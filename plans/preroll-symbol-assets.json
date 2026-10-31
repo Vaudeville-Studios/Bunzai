@@ -1,0 +1,188 @@
+[
+  {
+    "index": 0,
+    "slug": "oz",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-413ab530-2c7b-4688-8e63-49eaf71372bf.png",
+    "destination": "docs/media/preroll-symbols/oz-v1.webp"
+  },
+  {
+    "index": 1,
+    "slug": "harry-potter",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-b7b89f67-82b4-4f2e-9df9-af2587148a77.png",
+    "destination": "docs/media/preroll-symbols/harry-potter-v1.webp"
+  },
+  {
+    "index": 2,
+    "slug": "inception",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-503bf536-0d09-470b-9ec7-02436f2cf8dc.png",
+    "destination": "docs/media/preroll-symbols/inception-v1.webp"
+  },
+  {
+    "index": 3,
+    "slug": "phantom",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-0e9d4236-f5d4-454e-9e1f-909d82c9b439.png",
+    "destination": "docs/media/preroll-symbols/phantom-v1.webp"
+  },
+  {
+    "index": 4,
+    "slug": "howl-moving-castle",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-25d9e2e4-5b6a-45a9-a17c-7d1a2df3fb8c.png",
+    "destination": "docs/media/preroll-symbols/howl-moving-castle-v1.webp"
+  },
+  {
+    "index": 5,
+    "slug": "death-note",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-767aef2b-3f39-47b6-91f9-f4f05c52a5ac.png",
+    "destination": "docs/media/preroll-symbols/death-note-v1.webp"
+  },
+  {
+    "index": 6,
+    "slug": "uncharted",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-f9fa1d2e-a2b5-4574-911f-c6fc9eefea57.png",
+    "destination": "docs/media/preroll-symbols/uncharted-v1.webp"
+  },
+  {
+    "index": 7,
+    "slug": "one-piece",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-fbd8e4a3-dde9-4238-b2d0-a77dec82128c.png",
+    "destination": "docs/media/preroll-symbols/one-piece-v1.webp"
+  },
+  {
+    "index": 8,
+    "slug": "back-to-future",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-20400985-f5f6-4f54-95de-e7512e578c45.png",
+    "destination": "docs/media/preroll-symbols/back-to-future-v1.webp"
+  },
+  {
+    "index": 9,
+    "slug": "sleeping-beauty",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-72df2a20-8464-420f-bec9-fce2af64b687.png",
+    "destination": "docs/media/preroll-symbols/sleeping-beauty-v1.webp"
+  },
+  {
+    "index": 10,
+    "slug": "little-mermaid",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-b01adf70-bae8-4a24-b335-7d2fbd3c6457.png",
+    "destination": "docs/media/preroll-symbols/little-mermaid-v1.webp"
+  },
+  {
+    "index": 11,
+    "slug": "lord-of-the-rings",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-e1ee9edd-4859-4740-947d-aa4ea7dc6dd1.png",
+    "destination": "docs/media/preroll-symbols/lord-of-the-rings-v1.webp"
+  },
+  {
+    "index": 12,
+    "slug": "matrix",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-fe32e0e0-5a58-48fa-a2a7-d2ed11c6ae58.png",
+    "destination": "docs/media/preroll-symbols/matrix-v1.webp"
+  },
+  {
+    "index": 13,
+    "slug": "transformers",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-2023569e-ebf3-48df-add9-c5ab546c780a.png",
+    "destination": "docs/media/preroll-symbols/transformers-v1.webp"
+  },
+  {
+    "index": 14,
+    "slug": "beauty-and-beast",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-2403a09c-0d25-473f-8c71-8d8cd921cf03.png",
+    "destination": "docs/media/preroll-symbols/beauty-and-beast-v1.webp"
+  },
+  {
+    "index": 15,
+    "slug": "hunger-games",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-d142d8cd-76a2-452a-b839-3968720e84be.png",
+    "destination": "docs/media/preroll-symbols/hunger-games-v1.webp"
+  },
+  {
+    "index": 16,
+    "slug": "batman",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-ba21d4dc-3fb2-4102-8460-ab436b4de4a6.png",
+    "destination": "docs/media/preroll-symbols/batman-v1.webp"
+  },
+  {
+    "index": 17,
+    "slug": "sailor-moon",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-2813a9a3-8003-480c-bade-56e21e1bde30.png",
+    "destination": "docs/media/preroll-symbols/sailor-moon-v1.webp"
+  },
+  {
+    "index": 18,
+    "slug": "jurassic-park",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-015ebaa5-91ed-4587-bfd1-883a0a0a9c43.png",
+    "destination": "docs/media/preroll-symbols/jurassic-park-v1.webp"
+  },
+  {
+    "index": 19,
+    "slug": "minecraft",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-c38b415d-8118-4d4e-8654-700f1a441208.png",
+    "destination": "docs/media/preroll-symbols/minecraft-v1.webp"
+  },
+  {
+    "index": 20,
+    "slug": "zelda",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-b8e45b45-aaee-48ae-89e7-2e81a36b4493.png",
+    "destination": "docs/media/preroll-symbols/zelda-v1.webp"
+  },
+  {
+    "index": 21,
+    "slug": "star-trek",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-e70564e7-2d33-41dc-9320-7e7a2c291f6d.png",
+    "destination": "docs/media/preroll-symbols/star-trek-v1.webp"
+  },
+  {
+    "index": 22,
+    "slug": "lego-movie",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-a6352890-0f65-4aa3-9dcc-230786d9db64.png",
+    "destination": "docs/media/preroll-symbols/lego-movie-v1.webp"
+  },
+  {
+    "index": 23,
+    "slug": "neverending-story",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-8e1893bc-50ce-412b-a84a-58762e954d07.png",
+    "destination": "docs/media/preroll-symbols/neverending-story-v1.webp"
+  },
+  {
+    "index": 24,
+    "slug": "fullmetal-alchemist",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-fd1d7d14-d6ef-41fe-be1d-6e7faa27178c.png",
+    "destination": "docs/media/preroll-symbols/fullmetal-alchemist-v1.webp"
+  },
+  {
+    "index": 25,
+    "slug": "alan-wake",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-d77d4799-d9bf-4946-b2c3-da9361fbbbdd.png",
+    "destination": "docs/media/preroll-symbols/alan-wake-v1.webp"
+  },
+  {
+    "index": 26,
+    "slug": "pokemon",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-8e2c80a8-7394-44a8-83e4-d69822e3a36a.png",
+    "destination": "docs/media/preroll-symbols/pokemon-v1.webp"
+  },
+  {
+    "index": 27,
+    "slug": "jumanji",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-28338504-243b-4627-b542-858e80e2ae42.png",
+    "destination": "docs/media/preroll-symbols/jumanji-v1.webp"
+  },
+  {
+    "index": 28,
+    "slug": "frozen",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-9c4ba876-9752-474d-a942-c9843b7c8cae.png",
+    "destination": "docs/media/preroll-symbols/frozen-v1.webp"
+  },
+  {
+    "index": 29,
+    "slug": "pirates-caribbean",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-e6a12ac6-c7d4-4608-9ffd-efff40e2634b.png",
+    "destination": "docs/media/preroll-symbols/pirates-caribbean-v1.webp"
+  },
+  {
+    "index": 30,
+    "slug": "game-of-thrones",
+    "source": "C:\\Users\\chiev\\.codex\\generated_images\\01a18979-9ba3-7921-89ee-5638bb377b40\\exec-6453bb29-6bfb-4a41-a7b5-4673a150fdea.png",
+    "destination": "docs/media/preroll-symbols/game-of-thrones-v1.webp"
+  }
+]

@@ -15,14 +15,10 @@ export function auditoriumBody(): string {
 <article class="screen-preroll-card is-current" data-preroll-card="production"><span>AN INDEPENDENT PRODUCTION</span><strong class="screen-wordmark">BUN<em>ZAI</em></strong></article>
 <article class="screen-preroll-card" data-preroll-card="presents"><p class="screen-preroll-type">VAUDEVILLE PRESENTS</p></article>
 <article class="screen-preroll-card screen-preroll-words" data-preroll-card="words">
-<div class="screen-preroll-worlds" data-preroll-worlds aria-hidden="true">
-<img class="screen-preroll-world" data-preroll-world="wonderland" data-src="media/preroll-world-wonderland-v1.png" alt="" decoding="async">
-<img class="screen-preroll-world" data-preroll-world="middle-earth" data-src="media/preroll-world-middle-earth-v1.png" alt="" decoding="async">
-<img class="screen-preroll-world is-current" data-preroll-world="oz" data-src="media/preroll-world-oz-v1.png" alt="" decoding="async">
-<canvas class="screen-preroll-world-stencil" data-preroll-world-stencil aria-hidden="true"></canvas>
+<div class="screen-preroll-content">
+<div class="screen-preroll-symbol-stage" data-preroll-symbol-stage aria-hidden="true"><img class="screen-preroll-symbol" data-preroll-symbol alt="" decoding="async"><canvas class="screen-preroll-symbol-stencil" data-preroll-symbol-stencil></canvas></div>
+<div class="screen-preroll-copy"><span class="screen-preroll-prefix" data-preroll-prefix>ALL THE WORLD'S</span><strong class="screen-preroll-word" data-preroll-word data-tone="rose"></strong><p class="screen-preroll-progress" data-preroll-progress role="status" hidden></p></div>
 </div>
-<span class="screen-preroll-prefix" data-preroll-prefix>ALL THE WORLD'S</span>
-<span class="screen-preroll-word-stage"><strong class="screen-preroll-word" data-preroll-word data-tone="rose">A STAGE</strong><canvas class="screen-preroll-chrome" data-preroll-chrome aria-hidden="true"></canvas></span>
 <p class="screen-preroll-tagline" data-preroll-tagline hidden>All the worlds: your stage</p></article>
 <button class="screen-preroll-skip" type="button" data-preroll-skip>Skip opening</button>
 </div>

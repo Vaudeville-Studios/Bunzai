@@ -1,14 +1,40 @@
-/** Verify the recovered screen animation advances only in active, motion-enabled view. */
+/** Cover symbol order, bounded source loading, single-impact timing, and pause/replay behavior. */
 import { expect, test } from "bun:test";
 import { JSDOM } from "jsdom";
 import { sitePages } from "./pages";
-import { runScreenPreroll } from "./preroll";
+import { runScreenPreroll, SCREEN_PREROLL_PHRASES } from "./preroll";
 
-function fixture(reduced = false) {
+function fixture(reduced = false, failedSlug = "") {
   const dom = new JSDOM(sitePages([])[0]!.html, { pretendToBeVisual: true });
   const win = dom.window;
   const doc = win.document;
   win.HTMLCanvasElement.prototype.getContext = (() => null) as typeof win.HTMLCanvasElement.prototype.getContext;
+  const createElement = doc.createElement.bind(doc);
+  doc.createElement = ((tag: string, options?: ElementCreationOptions): HTMLElement => {
+    const element = createElement(tag, options);
+    if (tag.toLowerCase() === "img") {
+      const image = element as HTMLImageElement;
+      let source = "";
+      Object.defineProperties(image, {
+        complete: { configurable: true, get: () => source.length > 0 },
+        naturalWidth: { configurable: true, get: () => source.length > 0 && (!failedSlug || !source.includes(`${failedSlug}-v1.webp`)) ? 120 : 0 },
+        naturalHeight: { configurable: true, get: () => source.length > 0 && (!failedSlug || !source.includes(`${failedSlug}-v1.webp`)) ? 120 : 0 },
+        decode: { configurable: true, value: () => Promise.resolve() },
+        src: { configurable: true, get: () => source, set: (value: string) => {
+          source = value;
+          queueMicrotask(() => image.dispatchEvent(new win.Event(failedSlug && source.includes(`${failedSlug}-v1.webp`) ? "error" : "load")));
+        } },
+      });
+    }
+    return element;
+  }) as typeof doc.createElement;
+  const symbol = doc.querySelector<HTMLImageElement>("[data-preroll-symbol]")!;
+  Object.defineProperties(symbol, {
+    complete: { configurable: true, get: () => symbol.hasAttribute("src") },
+    naturalWidth: { configurable: true, get: () => symbol.hasAttribute("src") ? 120 : 0 },
+    naturalHeight: { configurable: true, get: () => symbol.hasAttribute("src") ? 120 : 0 },
+    decode: { configurable: true, value: () => Promise.resolve() },
+  });
   let now = 0, nextId = 0;
   const timers = new Map<number, { due: number; callback: () => void }>();
   const motion = new win.EventTarget();
@@ -28,103 +54,112 @@ function fixture(reduced = false) {
     }
     now = target;
   };
-  return { dom, win, doc, motion, advance, root: doc.querySelector<HTMLElement>("[data-screen-preroll]")! };
+  return { dom, win, doc, motion, advance, root: doc.querySelector<HTMLElement>("[data-screen-preroll]")!, symbol };
 }
 
-test("screen film credits Vaudeville, pulses the world plates behind the phrase run, and ends on Bunzai's exact tagline", () => {
-  const f = fixture();
-  expect(f.root.textContent).toContain("VAUDEVILLE PRESENTS");
-  expect(f.root.querySelector("[data-preroll-chrome][aria-hidden='true']")).not.toBeNull();
-  expect(f.root.querySelector("[data-preroll-world-stencil][aria-hidden='true']")).not.toBeNull();
-  const plates = [...f.root.querySelectorAll<HTMLImageElement>("[data-preroll-world]")];
-  expect(plates.map(image => image.getAttribute("data-src"))).toEqual([
-    "media/preroll-world-wonderland-v1.png",
-    "media/preroll-world-middle-earth-v1.png",
-    "media/preroll-world-oz-v1.png",
+async function flush(): Promise<void> { for (let i = 0; i < 80; i++) await Promise.resolve(); }
+
+test("the single phrase table maps all 32 lines to distinct props with a two-second Bunzai mark ending", () => {
+  expect(SCREEN_PREROLL_PHRASES).toHaveLength(32);
+  expect(new Set(SCREEN_PREROLL_PHRASES.map(phrase => phrase[3])).size).toBe(32);
+  expect(SCREEN_PREROLL_PHRASES.slice(0, 8).map(phrase => phrase[3])).toEqual([
+    "oz", "harry-potter", "inception", "phantom", "howl-moving-castle", "death-note", "uncharted", "one-piece",
   ]);
-  expect(plates.every(image => !image.hasAttribute("src"))).toBe(true);
+  expect(SCREEN_PREROLL_PHRASES[8]).toEqual(["BOUNDLESS", "lilac", 1200, "back-to-future"]);
+  expect(SCREEN_PREROLL_PHRASES.every(phrase => phrase[2] >= 1000)).toBe(true);
+  expect(SCREEN_PREROLL_PHRASES.at(-1)).toEqual(["YOURS", "rose", 2200, "bunzai-logo"]);
+});
+
+test("the film shows one transparent symbol beside intact words and impacts only once per phrase", async () => {
+  const f = fixture();
+  const prefix = f.root.querySelector<HTMLElement>("[data-preroll-prefix]")!;
+  const word = f.root.querySelector<HTMLElement>("[data-preroll-word]")!;
+  const symbolStage = f.root.querySelector<HTMLElement>("[data-preroll-symbol-stage]")!;
+  const canvas = f.root.querySelector<HTMLCanvasElement>("[data-preroll-symbol-stencil]")!;
+  expect(f.root.querySelectorAll("[data-preroll-symbol]")).toHaveLength(1);
+  expect(f.root.querySelector("[data-preroll-chrome], [data-preroll-world], [data-preroll-worlds]")).toBeNull();
+  expect(f.root.querySelector("[data-preroll-symbol]")!.hasAttribute("src")).toBe(false);
   let completed = 0;
   runScreenPreroll(f.doc, () => { completed++; });
-  const cards = () => f.root.querySelector<HTMLElement>(".screen-preroll-card.is-current")!.dataset.prerollCard;
-  expect(cards()).toBe("production");
-  f.advance(5000);
-  expect(cards()).toBe("presents");
-  f.advance(5000);
-  expect(cards()).toBe("words");
-  expect(f.root.querySelector("[data-preroll-word]")!.textContent).toBe("A STAGE");
-  expect(plates.find(image => image.dataset.prerollWorld === "oz")!.getAttribute("src"))
-    .toBe("media/preroll-world-oz-v1.png");
-  expect(plates.find(image => image.dataset.prerollWorld === "wonderland")!.hasAttribute("src"))
-    .toBe(false);
-  const activeWorld = () => f.root.querySelector<HTMLElement>("[data-preroll-world].is-current")!.dataset.prerollWorld;
-  expect(activeWorld()).toBe("oz");
-  f.advance(2400);
-  expect(f.root.querySelector("[data-preroll-word]")!.textContent).toBe("A STORY");
-  f.advance(13600);
-  expect(activeWorld()).toBe("wonderland");
-  f.advance(5130);
-  expect(activeWorld()).toBe("middle-earth");
-  for (let elapsed = 0; elapsed < 40000 && f.root.querySelector<HTMLElement>("[data-preroll-tagline]")!.hidden; elapsed += 100) f.advance(100);
-  expect(f.root.querySelector<HTMLElement>("[data-preroll-tagline]")!.hidden).toBe(false);
-  expect(f.root.querySelector("[data-preroll-tagline]")!.textContent).toBe("All the worlds: your stage");
-  expect(f.root.querySelector<HTMLElement>(".screen-preroll-word-stage")!.hidden).toBe(true);
-  f.advance(2600);
-  expect(completed).toBe(1);
-  expect(f.root.hidden).toBe(true);
-  let replayCompleted = 0;
-  runScreenPreroll(f.doc, () => { replayCompleted++; });
-  expect(f.root.hidden).toBe(false);
-  expect(cards()).toBe("production");
-  expect(f.root.querySelector<HTMLElement>("[data-preroll-prefix]")!.hidden).toBe(false);
-  expect(f.root.querySelector<HTMLElement>("[data-preroll-word]")!.textContent).toBe("A STAGE");
-  expect(f.root.querySelector<HTMLElement>(".screen-preroll-word-stage")!.hidden).toBe(false);
-  expect(f.root.querySelector<HTMLElement>("[data-preroll-tagline]")!.hidden).toBe(true);
+  f.advance(4000);
+  await flush();
+  expect(word.textContent).toBe("A STAGE");
+  expect(f.symbol.getAttribute("src")).toBe("media/preroll-symbols/oz-v1.webp");
+  expect(prefix.textContent).toBe("ALL THE WORLD'S");
+  expect(symbolStage.classList.contains("is-stencilled")).toBe(false);
+  expect(word.classList.contains("is-changing")).toBe(false);
+  f.advance(299);
+  expect(symbolStage.classList.contains("is-stencilled")).toBe(false);
+  f.advance(1);
+  expect(symbolStage.classList.contains("is-stencilled")).toBe(true);
+  expect(word.classList.contains("is-changing")).toBe(true);
+  expect(canvas.hidden).toBe(false);
+  f.advance(1299);
+  await flush();
+  expect(word.textContent).toBe("A STAGE");
+  f.advance(1);
+  await flush();
+  expect(word.textContent).toBe("A STORY");
+  expect(f.symbol.getAttribute("src")).toBe("media/preroll-symbols/harry-potter-v1.webp");
+  expect(completed).toBe(0);
   f.root.querySelector<HTMLButtonElement>("[data-preroll-skip]")!.click();
-  expect(replayCompleted).toBe(1);
+  expect(completed).toBe(1);
   f.dom.window.close();
 });
 
-test("hidden tabs pause the screen film and reduced motion skips to the feature picture", () => {
+test("the final YOURS line uses the existing full-color Bunzai mark without stencil recoloring", async () => {
   const f = fixture();
-  let completed = 0;
-  runScreenPreroll(f.doc, () => { completed++; });
-  Object.defineProperty(f.doc, "hidden", { value: true, configurable: true });
-  f.doc.dispatchEvent(new f.win.Event("visibilitychange"));
-  f.advance(10000);
-  expect(f.root.querySelector<HTMLElement>(".screen-preroll-card.is-current")!.dataset.prerollCard).toBe("production");
-  Object.defineProperty(f.doc, "hidden", { value: false, configurable: true });
-  f.doc.dispatchEvent(new f.win.Event("visibilitychange"));
-  f.advance(5000);
-  expect(f.root.querySelector<HTMLElement>(".screen-preroll-card.is-current")!.dataset.prerollCard).toBe("presents");
+  runScreenPreroll(f.doc, () => {});
+  f.advance(4000);
+  await flush();
+  for (let i = 0; i < SCREEN_PREROLL_PHRASES.length - 1; i++) {
+    f.advance(SCREEN_PREROLL_PHRASES[i]![2]);
+    await flush();
+  }
+  expect(f.root.querySelector("[data-preroll-word]")!.textContent).toBe("YOURS");
+  expect(f.symbol.getAttribute("src")).toBe("media/bunzai-mark.png");
+  expect(f.root.querySelector("[data-preroll-symbol-stage]")!.classList.contains("is-logo")).toBe(true);
+  expect(f.root.querySelector<HTMLCanvasElement>("[data-preroll-symbol-stencil]")!.hidden).toBe(true);
+  expect(f.root.querySelector<HTMLElement>("[data-preroll-tagline]")!.hidden).toBe(true);
   f.dom.window.close();
-  const reduced = fixture(true);
-  let reducedComplete = 0;
-  runScreenPreroll(reduced.doc, () => { reducedComplete++; });
-  expect(reducedComplete).toBe(1);
-  expect(reduced.root.hidden).toBe(true);
-  expect(reduced.doc.querySelector("[data-screening-open]")!.textContent).toContain("Begin the showing");
-  reduced.dom.window.close();
 });
 
-test("hidden tabs preserve the full-color world reveal hold before the synchronized impact", async () => {
+test("hidden tabs pause the symbol reveal hold and reduced motion skips symbol downloads", async () => {
   const f = fixture();
-  const image = f.root.querySelector<HTMLImageElement>('[data-preroll-world="oz"]')!;
-  Object.defineProperties(image, { complete: { value: true }, naturalWidth: { value: 100 }, naturalHeight: { value: 100 } });
-  const stop = runScreenPreroll(f.doc, () => {});
-  f.advance(10000);
-  await Promise.resolve();
-  const world = f.root.querySelector<HTMLElement>("[data-preroll-worlds]")!;
+  runScreenPreroll(f.doc, () => {});
+  f.advance(4000);
+  await flush();
   f.advance(250);
   Object.defineProperty(f.doc, "hidden", { value: true, configurable: true });
   f.doc.dispatchEvent(new f.win.Event("visibilitychange"));
   f.advance(1000);
-  expect(world.classList.contains("is-stencilled")).toBe(false);
+  expect(f.root.querySelector("[data-preroll-symbol-stage]")!.classList.contains("is-stencilled")).toBe(false);
   Object.defineProperty(f.doc, "hidden", { value: false, configurable: true });
   f.doc.dispatchEvent(new f.win.Event("visibilitychange"));
-  f.advance(299);
-  expect(world.classList.contains("is-stencilled")).toBe(false);
+  f.advance(49);
+  expect(f.root.querySelector("[data-preroll-symbol-stage]")!.classList.contains("is-stencilled")).toBe(false);
   f.advance(1);
-  expect(world.classList.contains("is-stencilled")).toBe(true);
-  stop();
+  expect(f.root.querySelector("[data-preroll-symbol-stage]")!.classList.contains("is-stencilled")).toBe(true);
+  f.dom.window.close();
+  const reduced = fixture(true);
+  let completed = 0;
+  runScreenPreroll(reduced.doc, () => { completed++; });
+  expect(completed).toBe(1);
+  expect(reduced.symbol.hasAttribute("src")).toBe(false);
+  reduced.dom.window.close();
+});
+
+test("a preloaded symbol error settles promptly and leaves the following phrase available", async () => {
+  const f = fixture(false, "oz");
+  runScreenPreroll(f.doc, () => {});
+  f.advance(4000);
+  await flush();
+  const progress = f.root.querySelector<HTMLElement>("[data-preroll-progress]")!;
+  expect(f.root.querySelector("[data-preroll-word]")!.textContent).toBe("A STAGE");
+  expect(progress.textContent).toContain("could not be loaded");
+  f.advance(SCREEN_PREROLL_PHRASES[0]![2]);
+  await flush();
+  expect(f.root.querySelector("[data-preroll-word]")!.textContent).toBe("A STORY");
+  expect(f.symbol.getAttribute("src")).toBe("media/preroll-symbols/harry-potter-v1.webp");
   f.dom.window.close();
 });

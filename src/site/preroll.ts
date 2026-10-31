@@ -1,6 +1,109 @@
-/** Run the recovered Vaudeville title-card rhythm in the auditorium's native screen. */
-import { createChromeText } from './chrome-text';
+/** Run the recovered Vaudeville title-card rhythm with one prop for each phrase. */
 import { createWorldStencil } from './world-stencil';
+
+const PRELOAD_CONCURRENCY = 3;
+const SYMBOL_HOLD_MS = 300;
+
+export const SCREEN_PREROLL_PHRASES = [
+  ["A STAGE", "rose", 1600, "oz"], ["A STORY", "gold", 1550, "harry-potter"],
+  ["A DREAM", "lilac", 1500, "inception"], ["A SCENE", "sky", 1450, "phantom"],
+  ["A CANVAS", "rose", 1400, "howl-moving-castle"], ["UNWRITTEN", "mint", 1350, "death-note"],
+  ["UNCHARTED", "sky", 1300, "uncharted"], ["WIDE OPEN", "gold", 1250, "one-piece"],
+  ["BOUNDLESS", "lilac", 1200, "back-to-future"], ["WAITING", "mint", 1150, "sleeping-beauty"],
+  ["LISTENING", "gold", 1100, "little-mermaid"], ["WATCHING", "rose", 1050, "lord-of-the-rings"],
+  ["WAKING", "mint", 1000, "matrix"], ["SHIFTING", "lilac", 1000, "transformers"],
+  ["STIRRING", "rose", 1000, "beauty-and-beast"], ["READY", "mint", 1000, "hunger-games"],
+  ["CALLING", "gold", 1000, "batman"], ["CHANGING", "lilac", 1000, "sailor-moon"],
+  ["ALIVE", "sky", 1000, "jurassic-park"], ["YOURS TO SHAPE", "mint", 1000, "minecraft"],
+  ["YOURS TO DISCOVER", "rose", 1000, "zelda"], ["YOURS TO EXPLORE", "sky", 1000, "star-trek"],
+  ["YOURS TO BUILD", "gold", 1000, "lego-movie"], ["YOURS TO IMAGINE", "lilac", 1000, "neverending-story"],
+  ["YOURS TO CREATE", "lilac", 1000, "fullmetal-alchemist"], ["YOURS TO WRITE", "mint", 1000, "alan-wake"],
+  ["YOURS TO BECOME", "rose", 1000, "pokemon"], ["YOURS TO PLAY", "gold", 1000, "jumanji"],
+  ["YOURS TO HOLD", "lilac", 1000, "frozen"], ["YOURS TO TAKE", "rose", 1000, "pirates-caribbean"],
+  ["YOURS TO CONQUER", "gold", 1000, "game-of-thrones"], ["YOURS", "rose", 2200, "bunzai-logo"],
+] as const;
+type Phrase = typeof SCREEN_PREROLL_PHRASES[number];
+type SymbolImage = { url: string; loaded: boolean };
+
+function preloadSymbols(win: Window, slugs: readonly string[], progress: (done: number) => void) {
+  const images = new Set<HTMLImageElement>();
+  const cancelImage = new Map<HTMLImageElement, () => void>();
+  let cancelled = false;
+  let cursor = 0;
+  let done = 0;
+  const loaded = new Map<string, SymbolImage>();
+  const urls = slugs.map(slug => [slug, slug === "bunzai-logo" ? "media/bunzai-mark.png" : `media/preroll-symbols/${slug}-v1.webp`] as const);
+  const preloadOne = (slug: string, url: string): Promise<void> => new Promise(resolve => {
+    const image = win.document.createElement("img");
+    images.add(image);
+    let settled = false;
+    const finish = (ok: boolean): void => {
+      if (settled) return;
+      settled = true;
+      win.clearTimeout(timer);
+      image.onload = null;
+      image.onerror = null;
+      images.delete(image);
+      cancelImage.delete(image);
+      loaded.set(slug, { url, loaded: ok && image.naturalWidth > 0 });
+      done++;
+      progress(done);
+      resolve();
+    };
+    const timer = win.setTimeout(() => finish(false), 20000);
+    cancelImage.set(image, () => finish(false));
+    image.onload = () => { void image.decode().then(() => finish(true), () => finish(image.naturalWidth > 0)); };
+    image.onerror = () => finish(false);
+    image.src = url;
+    if (image.complete) void image.decode().then(() => finish(image.naturalWidth > 0), () => finish(image.naturalWidth > 0));
+  });
+  const worker = async (): Promise<void> => {
+    while (!cancelled) {
+      const item = urls[cursor++];
+      if (!item) return;
+      await preloadOne(...item);
+    }
+  };
+  const promise = Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, urls.length) }, worker))
+    .then(() => loaded);
+  return {
+    promise,
+    cancel(): void {
+      cancelled = true;
+      for (const image of [...images]) {
+        cancelImage.get(image)?.();
+        image.removeAttribute("src");
+      }
+      images.clear();
+    },
+  };
+}
+
+function imageDecoded(image: HTMLImageElement): Promise<boolean> {
+  if (image.complete && image.naturalWidth > 0) return image.decode().then(() => true, () => true);
+  if (image.complete) return Promise.resolve(false);
+  const view = image.ownerDocument.defaultView;
+  if (!view) return Promise.resolve(false);
+  return new Promise(resolve => {
+    let timer = 0;
+    let settled = false;
+    const finish = (ok: boolean): void => {
+      if (settled) return;
+      settled = true;
+      view.clearTimeout(timer);
+      image.removeEventListener("load", load);
+      image.removeEventListener("error", error);
+      image.removeEventListener("abort", error);
+      resolve(ok);
+    };
+    const load = (): void => { void image.decode().then(() => finish(true), () => finish(image.naturalWidth > 0)); };
+    const error = (): void => finish(false);
+    timer = view.setTimeout(error, 20000);
+    image.addEventListener("load", load, { once: true });
+    image.addEventListener("error", error, { once: true });
+    image.addEventListener("abort", error, { once: true });
+  });
+}
 
 export function runScreenPreroll(doc: Document, onComplete: () => void): () => void {
   const root = doc.querySelector<HTMLElement>("[data-screen-preroll]");
@@ -14,57 +117,39 @@ export function runScreenPreroll(doc: Document, onComplete: () => void): () => v
   const cards = [...root.querySelectorAll<HTMLElement>("[data-preroll-card]")];
   const prefix = root.querySelector<HTMLElement>("[data-preroll-prefix]");
   const word = root.querySelector<HTMLElement>("[data-preroll-word]");
-  const wordStage = root.querySelector<HTMLElement>(".screen-preroll-word-stage");
-  const chromeCanvas = root.querySelector<HTMLCanvasElement>("[data-preroll-chrome]");
-  const worldStage = root.querySelector<HTMLElement>("[data-preroll-worlds]");
-  const worldPlates = [...root.querySelectorAll<HTMLImageElement>("[data-preroll-world]")];
-  const stencilCanvas = root.querySelector<HTMLCanvasElement>("[data-preroll-world-stencil]");
+  const symbolStage = root.querySelector<HTMLElement>("[data-preroll-symbol-stage]");
+  const symbolImage = root.querySelector<HTMLImageElement>("[data-preroll-symbol]");
+  const symbolCanvas = root.querySelector<HTMLCanvasElement>("[data-preroll-symbol-stencil]");
+  const progress = root.querySelector<HTMLElement>("[data-preroll-progress]");
   const tagline = root.querySelector<HTMLElement>("[data-preroll-tagline]");
-  if (cards.length !== 3 || !prefix || !word || !wordStage || !tagline) { onComplete(); return () => {}; }
+  if (cards.length !== 3 || !prefix || !word || !symbolStage || !symbolImage || !symbolCanvas || !progress || !tagline) {
+    onComplete(); return () => {};
+  }
 
-  const phrases = [
-    ["A STAGE", "rose", 2400], ["A STORY", "gold", 2200], ["A DREAM", "lilac", 2000],
-    ["A SCENE", "sky", 1800], ["A CANVAS", "rose", 1600], ["UNWRITTEN", "mint", 1400],
-    ["UNCHARTED", "sky", 1300], ["WIDE OPEN", "gold", 1200], ["BOUNDLESS", "lilac", 1100],
-    ["WAITING", "mint", 1000], ["LISTENING", "gold", 900], ["WATCHING", "rose", 800],
-    ["WAKING", "mint", 700], ["SHIFTING", "lilac", 550], ["STIRRING", "rose", 480],
-    ["READY", "mint", 420], ["CALLING", "gold", 360], ["CHANGING", "lilac", 300],
-    ["ALIVE", "sky", 250], ["YOURS TO SHAPE", "mint", 200], ["YOURS TO DISCOVER", "rose", 170],
-    ["YOURS TO EXPLORE", "sky", 145], ["YOURS TO BUILD", "gold", 125], ["YOURS TO IMAGINE", "lilac", 110],
-    ["YOURS TO CREATE", "lilac", 95], ["YOURS TO WRITE", "mint", 85], ["YOURS TO BECOME", "rose", 75],
-    ["YOURS TO PLAY", "gold", 65], ["YOURS TO HOLD", "lilac", 400], ["YOURS TO TAKE", "rose", 800],
-    ["YOURS TO CONQUER", "gold", 1400], ["YOURS", "rose", 3000],
-  ] as const;
   let timer = 0;
   let deadline = 0;
   let remaining = 0;
   let next: (() => void) | undefined;
   let stopped = false;
-  let chrome: ReturnType<typeof createChromeText> | undefined;
-  let stencil: ReturnType<typeof createWorldStencil> | undefined;
-  let stencilTimer = 0;
-  let stencilDeadline = 0;
-  let stencilRemaining = 0;
-  let stencilNext: (() => void) | undefined;
-  let activeWorld: string | undefined;
-  let worldLoad: (() => void) | undefined;
+  let activeIndex = -1;
+  const stencil = createWorldStencil(symbolCanvas, symbolImage);
+  let preloadedCount = 0;
+  const slugs = SCREEN_PREROLL_PHRASES.map(phrase => phrase[3]);
+  const preload = preloadSymbols(view, slugs, done => {
+    preloadedCount = done;
+    if (!progress.hidden) progress.textContent = `Preparing story symbols ${done} of ${slugs.length}`;
+  });
 
   const cleanup = (): void => {
-    win.clearTimeout(timer);
-    win.clearTimeout(stencilTimer);
+    view.clearTimeout(timer);
     timer = 0;
-    stencilTimer = 0;
-    stencilNext = undefined;
     next = undefined;
+    preload.cancel();
     doc.removeEventListener("visibilitychange", visibility);
     doc.removeEventListener("keydown", keydown);
     skip.removeEventListener("click", finish);
-    motion.removeEventListener("change", motionChange);
-    if (worldLoad) worldPlates.forEach(plate => plate.removeEventListener("load", worldLoad!));
-    stencil?.stop();
-    stencil = undefined;
-    chrome?.stop();
-    chrome = undefined;
+    preference.removeEventListener("change", motionChange);
+    stencil.stop();
     root.hidden = true;
     root.inert = true;
   };
@@ -81,8 +166,8 @@ export function runScreenPreroll(doc: Document, onComplete: () => void): () => v
   };
   const arm = (): void => {
     if (doc.hidden || !next || stopped) return;
-    deadline = win.performance.now() + remaining;
-    timer = win.setTimeout(() => {
+    deadline = view.performance.now() + remaining;
+    timer = view.setTimeout(() => {
       timer = 0;
       remaining = 0;
       const advance = next;
@@ -91,119 +176,87 @@ export function runScreenPreroll(doc: Document, onComplete: () => void): () => v
     }, remaining);
   };
   const wait = (milliseconds: number, advance: () => void): void => {
-    win.clearTimeout(timer);
+    view.clearTimeout(timer);
     remaining = milliseconds;
     next = advance;
     arm();
   };
-  const armStencil = (): void => {
-    if (doc.hidden || !stencilNext || stopped) return;
-    stencilDeadline = win.performance.now() + stencilRemaining;
-    stencilTimer = win.setTimeout(() => {
-      stencilTimer = 0;
-      stencilRemaining = 0;
-      const advance = stencilNext;
-      stencilNext = undefined;
-      advance?.();
-    }, stencilRemaining);
-  };
-  const waitStencil = (milliseconds: number, advance: () => void): void => {
-    win.clearTimeout(stencilTimer);
-    stencilRemaining = milliseconds;
-    stencilNext = advance;
-    armStencil();
-  };
   function visibility(): void {
-    if (doc.hidden) {
-      if (timer) {
-        view.clearTimeout(timer);
-        remaining = Math.max(0, deadline - view.performance.now());
-        timer = 0;
-      }
-      if (stencilTimer) {
-        view.clearTimeout(stencilTimer);
-        stencilRemaining = Math.max(0, stencilDeadline - view.performance.now());
-        stencilTimer = 0;
-      }
-    } else {
-      arm();
-      armStencil();
-    }
+    if (doc.hidden && timer) {
+      view.clearTimeout(timer);
+      remaining = Math.max(0, deadline - view.performance.now());
+      timer = 0;
+    } else if (!doc.hidden) arm();
   }
   function keydown(event: KeyboardEvent): void { if (event.key === "Escape") finish(); }
   function motionChange(): void { if (preference.matches) finish(); }
   const showCard = (name: string): void => {
     cards.forEach(card => card.classList.toggle("is-current", card.dataset.prerollCard === name));
   };
-  const showWorld = (name: string): void => {
-    const selected = worldPlates.find(plate => plate.dataset.prerollWorld === name);
-    if (activeWorld === name) return;
-    activeWorld = name;
-    win.clearTimeout(stencilTimer);
-    stencilTimer = 0;
-    stencilNext = undefined;
-    stencilRemaining = 0;
-    if (worldLoad) worldPlates.forEach(plate => plate.removeEventListener("load", worldLoad!));
-    worldLoad = undefined;
-    stencil?.stop();
-    stencil = undefined;
-    worldStage?.classList.remove("is-stencilled");
-    worldPlates.forEach(plate => plate.classList.remove("is-stencilled"));
-    if (selected && !selected.hasAttribute("src") && selected.dataset.src) {
-      selected.loading = "eager";
-      selected.src = selected.dataset.src;
-    }
-    worldPlates.forEach(plate => plate.classList.toggle("is-current", plate === selected));
-    if (!selected || !stencilCanvas) return;
-    const currentStencil = createWorldStencil(stencilCanvas, selected);
-    stencil = currentStencil;
-    const holdFullColor = (prepared: boolean): void => {
-      if (stopped || activeWorld !== name || stencil !== currentStencil) return;
-      const gpuReady = prepared && currentStencil.ready();
-      if (!selected.complete || !selected.naturalWidth) {
-        worldLoad = (): void => {
-          selected.removeEventListener("load", worldLoad!);
-          worldLoad = undefined;
-          holdFullColor(prepared);
-        };
-        selected.addEventListener("load", worldLoad, { once: true });
-        return;
-      }
-      waitStencil(550, () => {
-        if (stopped || activeWorld !== name || stencil !== currentStencil) return;
-        worldStage?.classList.add("is-stencilled");
-        selected.classList.add("is-stencilled");
-        if (gpuReady) currentStencil.activate();
-        hitWord();
-      });
-    };
-    void currentStencil.prepare().then(holdFullColor);
-  };
   const hitWord = (): void => {
-    wordStage.classList.remove("is-changing");
-    void wordStage.offsetWidth;
-    wordStage.classList.add("is-changing");
-    chrome ??= chromeCanvas ? createChromeText(chromeCanvas, word) : undefined;
-    chrome?.refresh();
-    chrome?.pulse();
+    word.classList.remove("is-changing");
+    void word.offsetWidth;
+    word.classList.add("is-changing");
   };
-  const showPhrase = (index: number): void => {
-    const [text, tone, duration] = phrases[index]!;
-    const world = index < 2 ? "oz"
-      : index < 6 || (index >= 10 && index <= 12) ? "wonderland"
-        : "middle-earth";
+  const showPhrase = (index: number, symbols: Map<string, SymbolImage>): void => {
+    if (stopped) return;
+    const [text, tone, duration, slug] = SCREEN_PREROLL_PHRASES[index] as Phrase;
+    const asset = symbols.get(slug);
+    activeIndex = index;
     word.textContent = text;
     word.dataset.tone = tone;
-    showWorld(world);
-    hitWord();
-    if (index < phrases.length - 1) wait(duration, () => showPhrase(index + 1));
-    else wait(duration, showTagline);
+    word.classList.remove("is-changing");
+    symbolStage.classList.remove("is-current", "is-stencilled", "is-logo");
+    symbolCanvas.hidden = false;
+    symbolImage.hidden = false;
+    if (slug === "bunzai-logo") {
+      stencil.stop();
+      symbolCanvas.hidden = true;
+      symbolImage.src = asset?.url ?? "media/bunzai-mark.png";
+      symbolStage.classList.add("is-current", "is-logo");
+      void imageDecoded(symbolImage).then(decoded => {
+        if (stopped || activeIndex !== index) return;
+        if (!decoded) progress.textContent = "The Bunzai mark could not be loaded; the phrase continues.";
+        wait(SYMBOL_HOLD_MS, () => {
+          if (stopped || activeIndex !== index) return;
+          hitWord();
+          wait(duration - SYMBOL_HOLD_MS, () => advancePhrase(index, symbols));
+        });
+      });
+      return;
+    }
+    if (!asset?.loaded) {
+      symbolImage.hidden = true;
+      symbolCanvas.hidden = true;
+      progress.hidden = false;
+      progress.textContent = `The story symbol for ${text} could not be loaded; the phrase continues.`;
+      wait(SYMBOL_HOLD_MS, () => { hitWord(); wait(duration - SYMBOL_HOLD_MS, () => advancePhrase(index, symbols)); });
+      return;
+    }
+    progress.hidden = true;
+    symbolImage.src = asset.url;
+    symbolStage.classList.add("is-current");
+    void stencil.prepare().then(async prepared => {
+      if (stopped || activeIndex !== index) return;
+      const decoded = prepared || await imageDecoded(symbolImage);
+      if (stopped || activeIndex !== index) return;
+      wait(SYMBOL_HOLD_MS, () => {
+        if (stopped || activeIndex !== index) return;
+        if (decoded) stencil.activate();
+        symbolStage.classList.add("is-stencilled");
+        hitWord();
+        wait(duration - SYMBOL_HOLD_MS, () => advancePhrase(index, symbols));
+      });
+    });
+  };
+  const advancePhrase = (index: number, symbols: Map<string, SymbolImage>): void => {
+    if (index + 1 < SCREEN_PREROLL_PHRASES.length) showPhrase(index + 1, symbols);
+    else showTagline();
   };
   const showTagline = (): void => {
     prefix.hidden = true;
-    wordStage.hidden = true;
-    chrome?.stop();
-    chrome = undefined;
+    symbolStage.hidden = true;
+    word.hidden = true;
     tagline.hidden = false;
     wait(2600, finish);
   };
@@ -211,23 +264,26 @@ export function runScreenPreroll(doc: Document, onComplete: () => void): () => v
   root.hidden = false;
   root.inert = false;
   prefix.hidden = false;
+  symbolStage.hidden = false;
+  symbolImage.hidden = false;
+  symbolCanvas.hidden = false;
   word.hidden = false;
-  wordStage.hidden = false;
-  wordStage.classList.remove("is-changing");
-  word.textContent = phrases[0]![0];
-  word.dataset.tone = phrases[0]![1];
+  word.classList.remove("is-changing");
   tagline.hidden = true;
+  progress.hidden = true;
   showCard("production");
   doc.addEventListener("visibilitychange", visibility);
   doc.addEventListener("keydown", keydown);
   skip.addEventListener("click", finish);
-  motion.addEventListener("change", motionChange);
+  preference.addEventListener("change", motionChange);
   skip.focus({ preventScroll: true });
-  wait(5000, () => {
+  wait(1800, () => {
     showCard("presents");
-    wait(5000, () => {
+    wait(2200, () => {
       showCard("words");
-      showPhrase(0);
+      progress.hidden = false;
+      progress.textContent = `Preparing story symbols ${preloadedCount} of ${slugs.length}`;
+      void preload.promise.then(symbols => { if (!stopped) showPhrase(0, symbols); });
     });
   });
   return stop;

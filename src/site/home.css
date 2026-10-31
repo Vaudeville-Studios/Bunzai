@@ -13,7 +13,7 @@ body[data-page="home"] > .wrap { display: none; }
 .cinema-shell { position: absolute; isolation: isolate; top: 0; left: 50%; translate: -50% 0; width: max(100%, calc(var(--cinema-height) * 1.7768)); aspect-ratio: 1672 / 941; container-type: inline-size; outline-offset: -3px; }
 /* clone-ok: the website auditorium background has independent bounds and stacking from Library cover layers. */
 .cinema-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: -2; transition: filter 1.2s ease; }
-.cinema-light, .cinema-projector, .screen-preroll-world-stencil, .screen-preroll-chrome { /* clone-ok: site projection and preroll canvases share page-local bounds, separate from Studio overlays. */ position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cinema-light, .cinema-projector, .screen-preroll-symbol-stencil { /* clone-ok: site projection and single-symbol stencil share page-local bounds. */ position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .cinema-light, .cinema-projector { mix-blend-mode: screen; }
 .cinema-light { z-index: -1; opacity: .85; }
 .cinema-projector { z-index: 2; opacity: 0; transition: opacity 1.5s ease .45s; }
@@ -54,32 +54,25 @@ body[data-page="home"] > .wrap { display: none; }
 .screen-preroll-card > span, .screen-preroll-prefix { color: var(--fg2); font: 600 clamp(12px, 1.25cqw, 16px)/1.4 var(--mono); letter-spacing: .22em; }
 .screen-preroll-card .screen-wordmark { font-size: clamp(44px, 10cqw, 136px); }
 .screen-preroll .screen-wordmark em { color: var(--pink); font-style: normal; }
-.screen-preroll-type { width: max-content; max-width: 100%; overflow: hidden; clip-path: inset(0 100% 0 0); border-right: 2px solid var(--peach); color: var(--peach); font: 700 clamp(15px, 3cqw, 42px)/1.3 var(--disp); letter-spacing: .12em; white-space: nowrap; }
-.screen-preroll-card.is-current .screen-preroll-type { animation: preroll-type 1.35s steps(19, end) .35s forwards; }
-@keyframes preroll-type { to { clip-path: inset(0 0 0 0); border-color: transparent; } }
+.screen-preroll-type { width: max-content; max-width: 100%; color: var(--peach); font: 700 clamp(15px, 3cqw, 42px)/1.3 var(--disp); letter-spacing: .12em; white-space: nowrap; }
 .screen-preroll-words { gap: 12px; isolation: isolate; }
-.screen-preroll-worlds { position: absolute; z-index: 0; inset: 10% 8% 9%; overflow: hidden; clip-path: polygon(4% 6%, 97% 0, 100% 84%, 1% 100%); background: var(--ink); transition: transform .28s cubic-bezier(.16,.8,.22,1); }
-.screen-preroll-worlds::before { position: absolute; inset: 0; z-index: 1; content: ""; background: linear-gradient(90deg, var(--ink), transparent 28% 72%, var(--ink)); }
-.screen-preroll-worlds::after { position: absolute; inset: 0; z-index: 2; content: ""; opacity: .5; background: linear-gradient(118deg, transparent 48.8%, var(--peach) 49.1% 49.4%, transparent 49.7%); }
-.screen-preroll-world { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; filter: none; transition: opacity .42s ease, filter .12s steps(2, end); }
-.screen-preroll-world[data-preroll-world="wonderland"] { object-position: 40% center; }
-.screen-preroll-world[data-preroll-world="middle-earth"] { object-position: 66% center; }
-.screen-preroll-world[data-preroll-world="oz"] { object-position: 65% center; }
-.screen-preroll-world.is-current { opacity: 1; }
-.screen-preroll-worlds.is-stencilled { transform: scale(1.03); }
-.screen-preroll-world.is-stencilled { filter: saturate(1.8) contrast(1.5) brightness(.76); }
-.screen-preroll-world-stencil { z-index: 3; }
-.screen-preroll-prefix, .screen-preroll-word-stage, .screen-preroll-tagline { position: relative; z-index: 3; }
-.screen-preroll-prefix { color: var(--fg); text-shadow: 2px 2px 0 var(--ink); }
-.screen-preroll-word-stage { position: relative; display: grid; place-items: center; width: max-content; max-width: 100%; }
-.screen-preroll-word { --word-accent: var(--pink); grid-area: 1 / 1; position: relative; z-index: 0; max-width: 100%; color: var(--word-accent); background: linear-gradient(180deg, var(--fg) 0%, var(--bg2) 14%, var(--fg) 28%, var(--word-accent) 37%, var(--fg2) 47%, var(--fg) 61%, var(--ink) 70%, var(--fg) 77%, var(--word-accent) 84%, var(--fg) 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font: 800 clamp(20px, 5cqw, 68px)/1.08 var(--disp); letter-spacing: .035em; text-wrap: balance; -webkit-text-stroke: 1px var(--ink); text-shadow: 3px 3px 0 var(--ink); }
-.screen-preroll-chrome { z-index: 1; }
-.screen-preroll-word-stage.is-changing { animation: preroll-word-slam .44s cubic-bezier(.16,.8,.22,1) both; }
+.screen-preroll-content { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(72px, .34fr) minmax(0, 1fr); align-items: center; gap: clamp(12px, 3cqw, 36px); width: min(100%, 1100px); }
+.screen-preroll-symbol-stage { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1; }
+.screen-preroll-symbol { display: block; width: 100%; height: 100%; object-fit: contain; }
+.screen-preroll-symbol-stencil { visibility: hidden; }
+.screen-preroll-symbol-stage.is-stencilled .screen-preroll-symbol-stencil { visibility: visible; }
+.screen-preroll-symbol-stage.is-stencilled .screen-preroll-symbol { filter: saturate(1.6) contrast(1.25); }
+.screen-preroll-symbol-stage.is-logo .screen-preroll-symbol { width: 78%; height: 78%; }
+.screen-preroll-copy { display: grid; justify-items: start; gap: clamp(8px, 1.4cqw, 16px); min-width: 0; text-align: left; }
+.screen-preroll-prefix { color: var(--fg2); }
+.screen-preroll-word { --word-accent: var(--pink); display: block; max-width: 100%; color: var(--word-accent); font: 800 clamp(20px, 5cqw, 68px)/1.08 var(--disp); letter-spacing: .035em; text-wrap: balance; text-shadow: 2px 3px 0 var(--ink); }
+.screen-preroll-progress { margin: 0; color: var(--fg2); font: 500 12px/1.4 var(--mono); }
+.screen-preroll-word.is-changing { animation: preroll-word-slam .4s cubic-bezier(.16,.8,.22,1) both; }
 @keyframes preroll-word-slam {
-  0% { opacity: .1; transform: translateY(-.42em) scale(1.34) skewX(-12deg); clip-path: inset(0 0 72% 0); }
-  24% { opacity: 1; transform: translateY(.1em) scale(.92) skewX(3deg); clip-path: polygon(0 0, 100% 0, 100% 58%, 0 48%); }
-  48% { transform: translateY(-.03em) scale(1.045) skewX(-1deg); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
-  100% { opacity: 1; transform: none; clip-path: none; }
+  0% { opacity: .45; transform: translateY(-.35em) scale(1.28) skewX(-7deg); }
+  38% { opacity: 1; transform: translateY(.08em) scale(.96) skewX(2deg); }
+  68% { transform: translateY(-.02em) scale(1.025) skewX(-.5deg); }
+  100% { opacity: 1; transform: none; }
 }
 .screen-preroll-word[data-tone="gold"] { --word-accent: var(--peach); }
 .screen-preroll-word[data-tone="mint"] { --word-accent: var(--mint); }
@@ -140,10 +133,7 @@ body[data-page="home"] > .wrap { display: none; }
   .screen-title p { font-size: 16px; }
   .screen-title a { font-size: 13px; margin-top: 15px; }
   .screen-preroll-card { gap: 12px; }
-  .screen-preroll-worlds { inset: 13% 2% 10%; }
-  .screen-preroll-world[data-preroll-world="wonderland"] { object-position: 35% center; }
-  .screen-preroll-world[data-preroll-world="middle-earth"] { object-position: 70% center; }
-  .screen-preroll-world[data-preroll-world="oz"] { object-position: 72% center; }
+  .screen-preroll-content { grid-template-columns: minmax(64px, .3fr) minmax(0, 1fr); gap: 10px; }
   .screen-preroll-word { font-size: clamp(20px, 7cqw, 42px); }
   .screen-preroll-card > span, .screen-preroll-prefix { letter-spacing: .12em; }
   .screen-preroll-skip { right: 6px; bottom: 5px; min-height: 24px; }
@@ -156,11 +146,10 @@ body[data-page="home"] > .wrap { display: none; }
   .cinema-footer p { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .screen-slide, .screen-feature figcaption, .cinema-shell, .cinema-art, .cinema-light, .cinema-projector, .screen-preroll-card, .screen-preroll-word, .screen-preroll-world { transition: none; }
-  .screen-preroll-type { clip-path: none; border-color: transparent; animation: none; }
-  .screen-preroll-word-stage.is-changing { animation: none; }
+  .screen-slide, .screen-feature figcaption, .cinema-shell, .cinema-art, .cinema-light, .cinema-projector, .screen-preroll-card, .screen-preroll-word, .screen-preroll-symbol { transition: none; }
+  .screen-preroll-word.is-changing { animation: none; }
   .auditorium:not([data-screening-state="ready"]) .cinema-shell { transform: none; }
 }
 @media (forced-colors: active) {
-  .screen-preroll-word { color: CanvasText; background: none; -webkit-text-fill-color: CanvasText; text-shadow: none; -webkit-text-stroke: 1px Canvas; }
+  .screen-preroll-word { color: CanvasText; text-shadow: none; -webkit-text-stroke: 1px Canvas; }
 }

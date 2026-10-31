@@ -27,7 +27,7 @@ export async function buildSite(root: string, output: string): Promise<number> {
   await mkdir(join(output, 'theme'), { recursive: true });
   await copyFile(join(root, 'src/ui/theme/tokens.css'), join(output, 'theme/tokens.css'));
   await cp(join(root, 'src/ui/theme/fonts'), join(output, 'theme/fonts'), { recursive: true });
-  await copyFile(join(root, 'build', ICON_FILES['icon-192.png'][0]), join(output, 'media/bunzai-mark.png'));
+  await copyFile(join(root, 'build', ICON_FILES['icon-256.png'][0]), join(output, 'media/bunzai-mark.png'));
   await copyFile(join(root, 'build', ICON_FILES['favicon.ico'][0]), join(output, 'favicon.ico'));
   return pages.length;
 }

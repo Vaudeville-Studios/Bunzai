@@ -106,13 +106,15 @@ The public repository belongs to Vaudeville-Studios; Pages publishes at
 documentation source links and canonical preview URLs use that organization-owned location.
 Clicking Begin the showing dims the room and pushes the camera toward the screen while the local
 curtain-opening film plays. The recovered Vaudeville title cards then run inside the screen: an
-independent-production credit, `VAUDEVILLE PRESENTS`, and an accelerating Shakespeare word sequence.
-Three locally shipped story-world plates appear behind the phrases. Each plate holds its full-color
-reveal, then resolves into a flat, colored cutout with image-edge outlines as its matching word slams
-into place. The words carry a glyph-shaped liquid-chrome reflection when WebGL is available; static
-token-metal text and the original image remain the fallback. The sequence ends on
-`All the worlds: your stage`. Skip and replay are available. Reduced motion skips the
-curtain and title animation and opens the first product picture directly. Native title content and
+independent-production credit, `VAUDEVILLE PRESENTS`, and a 32-phrase Shakespeare sequence.
+Each phrase pairs intact, unmasked text with one recognizable story prop, such as Oz's ruby slippers
+or Harry Potter's spectacles and lightning bolt. The prop appears in full color for 300ms, then its
+transparent cutout resolves into a posterized stencil with inked edges on the same impact as the
+word slam. WebGL affects only the symbol; the original full-color cutout remains visible if the
+renderer is unavailable. The last `YOURS` pairs with the existing Bunzai bunny mark. The source
+mapping and image-generation prompts are recorded in `plans/preroll-symbols.md`. Skip and replay are
+available, and hidden tabs pause the sequence. Reduced motion skips the curtain and title animation
+and opens the first product picture directly. Native title content and
 pictures sit inside the artwork's empty screen. Each picture pairs with
 live text explaining the feature and the pictured view, plus a link to its tour page. Pictures
 crossfade and their descriptions slide into place; reduced motion removes these transitions.

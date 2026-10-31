@@ -1,14 +1,11 @@
-/** Low-cost image-to-stencil transition for the preroll's story-world plates. */
+/** Alpha-preserving posterize and silhouette outline for transparent story cutouts. */
 import { Mesh, Program, Renderer, Texture, Triangle } from "ogl";
-import { sampleCssColor } from "./canvas-colors";
 
 const MAX_PIXELS = 1_000_000;
 const MAX_TEXTURE_EDGE = 1200;
 const MAX_DPR = 1.5;
 const FRAME_MS = 1000 / 15;
-const REACTIVE_FRAME_MS = 250;
 const IMPACT_MS = 190;
-const LATE_IMAGE_REVEAL_MS = 550;
 
 const VERTEX = `attribute vec2 position;
 varying vec2 vUv;
@@ -17,36 +14,45 @@ void main() { vUv = position * 0.5 + 0.5; gl_Position = vec4(position, 0.0, 1.0)
 const FRAGMENT = `precision mediump float;
 uniform sampler2D uImage;
 uniform vec2 uImageResolution;
-uniform vec3 uInk;
-uniform vec3 uAccent;
-uniform vec3 uLight;
-uniform float uTime;
 uniform float uImpact;
 varying vec2 vUv;
 float luminance(vec3 color) { return dot(color, vec3(0.299, 0.587, 0.114)); }
+vec2 sobel(float tl, float tc, float tr, float ml, float mr, float bl, float bc, float br) {
+  float gx = -tl - 2.0 * ml - bl + tr + 2.0 * mr + br;
+  float gy = -tl - 2.0 * tc - tr + bl + 2.0 * bc + br;
+  return vec2(gx, gy);
+}
 void main() {
   vec4 photo = texture2D(uImage, vUv);
   vec2 px = 1.0 / uImageResolution;
-  float tl = luminance(texture2D(uImage, vUv + vec2(-px.x, px.y)).rgb);
-  float tc = luminance(texture2D(uImage, vUv + vec2(0.0, px.y)).rgb);
-  float tr = luminance(texture2D(uImage, vUv + px).rgb);
-  float ml = luminance(texture2D(uImage, vUv - vec2(px.x, 0.0)).rgb);
-  float mr = luminance(texture2D(uImage, vUv + vec2(px.x, 0.0)).rgb);
-  float bl = luminance(texture2D(uImage, vUv - px).rgb);
-  float bc = luminance(texture2D(uImage, vUv - vec2(0.0, px.y)).rgb);
-  float br = luminance(texture2D(uImage, vUv + vec2(px.x, -px.y)).rgb);
-  float gx = -tl - 2.0 * ml - bl + tr + 2.0 * mr + br;
-  float gy = -tl - 2.0 * tc - tr + bl + 2.0 * bc + br;
-  float edge = smoothstep(0.22, 0.72, length(vec2(gx, gy)));
-  float luma = clamp(luminance(photo.rgb) + sin(uTime * 0.34) * 0.008, 0.0, 1.0);
-  vec3 cutout = luma < 0.27 ? uInk : luma < 0.57 ? uAccent : luma < 0.82 ? mix(uAccent, uLight, 0.42) : uLight;
-  cutout = mix(cutout, uInk, edge * 0.94);
+  vec4 tlc = texture2D(uImage, vUv + vec2(-px.x, px.y));
+  vec4 tcc = texture2D(uImage, vUv + vec2(0.0, px.y));
+  vec4 trc = texture2D(uImage, vUv + px);
+  vec4 mlc = texture2D(uImage, vUv - vec2(px.x, 0.0));
+  vec4 mrc = texture2D(uImage, vUv + vec2(px.x, 0.0));
+  vec4 blc = texture2D(uImage, vUv - px);
+  vec4 bcc = texture2D(uImage, vUv - vec2(0.0, px.y));
+  vec4 brc = texture2D(uImage, vUv + vec2(px.x, -px.y));
+  vec2 lightEdges = sobel(luminance(tlc.rgb), luminance(tcc.rgb), luminance(trc.rgb), luminance(mlc.rgb), luminance(mrc.rgb), luminance(blc.rgb), luminance(bcc.rgb), luminance(brc.rgb));
+  vec2 alphaEdges = sobel(tlc.a, tcc.a, trc.a, mlc.a, mrc.a, blc.a, bcc.a, brc.a);
+  float edge = smoothstep(0.22, 0.72, max(length(lightEdges), length(alphaEdges) * 1.5));
+  float luma = luminance(photo.rgb);
+  vec3 vivid = clamp(vec3(luma) + (photo.rgb - vec3(luma)) * 1.28, 0.0, 1.0);
+  vec3 cutout = floor(vivid * 4.0 + 0.5) / 4.0;
+  cutout = mix(cutout, photo.rgb * 0.04, edge * 0.94);
   float impact = smoothstep(0.0, 1.0, clamp(uImpact, 0.0, 1.0));
   gl_FragColor = vec4(mix(photo.rgb, cutout, impact), photo.a);
 }`;
 
+export function containedImageRect(sourceWidth: number, sourceHeight: number, targetWidth: number, targetHeight: number, alignX = 0.5, alignY = 0.5) {
+  const scale = Math.min(targetWidth / sourceWidth, targetHeight / sourceHeight);
+  const width = sourceWidth * scale;
+  const height = sourceHeight * scale;
+  return { x: (targetWidth - width) * alignX, y: (targetHeight - height) * alignY, width, height };
+}
+
 export interface WorldStencilHandle {
-  /** Resolve true after the decoded source image has reached the transparent WebGL overlay. */
+  /** Resolve true after the decoded source image is contain-fitted and rendered once. */
   prepare(): Promise<boolean>;
   /** Begin the image-backed posterize and outline impact. */
   activate(): void;
@@ -58,7 +64,7 @@ export interface WorldStencilHandle {
   stop(): void;
 }
 
-/** The source image remains visible below the canvas until a successful image-backed draw. */
+/** The source cutout remains visible below the canvas until a successful image-backed draw. */
 export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageElement): WorldStencilHandle {
   const win = canvas.ownerDocument.defaultView;
   if (!win) return { prepare: () => Promise.resolve(false), activate() {}, refresh() {}, ready: () => false, stop() {} };
@@ -69,13 +75,13 @@ export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageEl
   let stopped = false;
   let failed = false;
   let isReady = false;
+  let renderedSource = "";
   let impactAt = 0;
-  let pendingImageImpact = false;
   let dispose: (() => void) | undefined;
   let refreshDraw: (() => void) | undefined;
-  let resolvePrepared: ((ready: boolean) => void) | undefined;
-  const prepared = new Promise<boolean>(resolve => { resolvePrepared = resolve; });
-  const finishPrepare = (ready: boolean): void => { resolvePrepared?.(ready); resolvePrepared = undefined; };
+  let clearDraw: (() => void) | undefined;
+  let pending: { source: string; promise: Promise<boolean>; resolve: (ready: boolean) => void } | undefined;
+  const finishPrepare = (ready: boolean): void => { pending?.resolve(ready); pending = undefined; };
 
   const setup = (): void => {
     if (stopped || failed || motion.matches || forcedColors.matches || !canvas.isConnected || !image.isConnected) return;
@@ -84,8 +90,6 @@ export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageEl
     let program: Program | undefined;
     let texture: Texture | undefined;
     let mesh: Mesh | undefined;
-    let pixelCanvas: HTMLCanvasElement | undefined;
-    let pixelContext: CanvasRenderingContext2D | null = null;
     let imageCanvas: HTMLCanvasElement | undefined;
     let imageContext: CanvasRenderingContext2D | null = null;
     let observer: ResizeObserver | undefined;
@@ -97,13 +101,14 @@ export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageEl
     let refreshQueued = false;
     const originalWidth = canvas.style.width;
     const originalHeight = canvas.style.height;
+    const originalVisibility = canvas.style.visibility;
 
     const release = (): void => {
       if (dead) return;
       dead = true;
       cancelFrame(frame);
       try { observer?.disconnect(); } catch {}
-      image.removeEventListener("load", queueRefresh);
+      image.removeEventListener("load", sourceLoaded);
       image.removeEventListener("error", imageError);
       canvas.ownerDocument.removeEventListener("visibilitychange", visibility);
       canvas.removeEventListener("webglcontextlost", contextLost);
@@ -118,19 +123,39 @@ export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageEl
       try { if (renderer && texture) renderer.gl.deleteTexture(texture.texture); } catch {}
       dispose = undefined;
       refreshDraw = undefined;
-      if (!isReady) finishPrepare(false);
+      clearDraw = undefined;
+      finishPrepare(false);
+      active = false;
+      impactAt = 0;
       isReady = false;
+      renderedSource = "";
       canvas.style.width = originalWidth;
       canvas.style.height = originalHeight;
+      canvas.style.visibility = originalVisibility;
       imageCanvas = undefined;
-      pixelCanvas = undefined;
     };
-    const fail = (): void => { failed = true; canvas.style.visibility = "hidden"; release(); };
+    const fail = (): void => { failed = true; release(); };
     const contextLost = (event: Event): void => {
       event.preventDefault();
       fail();
     };
-    const imageError = (): void => fail();
+    const imageError = (): void => {
+      finishPrepare(false);
+      isReady = false;
+      renderedSource = "";
+      imageKey = "";
+      try { renderer?.gl.clear(renderer.gl.COLOR_BUFFER_BIT); } catch { fail(); }
+    };
+    const sourceLoaded = (): void => {
+      if (renderedSource && renderedSource !== image.src) {
+        active = false;
+        impactAt = 0;
+        isReady = false;
+        renderedSource = "";
+        clearDraw?.();
+      }
+      queueRefresh();
+    };
     const positionFactor = (token: string | undefined): number => {
       if (!token || token === "center") return 0.5;
       if (token === "left" || token === "top") return 0;
@@ -158,7 +183,7 @@ export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageEl
       }
     };
     const resize = (scheduleDraw = true): void => {
-      if (!renderer || !pixelCanvas || !imageCanvas || !imageContext || !image.complete || !image.naturalWidth || !image.naturalHeight || dead) return;
+      if (!renderer || !imageCanvas || !imageContext || !image.complete || !image.naturalWidth || !image.naturalHeight || dead) return;
       const rect = canvas.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       const dpr = Math.min(MAX_DPR, Math.max(1, view.devicePixelRatio || 1), Math.sqrt(MAX_PIXELS / (rect.width * rect.height)));
@@ -169,38 +194,19 @@ export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageEl
       canvas.style.width = "100%";
       canvas.style.height = "100%";
       const imageStyle = view.getComputedStyle(image);
-      const key = `${image.currentSrc || image.src}|${image.naturalWidth}x${image.naturalHeight}|${rect.width}x${rect.height}|${imageStyle.objectFit}|${imageStyle.objectPosition}`;
+      const key = `${image.src}|${image.naturalWidth}x${image.naturalHeight}|${rect.width}x${rect.height}|${imageStyle.objectPosition}`;
       if (imageKey !== key || !imageCanvas.width || !imageCanvas.height) {
-        const imageRatio = image.naturalWidth / image.naturalHeight;
-        const slotRatio = rect.width / rect.height;
-        let sx = 0, sy = 0, sw = image.naturalWidth, sh = image.naturalHeight;
-        if (imageStyle.objectFit === "cover") {
-          const [xToken, yToken] = imageStyle.objectPosition.split(/\s+/);
-          if (imageRatio > slotRatio) {
-            sw = image.naturalHeight * slotRatio;
-            sx = (image.naturalWidth - sw) * positionFactor(xToken);
-          } else {
-            sh = image.naturalWidth / slotRatio;
-            sy = (image.naturalHeight - sh) * positionFactor(yToken ?? xToken);
-          }
-        }
-        const scale = Math.min(1, MAX_TEXTURE_EDGE / sw, MAX_TEXTURE_EDGE / sh, Math.sqrt(MAX_PIXELS / (sw * sh)));
-        imageCanvas.width = Math.max(1, Math.round(sw * scale));
-        imageCanvas.height = Math.max(1, Math.round(sh * scale));
+        const textureScale = Math.min(MAX_TEXTURE_EDGE / cssWidth, MAX_TEXTURE_EDGE / cssHeight, Math.sqrt(MAX_PIXELS / (cssWidth * cssHeight)));
+        imageCanvas.width = Math.max(1, Math.round(cssWidth * textureScale));
+        imageCanvas.height = Math.max(1, Math.round(cssHeight * textureScale));
         imageContext.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
-        imageContext.drawImage(image, sx, sy, sw, sh, 0, 0, imageCanvas.width, imageCanvas.height);
+        const [xToken, yToken] = imageStyle.objectPosition.split(/\s+/);
+        const fit = containedImageRect(image.naturalWidth, image.naturalHeight, imageCanvas.width, imageCanvas.height, positionFactor(xToken), positionFactor(yToken ?? xToken));
+        imageContext.drawImage(image, fit.x, fit.y, fit.width, fit.height);
         texture!.image = imageCanvas;
         texture!.needsUpdate = true;
         imageKey = key;
-        if (pendingImageImpact) {
-          impactAt = view.performance.now() + LATE_IMAGE_REVEAL_MS;
-          pendingImageImpact = false;
-        }
       }
-      const style = view.getComputedStyle(canvas);
-      program!.uniforms.uInk.value = sampleCssColor(pixelContext!, style.getPropertyValue("--ink"));
-      program!.uniforms.uAccent.value = sampleCssColor(pixelContext!, style.getPropertyValue("--pink"));
-      program!.uniforms.uLight.value = sampleCssColor(pixelContext!, style.getPropertyValue("--peach"));
       program!.uniforms.uImageResolution.value = [imageCanvas.width, imageCanvas.height];
       if (scheduleDraw) schedule();
     };
@@ -216,12 +222,14 @@ export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageEl
         if (dead) return;
         if (now - lastFrame < FRAME_MS) { schedule(); return; }
         lastFrame = now;
+        if (active && !impactAt) impactAt = now;
         const elapsed = active ? Math.max(0, now - impactAt) : 0;
-        program!.uniforms.uTime.value = now / 1000;
         program!.uniforms.uImpact.value = active ? Math.min(1, elapsed / IMPACT_MS) : 0;
         renderer.render({ scene: mesh, clear: true });
-        if (!isReady) { isReady = true; finishPrepare(true); }
-        if (active) schedule(now < impactAt ? impactAt - now : now < impactAt + IMPACT_MS ? FRAME_MS : REACTIVE_FRAME_MS);
+        renderedSource = image.src;
+        isReady = true;
+        if (pending) finishPrepare(renderedSource === pending.source);
+        if (active && now < impactAt + IMPACT_MS) schedule(now < impactAt ? impactAt - now : FRAME_MS);
       } catch { fail(); }
     }
     const queueRefresh = (): void => {
@@ -242,27 +250,26 @@ export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageEl
       if (!gl) throw new Error("WebGL unavailable");
       gl.clearColor(0, 0, 0, 0);
       geometry = new Triangle(gl);
-      pixelCanvas = canvas.ownerDocument.createElement("canvas");
-      pixelCanvas.width = pixelCanvas.height = 1;
-      pixelContext = pixelCanvas.getContext("2d", { willReadFrequently: true });
       imageCanvas = canvas.ownerDocument.createElement("canvas");
       imageContext = imageCanvas.getContext("2d", { alpha: true });
-      if (!pixelContext || !imageContext) throw new Error("Canvas 2D unavailable");
+      if (!imageContext) throw new Error("Canvas 2D unavailable");
       texture = new Texture(gl, { image: imageCanvas, generateMipmaps: false, minFilter: gl.LINEAR, magFilter: gl.LINEAR, flipY: true });
       program = new Program(gl, { vertex: VERTEX, fragment: FRAGMENT, transparent: true, depthTest: false, depthWrite: false, uniforms: {
-        uImage: { value: texture }, uImageResolution: { value: [1, 1] }, uInk: { value: [0, 0, 0] }, uAccent: { value: [1, 0, 0] }, uLight: { value: [1, 1, 1] }, uTime: { value: 0 }, uImpact: { value: 0 },
+        uImage: { value: texture }, uImageResolution: { value: [1, 1] }, uImpact: { value: 0 },
       } });
+      program.setBlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       if (!gl.getProgramParameter(program.program, gl.LINK_STATUS)) throw new Error("Stencil shader link failed");
       mesh = new Mesh(gl, { geometry, program });
       observer = new ResizeObserver(queueRefresh);
       observer.observe(canvas);
       observer.observe(image);
-      image.addEventListener("load", queueRefresh);
+      image.addEventListener("load", sourceLoaded);
       image.addEventListener("error", imageError);
       canvas.addEventListener("webglcontextlost", contextLost);
       canvas.ownerDocument.addEventListener("visibilitychange", visibility);
       dispose = release;
       refreshDraw = safeResize;
+      clearDraw = () => { try { gl.clear(gl.COLOR_BUFFER_BIT); } catch { fail(); } };
       if (image.complete && image.hasAttribute("src") && !image.naturalWidth) { imageError(); return; }
       safeResize();
     } catch {
@@ -274,33 +281,52 @@ export function createWorldStencil(canvas: HTMLCanvasElement, image: HTMLImageEl
   const stop = (): void => {
     if (stopped) return;
     stopped = true;
-    if (!isReady) finishPrepare(false);
+    finishPrepare(false);
     dispose?.();
     motion.removeEventListener("change", preferenceChanged);
     forcedColors.removeEventListener("change", preferenceChanged);
     view.removeEventListener("pagehide", stop);
   };
   function preferenceChanged(): void {
-    if (motion.matches || forcedColors.matches) { if (!isReady) finishPrepare(false); dispose?.(); }
+    if (motion.matches || forcedColors.matches) { finishPrepare(false); dispose?.(); }
     else setup();
   }
   motion.addEventListener("change", preferenceChanged);
   forcedColors.addEventListener("change", preferenceChanged);
   win.addEventListener("pagehide", stop, { once: true });
   setup();
-  if (motion.matches || forcedColors.matches) finishPrepare(false);
   return {
-    prepare: () => prepared,
+    prepare() {
+      const source = image.src;
+      if (!source || stopped || failed || motion.matches || forcedColors.matches || (image.complete && !image.naturalWidth)) return Promise.resolve(false);
+      if (isReady && renderedSource === source) return Promise.resolve(true);
+      if (pending?.source === source) return pending.promise;
+      finishPrepare(false);
+      active = false;
+      impactAt = 0;
+      isReady = false;
+      renderedSource = "";
+      clearDraw?.();
+      const next: { source: string; promise: Promise<boolean>; resolve: (ready: boolean) => void } = {
+        source,
+        promise: Promise.resolve(false),
+        resolve: () => {},
+      };
+      next.promise = new Promise<boolean>(resolve => { next.resolve = resolve; });
+      pending = next;
+      if (!dispose) setup();
+      else refreshDraw?.();
+      return next.promise;
+    },
     activate() {
       if (stopped || motion.matches || forcedColors.matches) return;
       active = true;
-      if (!image.complete || !image.naturalWidth) pendingImageImpact = true;
-      else impactAt = view.performance.now();
+      impactAt = isReady ? view.performance.now() : 0;
       if (!dispose) setup();
       refreshDraw?.();
     },
     refresh() { if (!motion.matches && !forcedColors.matches) { if (!dispose) setup(); else refreshDraw?.(); } },
-    ready: () => isReady,
+    ready: () => isReady && renderedSource === image.src,
     stop,
   };
 }

@@ -13,8 +13,17 @@ export function auditoriumBody(): string {
 <div class="cinema-screen"><article class="screen-slide is-current screen-title" data-slide data-title="The opening title" data-link="info.html"><span>THE HOUSE IS YOURS.</span><p class="screen-wordmark" aria-hidden="true">BUN<em>ZAI</em></p><p>All the worlds: your stage</p><p class="screen-introduction">Make characters, build their worlds, and play stories with an AI provider you choose.</p><button class="btn" type="button" data-screening-open>Begin the showing <span aria-hidden="true">&#8599;</span></button></article>
 <div class="screen-preroll" data-screen-preroll hidden aria-label="Bunzai opening film">
 <article class="screen-preroll-card is-current" data-preroll-card="production"><span>AN INDEPENDENT PRODUCTION</span><strong class="screen-wordmark">BUN<em>ZAI</em></strong></article>
-<article class="screen-preroll-card" data-preroll-card="presents"><p class="screen-preroll-type">NOBUNNY PRESENTS</p></article>
-<article class="screen-preroll-card screen-preroll-words" data-preroll-card="words"><span class="screen-preroll-prefix" data-preroll-prefix>ALL THE WORLD'S</span><strong class="screen-preroll-word" data-preroll-word data-tone="rose">A STAGE</strong><p class="screen-preroll-tagline" data-preroll-tagline hidden>All the worlds: your stage</p></article>
+<article class="screen-preroll-card" data-preroll-card="presents"><p class="screen-preroll-type">VAUDEVILLE PRESENTS</p></article>
+<article class="screen-preroll-card screen-preroll-words" data-preroll-card="words">
+<div class="screen-preroll-worlds" data-preroll-worlds aria-hidden="true">
+<img class="screen-preroll-world" data-preroll-world="wonderland" data-src="media/preroll-world-wonderland-v1.png" alt="" decoding="async">
+<img class="screen-preroll-world" data-preroll-world="middle-earth" data-src="media/preroll-world-middle-earth-v1.png" alt="" decoding="async">
+<img class="screen-preroll-world is-current" data-preroll-world="oz" data-src="media/preroll-world-oz-v1.png" alt="" decoding="async">
+<canvas class="screen-preroll-world-stencil" data-preroll-world-stencil aria-hidden="true"></canvas>
+</div>
+<span class="screen-preroll-prefix" data-preroll-prefix>ALL THE WORLD'S</span>
+<span class="screen-preroll-word-stage"><strong class="screen-preroll-word" data-preroll-word data-tone="rose">A STAGE</strong><canvas class="screen-preroll-chrome" data-preroll-chrome aria-hidden="true"></canvas></span>
+<p class="screen-preroll-tagline" data-preroll-tagline hidden>All the worlds: your stage</p></article>
 <button class="screen-preroll-skip" type="button" data-preroll-skip>Skip opening</button>
 </div>
 ${pictures.map(picture => `<figure class="screen-slide screen-feature" data-slide data-title="${picture.name}" data-link="${picture.href}" inert aria-hidden="true"><a class="screen-picture" href="media/${picture.file}" target="_blank" rel="noopener" aria-label="Open full-resolution image: ${picture.alt}"><img src="media/${picture.file}" alt="${picture.alt}" loading="lazy" decoding="async"><span class="screen-enlarge">Enlarge image &#8599;</span></a><figcaption><span class="screen-kicker">INSIDE BUNZAI</span><h2>${picture.title}</h2><p>${picture.intro}</p><span class="screen-picture-label">ON SCREEN</span><p class="screen-picture-description">${picture.alt}</p><a href="${picture.href}">Take a closer look <span aria-hidden="true">&#8599;</span></a></figcaption></figure>`).join('')}

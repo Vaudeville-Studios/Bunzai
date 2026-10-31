@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:2957ac159b95f2cfd62bf0c3b5cfae78c8c1cb48aef1f9a4e81e9a84ce2fbce7",
-  "semanticSummaryHash": "sha256:5cc8f10654fa9387fedd3eb4423e8cd1a0aa9aeb45534eb1c33be497552c2f7b",
+  "sourceHash": "sha256:6a3eda8a92170ffcebf455df076add02757fdfa2a22995ee107056f8a754b249",
+  "semanticSummaryHash": "sha256:8b25d57edfc728a799589ecf96cc0cb15e860dabcc496140f2c372ebfcf0f68f",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root independently reviewed exact source hash 2957ac159b95f2cfd62bf0c3b5cfae78c8c1cb48aef1f9a4e81e9a84ce2fbce7 and the landing semantic projection on delivery branch base 6f1febf. This concise projection retains Mainstage core/runtime and settings/security/velvet meaning while describing the curtain film, recovered title cards, tagline, skip/replay and reduced-motion path. Documentation accuracy only; no release or security approval.",
-  "reviewedAt": "2026-10-31T16:38:40.229Z"
+  "notes": "Root reviewed the current landing summary and Browser Studio summary for UI source hash 6a3eda8a92170ffcebf455df076add02757fdfa2a22995ee107056f8a754b249. Documentation accuracy only; no security, release, or deployment approval.",
+  "reviewedAt": "2026-10-31T17:38:55.330Z"
 }

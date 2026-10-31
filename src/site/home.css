@@ -13,7 +13,8 @@ body[data-page="home"] > .wrap { display: none; }
 .cinema-shell { position: absolute; isolation: isolate; top: 0; left: 50%; translate: -50% 0; width: max(100%, calc(var(--cinema-height) * 1.7768)); aspect-ratio: 1672 / 941; container-type: inline-size; outline-offset: -3px; }
 /* clone-ok: the website auditorium background has independent bounds and stacking from Library cover layers. */
 .cinema-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: -2; transition: filter 1.2s ease; }
-.cinema-light, .cinema-projector { /* clone-ok: website projection canvases have separate bounds from Studio covers and proscenium overlays. */ position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; }
+.cinema-light, .cinema-projector, .screen-preroll-world-stencil, .screen-preroll-chrome { /* clone-ok: site projection and preroll canvases share page-local bounds, separate from Studio overlays. */ position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cinema-light, .cinema-projector { mix-blend-mode: screen; }
 .cinema-light { z-index: -1; opacity: .85; }
 .cinema-projector { z-index: 2; opacity: 0; transition: opacity 1.5s ease .45s; }
 .cinema-screen { position: absolute; left: 20.9%; top: 10.2%; width: 58.3%; height: 46.2%; overflow: hidden; background: var(--ink); }
@@ -54,16 +55,36 @@ body[data-page="home"] > .wrap { display: none; }
 .screen-preroll-card .screen-wordmark { font-size: clamp(44px, 10cqw, 136px); }
 .screen-preroll .screen-wordmark em { color: var(--pink); font-style: normal; }
 .screen-preroll-type { width: max-content; max-width: 100%; overflow: hidden; clip-path: inset(0 100% 0 0); border-right: 2px solid var(--peach); color: var(--peach); font: 700 clamp(15px, 3cqw, 42px)/1.3 var(--disp); letter-spacing: .12em; white-space: nowrap; }
-.screen-preroll-card.is-current .screen-preroll-type { animation: preroll-type 1.35s steps(16, end) .35s forwards; }
+.screen-preroll-card.is-current .screen-preroll-type { animation: preroll-type 1.35s steps(19, end) .35s forwards; }
 @keyframes preroll-type { to { clip-path: inset(0 0 0 0); border-color: transparent; } }
-.screen-preroll-words { gap: 12px; }
-.screen-preroll-word { color: var(--pink); font: 700 clamp(20px, 5cqw, 68px)/1.2 var(--disp); letter-spacing: .06em; }
-.screen-preroll-word.is-changing { animation: preroll-word-pop .18s ease-out both; }
-@keyframes preroll-word-pop { from { opacity: .35; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
-.screen-preroll-word[data-tone="gold"] { color: var(--peach); }
-.screen-preroll-word[data-tone="mint"] { color: var(--mint); }
-.screen-preroll-word[data-tone="sky"] { color: var(--sky); }
-.screen-preroll-word[data-tone="lilac"] { color: var(--lilac); }
+.screen-preroll-words { gap: 12px; isolation: isolate; }
+.screen-preroll-worlds { position: absolute; z-index: 0; inset: 10% 8% 9%; overflow: hidden; clip-path: polygon(4% 6%, 97% 0, 100% 84%, 1% 100%); background: var(--ink); transition: transform .28s cubic-bezier(.16,.8,.22,1); }
+.screen-preroll-worlds::before { position: absolute; inset: 0; z-index: 1; content: ""; background: linear-gradient(90deg, var(--ink), transparent 28% 72%, var(--ink)); }
+.screen-preroll-worlds::after { position: absolute; inset: 0; z-index: 2; content: ""; opacity: .5; background: linear-gradient(118deg, transparent 48.8%, var(--peach) 49.1% 49.4%, transparent 49.7%); }
+.screen-preroll-world { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; filter: none; transition: opacity .42s ease, filter .12s steps(2, end); }
+.screen-preroll-world[data-preroll-world="wonderland"] { object-position: 40% center; }
+.screen-preroll-world[data-preroll-world="middle-earth"] { object-position: 66% center; }
+.screen-preroll-world[data-preroll-world="oz"] { object-position: 65% center; }
+.screen-preroll-world.is-current { opacity: 1; }
+.screen-preroll-worlds.is-stencilled { transform: scale(1.03); }
+.screen-preroll-world.is-stencilled { filter: saturate(1.8) contrast(1.5) brightness(.76); }
+.screen-preroll-world-stencil { z-index: 3; }
+.screen-preroll-prefix, .screen-preroll-word-stage, .screen-preroll-tagline { position: relative; z-index: 3; }
+.screen-preroll-prefix { color: var(--fg); text-shadow: 2px 2px 0 var(--ink); }
+.screen-preroll-word-stage { position: relative; display: grid; place-items: center; width: max-content; max-width: 100%; }
+.screen-preroll-word { --word-accent: var(--pink); grid-area: 1 / 1; position: relative; z-index: 0; max-width: 100%; color: var(--word-accent); background: linear-gradient(180deg, var(--fg) 0%, var(--bg2) 14%, var(--fg) 28%, var(--word-accent) 37%, var(--fg2) 47%, var(--fg) 61%, var(--ink) 70%, var(--fg) 77%, var(--word-accent) 84%, var(--fg) 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font: 800 clamp(20px, 5cqw, 68px)/1.08 var(--disp); letter-spacing: .035em; text-wrap: balance; -webkit-text-stroke: 1px var(--ink); text-shadow: 3px 3px 0 var(--ink); }
+.screen-preroll-chrome { z-index: 1; }
+.screen-preroll-word-stage.is-changing { animation: preroll-word-slam .44s cubic-bezier(.16,.8,.22,1) both; }
+@keyframes preroll-word-slam {
+  0% { opacity: .1; transform: translateY(-.42em) scale(1.34) skewX(-12deg); clip-path: inset(0 0 72% 0); }
+  24% { opacity: 1; transform: translateY(.1em) scale(.92) skewX(3deg); clip-path: polygon(0 0, 100% 0, 100% 58%, 0 48%); }
+  48% { transform: translateY(-.03em) scale(1.045) skewX(-1deg); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+  100% { opacity: 1; transform: none; clip-path: none; }
+}
+.screen-preroll-word[data-tone="gold"] { --word-accent: var(--peach); }
+.screen-preroll-word[data-tone="mint"] { --word-accent: var(--mint); }
+.screen-preroll-word[data-tone="sky"] { --word-accent: var(--sky); }
+.screen-preroll-word[data-tone="lilac"] { --word-accent: var(--lilac); }
 .screen-preroll-tagline { color: var(--peach); font: 700 clamp(16px, 3.4cqw, 42px)/1.25 var(--body); font-style: italic; letter-spacing: .01em; }
 .screen-preroll-skip { position: absolute; right: 12px; bottom: 10px; z-index: 1; min-width: 32px; min-height: 28px; padding: 5px 8px; border: 1px solid var(--line); background: var(--ink); color: var(--fg2); font-size: 12px; }
 .screen-preroll-skip:hover { border-color: var(--peach); color: var(--fg); }
@@ -119,6 +140,11 @@ body[data-page="home"] > .wrap { display: none; }
   .screen-title p { font-size: 16px; }
   .screen-title a { font-size: 13px; margin-top: 15px; }
   .screen-preroll-card { gap: 12px; }
+  .screen-preroll-worlds { inset: 13% 2% 10%; }
+  .screen-preroll-world[data-preroll-world="wonderland"] { object-position: 35% center; }
+  .screen-preroll-world[data-preroll-world="middle-earth"] { object-position: 70% center; }
+  .screen-preroll-world[data-preroll-world="oz"] { object-position: 72% center; }
+  .screen-preroll-word { font-size: clamp(20px, 7cqw, 42px); }
   .screen-preroll-card > span, .screen-preroll-prefix { letter-spacing: .12em; }
   .screen-preroll-skip { right: 6px; bottom: 5px; min-height: 24px; }
   .cinema-floor { inset-inline: 12px; bottom: 55px; grid-template-columns: 1fr auto; gap: 10px; padding: 12px; }
@@ -130,8 +156,11 @@ body[data-page="home"] > .wrap { display: none; }
   .cinema-footer p { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .screen-slide, .screen-feature figcaption, .cinema-shell, .cinema-art, .cinema-light, .cinema-projector, .screen-preroll-card, .screen-preroll-word { transition: none; }
+  .screen-slide, .screen-feature figcaption, .cinema-shell, .cinema-art, .cinema-light, .cinema-projector, .screen-preroll-card, .screen-preroll-word, .screen-preroll-world { transition: none; }
   .screen-preroll-type { clip-path: none; border-color: transparent; animation: none; }
-  .screen-preroll-word.is-changing { animation: none; }
+  .screen-preroll-word-stage.is-changing { animation: none; }
   .auditorium:not([data-screening-state="ready"]) .cinema-shell { transform: none; }
+}
+@media (forced-colors: active) {
+  .screen-preroll-word { color: CanvasText; background: none; -webkit-text-fill-color: CanvasText; text-shadow: none; -webkit-text-stroke: 1px Canvas; }
 }

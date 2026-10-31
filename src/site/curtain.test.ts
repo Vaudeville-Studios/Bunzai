@@ -30,7 +30,7 @@ test("the first public frame is Bunzai; begin owns the click-gated curtain and r
   expect(home).toContain("All the worlds: your stage");
   expect(home).toContain("data-curtain-intro hidden");
   expect(home).toContain("data-screen-preroll hidden");
-  expect(home).toContain("NOBUNNY PRESENTS");
+  expect(home).toContain("VAUDEVILLE PRESENTS");
   const f = fixture();
   const intro = runCurtainIntro(f.doc);
   const stopScreening = runScreening(f.doc, intro.start);

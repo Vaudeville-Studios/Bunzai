@@ -1,5 +1,7 @@
-/** Cinema slideshow lifecycle: manual/keyboard navigation, pause on interaction or hidden tabs, and reduced motion. */
-export function runScreening(doc: Document): () => void {
+/** Own the click-led curtain, recovered opening, and feature-picture screening. */
+import { runScreenPreroll } from './preroll';
+
+export function runScreening(doc: Document, startCurtain: () => Promise<void> = () => Promise.resolve()): () => void {
   const stage = doc.querySelector<HTMLElement>('[data-screening]');
   const win = doc.defaultView;
   if (!stage || !win) return () => {};
@@ -8,24 +10,30 @@ export function runScreening(doc: Document): () => void {
   const title = doc.querySelector<HTMLOutputElement>('[data-screening-title]')!;
   const link = doc.querySelector<HTMLAnchorElement>('[data-screening-link]')!;
   const play = doc.querySelector<HTMLButtonElement>('[data-screening-play]')!;
+  const replay = doc.querySelector<HTMLButtonElement>('[data-screening-replay]')!;
   const controls = doc.querySelector<HTMLElement>('.screening-controls')!;
   const motion = win.matchMedia('(prefers-reduced-motion: reduce)');
   const room = stage.closest<HTMLElement>('.auditorium')!;
   const open = stage.querySelector<HTMLButtonElement>('[data-screening-open]')!;
   const pictures = doc.querySelector<HTMLAnchorElement>('a[href="#screening"]');
-  let entranceTimer = 0, opened = false, entering = false;
+  let opened = false, entering = false, playingFilm = false, disposed = false;
+  let filmCleanup = (): void => {};
   let at = 0, timer = 0, paused = false, hovered = false, focused = false, visible = true;
   const schedule = (): void => {
     win.clearTimeout(timer);
-    if (opened && !entering && !paused && !hovered && !focused && visible && !doc.hidden && !motion.matches) timer = win.setTimeout(() => show(at + 1), 8000);
+    if (opened && !entering && !playingFilm && !paused && !hovered && !focused && visible && !doc.hidden && !motion.matches) timer = win.setTimeout(() => show(at + 1), 8000);
   };
-  const finishEntrance = (): void => {
-    entering = false;
-    open.disabled = false;
-    room.dataset.screeningState = 'showing';
-    controls.inert = false;
-    show(1, true);
-    stage.focus({ preventScroll: true });
+  const playFilm = (returnTo: number): void => {
+    win.clearTimeout(timer);
+    playingFilm = true;
+    controls.inert = true;
+    filmCleanup = runScreenPreroll(doc, () => {
+      if (disposed) return;
+      playingFilm = false;
+      controls.inert = false;
+      show(returnTo, true);
+      stage.focus({ preventScroll: true });
+    });
   };
   const enterScreening = (event?: Event): void => {
     event?.preventDefault();
@@ -34,8 +42,13 @@ export function runScreening(doc: Document): () => void {
     entering = true;
     room.dataset.screeningState = 'entering';
     open.disabled = true;
-    if (motion.matches) finishEntrance();
-    else entranceTimer = win.setTimeout(finishEntrance, 1800);
+    controls.inert = true;
+    void Promise.resolve().then(startCurtain).catch(() => {}).then(() => {
+      if (disposed) return;
+      entering = false;
+      room.dataset.screeningState = 'showing';
+      playFilm(1);
+    });
   };
   const show = (next: number, announce = false): void => {
     at = (next + slides.length) % slides.length;
@@ -48,7 +61,7 @@ export function runScreening(doc: Document): () => void {
     title.setAttribute('aria-live', announce ? 'polite' : 'off');
     title.value = slides[at]!.dataset.title!;
     link.href = slides[at]!.dataset.link!;
-    link.textContent = at === 0 ? 'About Bunzai ↗' : 'Explore this part ↗';
+    link.textContent = at === 0 ? 'About Bunzai \u2197' : 'Explore this part \u2197';
     schedule();
   };
   const updatePlay = (): void => {
@@ -62,6 +75,7 @@ export function runScreening(doc: Document): () => void {
     if (!button) return;
     show(button.dataset.screenGo !== undefined ? Number(button.dataset.screenGo) : at + Number(button.dataset.screenStep), true);
   };
+  const replayOpening = (): void => { if (opened && !entering && !playingFilm) playFilm(at); };
   const toggle = (): void => { paused = !paused; updatePlay(); };
   const enter = (): void => { hovered = true; schedule(); };
   const leave = (): void => { hovered = false; schedule(); };
@@ -72,7 +86,7 @@ export function runScreening(doc: Document): () => void {
     schedule();
   };
   const key = (event: KeyboardEvent): void => {
-    if (!opened || entering) return;
+    if (!opened || entering || playingFilm) return;
     if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); show(at + (event.key === 'ArrowRight' ? 1 : -1), true); }
     if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); show(event.key === 'Home' ? 0 : slides.length - 1, true); }
   };
@@ -81,6 +95,7 @@ export function runScreening(doc: Document): () => void {
   open.addEventListener('click', enterScreening);
   pictures?.addEventListener('click', enterScreening);
   play.addEventListener('click', toggle);
+  replay.addEventListener('click', replayOpening);
   for (const element of [stage, controls]) {
     element.addEventListener('mouseenter', enter);
     element.addEventListener('mouseleave', leave);
@@ -95,13 +110,15 @@ export function runScreening(doc: Document): () => void {
   observer.observe(stage);
   updatePlay();
   return () => {
+    disposed = true;
     win.clearTimeout(timer);
-    win.clearTimeout(entranceTimer);
+    filmCleanup();
     observer.disconnect();
     controls.removeEventListener('click', navigate);
     open.removeEventListener('click', enterScreening);
     pictures?.removeEventListener('click', enterScreening);
     play.removeEventListener('click', toggle);
+    replay.removeEventListener('click', replayOpening);
     for (const element of [stage, controls]) {
       element.removeEventListener('mouseenter', enter);
       element.removeEventListener('mouseleave', leave);

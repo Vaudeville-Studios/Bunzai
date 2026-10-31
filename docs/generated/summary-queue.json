@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-30",
+  "generated": "2026-10-31",
   "targetChars": 90000,
   "totalPages": 133,
-  "totalSourceChars": 1629903,
+  "totalSourceChars": 1637117,
   "batches": [
     {
       "id": "batch-001",
-      "sourceChars": 89591,
+      "sourceChars": 84664,
       "pages": [
         {
           "docId": "01-VISION",
@@ -132,8 +132,8 @@
           "docId": "decisions/ADR-014-reusable-roleplay-core",
           "sourcePath": "docs/decisions/ADR-014-reusable-roleplay-core.md",
           "sidecarPath": "docs/summaries/decisions/ADR-014-reusable-roleplay-core.json",
-          "sectionCount": 2,
-          "sourceChars": 2312,
+          "sectionCount": 3,
+          "sourceChars": 3788,
           "status": "APPROVED"
         },
         {
@@ -175,21 +175,21 @@
           "sectionCount": 6,
           "sourceChars": 7835,
           "status": "APPROVED"
-        },
-        {
-          "docId": "guide/getting-started",
-          "sourcePath": "docs/guide/getting-started.md",
-          "sidecarPath": "docs/summaries/guide/getting-started.json",
-          "sectionCount": 5,
-          "sourceChars": 6403,
-          "status": "APPROVED"
         }
       ]
     },
     {
       "id": "batch-002",
-      "sourceChars": 85728,
+      "sourceChars": 88568,
       "pages": [
+        {
+          "docId": "guide/getting-started",
+          "sourcePath": "docs/guide/getting-started.md",
+          "sidecarPath": "docs/summaries/guide/getting-started.json",
+          "sectionCount": 5,
+          "sourceChars": 6415,
+          "status": "APPROVED"
+        },
         {
           "docId": "guide/importing",
           "sourcePath": "docs/guide/importing.md",
@@ -277,7 +277,13 @@
           "sectionCount": 6,
           "sourceChars": 7064,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-003",
+      "sourceChars": 59738,
+      "pages": [
         {
           "docId": "guide/platforms/README",
           "sourcePath": "docs/guide/platforms/README.md",
@@ -285,13 +291,7 @@
           "sectionCount": 3,
           "sourceChars": 3575,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-003",
-      "sourceChars": 56163,
-      "pages": [
+        },
         {
           "docId": "guide/platforms/risu",
           "sourcePath": "docs/guide/platforms/risu.md",
@@ -390,14 +390,14 @@
     },
     {
       "id": "batch-005",
-      "sourceChars": 173092,
+      "sourceChars": 173210,
       "pages": [
         {
           "docId": "reference/components",
           "sourcePath": "docs/reference/components.md",
           "sidecarPath": "docs/summaries/reference/components.json",
           "sectionCount": 3,
-          "sourceChars": 173092,
+          "sourceChars": 173210,
           "status": "APPROVED"
         }
       ]
@@ -1150,14 +1150,14 @@
     },
     {
       "id": "batch-017",
-      "sourceChars": 288097,
+      "sourceChars": 293705,
       "pages": [
         {
           "docId": "reference/ui",
           "sourcePath": "docs/reference/ui.md",
           "sidecarPath": "docs/summaries/reference/ui.json",
           "sectionCount": 34,
-          "sourceChars": 288097,
+          "sourceChars": 293705,
           "status": "APPROVED"
         }
       ]

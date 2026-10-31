@@ -98,16 +98,18 @@ account and sends no Studio data to a Bunzai server. A browser runtime supplies 
 `/api/*` client contract from in-process stores and the shared inspect/export engine; it does not
 fork the canonical model or maintain a second set of format conversions.
 
-The public website opens on a static Bunzai title inside an illustrated movie auditorium
-(`src/site/auditorium.ts`). Its owner-requested cutout-style room artwork is
+The public website opens on a static Bunzai title, `All the worlds: your stage`, inside an
+illustrated movie auditorium (`src/site/auditorium.ts`). Its owner-requested cutout-style room artwork is
 `docs/media/cinema-auditorium.png`; the generation prompt and provenance sit beside it.
 The public repository belongs to Vaudeville-Studios; Pages publishes at
 `https://vaudeville-studios.github.io/Bunzai/`. Repository actions, release requests, downloads,
 documentation source links and canonical preview URLs use that organization-owned location.
-Clicking Begin the showing dims the room and pushes the camera toward the screen
-before revealing the first product screenshot. Reduced motion opens directly without the camera
-movement. The prototype curtain film remains available to the design studies, not the homepage.
-Native title content and pictures sit inside the artwork's empty screen. Each picture pairs with
+Clicking Begin the showing dims the room and pushes the camera toward the screen while the local
+curtain-opening film plays. The recovered Vaudeville title cards then run inside the screen: an
+independent-production credit, NOBUNNY PRESENTS, and the accelerating Shakespeare word sequence,
+ending on `All the worlds: your stage`. Skip and replay are available. Reduced motion skips the
+curtain and title animation and opens the first product picture directly. Native title content and
+pictures sit inside the artwork's empty screen. Each picture pairs with
 live text explaining the feature and the pictured view, plus a link to its tour page. Pictures
 crossfade and their descriptions slide into place; reduced motion removes these transitions.
 The picture inventory derives from the existing feature tour: Scenes, an opening scene, character,

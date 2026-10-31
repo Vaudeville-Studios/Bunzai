@@ -130,10 +130,10 @@ function runReel(root: HTMLElement): void {
 }
 
 markPlatform();
-const stopIntro = runCurtainIntro(document);
-const stopPremiere = runPremiere(document, stopIntro);
-const stopScreening = runScreening(document);
-window.addEventListener('pagehide', () => { stopPremiere(); stopScreening(); }, { once: true });
+const curtain = runCurtainIntro(document);
+const stopPremiere = runPremiere(document, curtain.stop);
+const stopScreening = runScreening(document, curtain.start);
+window.addEventListener('pagehide', () => { stopScreening(); stopPremiere(); curtain.stop(); }, { once: true });
 runSceneExamples(document);
 document.querySelectorAll<HTMLElement>("[data-reel]").forEach(runReel);
 void fillReleases();

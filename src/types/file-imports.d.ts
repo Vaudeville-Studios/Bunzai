@@ -3,3 +3,8 @@ declare module "*.so" {
   const path: string;
   export default path;
 }
+
+declare module "webview-bun/build/libwebview.dll" {
+  const path: string;
+  export default path;
+}

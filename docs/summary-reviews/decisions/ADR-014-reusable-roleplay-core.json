@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "decisions/ADR-014-reusable-roleplay-core",
   "sourcePath": "docs/decisions/ADR-014-reusable-roleplay-core.md",
-  "sourceHash": "sha256:e65d256732152c525f0cb9556adc6afc9d51d45b0356c48bda6494e7aaf07fe7",
-  "semanticSummaryHash": "sha256:790f91956c8f3f0046671a889f7967b18a168a93653236c8ded8f0f53933bdf0",
+  "sourceHash": "sha256:a96e918fff5b7d39919c08143a73f8cbe14ef23caa5d5df4fa60b3b9ba976200",
+  "semanticSummaryHash": "sha256:9b1df193aef4b33b9432e01ebca06000115e6daca2d749de2efc53ec5a50f956",
   "verdict": "APPROVE",
-  "reviewer": "integration_review",
-  "notes": "Reviewed decision and summaries against canonical engine, injected store runtime and caller-owned terminal runner; independent targeted tests cover isolation, startup recovery and shutdown, cross-process ownership and packaged behavior remain excluded.",
-  "reviewedAt": "2026-10-30T00:44:33.229Z"
+  "reviewer": "root",
+  "notes": "Documentation accuracy only: distinguishes the original decision from the later amendment and preserves the amendment's attribution and implementation limits.",
+  "reviewedAt": "2026-10-31T16:51:59.042Z"
 }

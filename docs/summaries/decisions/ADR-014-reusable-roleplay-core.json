@@ -2,9 +2,15 @@
   "schemaVersion": 1,
   "docId": "decisions/ADR-014-reusable-roleplay-core",
   "sourcePath": "docs/decisions/ADR-014-reusable-roleplay-core.md",
-  "sourceHash": "sha256:e65d256732152c525f0cb9556adc6afc9d51d45b0356c48bda6494e7aaf07fe7",
-  "summary": "The accepted consolidation direction retains one reusable turn engine and canonical scene model for desktop and terminal hosts. The source API exposes existing orchestration with injected stores, providers and library readers; skills, trackers, presets, macros, assembly and Final Cut keep their owners. The runtime owns only in-flight tasks, cancellation, gates and tracker rounds, while ChatStore owns durable scenes, checkpoints, versions and deltas. Hosts reuse a runtime per opened store, await accepted work before storage closes and refuse new work after shutdown. Host background promises must cover their writes. Imported scripts remain sealed under ADR-009, so terminal hosts without an isolated worker fail closed for applicable regex. Desktop consumes the API; the injected terminal runner is tested, while a standalone shared-library CLI remains withheld until cross-process checkpoint ownership is durable. Browser bundling and a scripted Node turn establish source compatibility only. Broader patch reconciliation and packaged verification remain outstanding, and old repository ancestry stays excluded.",
-  "topics": ["one reusable turn engine", "ChatStore authority", "runtime shutdown", "terminal host limits", "sealed scripts"],
+  "sourceHash": "sha256:a96e918fff5b7d39919c08143a73f8cbe14ef23caa5d5df4fa60b3b9ba976200",
+  "summary": "The page records the original ADR-014 consolidation decision and a later amendment describing a separate-engine integration as distinct decisions. The original direction keeps one reusable engine for desktop and terminal, injects stores/providers/readers, and assigns durable scenes, versions, checkpoints and deltas to ChatStore; the runtime owns in-flight tasks and hosts reuse it per opened store. Its implementation section records the evidence and limits stated at that time, including desktop streaming, an injected terminal runner, no standalone CLI pending durable cross-process checkpoint ownership, and browser/Node checks that do not establish packaged behavior. The later amendment attributes an import of two upstream commits to owner approval and describes a split: new scenes use the rp-core submodule while existing scenes keep the Bunzai runtime. It describes migration 47, linked-scene operations, database-backed session leases, OpenAI-compatible/Ollama provider support, refused transcript/config changes, no automatic legacy configuration transfer, and incomplete scene export. These are the page's claims; this summary does not independently establish current architecture approval or consent.",
+  "topics": [
+    "one reusable turn engine",
+    "ChatStore authority",
+    "runtime shutdown",
+    "terminal host limits",
+    "sealed scripts"
+  ],
   "sections": [
     {
       "slug": "decision",
@@ -12,16 +18,41 @@
       "level": 2,
       "sourceHash": "sha256:705eca47807d5fa5538aee913aacd2a319d7c89ff387bc613b17c58ae9c0d250",
       "summary": "Bunzai absorbs co-developer improvements into its existing canonical owners rather than adopting a second default engine or journal. The public core injects storage, providers and readers. Its runtime owns cancellation, review and regex gates, tracker rounds and accepted tasks; ChatStore owns all persisted scene state. Hosts reuse one runtime for an opened store, await work before closing storage and admit no new operation after shutdown. afterEvent promises cover host writes. Other jobs remain host-owned, and imported regex requires ADR-009's isolated worker.",
-      "topics": ["canonical ownership", "injected dependencies", "awaited task lifetime", "ADR-009"],
+      "topics": [
+        "canonical ownership",
+        "injected dependencies",
+        "awaited task lifetime",
+        "ADR-009"
+      ],
       "children": []
     },
     {
       "slug": "current-implementation-and-limits",
       "title": "Current implementation and limits",
       "level": 2,
-      "sourceHash": "sha256:addb6de7730ee824d22bdb7955ff3bdef63574d5137b18b8fae85d749c8e66e5",
-      "summary": "Desktop streaming consumes the reusable source API and explicit store-scoped runtime. The terminal runner supports injected send, continue and swipe operations with fail-closed regex tests. A standalone CLI is withheld because SQLite serialization cannot establish whether another process still owns a checkpoint; durable cross-process ownership remains required. Browser bundling and a scripted Node execution prove source behavior, not a packaged artifact or published library. Remaining co-developer patches are reconciled separately without importing the old repository's ancestry.",
-      "topics": ["desktop API consumption", "injected terminal runner", "cross-process ownership gap", "source-only evidence"],
+      "sourceHash": "sha256:b16bb7ea3199fabfca453d7333a7c03765112d1abc6a0d95e2ebd99763eacfd4",
+      "summary": "This section describes evidence and limits at the time of the original direction. It reports desktop streaming through the reusable source API, an injected terminal runner with scripted turn and regex-refusal checks, and withholding a standalone shared-library CLI because SQLite serialization alone does not establish cross-process checkpoint ownership. It also says browser bundling and a scripted Node turn demonstrate source compatibility rather than packaged-platform behavior, while broader reconciliation remained separate work. These statements precede the dated amendment and should not be read as describing that later integration.",
+      "topics": [
+        "desktop API consumption",
+        "injected terminal runner",
+        "cross-process ownership gap",
+        "source-only evidence"
+      ],
+      "children": []
+    },
+    {
+      "slug": "owner-authorized-amendment-2026-10-31",
+      "title": "Owner-authorized amendment, 2026-10-31",
+      "level": 2,
+      "sourceHash": "sha256:39c50a449c7f10eaed5c28099397b481a59a46df80c8b7567e77f4693e36a733",
+      "summary": "The later amendment attributes an import of two upstream commits to owner approval and describes a split: new scenes use the rp-core submodule while existing scenes keep the Bunzai runtime. It records migration 47 and linked-scene send/reply/continue/swipe/review/stop/export behavior, with unsupported transcript edits and legacy configuration writes refused. It names OpenAI-chat-compatible and native Ollama providers and says other native adapters are refused. It states legacy presets, lore/regex and tracker settings are not transferred automatically, exported scenes omit the external journal/compendium, old scenes are not migrated, and external tasks are tracked through shutdown and database-backed leases.",
+      "topics": [
+        "later external-engine integration",
+        "rp-core submodule",
+        "migration 47",
+        "linked scenes",
+        "provider and export limits"
+      ],
       "children": []
     }
   ]

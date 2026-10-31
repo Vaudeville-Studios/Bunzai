@@ -5,7 +5,7 @@
  */
 import type { Guide } from "./guides";
 import { infoBody } from "./info";
-import { auditoriumBody } from './auditorium';
+import { auditoriumBody, curtainIntroMarkup } from './auditorium';
 import { CAST, tourBody } from "./tour";
 import { icSvg } from '../ui/_shared/ic-svg';
 
@@ -46,7 +46,7 @@ function frame({ title, description, up, section, body }: Frame): string {
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Bunzai. Every story deserves a stage, on a crimson cinema screen.">
+<meta property="og:image:alt" content="Bunzai. All the worlds: your stage, on a crimson cinema screen.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0a0a0b">
 <link rel="icon" href="${up}favicon.ico">
@@ -55,6 +55,7 @@ ${section === "home" ? `<link rel="stylesheet" href="${up}home.css">` : ""}
 ${section === 'info' ? `<link rel="stylesheet" href="${up}info.css">` : ''}
 </head>
 <body data-page="${section}">
+${section === "home" ? curtainIntroMarkup() : ""}
 
 
 <a class="skip" href="#main">Skip to content</a>
@@ -84,7 +85,7 @@ const ticket = (up: string): string => `<div class="ticket">
 </div>`;
 
 function home(): Page {
-  return { path: "index.html", html: frame({ title: "Bunzai | All the worlds. Your stage.", description: "Make characters, build their worlds, and play scenes with an AI provider you choose. Free and open source.", up: "", section: "home", body: auditoriumBody() }) };
+  return { path: "index.html", html: frame({ title: "Bunzai | All the worlds: your stage", description: "Make characters, build their worlds, and play stories with an AI provider you choose. Free and open source.", up: "", section: "home", body: auditoriumBody() }) };
 }
 
 function info(): Page {

@@ -19,6 +19,10 @@ test('the auditorium links to a separate info page with product details and exis
   expect(home).toContain('href="info.html"');
   expect(home).toContain('src="media/cinema-auditorium.png"');
   expect(home).toContain('data-screening');
+  expect(home).toContain('data-curtain-intro hidden');
+  expect(home).toContain('data-screen-preroll hidden');
+  expect(home).toContain('Bunzai | All the worlds: your stage');
+  expect(home).toContain('All the worlds: your stage');
   expect(home).toContain('data-screen-step="1"');
   expect(home).not.toContain('data-scene-example');
   for (const destination of ['download.html', 'studio/', 'guides/getting-started.html', 'guides/importing.html', 'news.html']) {

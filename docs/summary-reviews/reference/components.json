@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:cb9abe666c9a242b8269e4749c5ba12eaeacb718676e5d6e454b31aa4c9f0970",
-  "semanticSummaryHash": "sha256:0b766a24920da50718102202c13d0215c895b9e31de4bb9597230b589edb2beb",
+  "sourceHash": "sha256:f46f64b97bfd52cd5d1b8a753913fd855a23ad885482a40de1cb64fdb99427c6",
+  "semanticSummaryHash": "sha256:4ebe059ee3ff6047224012a835ed1263c1f4096676460fd28aa4241694f19d33",
   "verdict": "APPROVE",
-  "reviewer": "node_placement_review",
-  "notes": "Re-reviewed latest catalog export rename to TurnStatus against component, caller and mutually exclusive phase/Final Cut event state; prior Promptbook editor entries remain accurate.",
-  "reviewedAt": "2026-10-30T13:06:40.283Z"
+  "reviewer": "root",
+  "notes": "Documentation accuracy only: summarizes the generated catalog inventory and current exported UI/helper tables; behavior remains owned by source.",
+  "reviewedAt": "2026-10-31T16:51:59.209Z"
 }

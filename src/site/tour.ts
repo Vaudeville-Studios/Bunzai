@@ -163,7 +163,7 @@ export const SCENE_WINDOW = `<div class="win scene-example" data-scene-example>
 <div class="msg" style="--c:var(--pink)"><div class="av" aria-hidden="true">V</div><div><b>Vera</b><p>You came up the stairs without a lantern. Brave, or a little foolish?</p></div></div>
 <div class="msg you" style="--c:var(--sky)"><div class="av" aria-hidden="true">Y</div><div><b>You</b><p>A little of both.</p></div></div>
 <div class="msg" style="--c:var(--pink)"><div class="av" aria-hidden="true">V</div><div><b>Vera</b><p>Then sit. The storm holds till midnight, and I have tea.</p></div></div></div>
-<form class="scene-composer"><input name="line" maxlength="600" aria-label="Your line in the example conversation" placeholder="Write your next line…" autocomplete="off"><button class="btn" type="submit">Continue example <span aria-hidden="true">↗</span></button></form>
+<form class="scene-composer"><input name="line" maxlength="600" aria-label="Your line in the example conversation" placeholder="Write your next line…" autocomplete="off"><button class="btn" type="submit">Continue example <span aria-hidden="true">&#8599;</span></button></form>
 <div class="example-foot"><span>A scripted preview. No AI connection needed.</span><button type="button" data-scene-reset>Reset</button></div></div>`;
 
 /** One picture of a member for the home page's reel: its first screenshot, or the drawn stand-in. */

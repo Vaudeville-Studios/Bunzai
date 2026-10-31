@@ -72,8 +72,8 @@ test("the single phrase table maps all 32 lines to distinct props and distinct h
     "oz", "harry-potter", "inception", "phantom", "howl-moving-castle", "death-note", "uncharted", "one-piece",
   ]);
   expect(SCREEN_PREROLL_PHRASES[8]).toMatchObject({ text: "BOUNDLESS", tone: "lilac", duration: 1200, symbol: "back-to-future" });
-  expect(SCREEN_PREROLL_PHRASES.every(phrase => phrase.duration >= 1000)).toBe(true);
-  expect(SCREEN_PREROLL_PHRASES.at(-1)).toMatchObject({ text: "YOURS", tone: "rose", duration: 2200, symbol: "bunzai-logo" });
+  expect(SCREEN_PREROLL_PHRASES.slice(19).map(phrase => phrase.duration)).toEqual([900, 800, 700, 600, 500, 450, 400, 350, 300, 250, 220, 800, 1600]);
+  expect(SCREEN_PREROLL_PHRASES.at(-1)).toMatchObject({ text: "YOURS", tone: "rose", duration: 1600, symbol: "bunzai-logo" });
   expect(new Set(SCREEN_PREROLL_PHRASES.map(phrase => phrase.motion.join("|"))).size).toBe(32);
   expect(SCREEN_PREROLL_PHRASES.every(phrase => phrase.motion[2] >= 90 && phrase.motion[2] <= 180)).toBe(true);
 });
@@ -98,7 +98,8 @@ test("the film shows one transparent symbol beside intact words and coordinates 
   f.advance(299);
   expect(symbolStage.classList.contains("is-stencilled")).toBe(false);
   f.advance(1);
-  expect(symbolStage.classList.contains("is-stencilled")).toBe(true);
+  expect(symbolStage.classList.contains("is-stencilled")).toBe(false);
+  expect(f.symbol.hidden).toBe(false);
   expect(word.classList.contains("is-changing")).toBe(true);
   expect(word.textContent).toBe("A STAGE");
   expect(word.style.clipPath).toBe("");
@@ -149,7 +150,7 @@ test("hidden tabs pause the symbol reveal hold and reduced motion skips symbol d
   f.advance(49);
   expect(f.root.querySelector("[data-preroll-symbol-stage]")!.classList.contains("is-stencilled")).toBe(false);
   f.advance(1);
-  expect(f.root.querySelector("[data-preroll-symbol-stage]")!.classList.contains("is-stencilled")).toBe(true);
+  expect(f.root.querySelector("[data-preroll-symbol-stage]")!.classList.contains("is-stencilled")).toBe(false);
   f.dom.window.close();
   const reduced = fixture(true);
   let completed = 0;

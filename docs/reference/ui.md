@@ -110,9 +110,10 @@ independent-production credit, `VAUDEVILLE PRESENTS`, and a 32-phrase Shakespear
 Each phrase pairs intact, unmasked text with one recognizable story prop, such as Oz's ruby slippers
 or Harry Potter's spectacles and lightning bolt. Props share a Persona- and Danganronpa-inspired
 layered-paper illustration style, independent of each story's native art style. Each prop appears
-in full color for 300ms, then hard-cuts to exactly two flat colors: its phrase's main color and a
-shadow color. A torn-paper burst starts at the same beat and drifts slowly while the next phrase
-prepares. Every phrase has its own short, abrupt text entry; the complete words remain visible
+in full color for up to 300ms during the opening phrases. Accelerated ending phrases skip the
+full-color hold and hard-cut directly to exactly two flat colors: each phrase's main color and a
+shadow color. A directional burst of straight paper shards starts at the same beat and clears
+when the next phrase begins. Every phrase has its own short, abrupt text entry; the complete words remain visible
 without masks. If the WebGL renderer is unavailable, the prop stays in full color. The last `YOURS`
 pairs with the existing Bunzai bunny mark in its original colors, with the burst behind it. The
 revision and prompt source are in `plans/preroll-paper-revision.md`; v2 asset sources and prompts are

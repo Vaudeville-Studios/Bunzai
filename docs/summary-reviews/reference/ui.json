@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:f1274b6df71752279ad58ebae0c6dfb67fb9ccd31fc477c6422c3430c281fd85",
-  "semanticSummaryHash": "sha256:fa307f2c124bed040939b0c857ebc3a42917156a9a9bd591909865c469342a86",
+  "sourceHash": "sha256:1efb877d68fc5a7fe5542f95fc2e83d4c62604a6bbac6bf2778c5deccd566ffc",
+  "semanticSummaryHash": "sha256:f875936c51eb0ddb4b30f711703f5b7bb7d8901080638008bf4ff94bdd632c32",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root approved documentation accuracy for source hash f1274b6df71752279ad58ebae0c6dfb67fb9ccd31fc477c6422c3430c281fd85; summary describes intact phrase text, shared paper props, 300ms color hold, two-color cut, synchronized slow burst, image fallback, and reviewed host behavior.",
-  "reviewedAt": "2026-10-31T19:07:31.348Z"
+  "notes": "Root approved documentation accuracy for source hash 1efb877d68fc5a7fe5542f95fc2e83d4c62604a6bbac6bf2778c5deccd566ffc; summary describes the opening color hold, direct accelerated two-color cuts, directional shards cleared before each next prop, and full-color source fallback.",
+  "reviewedAt": "2026-10-31T22:14:03.242Z"
 }

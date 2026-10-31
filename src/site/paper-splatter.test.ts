@@ -14,7 +14,7 @@ function fixture(reduced = false, forced = false) {
     fillStyle: "#000",
     setTransform: (...args: number[]) => calls.push(["transform", ...args]),
     clearRect: (...args: number[]) => calls.push(["clear", ...args]),
-    save: () => {}, restore: () => {}, translate: () => {}, rotate: () => {}, beginPath: () => {},
+    save: () => {}, restore: () => {}, translate: () => {}, rotate: (angle: number) => calls.push(["rotate", angle]), beginPath: () => {},
     moveTo: (...args: number[]) => calls.push(["move", ...args]),
     lineTo: (...args: number[]) => calls.push(["line", ...args]),
     closePath: () => {}, fill: () => calls.push(["fill"]),
@@ -27,12 +27,17 @@ function fixture(reduced = false, forced = false) {
   return { dom, win, canvas, calls, motion, colors };
 }
 
-test("fixed seed draws a bounded set of paper lobes and shards and stop cancels drift", () => {
+test("fixed seed draws separated leftward shards and clear permits the next burst", () => {
   const f = fixture();
   const splatter = createPaperSplatter(f.canvas);
   splatter.burst({ seed: 23, main: "rgb(220, 70, 50)", shadow: "rgb(80, 20, 35)" });
   const first = f.calls.filter(([kind]) => kind === "move" || kind === "line");
-  expect(f.calls.filter(([kind]) => kind === "fill")).toHaveLength(14);
+  expect(f.calls.filter(([kind]) => kind === "fill")).toHaveLength(10);
+  expect(first.length).toBeGreaterThanOrEqual(30);
+  expect(first.length).toBeLessThanOrEqual(40);
+  expect(f.calls.filter(([kind]) => kind === "rotate").every(([, angle]) => Math.cos(angle!) < 0)).toBe(true);
+  splatter.clear();
+  expect(f.calls.at(-1)?.[0]).toBe("clear");
   splatter.burst({ seed: 23, main: "rgb(220, 70, 50)", shadow: "rgb(80, 20, 35)" });
   const paths = f.calls.filter(([kind]) => kind === "move" || kind === "line").slice(first.length);
   expect(paths).toEqual(first);

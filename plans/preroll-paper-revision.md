@@ -4,7 +4,7 @@ Starting props stay detailed and recognizable. Every prop uses the same Bunzai P
 
 Each prop reveals in color, then instantly becomes exactly two flat colors: the phrase's main color and a shadow emphasis color. Broad shadow areas replace edge tracing; source alpha remains transparent. Text is never masked. Thirty-two phrase-specific abrupt transitions replace the shared bounce.
 
-A graphic torn-paper splatter bursts behind the prop at the cut. It has a brief sharp expansion followed by very slow rotation/drift, including the next phrase's preparation. No photographic injury imagery. Reuse bounded geometry and one canvas; honor reduced motion and hidden-tab pause.
+A directional burst of straight paper shards flies out from behind the prop at the cut and clears before the next prop appears. The accelerated ending skips the color hold and lands directly on the two-color cut; longer opening phrases retain the brief full-color reveal. No photographic injury imagery. Reuse bounded geometry and one canvas; honor reduced motion and hidden-tab pause.
 
 ## First style-master edit prompt
 

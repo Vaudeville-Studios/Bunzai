@@ -4,9 +4,9 @@ const MAX_DPR = 1.5;
 const FRAME_MS = 1000 / 30;
 const EXPAND_MS = 100;
 
-type Piece = { angle: number; distance: number; size: number; points: number; shade: boolean; lobe: boolean; radii: number[] };
+type Piece = { angle: number; distance: number; length: number; width: number; corners: 3 | 4; shade: boolean; spin: number };
 export type PaperSplatter = { seed: number; main: string; shadow: string };
-export interface PaperSplatterHandle { burst(value: PaperSplatter): void; stop(): void }
+export interface PaperSplatterHandle { burst(value: PaperSplatter): void; clear(): void; stop(): void }
 
 function seeded(seed: number): () => number {
   let state = seed >>> 0 || 1;
@@ -21,30 +21,22 @@ function seeded(seed: number): () => number {
 
 function makePieces(seed: number): Piece[] {
   const random = seeded(seed);
-  const turn = random() * Math.PI * 2;
-  const clusters = [turn - 0.25, turn + 1.9, turn + 4.35];
-  const lobeClusters = [0, 1, 2, 0, 2];
-  const shardClusters = [0, 0, 1, 1, 1, 2, 2, 2, 0];
-  return Array.from({ length: 14 }, (_, index) => {
-    const lobe = index < 5;
-    const cluster = lobe ? lobeClusters[index]! : shardClusters[index - 5]!;
-    const points = lobe ? 8 + Math.floor(random() * 4) : 4 + Math.floor(random() * 3);
-    return {
-      angle: clusters[cluster]! + (random() - 0.5) * (lobe ? 0.78 : 0.92),
-      distance: lobe ? 0.72 + random() * 0.09 : 0.82 + random() * 0.07,
-      size: lobe ? 0.18 + random() * 0.06 : 0.09 + random() * 0.04,
-      points,
-      shade: !lobe && index % 2 === 1,
-      lobe,
-      radii: Array.from({ length: points }, () => lobe ? 0.38 + random() * 0.82 : 0.55 + random() * 0.55),
-    };
-  });
+  const direction = Math.PI + (random() - 0.5) * 0.2;
+  return Array.from({ length: 10 }, (_, index) => ({
+    angle: direction + (random() * 2 - 1) * (0.45 + random() * 0.25),
+    distance: 0.75 + index * 0.04 + random() * 0.06,
+    length: 0.25 + random() * 0.15,
+    width: 0.06 + random() * 0.08,
+    corners: (random() < 0.55 ? 3 : 4) as 3 | 4,
+    shade: index % 3 === 1 || index % 5 === 3,
+    spin: 0.018 + random() * 0.034,
+  }));
 }
 
 export function createPaperSplatter(canvas: HTMLCanvasElement): PaperSplatterHandle {
   const win = canvas.ownerDocument.defaultView;
   const context = canvas.getContext("2d");
-  if (!win || !context) return { burst() {}, stop() {} };
+  if (!win || !context) return { burst() {}, clear() {}, stop() {} };
   const view = win;
   const surface = context;
   const motion = view.matchMedia?.("(prefers-reduced-motion: reduce)") ?? { matches: false, addEventListener() {}, removeEventListener() {} };
@@ -60,7 +52,6 @@ export function createPaperSplatter(canvas: HTMLCanvasElement): PaperSplatterHan
   let pieces: Piece[] = [];
   let main = "";
   let shadow = "";
-  let drift = 0.02;
 
   const cancel = (): void => {
     if (!frame) return;
@@ -86,20 +77,22 @@ export function createPaperSplatter(canvas: HTMLCanvasElement): PaperSplatterHan
     if (frame || stopped || !active) return;
     frame = view.setTimeout(() => draw(view.performance.now()), FRAME_MS);
   };
-  const polygon = (piece: Piece, scale: number, radius: number): void => {
-    const x = Math.cos(piece.angle) * piece.distance * radius * scale;
-    const y = Math.sin(piece.angle) * piece.distance * radius * scale;
-    const size = piece.size * radius * scale;
+  const polygon = (piece: Piece, scale: number, radius: number, elapsed: number): void => {
+    const seconds = Math.max(0, elapsed - EXPAND_MS) / 1000;
+    const distance = piece.distance + seconds * 0.003;
+    const x = Math.cos(piece.angle) * distance * radius * scale;
+    const y = Math.sin(piece.angle) * distance * radius * scale;
+    const length = piece.length * radius * scale;
+    const halfWidth = piece.width * radius * scale / 2;
     surface.save();
     surface.translate(x, y);
-    surface.rotate(piece.angle + (piece.lobe ? 0 : Math.PI / 2));
+    surface.rotate(piece.angle + piece.spin * seconds);
     surface.beginPath();
-    for (let point = 0; point < piece.points; point++) {
-      const angle = point / piece.points * Math.PI * 2;
-      const jagged = piece.radii[point]!;
-      const px = Math.cos(angle) * size * jagged;
-      const py = Math.sin(angle) * size * (piece.lobe ? 0.72 : 0.25) * jagged;
-      if (point === 0) surface.moveTo(px, py); else surface.lineTo(px, py);
+    const corners = piece.corners === 3
+      ? [[length / 2, 0], [-length / 2, -halfWidth], [-length * 0.34, halfWidth]]
+      : [[length / 2, 0], [-length * 0.22, -halfWidth], [-length / 2, 0], [-length * 0.22, halfWidth]];
+    for (const [index, [px, py]] of corners.entries()) {
+      if (index === 0) surface.moveTo(px!, py!); else surface.lineTo(px!, py!);
     }
     surface.closePath();
     surface.fillStyle = piece.shade ? shadow : main;
@@ -118,12 +111,10 @@ export function createPaperSplatter(canvas: HTMLCanvasElement): PaperSplatterHan
       const elapsed = Math.max(0, now - startedAt);
       const expansion = Math.min(1, elapsed / EXPAND_MS);
       const eased = 1 - (1 - expansion) * (1 - expansion) * (1 - expansion);
-      const rotation = Math.max(0, elapsed - EXPAND_MS) / 1000 * drift;
-      const radius = Math.min(width, height) * 0.49;
+      const radius = Math.min(width, height) * 0.35;
       surface.save();
-      surface.translate(width / 2 + Math.sin(rotation) * 2, height / 2 + Math.sin(rotation * 0.7) * 2);
-      surface.rotate(rotation);
-      for (const piece of pieces) polygon(piece, eased, radius);
+      surface.translate(width / 2, height / 2);
+      for (const piece of pieces) polygon(piece, eased, radius, elapsed);
       surface.restore();
       request();
     } catch { active = false; clear(); }
@@ -138,15 +129,14 @@ export function createPaperSplatter(canvas: HTMLCanvasElement): PaperSplatterHan
   function stop(): void {
     if (stopped) return;
     stopped = true;
-    active = false;
-    cancel();
-    clear();
+    clearBurst();
     view.removeEventListener("resize", onResize);
     view.removeEventListener("pagehide", stop);
     canvas.ownerDocument.removeEventListener("visibilitychange", visibility);
     motion.removeEventListener("change", preference);
     forced.removeEventListener("change", preference);
   }
+  function clearBurst(): void { active = false; cancel(); pieces = []; clear(); }
   function onResize(): void { if (active) draw(view.performance.now()); }
   view.addEventListener("resize", onResize);
   view.addEventListener("pagehide", stop, { once: true });
@@ -160,13 +150,13 @@ export function createPaperSplatter(canvas: HTMLCanvasElement): PaperSplatterHan
       main = value.main;
       shadow = value.shadow;
       pieces = makePieces(value.seed);
-      drift = (1 + (value.seed >>> 0) % 3) * Math.PI / 180;
       startedAt = view.performance.now();
       lastDraw = startedAt - FRAME_MS;
       active = true;
       cancel();
       draw(startedAt);
     },
+    clear: clearBurst,
     stop,
   };
 }

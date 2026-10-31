@@ -4,6 +4,7 @@ import { createPaperSplatter } from './paper-splatter';
 
 const PRELOAD_CONCURRENCY = 3;
 const SYMBOL_HOLD_MS = 300;
+const symbolHold = (duration: number): number => duration >= 1000 ? SYMBOL_HOLD_MS : 0;
 
 export const SCREEN_PREROLL_PHRASES = [
   { text: "A STAGE", tone: "rose", duration: 1600, symbol: "oz", motion: ["translateY(-100%) rotate(-10deg)", "50% 0%", 150] },
@@ -25,19 +26,19 @@ export const SCREEN_PREROLL_PHRASES = [
   { text: "CALLING", tone: "gold", duration: 1000, symbol: "batman", motion: ["rotateX(72deg) translateY(-20%)", "0% 0%", 155] },
   { text: "CHANGING", tone: "lilac", duration: 1000, symbol: "sailor-moon", motion: ["translateX(-100%) rotate(-7deg) skewY(-10deg)", "0% 50%", 135] },
   { text: "ALIVE", tone: "sky", duration: 1000, symbol: "jurassic-park", motion: ["rotate(22deg) scaleX(.7) translateY(-18%)", "100% 0%", 150] },
-  { text: "YOURS TO SHAPE", tone: "mint", duration: 1000, symbol: "minecraft", motion: ["translateY(110%) skewX(-22deg)", "50% 100%", 140] },
-  { text: "YOURS TO DISCOVER", tone: "rose", duration: 1000, symbol: "zelda", motion: ["rotateY(68deg) scaleY(.82)", "0% 50%", 125] },
-  { text: "YOURS TO EXPLORE", tone: "sky", duration: 1000, symbol: "star-trek", motion: ["translateX(112%) rotate(11deg)", "100% 0%", 155] },
-  { text: "YOURS TO BUILD", tone: "gold", duration: 1000, symbol: "lego-movie", motion: ["skewX(42deg) translateY(22%)", "50% 0%", 110] },
-  { text: "YOURS TO IMAGINE", tone: "lilac", duration: 1000, symbol: "neverending-story", motion: ["scaleY(.72) rotateX(-28deg)", "50% 0%", 145] },
-  { text: "YOURS TO CREATE", tone: "lilac", duration: 1000, symbol: "fullmetal-alchemist", motion: ["rotate(-26deg) translateX(-16%)", "0% 100%", 135] },
-  { text: "YOURS TO WRITE", tone: "mint", duration: 1000, symbol: "alan-wake", motion: ["translateY(-100%) skewX(18deg) scaleX(.82)", "100% 0%", 160] },
-  { text: "YOURS TO BECOME", tone: "rose", duration: 1000, symbol: "pokemon", motion: ["rotateY(-72deg) translateY(14%)", "100% 100%", 120] },
-  { text: "YOURS TO PLAY", tone: "gold", duration: 1000, symbol: "jumanji", motion: ["translateX(-108%) rotate(16deg)", "0% 0%", 150] },
-  { text: "YOURS TO HOLD", tone: "lilac", duration: 1000, symbol: "frozen", motion: ["scaleX(.76) skewY(-16deg)", "50% 100%", 130] },
-  { text: "YOURS TO TAKE", tone: "rose", duration: 1000, symbol: "pirates-caribbean", motion: ["rotateX(-70deg) skewX(14deg)", "0% 50%", 155] },
-  { text: "YOURS TO CONQUER", tone: "gold", duration: 1000, symbol: "game-of-thrones", motion: ["translateY(100%) rotate(-9deg) scaleY(.76)", "100% 100%", 140] },
-  { text: "YOURS", tone: "rose", duration: 2200, symbol: "bunzai-logo", motion: ["rotate(12deg) scale(.74) translateY(20%)", "50% 50%", 170] },
+  { text: "YOURS TO SHAPE", tone: "mint", duration: 900, symbol: "minecraft", motion: ["translateY(110%) skewX(-22deg)", "50% 100%", 140] },
+  { text: "YOURS TO DISCOVER", tone: "rose", duration: 800, symbol: "zelda", motion: ["rotateY(68deg) scaleY(.82)", "0% 50%", 125] },
+  { text: "YOURS TO EXPLORE", tone: "sky", duration: 700, symbol: "star-trek", motion: ["translateX(112%) rotate(11deg)", "100% 0%", 155] },
+  { text: "YOURS TO BUILD", tone: "gold", duration: 600, symbol: "lego-movie", motion: ["skewX(42deg) translateY(22%)", "50% 0%", 110] },
+  { text: "YOURS TO IMAGINE", tone: "lilac", duration: 500, symbol: "neverending-story", motion: ["scaleY(.72) rotateX(-28deg)", "50% 0%", 145] },
+  { text: "YOURS TO CREATE", tone: "lilac", duration: 450, symbol: "fullmetal-alchemist", motion: ["rotate(-26deg) translateX(-16%)", "0% 100%", 135] },
+  { text: "YOURS TO WRITE", tone: "mint", duration: 400, symbol: "alan-wake", motion: ["translateY(-100%) skewX(18deg) scaleX(.82)", "100% 0%", 160] },
+  { text: "YOURS TO BECOME", tone: "rose", duration: 350, symbol: "pokemon", motion: ["rotateY(-72deg) translateY(14%)", "100% 100%", 120] },
+  { text: "YOURS TO PLAY", tone: "gold", duration: 300, symbol: "jumanji", motion: ["translateX(-108%) rotate(16deg)", "0% 0%", 150] },
+  { text: "YOURS TO HOLD", tone: "lilac", duration: 250, symbol: "frozen", motion: ["scaleX(.76) skewY(-16deg)", "50% 100%", 130] },
+  { text: "YOURS TO TAKE", tone: "rose", duration: 220, symbol: "pirates-caribbean", motion: ["rotateX(-70deg) skewX(14deg)", "0% 50%", 155] },
+  { text: "YOURS TO CONQUER", tone: "gold", duration: 800, symbol: "game-of-thrones", motion: ["translateY(100%) rotate(-9deg) scaleY(.76)", "100% 100%", 140] },
+  { text: "YOURS", tone: "rose", duration: 1600, symbol: "bunzai-logo", motion: ["rotate(12deg) scale(.74) translateY(20%)", "50% 50%", 170] },
 ] as const;
 type Phrase = typeof SCREEN_PREROLL_PHRASES[number];
 type SymbolImage = { url: string; loaded: boolean };
@@ -236,6 +237,7 @@ export function runScreenPreroll(doc: Document, onComplete: () => void): () => v
   };
   const showPhrase = (index: number, symbols: Map<string, SymbolImage>): void => {
     if (stopped) return;
+    splatter.clear();
     const phrase = SCREEN_PREROLL_PHRASES[index] as Phrase;
     const { text, tone, duration, symbol } = phrase;
     const asset = symbols.get(symbol);
@@ -247,6 +249,7 @@ export function runScreenPreroll(doc: Document, onComplete: () => void): () => v
     symbolStage.classList.remove("is-current", "is-stencilled", "is-logo");
     symbolCanvas.hidden = false;
     symbolImage.hidden = false;
+    const holdMs = symbol === "bunzai-logo" ? 0 : symbolHold(duration);
     if (symbol === "bunzai-logo") {
       stencil.stop();
       symbolCanvas.hidden = true;
@@ -255,11 +258,8 @@ export function runScreenPreroll(doc: Document, onComplete: () => void): () => v
       void imageDecoded(symbolImage).then(decoded => {
         if (stopped || activeIndex !== index) return;
         if (!decoded) progress.textContent = "The Bunzai mark could not be loaded; the phrase continues.";
-        wait(SYMBOL_HOLD_MS, () => {
-          if (stopped || activeIndex !== index) return;
-          impact(index, phrase, false, decoded);
-          wait(duration - SYMBOL_HOLD_MS, () => advancePhrase(index, symbols));
-        });
+        impact(index, phrase, false, decoded);
+        wait(duration, () => advancePhrase(index, symbols));
       });
       return;
     }
@@ -268,21 +268,25 @@ export function runScreenPreroll(doc: Document, onComplete: () => void): () => v
       symbolCanvas.hidden = true;
       progress.hidden = false;
       progress.textContent = `The story symbol for ${text} could not be loaded; the phrase continues.`;
-      wait(SYMBOL_HOLD_MS, () => { hitWord(phrase); wait(duration - SYMBOL_HOLD_MS, () => advancePhrase(index, symbols)); });
+      wait(holdMs, () => { hitWord(phrase); wait(duration - holdMs, () => advancePhrase(index, symbols)); });
       return;
     }
     progress.hidden = true;
+    if (holdMs === 0) symbolImage.hidden = true;
     symbolImage.src = asset.url;
     symbolStage.classList.add("is-current");
     void stencil.prepare().then(async prepared => {
       if (stopped || activeIndex !== index) return;
       const decoded = prepared || await imageDecoded(symbolImage);
       if (stopped || activeIndex !== index) return;
-      wait(SYMBOL_HOLD_MS, () => {
+      const beginPhrase = (): void => {
         if (stopped || activeIndex !== index) return;
-        impact(index, phrase, decoded);
-        wait(duration - SYMBOL_HOLD_MS, () => advancePhrase(index, symbols));
-      });
+        if (!prepared) symbolImage.hidden = false;
+        impact(index, phrase, prepared, decoded);
+        wait(duration - holdMs, () => advancePhrase(index, symbols));
+      };
+      if (holdMs === 0) beginPhrase();
+      else wait(holdMs, beginPhrase);
     });
   };
   const advancePhrase = (index: number, symbols: Map<string, SymbolImage>): void => {

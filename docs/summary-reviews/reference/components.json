@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:f400da2bd9bde47c21da142b8d0dbe532a1e71ed8e165ed0fc03cc97e4d58f23",
-  "semanticSummaryHash": "sha256:eee34f8a59f3727f5ed571a7a06b00bb0a9febf1155fafd2c06cd96138e243cb",
+  "sourceHash": "sha256:efe27eb66d3c8df02079bb139fe2d85b904e1aaf1ba77a89f5bc3b3e239272bd",
+  "semanticSummaryHash": "sha256:f857791f61436215cd4afea0cb8f3a98b4f32f3e4a0c1b0f21f88a081e7ea2d1",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root independently verified the regenerated component catalog summary against source sha256:f400da2bd9bde47c21da142b8d0dbe532a1e71ed8e165ed0fc03cc97e4d58f23 and semantic summary sha256:eee34f8a59f3727f5ed571a7a06b00bb0a9febf1155fafd2c06cd96138e243cb. Added extension UI entries, shared style list updates, and ScenePage navigation props are accurate. Documentation accuracy only; no security or release signoff.",
-  "reviewedAt": "2026-10-31T13:55:42.893Z"
+  "notes": "Root approved regenerated Components catalog: one HostCommandMenu row now lists its bounded scroll styles; summary text and semantic hash are unchanged. Documentation accuracy only.",
+  "reviewedAt": "2026-10-31T16:01:30.642Z"
 }

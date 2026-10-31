@@ -2,7 +2,7 @@
   "generated": "2026-10-31",
   "targetChars": 90000,
   "totalPages": 140,
-  "totalSourceChars": 1696826,
+  "totalSourceChars": 1696853,
   "batches": [
     {
       "id": "batch-001",
@@ -406,14 +406,14 @@
     },
     {
       "id": "batch-005",
-      "sourceChars": 174190,
+      "sourceChars": 174217,
       "pages": [
         {
           "docId": "reference/components",
           "sourcePath": "docs/reference/components.md",
           "sidecarPath": "docs/summaries/reference/components.json",
           "sectionCount": 3,
-          "sourceChars": 174190,
+          "sourceChars": 174217,
           "status": "APPROVED"
         }
       ]

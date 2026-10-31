@@ -390,7 +390,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | HistorianSection | src/ui/apps/scenes/compendium/tabs/settings/historian.tsx | ({ compendium, set }: SectionProps) |  |  |
 | HistoryList | src/ui/apps/scenes/scene-history.tsx | ({ history, onRestore }: { history: HistoryView; onRestore(index: number): void }) | The Edit history popover: the text now, then each earlier text newest first with Restore. |  |
 | HorizonBadge | src/ui/apps/scenes/props/story-director/director-parts.tsx | ({ horizon }: { horizon: DirectorHorizon }) |  |  |
-| HostCommandMenu | src/ui/extensions/host-command-menu.tsx | ({ api, resources, onActivate }: HostCommandMenuProps) |  |  |
+| HostCommandMenu | src/ui/extensions/host-command-menu.tsx | ({ api, resources, onActivate }: HostCommandMenuProps) |  | .commandScroll .commandRows |
 | HtmlDocEditor | src/ui/apps/workbench/htmldoc-editor.tsx | ({ entity, revision, ctx, piece, topRight }: HtmlDocEditorProps) |  | .room .head .name .summary .split .grip .pane .paneHead ... |
 | HtmlView | src/ui/apps/html-view/index.tsx | ({ ctx }: { ctx: AppContext }) |  | .room .body .quiet .frame .big .expand |
 | Ic | src/ui/_shared/ic.tsx | ({ name, size = 16, fill = false, className }: { name: IconName; size?: number; fill?: boolean; className?: string }) | `fill` draws a lucide glyph solid, as RoleCall does for the Booth bolt and the stop square; mdi glyphs are always solid. |  |

@@ -1,11 +1,13 @@
 /** Purpose: invoke registered extension commands with a separate bounded host-selected resource context. */
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 import type { ExtensionActivationResult, ExtensionManagerApi, InstalledExtensionSummary } from "../../extensions/runtime/service-api";
 import type { JsonValue } from "../../extensions/contracts/value";
 import type { ResourceRef } from "../../extensions/contracts/operation";
 import { extensionInvocationContextSchema, MAX_EXTENSION_INVOCATION_RESOURCES } from "../../extensions/contracts/invocation-context";
 import { toErrorMessage } from "../../error-message";
 import { Button } from "../components/button";
+import { VirtualRows } from "../_shared/virtual-list";
+import styles from "./host-command-menu.module.css";
 
 export interface HostCommandMenuProps {
   api: Pick<ExtensionManagerApi, "list">;
@@ -14,6 +16,7 @@ export interface HostCommandMenuProps {
 }
 
 export function HostCommandMenu({ api, resources, onActivate }: HostCommandMenuProps): JSX.Element | null {
+  const commandScroll = useRef<HTMLDivElement>(null);
   const [extensions, setExtensions] = useState<readonly InstalledExtensionSummary[]>([]);
   const [running, setRunning] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
@@ -44,11 +47,11 @@ export function HostCommandMenu({ api, resources, onActivate }: HostCommandMenuP
     <h2>Extension commands</h2>
     {resources.length > 0 && <p>{scopeError || `${resources.length} focused piece${resources.length === 1 ? "" : "s"} will be offered as context. Access grants still control what each command can read or change.`}</p>}
     {!resources.length && <p>No focused pieces are attached to this command. Commands that need piece context will be denied by their grants.</p>}
-    <ul>{commands.map(/* bounded-ok: at most 100 installed controls × 64 manifest contributions */ (command) => <li key={`${command.packageId}:${command.commandId}`}>
-      <Button size="sm" disabled={!!scopeError || running !== null} onClick={() => void run(command)}>
+    <div ref={commandScroll} className={styles.commandScroll} role="group" aria-label="Registered extension commands">
+      <VirtualRows items={commands} keyOf={(command) => `${command.packageId}:${command.commandId}`} pinKey={running} render={(command) => <Button size="sm" disabled={!!scopeError || running !== null} onClick={() => void run(command)}>
         {running === `${command.packageId}:${command.commandId}` ? "Running..." : `${command.packageName}: ${command.label}`}
-      </Button>
-    </li>)}</ul>
+      </Button>} estimate={40} scroll={commandScroll} className={styles.commandRows} />
+    </div>
     {(scopeError || notice) && <p role="status" aria-live="polite">{scopeError || notice}</p>}
   </section>;
 }

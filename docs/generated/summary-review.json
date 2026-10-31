@@ -383,8 +383,8 @@
       "status": "APPROVED",
       "verdict": "APPROVE",
       "reviewer": "root",
-      "sourceHash": "sha256:f400da2bd9bde47c21da142b8d0dbe532a1e71ed8e165ed0fc03cc97e4d58f23",
-      "semanticSummaryHash": "sha256:eee34f8a59f3727f5ed571a7a06b00bb0a9febf1155fafd2c06cd96138e243cb"
+      "sourceHash": "sha256:efe27eb66d3c8df02079bb139fe2d85b904e1aaf1ba77a89f5bc3b3e239272bd",
+      "semanticSummaryHash": "sha256:f857791f61436215cd4afea0cb8f3a98b4f32f3e4a0c1b0f21f88a081e7ea2d1"
     },
     {
       "docId": "reference/concepts/bundles",

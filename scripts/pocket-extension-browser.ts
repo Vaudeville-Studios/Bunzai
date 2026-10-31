@@ -163,10 +163,11 @@ try {
       ],
       contributions: [
         { type: "command", id: "inspect", label: "Run browser proof", operation: "api.describe" },
+        { type: "command", id: "selection", label: "Verify selected context", operation: "content.list" },
         { type: "command", id: "macro", label: "Preview macros", operation: "macros.preview" },
       ],
     },
-    files: { "main.js": "bunzai.extension.define({commands:{inspect:async input=>{let page=await bunzai.call('api.describe',{offset:0,limit:20}),operationIds=[];do{operationIds.push(...page.operations.map(item=>item.id));if(page.nextOffset===null)break;page=await bunzai.call('api.describe',{offset:page.nextOffset,limit:20})}while(true);const selected=await bunzai.call('content.list',{scope:{type:'invocation'},fields:['id','kind','name']});await bunzai.call('storage.set',{key:'browser-proof-'+(input.run||'first'),value:'committed',expectedRevision:-1});return {operationIds,selected,invocationResources:bunzai.context.invocation.resources,invocationContextFrozen:Object.isFrozen(bunzai.context.invocation.resources),fetch:typeof fetch,document:typeof document,window:typeof window,parent:typeof parent,localStorage:typeof localStorage,process:typeof process}},macro:async()=>{try{return await bunzai.call('macros.preview',{sample:'Hello {{char}}!',environment:{characterName:'Nova',randomSeed:7}})}catch{return {denied:true}}}}})" },
+    files: { "main.js": "bunzai.extension.define({commands:{inspect:async input=>{let page=await bunzai.call('api.describe',{offset:0,limit:20}),operationIds=[];do{operationIds.push(...page.operations.map(item=>item.id));if(page.nextOffset===null)break;page=await bunzai.call('api.describe',{offset:page.nextOffset,limit:20})}while(true);const selected=await bunzai.call('content.list',{scope:{type:'invocation'},fields:['id','kind','name']});await bunzai.call('storage.set',{key:'browser-proof-'+(input.run||'first'),value:'committed',expectedRevision:-1});return {operationIds,selected,invocationResources:bunzai.context.invocation.resources,invocationContextFrozen:Object.isFrozen(bunzai.context.invocation.resources),fetch:typeof fetch,document:typeof document,window:typeof window,parent:typeof parent,localStorage:typeof localStorage,process:typeof process}},selection:async input=>{if(input!==null)throw Error('Host menu did not pass null guest input');const selected=await bunzai.call('content.list',{scope:{type:'invocation'},fields:['id','kind','name']});if(selected.length!==1||selected[0].id!=='pocket-prompt-proof')throw Error('Host menu did not pass the selected character as invocation context');return selected},macro:async()=>{try{return await bunzai.call('macros.preview',{sample:'Hello {{char}}!',environment:{characterName:'Nova',randomSeed:7}})}catch{return {denied:true}}}}})" },
   };
   const installed = await page.evaluate(async (pkg) => {
     const request = async (path: string, body?: unknown) => {
@@ -266,6 +267,17 @@ try {
   const approvedMacro = await page.evaluate(async () => await (window as ProbeWindow).__pocketActivation!);
   const macroOutput = approvedMacro.body !== null && typeof approvedMacro.body === "object" && "output" in approvedMacro.body ? (approvedMacro.body as { output?: { text?: unknown; diagnostics?: unknown } }).output : undefined;
   if (approvedMacro.status !== 200 || macroOutput?.text !== "Hello Nova!") throw new Error(`approved Browser macro preview failed: ${JSON.stringify(approvedMacro)}`);
+  await page.locator('[data-app-id="library"]').click();
+  await page.locator('[data-part="library.root"]').waitFor({ timeout: 20_000 });
+  const focusedCharacter = page.locator('[data-part="library.root"] [data-pick]').filter({ hasText: "Pocket prompt proof" }).first();
+  try { await focusedCharacter.waitFor({ timeout: 20_000 }); }
+  catch { throw new Error(`Pocket character did not appear in Library: ${JSON.stringify(await page.locator('[data-part="library.root"]').innerText().then((text) => text.slice(0, 1800)))}`); }
+  await focusedCharacter.click();
+  await page.getByText("1 focused piece will be offered as context.", { exact: false }).waitFor({ timeout: 10_000 });
+  const menuButton = page.getByRole("button", { name: "Pocket boundary proof: Verify selected context", exact: true });
+  await menuButton.waitFor({ timeout: 10_000 });
+  await menuButton.click();
+  await page.getByRole("status").filter({ hasText: "Pocket boundary proof: Verify selected context finished." }).waitFor({ timeout: 20_000 });
   const promptPackage = {
     manifest: {
       schemaVersion: 1, id: "bunzai.extension.pocket-prompt-proof", version: "1.0.0", name: "Pocket prompt proof",

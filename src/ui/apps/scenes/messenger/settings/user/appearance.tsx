@@ -1,8 +1,7 @@
 /** Appearance rows that need more than the plain pref table (rows.ts): the three message colours, the scene accent, the studio colour and theme. */
 import { useReducer, type JSX } from "react";
 import { SETTING_KEYS, DEFAULT_STUDIO_THEME } from "../../../../../../studio/settings-shape";
-import type { ThemeCatalogEntry } from "../../../../../../extensions/theme-lifecycle";
-import { loadThemeCatalog } from "../../../../settings/sections/theme-manager";
+import type { InstalledExtensionSummary } from "../../../../../../extensions/runtime/service";
 import { HOUSE_PALETTE } from "../../../../../components/swatch-row";
 import { ACCENT_CUSTOM_KEY, ACCENT_SOURCE_KEY, ACCENT_SOURCES, accentSourceAvailable, accentSourceOf, sceneAccentHex, type AccentSource } from "../../../scene-accent-core";
 import { sceneColors } from "../../../scene-accents";
@@ -47,7 +46,7 @@ export function ColourRows({ a, env, part }: { a: WingArgs; env: RowEnv; part: "
 export function ThemeRows({ env }: { env: RowEnv }): JSX.Element {
   const nav = useSettingsNav();
   const [, again] = useReducer((n: number) => n + 1, 0);
-  const catalog = useLoaded(loadThemeCatalog, isList<ThemeCatalogEntry>).value;
+  const catalog = useLoaded(() => env.ctx.api.extensions.list(), isList<InstalledExtensionSummary>).value?.filter((item) => item.theme !== null);
   const requested = env.ctx.prefs.get(SETTING_KEYS.theme);
   const selected = typeof requested === "string" ? requested : DEFAULT_STUDIO_THEME;
   const known = catalog?.some((t) => t.id === selected) ?? false;
@@ -55,10 +54,10 @@ export function ThemeRows({ env }: { env: RowEnv }): JSX.Element {
     <div data-part="scene.messenger.settings.rows">
       {catalog && (
         <SelectRow label="Theme" description="Applies once the host confirms the theme's permissions." value={known ? selected : ""}
-          options={[...(known ? [] : [{ value: "", label: "Unavailable selection" }]), ...catalog.map((t) => ({ value: t.id, label: `${t.name}${t.builtIn ? " (bundled)" : " (installed)"}` }))]}
+          options={[...(known ? [] : [{ value: "", label: "Unavailable selection" }]), ...catalog.map((t) => ({ value: t.id, label: `${t.name}${t.enabled ? " (installed)" : " (disabled)"}` }))]}
           onChange={(v) => { if (v) { env.ctx.prefs.set(SETTING_KEYS.theme, v); again(); } }} />
       )}
-      <DrillRow label="Theme packages" description="Install, approve, disable or remove a theme package." onOpen={() => nav.open("user.themes")} />
+      <DrillRow label="Theme picker" description="Choose an installed appearance. Manage package access in the Extensions tab of Settings." onOpen={() => nav.open("user.themes")} />
     </div>
   );
 }

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/glossary",
   "sourcePath": "docs/reference/glossary.md",
-  "sourceHash": "sha256:59707f834891231494e007a8bf34b12e53d976363467159b712796de9321ff8c",
-  "semanticSummaryHash": "sha256:d90335a8aece1553ea15482f6fa6e88ec5f2a37743eedc2515f83c16a7542aa3",
+  "sourceHash": "sha256:bc70da041d672bbe2417113df7384242fd5cfa2071260b62cde3daa5e8f95f78",
+  "semanticSummaryHash": "sha256:6822832983b0a68fdac675e543747bfb903119af2b090eeb617074b4f2f99e45",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "rename to Bunzai only",
-  "reviewedAt": "2026-10-29T20:48:09.116Z"
+  "reviewer": "root",
+  "notes": "Root conditionally approved summary accuracy for source SHA-256 bc70da041d672bbe2417113df7384242fd5cfa2071260b62cde3daa5e8f95f78 after the where-things-live summary was corrected to name bounded Lua/regex test benches, JavaScript guest workers, inert imports, and src/shared. Documentation accuracy only; no implementation, security, or release approval.",
+  "reviewedAt": "2026-10-31T13:43:53.437Z"
 }

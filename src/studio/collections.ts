@@ -20,6 +20,7 @@ import {
   parseCollections,
 } from "./collections-shape";
 import { stateDocument } from "./state-document-store";
+import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
 
 export class CollectionsStore {
   /**
@@ -40,6 +41,10 @@ export class CollectionsStore {
     return this.doc.read();
   }
 
+  readVersioned(): Promise<{ value: CollectionsFile; revision: number }> {
+    return this.doc.readVersioned();
+  }
+
   /**
    * Apply a pure edit from collections-shape to the file on disk.
    *
@@ -49,6 +54,18 @@ export class CollectionsStore {
    */
   edit(change: (current: CollectionsFile) => CollectionsFile): Promise<CollectionsFile> {
     return this.doc.enqueue(async () => this.doc.write(change(await this.read())));
+  }
+
+  editIfUnchanged(change: (current: CollectionsFile) => CollectionsFile, expectedRevision: number, context: ExtensionCommitContext): Promise<
+    { status: "saved"; value: CollectionsFile; revision: number } | { status: "stale" }
+  > {
+    return this.doc.enqueue(async () => {
+      const snapshot = await this.doc.readVersioned();
+      if (snapshot.revision !== expectedRevision) return { status: "stale" };
+      const value = parseCollections(change(snapshot.value));
+      const status = await this.doc.compareAndWrite(value, expectedRevision, context);
+      return status === "saved" ? { status, value, revision: expectedRevision + 1 } : { status };
+    });
   }
 
   /** Replace the whole file, parsed and normalised first. */

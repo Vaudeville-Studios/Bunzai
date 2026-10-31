@@ -35,8 +35,7 @@ async function shapeFiles(): Promise<string[]> {
     // What a stored reply's generation may hold (a swipe's cell): the one check every store applies.
     "src/stage/store/generation-rules.ts",
     "src/core/canonical.ts",
-    // Where the library lives: the database's migrations, and the pieces, the Studio's own documents,
-    // and Kit's transcripts inside it.
+    // Where the library lives: applied migration ids/names are immutable, and older builds refuse an unknown migration before writing; the pieces, Studio documents, and Kit transcripts live inside this database.
     "src/stage/store/sqlite/migrations.ts",
     "src/stage/store/sqlite/migration-18-parts.ts",
     "src/stage/store/sqlite/migration-19-blobs.ts",
@@ -78,6 +77,13 @@ async function shapeFiles(): Promise<string[]> {
     "src/stage/store/sqlite/migration-46-dramaturg.ts",
     "src/stage/contracts/dramaturg-types.ts",
     "src/stage/store/dramaturg-rules.ts",
+    // The extension's sealed tables and its turn-checkpoint owner column are persisted versioned shapes.
+    "src/stage/store/sqlite/migration-47-extensions.ts",
+    "src/stage/store/sqlite/migration-48-state-revisions.ts",
+    "src/stage/store/sqlite/migration-49-extension-logs.ts",
+    "src/stage/store/sqlite/migration-50-checkpoint-extension-owner.ts",
+    "src/stage/contracts/extension-turn-owner.ts",
+    "src/stage/store/extension-turn-owner.ts",
     "src/stage/store/settings-patch.ts",
     "src/stage/store/sqlite/document-backend.ts",
     "src/stage/store/sqlite/piece-parts-sql.ts",
@@ -468,7 +474,10 @@ async function shapeFiles(): Promise<string[]> {
 // Existing pieces remain readable. Older builds cannot read new kinds. Final Cut active saved Agents move
 // to canonical pieces with complete original escrow, verified exact identity and revision-guarded edits.
 // Downgrade remains one-way for those new pieces; the existing v0.1.42 storage-change fence covers this release.
-const PINNED_SHAPE_HASH = "82a96da9fb0d90b894bed6eae16a3e17a483032d05edb885c92fedee25e9bea4";
+// 2026-10-31: migrations 47-50 add sealed extension tables, revisioned Studio state documents, operational logs and the
+// encrypted turn-checkpoint owner. The owner decoder is pinned with the persisted column; no prior migration
+// changed, and older builds refuse these unknown migrations before writing. Restore tests cover the new rows.
+const PINNED_SHAPE_HASH = "c46f83a2e92c5233877c862ba77d3718da562c23cc383dc6294cd9df5309ce12";
 
 test("storage-shape tripwire: an on-disk shape change must be a deliberate, version-aware act", async () => {
   const h = createHash("sha256");

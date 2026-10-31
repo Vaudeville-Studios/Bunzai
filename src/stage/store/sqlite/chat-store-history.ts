@@ -11,6 +11,8 @@ import { personaDaysOf } from "../persona-stats-rules";
 import type { ChatSqlKit } from "./chat-store-cuts";
 import { applyPartChange } from "./piece-parts-sql";
 import type { SqlStatsCounters } from "./chat-store-stats";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import { requireExtensionCommit } from "./extension-commit-guard";
 
 export interface HistoryKit {
   cipher: CellCipher;
@@ -36,7 +38,7 @@ export function createChatMethod(
 ): Pick<ChatStore, "createChat"> {
   const { statement } = k.database;
   return {
-    async createChat(input): Promise<Chat> {
+    async createChat(input, extensionCommit?: ExtensionCommitContext): Promise<Chat> {
       const title = checkTitle(input?.title);
       const cast = checkCast(input?.cast);
       const snapshot = checkSnapshot(input?.snapshot, cast);
@@ -47,6 +49,7 @@ export function createChatMethod(
       const branchId = k.newId();
       const source = history?.source === undefined ? null : k.cipher.index(`chat-source\u0000${history.source}`);
       await k.write(() => {
+        if (extensionCommit) requireExtensionCommit(k.database, k.cipher, extensionCommit);
         if (source !== null) {
           const held = k.one<{ id: string }>("SELECT id FROM chats WHERE import_key = ? AND deleted_at IS NULL", source);
           if (held) throw new ChatAlreadyImportedError(held.id);

@@ -48,7 +48,7 @@ export function runScreening(doc: Document): () => void {
     title.setAttribute('aria-live', announce ? 'polite' : 'off');
     title.value = slides[at]!.dataset.title!;
     link.href = slides[at]!.dataset.link!;
-    link.textContent = at === 0 ? 'About Bunzai ↗' : 'Explore this part ↗';
+    link.textContent = at === 0 ? 'About Bunzai \u2197' : 'Explore this part \u2197';
     schedule();
   };
   const updatePlay = (): void => {

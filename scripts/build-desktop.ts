@@ -101,6 +101,10 @@ const sandboxWorkerJs = await bundleBrowser(join(root, "src", "sandbox", "lua", 
   "module", "url", "fs", "path", "child_process", "crypto",
 ], PROD);
 const regexWorkerJs = await bundleBrowser(join(root, "src", "sandbox", "regex", "worker.ts"), undefined, PROD);
+const extensionWorkerJs = await bundleBrowser(join(root, "src", "sandbox", "javascript", "worker.ts"), [], PROD);
+const extensionFrameJs = await bundleBrowser(join(root, "src", "sandbox", "javascript", "extension-frame.ts"), [], PROD);
+const extensionFrameHtml = await Bun.file(join(root, "src", "sandbox", "javascript", "extension-frame.html")).text();
+const quickJsWasmB64 = Buffer.from(await Bun.file(join(root, "node_modules", "@jitl", "quickjs-wasmfile-release-sync", "dist", "emscripten-module.wasm")).arrayBuffer()).toString("base64");
 
 const docsIndexRaw = await Bun.file(join(root, "docs", "generated", "docs-index.json")).json();
 const docsIndex = parseDocsIndex(docsIndexRaw);
@@ -161,6 +165,10 @@ const assets = {
   tours,
   sandboxWorkerJs,
   regexWorkerJs,
+  extensionWorkerJs,
+  extensionFrameJs,
+  extensionFrameHtml,
+  quickJsWasmB64,
 };
 // The repo carries a null PLACEHOLDER at this path (a committed bake goes stale silently; null
 // cannot lie). The real bake exists only for the duration of the compile and is restored after.
@@ -302,6 +310,8 @@ try {
         // the window worker MUST ride as its own entrypoint; without it the exe compiles fine and
         // then boots headless (worker ModuleNotFound at runtime, console hidden, no window)
         join(root, "src", "desktop-window.ts"),
+        // QuickJS guest code runs in this terminable Bun worker in compiled desktop mode.
+        join(root, "src", "sandbox", "javascript", "worker.ts"),
         // the stage's background lane (src/stage/worker-lane.ts) starts these workers by the same
         // rule; lane-probe.ts is the packaged probe for both
         join(root, "src", "stage", "store", "sqlite", "maintenance-worker.ts"),
@@ -337,7 +347,8 @@ try {
     const os = process.platform === "win32" ? "windows" : process.platform === "darwin" ? "darwin" : "linux";
     const out = join(root, "dist", `bunzai-kit-${os}-${arch}${os === "windows" ? ".exe" : ""}`);
     const compile = Bun.spawnSync(
-      [process.execPath, "build", "--compile", ...NO_PROPRIETARY_SDK, join(root, "src", "kit", "index.tsx"), "--outfile", out],
+      [process.execPath, "build", "--compile", ...NO_PROPRIETARY_SDK, join(root, "src", "kit", "index.tsx"),
+        join(root, "src", "sandbox", "javascript", "worker.ts"), join(root, "src", "sandbox", "regex", "worker.ts"), "--outfile", out],
       { cwd: root, stdout: "inherit", stderr: "inherit" },
     );
     // A cross-target opentui miss exits 0 while writing nothing, so the file is the real check.

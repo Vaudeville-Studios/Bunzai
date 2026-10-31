@@ -8,6 +8,13 @@ import type { AnyKindEntity } from "../generated/kinds";
 import { ENTITY_SCHEMAS } from "../generated/kind-schemas";
 
 export const canonicalEntitySchema = z.discriminatedUnion("kind", ENTITY_SCHEMAS);
+const canonicalBodyProjections = ENTITY_SCHEMAS.map((schema) => z.strictObject({
+  id: schema.shape.id,
+  kind: schema.shape.kind,
+  body: schema.shape.body,
+}));
+/** Canonical authored body without escrow, notes, platform profiles or host-owned config. */
+export const canonicalEntityBodySchema = z.union(canonicalBodyProjections as [typeof canonicalBodyProjections[number], ...typeof canonicalBodyProjections]);
 
 /** Any canonical piece of any kind. */
 export type ParsedCanonicalEntity = AnyKindEntity;

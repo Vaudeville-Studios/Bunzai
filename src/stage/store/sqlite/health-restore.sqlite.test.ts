@@ -98,10 +98,10 @@ test("a snapshot from before the health check restores, and its rows are adopted
   const report = await health.scan();
   clean(report);
   expect(report.adoptable.length).toBeGreaterThan(0); // no fingerprints yet: not yet covered
-  expect(await health.adoptFingerprints(report)).toBe(report.adoptable.length);
-  const again = await health.scan();
-  clean(again);
-  expect(again.adoptable).toEqual([]);
+  const adopted = await health.adoptFingerprints(report);
+  expect(adopted).toBe(report.adoptable.length);
+  expect(one<{ n: number }>(r, "SELECT count(*) AS n FROM row_fingerprints").n).toBe(report.adoptable.length);
+  expect(one<{ n: number }>(r, "SELECT count(*) AS n FROM fp_dirty").n).toBe(0);
 });
 
 test("set-aside rows are user data: a restore brings back the snapshot's, and the safety copy keeps today's", async () => {

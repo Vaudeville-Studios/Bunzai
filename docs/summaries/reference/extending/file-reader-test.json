@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/file-reader-test",
+  "sourcePath": "docs/reference/extending/file-reader-test.md",
+  "sourceHash": "sha256:30dd153ac25d07d441f734b7fa2dab98b5c6e14f1826bfe2128eea8f581bc75d",
+  "summary": "This guide exercises the extension file reader through a temporary artifact and the isolated desktop Studio fixture. It creates a unique directory and sample text file, packs the checked-in file-reader example, then installs it while granting only file picking and reading. The user selects the exact temporary path through the host action card and reviews the name and read limit before continuing. The result is checked for its bounded text preview, byte count, and digest. The guide states that the WebView packaging boundary has not been verified, avoiding a broader release claim.",
+  "topics": [
+    "temporary fixture",
+    "host file selection",
+    "packaging limits"
+  ],
+  "sections": [
+    {
+      "slug": "build-a-temporary-artifact",
+      "title": "Build a temporary artifact",
+      "level": 2,
+      "sourceHash": "sha256:4e68d93c4217904da3ddd1ae051604d9d84f37c7192ab8c9ba66abdaaa0aaf8e",
+      "summary": "The PowerShell setup creates a uniquely named temporary directory, writes a two-line sample, and packs the checked-in file-reader example to a file inside that same directory. The user retains both paths in variables for the following host exercise. Because the directory name includes a fresh GUID, these commands avoid clobbering an existing repository artifact or fixture. The guide does not remove the directory, so the selected sample and package remain available for inspection after the run.",
+      "topics": [
+        "GUID directory",
+        "sample file",
+        "packed example"
+      ],
+      "children": []
+    },
+    {
+      "slug": "exercise-the-production-host-path",
+      "title": "Exercise the production host path",
+      "level": 2,
+      "sourceHash": "sha256:ad3e39308492b3357176c68130b04f0c81791d200ec72efd67406c992444f215",
+      "summary": "The user opens an isolated desktop fixture, reviews the package in Settings, approves only `files.pick` and `files.read`, and enables it. Running the example presents a host-owned file action card; the user chooses the temporary sample and explicitly reviews its filename and full-file limit before proceeding. The host-rendered result should include the name, byte count, SHA-256 digest, and first 2,000 text characters. Revoking the package should remove its command and result. File data moves as bounded chunks through the authenticated local API, not to a network destination.",
+      "topics": [
+        "exact file review",
+        "opaque handle",
+        "host-rendered result"
+      ],
+      "children": []
+    },
+    {
+      "slug": "limits",
+      "title": "Limits",
+      "level": 2,
+      "sourceHash": "sha256:72f9fc7a05907372ba42f3439b4fc1c259b959e0a515df5f844ce7c6c4b592f6",
+      "summary": "The selected file is bounded to 65,536 bytes for this example. File-action tickets expire, and the chosen handle is scoped to one invocation, package digest, grant revision, and runtime epoch. The document distinguishes the production QuickJS worker path from packaged deployment evidence: the current implementation has not been verified inside a packaged WebView runtime. A successful isolated desktop run therefore demonstrates the checked host path and its limit, not universal packaging support or a stronger filesystem guarantee.",
+      "topics": [
+        "byte limit",
+        "invocation-scoped ticket",
+        "WebView evidence"
+      ],
+      "children": []
+    }
+  ]
+}

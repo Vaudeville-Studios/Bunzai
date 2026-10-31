@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/sdk",
+  "sourcePath": "docs/reference/extending/sdk.md",
+  "sourceHash": "sha256:bbbb6ff03e5dfe1855bbd75007388e2a4511086c94dc7fc487d08cd917608468",
+  "summary": "This generated reference maps SDK convenience methods to canonical operation IDs and schema links. Each method uses the same `bunzai.call` bridge, and runtime schemas validate requests and responses at the broker. The SDK also exposes bounded host invocation refs through `bunzai.context.invocation.resources`; these refs are the union of host-selected resources covered by this package's approved grants, separate from guest input and not authority. The broker rechecks each operation against its exact grant before exposing narrowed access. Desktop and Browser menus attach staged or active pieces; Terminal has no current-piece selector and uses explicit operation selectors. Generated output should be refreshed from source rather than edited by hand.",
+  "topics": [
+    "generated SDK",
+    "single broker bridge",
+    "schemas",
+    "grants remain authoritative",
+    "host invocation context"
+  ],
+  "sections": [
+    {
+      "slug": "host-invocation-context",
+      "title": "Host invocation context",
+      "level": 2,
+      "summary": "This section documents the typed `bunzai.context.invocation.resources` property. It is a read-only array of at most 16 host-selected resource refs covered by the package's approved grants, passed separately from command input. It is not filtered for one operation: the broker rechecks and narrows the resources against each exact operation grant before access. Desktop and Browser command menus attach Library staged refs or the Workbench active piece. Terminal has no current-piece or `--on` selector; handlers use explicit operation selectors where available. This distinction keeps examples honest about host support and authority.",
+      "topics": [
+        "read-only resource refs",
+        "separate from guest input",
+        "host-specific selection"
+      ],
+      "children": [],
+      "sourceHash": "sha256:f9b404017944238d9c9f3b94e3200efa5e3c18af1d1c9eca49a255855dd10532"
+    }
+  ]
+}

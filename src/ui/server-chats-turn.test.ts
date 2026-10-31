@@ -219,6 +219,8 @@ test("M5: a thousand tiny chunks inside the coalescing window reach the client a
 
 test("M5: stopping mid-stream flushes whatever text had already arrived, never dropping or reordering it", async () => {
   const { post, handler, chatId, version } = await readyScene();
+  let resolveBurst!: () => void;
+  const burstReady = new Promise<void>((resolve) => { resolveBurst = resolve; });
   const burst = Bun.serve({
     port: 0,
     async fetch(req) {
@@ -232,6 +234,7 @@ test("M5: stopping mid-stream flushes whatever text had already arrived, never d
         async start(c) {
           const enc = new TextEncoder();
           for (let i = 0; i < 20; i++) c.enqueue(enc.encode(chunk({ choices: [{ delta: { content: "x" } }] })));
+          resolveBurst();
           await new Promise(() => {});
         },
       });
@@ -242,14 +245,17 @@ test("M5: stopping mid-stream flushes whatever text had already arrived, never d
   await post("/api/chats/connection", { chatId, connection: { id: burstId, model: "burst-stop" } });
   const res = await post("/api/chats/turn", { chatId, kind: "reply", expectedVersion: version });
   let turnId = "";
-  const seen = await readEvents(res, (e) => {
+  const seenPromise = readEvents(res, (e) => {
     if (e.type === "start" && !turnId) {
       turnId = e["turnId"] as string;
-      // Comfortably after the zero-delay burst arrives, comfortably before the 40 ms auto-flush:
-      // text is pending, unflushed, when Stop lands.
-      setTimeout(() => { void post("/api/chats/stop", { chatId, turnId }); }, 20);
     }
   });
+  await burstReady;
+  // Start the stop window only after the upstream response has enqueued its whole burst; prompt hooks
+  // may take time before the provider request begins, so the turn's `start` event is not that boundary.
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  void post("/api/chats/stop", { chatId, turnId });
+  const seen = await seenPromise;
   burst.stop(true);
   expect(seen.at(-1)!.type).toBe("stopped");
   const combined = seen.filter((e) => e.type === "text").map((e) => (e as unknown as { delta: string }).delta).join("");

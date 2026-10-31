@@ -9,14 +9,15 @@ import type { ChatStore } from "../stage/contracts/chat-store";
 import type { StateStore } from "../stage/contracts/state-store";
 import { StudioValidationError } from "../studio/errors";
 import type { SettingsStoreLike, StudioStoreLike } from "../studio/contracts";
-import { forecastRequest, tryFormula, type ForecastDeps } from "../studio/scene-forecast";
+import { assembleExtensionPromptPreview, EXTENSION_PROMPT_PREVIEW_LABEL, forecastRequest, tryFormula, type ForecastDeps } from "../studio/scene-forecast";
 import { SANITY_TEXT } from "../entities/_shared/sanity";
 import { narratorTools } from "../studio/library-tools";
-import type { ReadPreset } from "../studio/scene-turn-load";
-import type { ReadLorebook } from "../studio/scene-lore";
+import { lorebookReader, type ReadLorebook } from "../studio/scene-lore";
+import { presetReader, type ReadPreset } from "../studio/scene-turn-load";
 import { choiceDefaultsOf, promptBudgetOf, toolBudgetOf } from "./server-scene-readers";
 import { connect } from "../kit/providers/scene-connect";
 import { json } from "./server-security";
+import type { LibraryHandle } from "./library-root";
 
 type Body = Record<string, unknown>;
 
@@ -25,6 +26,35 @@ const FORMULA_TRY = "/api/chats/formula-try";
 
 /** A draft is at most this long; a larger body is refused rather than assembled. */
 const DRAFT_MAX = 100_000;
+
+/** A local, read-only prompt preview over the currently unlocked canonical scene and library. */
+export function createExtensionPromptPreviewer(studio: StudioStoreLike, settings: SettingsStoreLike | undefined, library: LibraryHandle | undefined) {
+  return async (sceneId: string, draft: string, signal: AbortSignal) => {
+    if (signal.aborted) throw new StudioValidationError("Prompt preview was cancelled.");
+    const opened = library?.opened();
+    if (!opened || opened.state !== "unlocked" || !opened.stateStore) throw new StudioValidationError("An unlocked library is required for prompt preview.");
+    const choiceDefaults = choiceDefaultsOf(settings);
+    const deps: ForecastDeps = {
+      chats: opened.chats, state: opened.stateStore, connect, readPreset: presetReader(studio), readLorebook: lorebookReader(studio),
+      readLibrary: (kind, id) => studio.read(kind, id),
+      ...(choiceDefaults ? { choiceDefaults } : {}),
+      ...(promptBudgetOf(settings) ? { promptBudgetMs: promptBudgetOf(settings)! } : {}),
+      ...(toolBudgetOf(settings) ? { toolBudgetMs: toolBudgetOf(settings)! } : {}),
+      narratorTools: narratorTools((kind, id) => studio.read(kind, id)), now: Date.now, randomSeed: () => Math.floor(Math.random() * 2 ** 31),
+    };
+    const preview = await assembleExtensionPromptPreview(deps, { chatId: sceneId, draft });
+    if (signal.aborted) throw new StudioValidationError("Prompt preview was cancelled.");
+    return { ...preview, label: EXTENSION_PROMPT_PREVIEW_LABEL as typeof EXTENSION_PROMPT_PREVIEW_LABEL };
+  };
+}
+
+export function createPromptScenesReader(library: LibraryHandle | undefined) {
+  return async () => {
+    const opened = library?.opened();
+    if (!opened || opened.state !== "unlocked") throw new StudioValidationError("An unlocked library is required for scene selection.");
+    return (await opened.chats.listChats()).chats.slice(0, 500).map(({ id, title }) => ({ id, title: title.slice(0, 256) }));
+  };
+}
 
 /** The forecast route, or null when the path is not it. */
 export async function handleForecastRoute(req: Request, p: string, chats: ChatStore, state: StateStore, readPreset: ReadPreset, readLorebook: ReadLorebook, b: Body | null, studio?: StudioStoreLike, settings?: SettingsStoreLike): Promise<Response | null> {

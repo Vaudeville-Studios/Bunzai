@@ -3,8 +3,12 @@
  * one transaction, so two quick changes never overwrite each other. The take's text is the `summary` slot (summary-slot.ts); a per-take text an older build kept in this cell is no longer read and is dropped by the next write.
  */
 import type { ChatStore, SummarySettings } from "../../contracts/chat-store";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import { EXTENSION_BACKGROUND_FIELDS } from "../../../extensions/contracts/background-fields";
+import { requireCommitResource } from "../extension-commit-access";
 import { checkSummaryError, checkSummarySettings, mergeSummarySettings } from "../summary-rules";
 import type { ChatSqlKit } from "./chat-store-cuts";
+import { requireExtensionCommit } from "./extension-commit-guard";
 
 const COLUMN = "chats.summary_json";
 
@@ -20,10 +24,14 @@ export function summaryMethods(k: ChatSqlKit): Pick<ChatStore, "setSummarySettin
     const next: SummaryCell = { ...(cell.settings ? { settings: cell.settings } : {}), ...(cell.error ? { error: cell.error } : {}) };
     k.run("UPDATE chats SET summary_json = ? WHERE id = ?", Object.keys(next).length > 0 ? k.cipher.seal(COLUMN, JSON.stringify(next)) : null, chatId);
   };
-  const change = async (chatId: string, edit: (cell: SummaryCell) => SummaryCell) => {
+  const change = async (chatId: string, edit: (cell: SummaryCell) => SummaryCell, extensionCommit?: ExtensionCommitContext) => {
     const found = await k.write(() => {
       const cell = read(chatId, true);
       if (!cell) return false;
+      if (extensionCommit) {
+        requireCommitResource(extensionCommit, { kind: "scene", id: chatId }, [EXTENSION_BACKGROUND_FIELDS.summaryError]);
+        requireExtensionCommit(k.database, k.cipher, extensionCommit);
+      }
       write(chatId, edit(cell));
       return true;
     });
@@ -34,9 +42,9 @@ export function summaryMethods(k: ChatSqlKit): Pick<ChatStore, "setSummarySettin
       const patch = checkSummarySettings(patchRaw);
       return change(chatId, (cell) => ({ ...cell, settings: mergeSummarySettings(cell.settings, patch) }));
     },
-    setSummaryError(chatId, errorRaw) {
+    setSummaryError(chatId, errorRaw, extensionCommit) {
       const error = checkSummaryError(errorRaw);
-      return change(chatId, ({ error: _old, ...cell }) => (error ? { ...cell, error } : cell));
+      return change(chatId, ({ error: _old, ...cell }) => (error ? { ...cell, error } : cell), extensionCommit);
     },
   };
 }

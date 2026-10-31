@@ -7,7 +7,7 @@
  * `backend.parts()`, and every write's part diff is `content-store-write.ts`'s job, kept there to
  * hold this file under the line cap.
  */
-import { parseCanonicalEntity, type ParsedCanonicalEntity } from "../../entities/runtime-schema";
+import type { ParsedCanonicalEntity } from "../../entities/runtime-schema";
 import { normalizeAuthoredSentinelLiterals } from "../../entities/piece-parts-blob";
 import { StudioConflictError, StudioReadError, StudioValidationError, StudioNotFoundError } from "../../studio/errors";
 
@@ -24,13 +24,13 @@ import type {
   EntityKind,
   GraveSummary,
   PieceSummary,
-  PieceSummaryContent,
   SaveReason,
 } from "../contracts/content-store";
 import { DamagedDataError } from "../damaged-data-error";
 import { breather } from "./breather";
 import { contentSummaryOf, decode, decomposeEntity, diffWrite, freshWrite } from "./content-store-write";
 import { readStoredVersion, restoreStoredVersion } from "./content-store-history";
+import { readStoredVersionHeld } from "./content-store-history-held";
 import { patchPiece } from "./content-store-patch";
 import { duplicateHeld, readHeldPiece } from "./content-store-copy";
 import { readLight, readOriginalEntry, readOriginalEntryVersioned, readRisuNamedAssets } from "./content-store-light";
@@ -41,6 +41,9 @@ import { rebuildSummaries, type RebuildProgress } from "./summary-rebuild";
 import { computeSummaryFor, decodeStableLive } from "./content-store-stable-read";
 export { computeSummaryFor } from "./content-store-stable-read";
 import { readContentEntity, type ColdFillResult } from "./content-store-read";
+import { contentAddress as addr, parseContentInput as parseInput } from "./content-store-address";
+import { contentInvalidationRoots, createContentChangePublisher } from "./content-store-events";
+import { parseSummaryContent } from "./content-store-summary";
 
 /** A buried piece's display name, or undefined when its body cannot be opened: a damaged part cell
  * lists the grave by its id instead of throwing the whole Trash away (rule 25). Other errors still throw. */
@@ -59,26 +62,6 @@ async function graveName(backend: DocumentBackend, kind: EntityKind, id: string,
 const LAST_KEEP_BOTH_SUFFIX = 999;
 /** An overwrite that keeps losing races to other writers stops instead of spinning. */
 const MAX_WRITE_ATTEMPTS = 5;
-
-/** Parse untrusted input once, at the boundary, into a known entity with a safe id and kind. */
-function parseInput(raw: unknown): { entity: ParsedCanonicalEntity; kind: EntityKind; id: string } {
-  let entity: ParsedCanonicalEntity;
-  try {
-    entity = parseCanonicalEntity(raw);
-  } catch {
-    throw new StudioValidationError("invalid canonical entity");
-  }
-  // No runtime kind check: parseCanonicalEntity already admits only the canonical kinds, and this
-  // assignment stops compiling the day that union and the studio kinds drift apart.
-  const kind: EntityKind = entity.kind;
-  const id = assertSafeStudioId(entity.id);
-  return { entity: { ...entity, id }, kind, id };
-}
-
-/** Check and normalise an address exactly as a write would, so a read finds what a write stored. */
-function addr(kind: unknown, id: unknown): { kind: EntityKind; id: string } {
-  return { kind: assertStudioEntityKind(kind), id: assertSafeStudioId(id) };
-}
 
 /** How many versions of each entity are kept when nothing says otherwise (spec edge case 9). */
 export const DEFAULT_KEEP_VERSIONS = 25;
@@ -103,6 +86,8 @@ export function createContentStore(
     coldFill?: (kind: EntityKind, id: string, writeId: number, mode?: "hold") => Promise<ColdFillResult>;
   } = {},
 ): ContentStore {
+  const changes = createContentChangePublisher();
+  const publishChange = changes.publish;
   const keepVersions = options.keepVersions ?? DEFAULT_KEEP_VERSIONS;
   // One private namespace in the shared piece cache (piece-cache.ts's own docblock on why it is
   // shared, not an instance per store): this store's own patches never collide with another store's,
@@ -122,10 +107,11 @@ export function createContentStore(
   }
 
   /** A brand-new entity at exactly this id, only if no live entity holds it (graves never do). */
-  async function writeFresh(entity: ParsedCanonicalEntity, kind: EntityKind, id: string): Promise<ContentSummary | null> {
+  async function writeFresh(entity: ParsedCanonicalEntity, kind: EntityKind, id: string, extensionCommit?: import("../contracts/extension-store").ExtensionCommitContext): Promise<ContentSummary | null> {
     const built = freshWrite(entity, kind, id, clock(), "create");
     const summary = buildSummary(built.entity);
-    const wrote = await backend.write(built.row, built.version, { when: "absent" }, summary, built.change);
+    const wrote = await backend.write(built.row, built.version, { when: "absent", ...(extensionCommit ? { extensionCommit } : {}) }, summary, built.change);
+    if (wrote) publishChange({ kind, id, revision: built.row.revision, action: "upsert", invalidations: contentInvalidationRoots(built.change), ...(extensionCommit ? { originPackageId: extensionCommit.packageId } : {}) });
     return wrote ? contentSummaryOf(built.row, built.entity, summary.content) : null;
   }
 
@@ -137,7 +123,7 @@ export function createContentStore(
    * having the monotonic write id just read, so a racing delete or writer makes it return null rather
    * than resurrecting a grave or claiming someone else's history version.
    */
-  async function writeNext(current: DocumentRow, entity: ParsedCanonicalEntity, reason: SaveReason): Promise<ContentSummary | null> {
+  async function writeNext(current: DocumentRow, entity: ParsedCanonicalEntity, reason: SaveReason, extensionCommit?: import("../contracts/extension-store").ExtensionCommitContext): Promise<ContentSummary | null> {
     const { parts, revision } = decomposeEntity(entity);
     if (revision === current.revision) {
       if ((await backend.get(current.kind, current.id))?.writeId !== current.writeId) return null;
@@ -150,11 +136,12 @@ export function createContentStore(
     const wrote = await backend.write(
       built.row,
       built.version,
-      { when: "writeId", expected: current.writeId },
+      { when: "writeId", expected: current.writeId, ...(extensionCommit ? { extensionCommit } : {}) },
       summary,
       built.change,
     );
     if (!wrote) return null;
+    publishChange({ kind: current.kind as EntityKind, id: current.id, revision: built.row.revision, action: "upsert", invalidations: contentInvalidationRoots(built.change), ...(extensionCommit ? { originPackageId: extensionCommit.packageId } : {}) });
     // After the write, not inside it: a crash in between only leaves extra versions, never fewer.
     await backend.pruneVersions(current.kind, current.id, keepVersions);
     return contentSummaryOf(built.row, built.entity, summary.content);
@@ -191,6 +178,9 @@ export function createContentStore(
   }
 
   const store: ContentStore = {
+    subscribeChanges(listener) {
+      return changes.subscribe(listener);
+    },
     ...assetReaders(backend, liveRow, addr),
     async summary(kindRaw, idRaw) {
       const { kind, id } = addr(kindRaw, idRaw);
@@ -348,9 +338,9 @@ export function createContentStore(
       return readRisuNamedAssets(backend, liveRow, kind, id);
     },
 
-    async create(raw) {
+    async create(raw, extensionCommit) {
       const { entity, kind, id } = parseInput(raw);
-      const summary = await writeFresh(entity, kind, id);
+      const summary = await writeFresh(entity, kind, id, extensionCommit);
       return summary ? { status: "saved", summary } : { status: "exists" };
     },
 
@@ -364,17 +354,19 @@ export function createContentStore(
       return readHeldPiece(backend, kind, id, options.coldFill);
     },
 
-    async duplicate(kindRaw, idRaw, transform = (entity) => entity) {
+    async duplicate(kindRaw, idRaw, transform = (entity) => entity, extensionCommit) {
       const { kind, id } = addr(kindRaw, idRaw);
-      return duplicateHeld(backend, kind, id, transform, clock, options.coldFill);
+      const result = await duplicateHeld(backend, kind, id, transform, clock, options.coldFill, extensionCommit);
+      if (result) publishChange({ kind, id: result.id, revision: result.revision, action: "upsert", invalidations: ["body"], ...(extensionCommit ? { originPackageId: extensionCommit.packageId } : {}) });
+      return result;
     },
 
-    async saveIfUnchanged(raw, expectedRevision) {
+    async saveIfUnchanged(raw, expectedRevision, extensionCommit) {
       const { entity, kind, id } = parseInput(raw);
       const current = await liveRow(kind, id);
       if (!current) return { status: "missing" };
       if (current.revision !== expectedRevision) return { status: "stale" };
-      const summary = await writeNext(current, entity, "save");
+      const summary = await writeNext(current, entity, "save", extensionCommit);
       if (summary) return { status: "saved", summary };
       // Lost a race. Never retried: report what the caller now needs to know.
       return (await liveRow(kind, id)) ? { status: "stale" } : { status: "missing" };
@@ -382,17 +374,26 @@ export function createContentStore(
 
     async patch(kindRaw, idRaw, expectedRevision, patch, uploads = [], intent = "manual") {
       const { kind, id } = addr(kindRaw, idRaw);
-      return patchPiece(backend, pieceCacheToken, kind, id, expectedRevision, patch, uploads, clock, keepVersions, intent, options.coldFill);
+      return patchPiece(backend, pieceCacheToken, kind, id, expectedRevision, patch, uploads, clock, keepVersions, intent, options.coldFill, undefined,
+        (revision, change) => publishChange({ kind, id, revision, action: "upsert", invalidations: contentInvalidationRoots(change) }));
+    },
+
+    async patchWithCommit(kindRaw, idRaw, expectedRevision, patch, uploads, intent, extensionCommit) {
+      const { kind, id } = addr(kindRaw, idRaw);
+      return patchPiece(backend, pieceCacheToken, kind, id, expectedRevision, patch, uploads, clock, keepVersions, intent, options.coldFill, extensionCommit,
+        (revision, change) => publishChange({ kind, id, revision, action: "upsert", invalidations: contentInvalidationRoots(change), originPackageId: extensionCommit.packageId }));
     },
 
     async delete(kindRaw, idRaw, expectedRevision) {
       return Boolean(await store.deleteWithReceipt(kindRaw, idRaw, expectedRevision));
     },
 
-    async deleteWithReceipt(kindRaw, idRaw, expectedRevision) {
+    async deleteWithReceipt(kindRaw, idRaw, expectedRevision, extensionCommit) {
       const { kind, id } = addr(kindRaw, idRaw);
-      let receipt: Omit<import("../contracts/content-store").PieceChangeEvent, "sequence"> | null = null;
-      const deleted = await backend.bury(kind, id, crypto.randomUUID(), clock(), (committed) => { receipt = committed; }, expectedRevision);
+      const receipts: Omit<import("../contracts/content-store").PieceChangeEvent, "sequence">[] = [];
+      const deleted = await backend.bury(kind, id, crypto.randomUUID(), clock(), (committed) => { receipts.push(committed); }, expectedRevision, extensionCommit);
+      const receipt = receipts[0] ?? null;
+      if (deleted && receipt) publishChange({ kind, id, revision: receipt.revision ?? "", action: "delete", invalidations: ["*"], ...(extensionCommit ? { originPackageId: extensionCommit.packageId } : {}) });
       return deleted ? receipt : null;
     },
 
@@ -417,7 +418,7 @@ export function createContentStore(
       return graves.sort((a, b) => b.deletedAt - a.deletedAt || compareDocumentOrder(a, b));
     },
 
-    async restore(graveId) {
+    async restore(graveId, extensionCommit) {
       if (typeof graveId !== "string" || graveId === "") throw new StudioValidationError("restore needs a grave id");
       const grave = await backend.grave(graveId);
       if (!grave) return null;
@@ -431,7 +432,10 @@ export function createContentStore(
       const { graveId: _g, deletedAt: _d, ...own } = grave;
       // Always home, with its whole history: its id is retired, so nothing else can hold it. False
       // only when a purge removed the grave since the read.
-      return (await backend.unbury(graveId)) ? contentSummaryOf({ ...own, writeId: own.writeId + 1 }, decoded.entity) : null;
+      if (!(await backend.unbury(graveId, extensionCommit))) return null;
+      const restored = contentSummaryOf({ ...own, writeId: own.writeId + 1 }, decoded.entity);
+      publishChange({ kind: own.kind as EntityKind, id: own.id, revision: restored.revision, action: "upsert", invalidations: ["body"], ...(extensionCommit ? { originPackageId: extensionCommit.packageId } : {}) });
+      return restored;
     },
 
     async freeId(kindRaw, idRaw) {
@@ -475,22 +479,19 @@ export function createContentStore(
       return readStoredVersion(backend, kind, id, version);
     },
 
+    async readVersionHeld(kindRaw, idRaw, version) {
+      const { kind, id } = addr(kindRaw, idRaw);
+      return readStoredVersionHeld(backend, kind, id, version);
+    },
+
     async restoreVersion(kindRaw, idRaw, version) {
       const { kind, id } = addr(kindRaw, idRaw);
-      return restoreStoredVersion(backend, kind, id, version, keepVersions, clock);
+      const prior = await backend.get(kind, id);
+      const result = await restoreStoredVersion(backend, kind, id, version, keepVersions, clock);
+      if (result && prior?.revision !== result.revision) publishChange({ kind, id, revision: result.revision, action: "upsert", invalidations: ["body"] });
+      return result;
     },
   };
 
   return store;
-}
-
-/** A stamped summary's opaque text, parsed back; null (never a throw) on absence or corruption, so a
- *  reader falls back to that one row's body instead of failing the whole listing (fail closed). */
-function parseSummaryContent(text: string | null): PieceSummaryContent | null {
-  if (text === null) return null;
-  try {
-    return JSON.parse(text) as PieceSummaryContent;
-  } catch {
-    return null;
-  }
 }

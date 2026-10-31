@@ -14,6 +14,8 @@ import { checkVariantId, turnOpenConflict } from "../cast-rules";
 import { StudioConflictError } from "../../../studio/errors";
 import type { Delta } from "../../../core/scene-state/types";
 import type { ChatPrompting, ChatStore, Generation, JsonObject, Message, TurnCheckpoint, WriteGuard } from "../../contracts/chat-store";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import { extensionTurnOwnerOf, openExtensionTurnOwner, sameExtensionTurnOwner } from "../extension-turn-owner";
 import { checkConnection, checkGuard, checkLore, checkProgress, checkProps, checkTurnResult, checkTurnTarget } from "../chat-rules";
 import { checkPreset } from "../preset-rules";
 import { checkOpening } from "../opening-rules";
@@ -23,6 +25,9 @@ import { continuedGeneration } from "../continue-rules";
 import { checkRerun, traceWithRerun } from "../final-cut-rules";
 import type { ChatSqlKit } from "./chat-store-cuts";
 import { appendSwipe } from "./swipe-sql";
+import { requireExtensionCommit } from "./extension-commit-guard";
+import { requireCommitResource } from "../extension-commit-access";
+import { checkExtensionDeltas } from "../scene-state-rules";
 
 interface CheckpointSql {
   id: string;
@@ -34,6 +39,7 @@ interface CheckpointSql {
   trace_json: string | null;
   provider_request_id: string | null;
   deltas_json: string | null;
+  extension_owner_json: string | null;
   base_version: number;
   started_at: number;
   saved_at: number;
@@ -50,6 +56,7 @@ type TurnMethods = Pick<
   | "appendFinalCutRerun"
   | "beginTurn"
   | "saveCheckpoint"
+  | "appendPendingExtensionDeltas"
   | "commitTurn"
   | "dropTurn"
   | "resumeIncomplete"
@@ -65,7 +72,7 @@ type TurnMethods = Pick<
 >;
 
 /** Checkpoints joined to their branch and chat; `live` keeps only those a caller may see (rule 16). */
-const CHECKPOINTS = `SELECT c.id, b.chat_id, c.branch_id, c.kind, c.message_id, c.content, c.trace_json, c.provider_request_id, c.deltas_json, c.base_version, c.started_at, c.saved_at
+const CHECKPOINTS = `SELECT c.id, b.chat_id, c.branch_id, c.kind, c.message_id, c.content, c.trace_json, c.provider_request_id, c.deltas_json, c.extension_owner_json, c.base_version, c.started_at, c.saved_at
   FROM turn_checkpoints c JOIN branches b ON b.id = c.branch_id JOIN chats h ON h.id = b.chat_id`;
 const LIVE = "b.deleted_at IS NULL AND h.deleted_at IS NULL";
 
@@ -86,6 +93,7 @@ export function turnMethods(k: TurnSqlKit): TurnMethods {
     ...(r.trace_json === null ? {} : { trace: JSON.parse(cipher.open("turn_checkpoints.trace_json", r.trace_json)) as JsonObject }),
     ...(r.provider_request_id === null ? {} : { providerRequestId: cipher.open("turn_checkpoints.provider_request_id", r.provider_request_id) }),
     ...(r.deltas_json === null ? {} : { deltas: JSON.parse(cipher.open("turn_checkpoints.deltas_json", r.deltas_json)) as Delta[] }),
+    ...(r.extension_owner_json === null ? {} : { extensionOwner: openExtensionTurnOwner(cipher, r.extension_owner_json) }),
     baseVersion: r.base_version,
     startedAt: r.started_at,
     savedAt: r.saved_at,
@@ -117,10 +125,11 @@ export function turnMethods(k: TurnSqlKit): TurnMethods {
       return r ? (JSON.parse(cipher.open("swipe_traces.trace_json", r.trace_json)) as JsonObject) : null;
     },
 
-    async beginTurn(branchId, targetRaw, guard) {
+    async beginTurn(branchId, targetRaw, guard, extensionCommit) {
       const target = checkTurnTarget(targetRaw);
       const expected = checkGuard(guard);
       return k.write(() => {
+        if (extensionCommit) requireExtensionCommit(k.database, cipher, extensionCommit);
         const branch = k.writableBranch(branchId);
         if (!branch) return null;
         if (target.kind !== "reply") {
@@ -134,17 +143,24 @@ export function turnMethods(k: TurnSqlKit): TurnMethods {
         const id = k.newId();
         const t = k.clock();
         k.run(
-          "INSERT INTO turn_checkpoints (id, branch_id, kind, message_id, content, base_version, started_at, saved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO turn_checkpoints (id, branch_id, kind, message_id, content, base_version, started_at, saved_at, extension_owner_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
           id, branchId, target.kind, target.kind === "reply" ? null : target.messageId, cipher.seal("turn_checkpoints.content", ""), branch.version, t, t,
+          extensionCommit ? cipher.seal("turn_checkpoints.extension_owner_json", JSON.stringify(extensionTurnOwnerOf(extensionCommit))) : null,
         );
         return toCheckpoint(open(id)!);
       });
     },
 
-    async saveCheckpoint(turnId, progressRaw) {
+    async saveCheckpoint(turnId, progressRaw, extensionCommit) {
       const { content, trace, providerRequestId, deltas } = checkProgress(progressRaw);
       return (deltas === undefined ? saveWrite : longWrite)(() => {
-        if (!open(turnId)) return null;
+        if (extensionCommit) requireExtensionCommit(k.database, cipher, extensionCommit);
+        const checkpoint = open(turnId);
+        if (!checkpoint) return null;
+        const mergedDeltas = deltas === undefined ? undefined : [
+          ...deltas.filter(({ slot }) => !slot.startsWith("ext:")),
+          ...(checkpoint.deltas_json === null ? [] : (JSON.parse(cipher.open("turn_checkpoints.deltas_json", checkpoint.deltas_json)) as Delta[]).filter(({ slot }) => slot.startsWith("ext:"))),
+        ];
         // Omitted fields keep what an earlier save recorded: the request id arrives once, early.
         k.run(
           `UPDATE turn_checkpoints SET content = ?, trace_json = coalesce(?, trace_json),
@@ -152,19 +168,45 @@ export function turnMethods(k: TurnSqlKit): TurnMethods {
           cipher.seal("turn_checkpoints.content", content),
           trace === undefined ? null : sealTrace("turn_checkpoints.trace_json", trace),
           providerRequestId === undefined ? null : cipher.seal("turn_checkpoints.provider_request_id", providerRequestId),
-          deltas === undefined ? null : cipher.seal("turn_checkpoints.deltas_json", JSON.stringify(deltas)),
+          mergedDeltas === undefined ? null : cipher.seal("turn_checkpoints.deltas_json", JSON.stringify(mergedDeltas)),
           k.clock(), turnId,
         );
         return toCheckpoint(open(turnId)!);
       });
     },
 
-    async commitTurn(turnId, resultRaw, guard) {
+    async appendPendingExtensionDeltas(turnId, packageId, expectedVersion, deltasRaw, extensionCommit) {
+      const deltas = checkExtensionDeltas([...deltasRaw], packageId);
+      if (extensionCommit.operation !== "state.write.apply" || packageId !== extensionCommit.packageId || deltas.length === 0) {
+        throw new Error("pending extension state must stay inside its package namespace");
+      }
+      return longWrite(() => {
+        requireExtensionCommit(k.database, cipher, extensionCommit);
+        const checkpoint = open(turnId);
+        if (!checkpoint || checkpoint.base_version !== expectedVersion || checkpoint.kind === "continue") return false;
+        const owner = checkpoint.extension_owner_json === null ? undefined : openExtensionTurnOwner(cipher, checkpoint.extension_owner_json);
+        if (!sameExtensionTurnOwner(owner, extensionCommit)) return false;
+        const branch = k.branchRow(checkpoint.branch_id);
+        if (!branch || branch.chat_id !== checkpoint.chat_id || branch.version !== expectedVersion) return false;
+        requireCommitResource(extensionCommit, { kind: "scene", id: checkpoint.chat_id }, ["state"]);
+        requireCommitResource(extensionCommit, { kind: "take", id: checkpoint.branch_id }, ["state"]);
+        const existing = checkpoint.deltas_json === null ? [] : JSON.parse(cipher.open("turn_checkpoints.deltas_json", checkpoint.deltas_json)) as Delta[];
+        k.run("UPDATE turn_checkpoints SET deltas_json = ?, saved_at = ? WHERE id = ? AND base_version = ?",
+          cipher.seal("turn_checkpoints.deltas_json", JSON.stringify([...existing, ...deltas])), k.clock(), turnId, expectedVersion);
+        return true;
+      });
+    },
+
+    async commitTurn(turnId, resultRaw, guard, extensionCommit) {
       const { content, generation, trace, request } = checkTurnResult(resultRaw);
       const expected = checkGuard(guard);
       return longWrite(() => {
+        if (extensionCommit) requireExtensionCommit(k.database, cipher, extensionCommit);
         const c = open(turnId);
         if (!c) return null;
+        const pendingExtensionState = c.deltas_json !== null && (JSON.parse(cipher.open("turn_checkpoints.deltas_json", c.deltas_json)) as Delta[]).some(({ slot }) => slot.startsWith("ext:"));
+        const owner = c.extension_owner_json === null ? undefined : openExtensionTurnOwner(cipher, c.extension_owner_json);
+        if (pendingExtensionState && (!extensionCommit || !sameExtensionTurnOwner(owner, extensionCommit))) throw new StudioConflictError("the extension that owns pending state is no longer authorized to commit it");
         let messageId: string;
         let position: number;
         if (c.kind === "reply") {
@@ -226,8 +268,11 @@ export function turnMethods(k: TurnSqlKit): TurnMethods {
       });
     },
 
-    async dropTurn(turnId) {
-      return k.write(() => (open(turnId) ? k.run("DELETE FROM turn_checkpoints WHERE id = ?", turnId) > 0 : false));
+    async dropTurn(turnId, extensionCommit) {
+      return k.write(() => {
+        if (extensionCommit) requireExtensionCommit(k.database, cipher, extensionCommit);
+        return open(turnId) ? k.run("DELETE FROM turn_checkpoints WHERE id = ?", turnId) > 0 : false;
+      });
     },
 
     async resumeIncomplete() {

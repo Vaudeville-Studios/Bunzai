@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "bunzai.extension.prompt-contributor",
+  "version": "1.0.0",
+  "name": "Gentle prompt note",
+  "description": "Adds one short, package-owned system-stage candidate to an explicitly previewed prompt.",
+  "author": "Bunzai example",
+  "api": { "major": 1, "minMinor": 0, "maxMinor": 0 },
+  "entry": "main.js",
+  "requirements": [
+    { "operation": "prompts.contribute", "resources": ["scene"], "fields": ["system.append"], "methods": [], "destinations": [], "purpose": "Contribute one short note to scene-1 prompt previews", "required": true }
+  ],
+  "contributions": [
+    { "type": "prompt", "id": "gentle-tone", "label": "Gentle tone reminder", "stage": "system.append", "priority": 10, "required": false }
+  ]
+}

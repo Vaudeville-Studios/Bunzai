@@ -7,6 +7,7 @@
 import type { SlotDef } from "./types";
 
 const MEMBER_MAX = 120;
+const EXTENSION_SLOT_ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+:[a-z][a-z0-9._-]{0,63}$/;
 
 export function makeSlotOf(slots: readonly SlotDef[]): (id: string) => SlotDef | undefined {
   const exact = new Map<string, SlotDef>();
@@ -25,6 +26,9 @@ export function makeSlotOf(slots: readonly SlotDef[]): (id: string) => SlotDef |
     const own = exact.get(id);
     if (own) return own;
     const family = families.find((f) => id.startsWith(f.prefix));
-    return family && id !== `${family.prefix}*` && id.length > family.prefix.length && id.length - family.prefix.length <= MEMBER_MAX ? family.def : undefined;
+    if (!family || id === `${family.prefix}*` || id.length <= family.prefix.length) return undefined;
+    const member = id.slice(family.prefix.length);
+    if (family.prefix === "ext:") return EXTENSION_SLOT_ID.test(member) ? family.def : undefined;
+    return member.length <= MEMBER_MAX ? family.def : undefined;
   };
 }

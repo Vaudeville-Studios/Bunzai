@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/entities/skill",
   "sourcePath": "docs/reference/entities/skill.md",
-  "sourceHash": "sha256:24218039990e96fdddd37ba72185c65cd169205b2cfb854f6c4f49e554457116",
-  "semanticSummaryHash": "sha256:30794c426ba27a90ae0e17184ba67333f1c628fa834cd6995a2f50681dccf47c",
+  "sourceHash": "sha256:af28c7e4226dd0879625c0d759c5872aea8a69ba4fbf8ef1213bd75e4094fddb",
+  "semanticSummaryHash": "sha256:62497d67eb2a1c83f4c3719249362e5cce4173964b13488556c46c1083cefce5",
   "verdict": "APPROVE",
-  "reviewer": "promptbook_runtime_review",
-  "notes": "Source and summary accurately describe activation, state-scoped open and close, normal Skills block and named Promptbook placements. Fixed reservations and duplicate include rejection match source. UI and packaged evidence remain limited as documented; no suite run by this reviewer.",
-  "reviewedAt": "2026-10-30T13:04:08.479Z"
+  "reviewer": "root",
+  "notes": "Root independently approved documentation-summary accuracy for source SHA-256 af28c7e4226dd0879625c0d759c5872aea8a69ba4fbf8ef1213bd75e4094fddb. This approval covers documentation accuracy only, not security or release readiness.",
+  "reviewedAt": "2026-10-31T13:40:01.626Z"
 }

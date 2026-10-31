@@ -48,9 +48,9 @@ export async function runHistorian(deps: CompendiumDeps, chatId: string, branchI
   const had = await deps.chats.listReceipts(chatId, { branchId, messageId: boundaryId, limit: 200 });
   if (had.some((r) => r.kind === "historian" && r.swipeId === swipe.id)) return null;
 
-  const receipt = (await deps.chats.appendReceipt(chatId, { branchId, messageId: boundaryId, swipeId: swipe.id, kind: "historian" }))!;
+  const receipt = (await deps.chats.appendReceipt(chatId, { branchId, messageId: boundaryId, swipeId: swipe.id, kind: "historian" }, deps.extensionCommit))!;
   const settle = async (status: CompendiumReceipt["status"], extra: { reason?: string; writes?: ReceiptWrite[]; model?: string } = {}): Promise<CompendiumReceipt> => {
-    const done = await deps.chats.settleReceipt(receipt.id, { status, ...(extra.reason ? { reason: bounded(extra.reason) } : {}), ...(extra.writes ? { writes: extra.writes } : {}), ...(extra.model ? { model: extra.model } : {}) });
+    const done = await deps.chats.settleReceipt(receipt.id, { status, ...(extra.reason ? { reason: bounded(extra.reason) } : {}), ...(extra.writes ? { writes: extra.writes } : {}), ...(extra.model ? { model: extra.model } : {}) }, deps.extensionCommit);
     if (!done) throw new Error("the scene is gone");
     return done;
   };
@@ -58,7 +58,7 @@ export async function runHistorian(deps: CompendiumDeps, chatId: string, branchI
     return await run();
   } catch (error) {
     const now = await deps.chats.receipt(receipt.id);
-    if (now && (now.status === "queued" || now.status === "running")) await deps.chats.settleReceipt(receipt.id, { status: "failed", reason: bounded(toErrorMessage(error, "the historian failed")) }).catch(() => undefined);
+    if (now && (now.status === "queued" || now.status === "running")) await deps.chats.settleReceipt(receipt.id, { status: "failed", reason: bounded(toErrorMessage(error, "the historian failed")) }, deps.extensionCommit).catch(() => undefined);
     return (await deps.chats.receipt(receipt.id)) ?? null;
   }
 

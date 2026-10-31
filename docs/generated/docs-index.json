@@ -1,6 +1,6 @@
 {
   "generated": "2026-10-31",
-  "count": 133,
+  "count": 140,
   "docs": [
     {
       "id": "01-VISION",
@@ -1085,7 +1085,7 @@
       "summary": "**Status:** accepted, 2026-08-23 (proposed 2026-07-26) **Context owners:** `src/core/preset/macros/`, `src/sandbox/`, a future `src/core/macros/` **Supersedes nothing. Constrains:** any implementation of the macro engine",
       "tags": [],
       "related": [],
-      "semanticSummary": "Accepted on 2026-08-23, ADR-012 decides that macro evaluation is a closed-world interpreter rather than a second script sandbox. Bunzai cannot say whether a preset macro survives conversion because support.ts is name-level only: a missing name reliably dies, a present name proves nothing, and random with two arguments means different things on SillyTavern and RoleCall. Closing that gap needs the tokenizer, parser and tree-walking evaluator the macro engine spec designs, which collides with project rule 3 naming macros alongside Lua and regex as sealed payloads. The ADR narrows rule 3 in writing to Lua and regex, which keep ADR-009 isolation, and permits an in-process macro interpreter under bounded depth, output and steps, with no host surface, seeded randomness and clock, and unknown names degrading to literal text. Conversion still never evaluates: the Round-Trip Law boundary is promoted from spec text to accepted decision. Handlers are data-only, enforced by a registry test. Rejection means macro behavior can never be proven, only compared by name. A 2026-09-26 amendment adds chat display as a fourth caller, RoleCall's way: every message runs through the full engine when shown, against the chat's frozen cast, with a fresh caller-supplied seed and a discarded working copy of variables.",
+      "semanticSummary": "Accepted on 2026-08-23, ADR-012 decides that macro evaluation is a closed-world interpreter rather than a second script sandbox. Bunzai cannot say whether a preset macro survives conversion because support.ts is name-level only: a missing name reliably dies, a present name proves nothing, and random with two arguments means different things on SillyTavern and RoleCall. Closing that gap needs the tokenizer, parser and tree-walking evaluator the macro engine spec designs, which collides with project rule 3 naming macros alongside Lua and regex as sealed payloads. The ADR narrows rule 3 in writing to Lua and regex, which keep ADR-009 isolation, and permits an in-process macro interpreter under bounded depth, output and steps, with no host surface, seeded randomness and clock, and unknown names degrading to literal text. Conversion still never evaluates: the Round-Trip Law boundary is promoted from spec text to accepted decision. Handlers are data-only, enforced by a registry test. A 2026-09-26 amendment adds chat display as a fourth caller. Accepted ADR-015 adds a fifth: brokered macros.preview from a user-invoked, manifest-declared command, with per-request confirmation, read-only execution, regex disabled and no persistence. Import, save, codec, automatic hook and background paths remain excluded.",
       "topics": [
         "closed world interpreter",
         "rule 3 narrowed",
@@ -1129,12 +1129,12 @@
           "text": "Decision",
           "slug": "decision",
           "level": 2,
-          "summary": "The decision has five parts. Rule 3 is narrowed in writing to sealed script payloads, meaning Lua and regex, which keep ADR-009 isolation and remain the only execution paths that get it, with the AGENTS.md rule text updated in the same change that accepts this ADR. Macro evaluation is permitted as an in-process closed-world interpreter under src/core/macros subject to the stated constraints. Conversion still never evaluates: the macro engine spec edge case forbidding a codec from calling the evaluator during parse or serialize is promoted from spec text to accepted decision, so macro text stays opaque payload to every adapter. The evaluator is reachable from exactly four callers without a further ADR: the user-invoked test bench, the transfer compatibility report, future prompt assembly, and chat display, added by the 2026-09-26 amendment. Handlers are data-only, with filesystem, network, process, timer and dynamic-code operations prohibited and enforced by a registry test rather than by review alone.",
+          "summary": "The decision narrows rule 3 in writing to sealed Lua and regex payloads, which retain ADR-009 isolation, while permitting the in-process closed-world macro interpreter under the specified bounds. Conversion never evaluates macro text; the codec rule against evaluation during parse or serialize is accepted as a contract. The permitted caller list now has five entries: the user-invoked test bench, transfer compatibility report, future prompt assembly, chat display, and the bounded extension macros.preview caller accepted by ADR-015. The new caller must originate in an explicitly invoked manifest command and receive fresh host confirmation for each request; it evaluates once with read-only state and regex disabled. Other automatic extension activations remain excluded. Macro handlers remain data-only, with filesystem, network, process, timer and dynamic-code operations prohibited and enforced by a registry test.",
           "topics": [
             "rule 3 narrowed to Lua regex",
             "interpreter permitted in core",
             "codecs never evaluate",
-            "three permitted callers",
+            "five permitted callers",
             "handlers data only enforced"
           ],
           "children": []
@@ -1296,6 +1296,111 @@
             "injected terminal runner",
             "cross-process ownership gap",
             "source-only evidence"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "decisions/ADR-015-extension-runtime",
+      "path": "docs/decisions/ADR-015-extension-runtime.md",
+      "title": "ADR-015: Extension runtime and macro preview boundary",
+      "audience": "dev",
+      "summary": "**Status:** accepted, 2026-10-31 (independent root review) **Context owners:** extension runtime, macro evaluator **Depends on:** ADR-012",
+      "tags": [],
+      "related": [],
+      "semanticSummary": "ADR-015 amends ADR-012 to permit one brokered macros.preview call from a user-invoked, manifest-declared command. Each request requires fresh host confirmation; the bounded sample and explicit value context are shown without evaluation, then the existing closed-world evaluator runs once with read-only state and regex disabled. The handler has no persistence, provider, nested broker or host-service access. Broker-path, static Pages Browser and real QuickJS/TUI Terminal evidence cover the narrow caller on those hosts; packaged WebView behavior and broader runtime or release readiness remain unverified.",
+      "topics": [
+        "macro preview",
+        "fresh host confirmation",
+        "bounded read-only context",
+        "three-host evidence",
+        "release limits"
+      ],
+      "anchors": [
+        {
+          "text": "Amendment to ADR-012 Decision 4",
+          "slug": "amendment-to-adr-012-decision-4",
+          "level": 2,
+          "summary": "The amendment admits a fifth caller for the existing macro interpreter: an explicitly invoked manifest command calling macros.preview through the broker. The host reviews the bounded sample and supplied values before execution, and the handler evaluates only after approval, once, with read-only mode and regex disabled. It returns bounded rendered text and sanitized diagnostics without persisting state or invoking another capability.",
+          "topics": [
+            "command invocation",
+            "pre-execution review",
+            "one evaluator call",
+            "no persistence"
+          ],
+          "children": []
+        },
+        {
+          "text": "Acceptance evidence and limits",
+          "slug": "acceptance-evidence-and-limits",
+          "level": 2,
+          "summary": "Independent review accepted the narrow boundary. A broker-path test proves event activation is rejected, denial invokes the evaluator zero times, and approval invokes it once. The Desktop broker path, static Pages Browser probe and Terminal QuickJS/TUI path have been exercised. Those checks do not establish packaged WebView behavior, general host parity, package release readiness or completion of the extension runtime plan.",
+          "topics": [
+            "independent review",
+            "broker evidence",
+            "Pages Browser",
+            "Terminal TUI",
+            "unverified packaging"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "decisions/ADR-016-extension-command-and-prompt-hooks",
+      "path": "docs/decisions/ADR-016-extension-command-and-prompt-hooks.md",
+      "title": "ADR-016: Extension command registrations and prompt candidates",
+      "audience": "dev",
+      "summary": "**Status:** accepted, 2026-10-31 (root authorization) **Context owners:** extension runtime, operation catalog, roleplay core **Depends on:** ADR-015",
+      "tags": [],
+      "related": [],
+      "semanticSummary": "ADR-016 defines separate host-visible command registration and prompt-candidate operations. Commands remain manifest-declared; `commands.register` only replaces the installed package's enabled subset using trusted package identity and revision checks. Prompt hooks may contribute and then transform only their own invocation-local candidate, under separate grants and shared size/count bounds. Required failures abort before provider send; optional failures are counted by host control state and suspend after three consecutive failures. The ADR records the security semantics and evidence gates; it does not claim every host composition or release boundary is verified.",
+      "topics": [
+        "manifest-bound command IDs",
+        "host-visible registration subset",
+        "isolated prompt candidates",
+        "required and optional failures",
+        "host parity evidence"
+      ],
+      "anchors": [
+        {
+          "text": "Command registration",
+          "slug": "command-registration",
+          "level": 2,
+          "summary": "The manifest remains the identity and handler authority. Guest initialization binds handlers only to declared IDs; `commands.register` replaces the host-visible enabled subset with an exact manifest subset, using the current package identity and trusted commit revision. Install seeds all declared IDs to preserve existing behavior. The operation cannot add handlers, rename commands, change grants or control another package, and all activation paths must honor the stored subset.",
+          "topics": [
+            "manifest identity",
+            "exact replacement subset",
+            "trusted revision",
+            "activation enforcement"
+          ],
+          "children": []
+        },
+        {
+          "text": "Prompt contribution and transformation",
+          "slug": "prompt-contribution-and-transformation",
+          "level": 2,
+          "summary": "Prompt hooks run only at a host-owned active hook. A package may contribute one bounded candidate and later transform only that same package/hook candidate; it cannot replace the assembled prompt. Operations use separate grants and invocation-local state. Prompt activation admits only operations explicitly marked safe for that origin and still applies ordinary exact grants. Candidates are ordered deterministically and share count/byte limits. Required hook failure aborts before provider send; optional failures use host-owned control state, reset on success and suspend after three consecutive failures. Revocation is checked before accepting output, and failed or stale candidates are discarded.",
+          "topics": [
+            "per-hook candidate isolation",
+            "prompt-safe origin policy",
+            "deterministic ordering and bounds",
+            "revocation recheck",
+            "host-owned suspension"
+          ],
+          "children": []
+        },
+        {
+          "text": "Evidence required",
+          "slug": "evidence-required",
+          "level": 2,
+          "summary": "The ADR names the required evidence: exact command-subset validation and isolation, install defaults, disabled-command rejection on each composed host, per-hook contribution and transformation isolation, independent grants and common bounds. Catalog and UI metadata must come from source definitions. These are acceptance requirements, not proof that all host integrations or packaged behavior have passed.",
+          "topics": [
+            "registration isolation tests",
+            "hook isolation tests",
+            "catalog ownership",
+            "acceptance is evidence-gated"
           ],
           "children": []
         }
@@ -4425,7 +4530,7 @@
           "text": "Source of truth",
           "slug": "source-of-truth",
           "level": 2,
-          "summary": "The map names canonical, registry, adapter, loader, format overlay, MIME, bundles, derivation, database, encryption and entity owners, now including snapshots, the health check and the host-only care routes. Scale evidence is bounded and artifact-matched; CLI launch differs from desktop identity; source paths are reviewed while runtime metrics and physical RSS remain unproved.",
+          "summary": "The source map names canonical, registry, adapter, loader, overlay, MIME, bundle, derivation, persistence, encryption and entity owners, including snapshots, health and care routes. Appearance packages share a contract, inventory and runtime resolver; legacy import has a separate owner. Shared theme reads are in `extensions/theme-read-routes.ts`; Desktop and Pocket call them, while Studio polls revisions. Scale evidence is bounded; CLI launch differs from desktop identity, and runtime metrics and RSS remain unproved.",
           "topics": [
             "canonical and adapter owners",
             "registry and loader owners",
@@ -4745,7 +4850,7 @@
       "summary": "Auto-generated by `scripts/hooks/component-catalog.ts` from exported UI entries under pre-commit gate (`--check`) fails the commit when this file drifts from the real exports.",
       "tags": [],
       "related": [],
-      "semanticSummary": "Component catalog is the generated inventory of exported Bunzai UI entries. scripts/hooks/component-catalog.ts scans React components throughout src/ui plus exported create/build/swatch/inject helpers under src/ui/_shared. Authors do not hand-edit the markdown: regenerate it with bun run scripts/hooks/component-catalog.ts, and the pre-commit --check gate fails when live exports drift. Each row records Name, source File, TypeScript Signature, optional Doc blurb, and Styles class list. Before building a control, scan this catalog and reuse an existing entry rather than inventing a twin. The two tables distinguish React `.tsx` components from shared `.ts` UI helpers; that distinction is file shape and API role, not a claim that helpers are legacy or awaiting migration. Use the catalog as lookup authority for props and file homes; behavior and layout truth remain in reference/ui and the owning source. The catalog also includes the cover composer, context-menu button, reusable proscenium and capped LightRays effect used by the approved premiere layout. It also lists the Context wing parts under src/ui/apps/scenes/context (the wing shell and its resize edge, This turn, Next send, Lore & state with its Macros view, the pressure bar and the Memory controls), the Messenger shell, panels and settings rows under src/ui/apps/scenes/messenger, the Booth's Chat Summary row and Settings > Memory & Summaries. It also lists the shared RoomHeader (kicker, title, lede, actions) and Panel (framed section) components. The catalog now includes Promptbook phase, card and Board editors, Agent and Skill editors, shared Skill conditions and the model picker.",
+      "semanticSummary": "Component catalog is the generated inventory of exported Bunzai UI entries. scripts/hooks/component-catalog.ts scans React components throughout src/ui plus exported create/build/swatch/inject helpers under src/ui/_shared. Authors do not hand-edit the markdown: regenerate it with bun run scripts/hooks/component-catalog.ts, and the pre-commit --check gate fails when live exports drift. Each row records Name, source File, TypeScript Signature, optional Doc blurb, and Styles class list. Before building a control, scan this catalog and reuse an existing entry rather than inventing a twin. The two tables distinguish React `.tsx` components from shared `.ts` UI helpers; that distinction is file shape and API role, not a claim that helpers are legacy or awaiting migration. Use the catalog as lookup authority for props and file homes; behavior and layout truth remain in reference/ui and the owning source. Recent entries include the Extension manager, bounded renderer, settings editor, effect-review panel and command menus used by Library and Workbench. ScenePage exposes navigation-ticket and load identifiers for verified host navigation handoff. The catalog also includes the cover composer, context-menu button, reusable proscenium and capped LightRays effect used by the approved premiere layout. It also lists the Context wing, Messenger shell and panels, Booth Chat Summary, shared RoomHeader and Panel, Promptbook editors, Agent and Skill editors, shared Skill conditions and the model picker.",
       "topics": [
         "generated component catalog",
         "component-catalog.ts hook",
@@ -4776,16 +4881,16 @@
           "text": "Components (React, `.tsx`)",
           "slug": "components-react-tsx",
           "level": 2,
-          "summary": "The React table lists exported UI components by name, source file, TypeScript signature and optional documentation and styles links. It covers the shell, Dock, shared controls, Library, Workbench editors, Scenes, and Settings and documentation surfaces. BookCover composes lorebook presentation, Proscenium frames scene artwork, and LightRays supplies capped premiere beams. Rows are generated discovery metadata, not proof of behavior or a second registry; consult reference/ui and source for the live contract. It also lists the Stage AccentRow, Compendium Settings tab, the Participants rows with the Add participant form, the Storyboards dossier, the Props wing with its tracker panels, and the Messenger shell, panels, reply change visuals and settings rows (including the Compendium, Final Cut, models and prompt rows) and the shared VirtualRows and VirtualShelf lists. It lists the shared RoomHeader and Panel, the IconPicker and NumberInput controls and the field editor a tracker and a tool share, the Agent room's RoomFrame and DockedHead, EditorEhead with its optional kind and deck props, and the Settings StageLightsRow and ProtectedLine. New entries cover Promptbook views, Agent and Skill editing, shared conditions and model selection.",
+          "summary": "The React table lists exported UI components by name, source file, TypeScript signature and optional documentation and styles links. It covers the shell, Dock, shared controls, Library, Workbench editors, Scenes, Settings, and documentation surfaces. Recent extension entries include the manager, bounded renderer, settings editor, effect-review panel and host command menus. ScenePage exposes navigation-ticket and load identifiers for verified navigation handoff. BookCover composes lorebook presentation, Proscenium frames scene artwork, and LightRays supplies capped premiere beams. Rows are generated discovery metadata, not proof of behavior or a second registry; consult reference/ui and source for the live contract. It also lists Stage AccentRow, Compendium Settings, Participants, Storyboards, the Props wing, Messenger and shared virtualized lists. RoomHeader, Panel, IconPicker, NumberInput, Promptbook views, Agent and Skill editors, shared conditions and model selection also appear.",
           "topics": [
             "React tsx exports",
             "shell Dock App",
             "workbench editors presenters",
             "library settings docs apps",
             "signature and styles columns",
-            "Props wing and TrackHare",
-            "Messenger shell and settings rows",
-            "RoomHeader and Panel"
+            "RoomHeader and Panel",
+            "extension effect review and host command menus",
+            "ScenePage navigation handoff props"
           ],
           "children": []
         },
@@ -7387,7 +7492,7 @@
         "reference/entities/preset",
         "reference/formats/sillytavern"
       ],
-      "semanticSummary": "Prompt format entity is the canonical piece for SillyTavern instruct and context templates: a name plus optional instruct and context halves, each ST's own field names with scalar values, and optional notes. One piece holds both because ST binds them by name. Nothing applies it, since Bunzai has no text-completion connection; the Library card says so in a computed line and the Workbench opens it read-only. The sillytavern-promptformat codec reads either file or a master wrapper and writes one half back as its file or a pair as the wrapper; pairing happens in the Library import.",
+      "semanticSummary": "Prompt format entity is the canonical piece for SillyTavern instruct and context templates: a name plus optional instruct and context halves, each ST's own field names with scalar values, and optional notes. One piece holds both because ST binds them by name. Nothing applies it, since Bunzai has no text-completion connection; the Library card says so in a computed line and the Workbench opens it read-only. Extensions may stage reviewed changes to the stored name, scalar template fields and notes, but the templates remain inert and are not applied to prompt assembly. The sillytavern-promptformat codec reads either file or a master wrapper and writes one half back as its file or a pair as the wrapper; pairing happens in the Library import.",
       "topics": [
         "CanonicalPromptFormat",
         "instruct and context halves",
@@ -7849,7 +7954,7 @@
         "reference/entities/tracker",
         "reference/entities/tool"
       ],
-      "semanticSummary": "The skill entity page covers CanonicalSkill: instructions the model gets only when they matter, with a name, a one-line description the model reads when it may pick the skill, and macro-rendered text. A skill turns on always, when its triggers match, or while the model has it open, and its triggers are a lorebook entry's own fields matched by the lore engine's own matcher. A scene links skills by id in its prompting like tools and trackers, a turn reads them through its one library reader, and the ones on ride as one Skills block at the preset's skills marker, reserved by the budget so they are never dropped. The model opens and closes picked skills with open_skill and close_skill, kept in the skills scene-state slot. The Workbench editor supports activation and trigger editing. Promptbook cards provide named placements and Together groups with fixed budget protection; the scene panel and Kit editing remain unbuilt. Live verification remains unavailable.",
+      "semanticSummary": "The skill entity page covers CanonicalSkill: instructions the model gets only when they matter, with a name, a one-line description the model reads when it may pick the skill, and macro-rendered text. A skill turns on always, when its triggers match, or while the model has it open, and its triggers are a lorebook entry's own fields matched by the lore engine's own matcher. A scene links skills by id in its prompting like tools and trackers, a turn reads them through its one library reader, and the ones on ride as one Skills block at the preset's skills marker, reserved by the budget so they are never dropped. The model opens and closes picked skills with open_skill and close_skill, kept in the skills scene-state slot. The Workbench editor supports activation and trigger editing. Extensions may stage reviewed changes to the name, description or authored instructions as inert canonical text; draft review and apply own persistence. Promptbook cards provide named placements and Together groups with fixed budget protection. Live verification remains unavailable.",
       "topics": [
         "CanonicalSkill",
         "skillVerdict",
@@ -7905,7 +8010,7 @@
           "text": "Editing and placement",
           "slug": "editing-and-placement",
           "level": 2,
-          "summary": "The Workbench editor uses the existing revision-checked piece session for instructions, activation and shared triggers. Primary matches can require any or all, with older pieces defaulting to any. Promptbook Skill cards occupy named positions and can join adjacent Prompt cards in one message, retaining existing activation and fixed budget protection. Duplicate named-slot placement through include is refused. The dedicated scene Skills panel, manual close route and Kit authoring remain unbuilt; generic Kit piece operations work. Editor and placement evidence is unit based, with live UI verification blocked by browser access.",
+          "summary": "The Workbench editor uses the existing revision-checked piece session for instructions, activation and shared triggers. Extensions can stage a reviewed update to name, description or authored instructions through the semantic draft API; those values remain inert and require explicit host review and revision-matched apply. Primary matches can require any or all, with older pieces defaulting to any. Promptbook Skill cards occupy named positions and can join adjacent Prompt cards in one message, retaining existing activation and fixed budget protection. Duplicate named-slot placement through include is refused. The dedicated scene Skills panel and manual close route remain unbuilt. Editor and placement evidence is unit based, with live UI verification blocked by browser access.",
           "topics": [
             "skill editor",
             "open_skill",
@@ -8257,6 +8362,142 @@
       ]
     },
     {
+      "id": "reference/extending/api",
+      "path": "docs/reference/extending/api.md",
+      "title": "Generated extension API catalog",
+      "audience": "dev",
+      "summary": "Generated from `src/extensions/operations/`. Descriptors are the source of truth.",
+      "tags": [],
+      "related": [],
+      "semanticSummary": "This generated reference inventories the extension operations currently described by source-owned descriptors. Each row gives the operation ID, human-facing name, effect class, source-declared hosts, budget class and confirmation policy. The table helps locate an API and compare its broad effect boundary, but it does not replace the strict input and output contracts in the adjacent api.json data artifact. The generator derives both views from operation definitions so documentation follows the catalog rather than a second hand-maintained list. A descriptor's host list means that a concrete adapter is declared for that host; it is not proof that every required user flow is complete. The fixed required-family test remains the acceptance authority and may still fail for host combinations the plan requires. Package authors should pair this inventory with the SDK reference and host-aware package check, and users should inspect the operation's exact resource, field, destination and review requirements before granting access.",
+      "topics": [
+        "operation catalog",
+        "host declarations",
+        "effects and confirmation",
+        "generated schemas"
+      ],
+      "anchors": []
+    },
+    {
+      "id": "reference/extending/coverage",
+      "path": "docs/reference/extending/coverage.md",
+      "title": "Generated extension coverage",
+      "audience": "dev",
+      "summary": "Generated from source drop-ins. Absence from the operation catalog means unavailable.",
+      "tags": [],
+      "related": [],
+      "semanticSummary": "This generated coverage report combines discovered semantic capabilities, strict content field groups, source-declared operation availability by host, and per-host catalog totals. It distinguishes capabilities that exist in the application from those explicitly reviewed for extension exposure and backed by a strict operation adapter. Field groups do not imply access without a matching grant. Host rows describe generated descriptors and their adapter claims, not security certification or packaged release behavior. The fixed required-family test compares expected plan IDs and host combinations with the catalog and passes for this source snapshot. Terminal scene-composer draft control is excluded because that host has no scene-bound composer owner. Read the coverage with the normative matrix and host integration evidence; passing the matrix alone does not prove every release boundary.",
+      "topics": [
+        "capability inventory",
+        "field groups",
+        "host availability",
+        "required matrix remains red"
+      ],
+      "anchors": [
+        {
+          "text": "Semantic capability inventory",
+          "slug": "semantic-capability-inventory",
+          "level": 2,
+          "summary": "This section compares the capability modules discovered in the repository with the subset that has explicit extension exposure metadata and a corresponding strict operation descriptor. Discovery tells the application which semantic capabilities exist; it does not authorize an extension to invoke them. Exposure metadata is owned alongside the capability semantics and identifies the reviewed operation, fields, resources, confirmation, budget and supported hosts. The adapter count then reports whether a generated descriptor currently exists for that exposed operation. This relationship helps reveal capabilities that are still unreviewed or lack an operation adapter, while avoiding the assumption that every internal editor or Kit action should become an extension API. Counts are generated from the current source scan and catalog and should be checked alongside the fixed required-family acceptance test.",
+          "topics": [
+            "discovered capabilities",
+            "review metadata",
+            "strict adapters"
+          ],
+          "children": []
+        },
+        {
+          "text": "Strict content field groups",
+          "slug": "strict-content-field-groups",
+          "level": 2,
+          "summary": "This section lists the reviewed field groups available to scoped content read operations. Each group names a bounded projection rather than exposing an entire mutable stored entity. A package requests exact fields and resources, the grant matcher narrows those values, and the operation projects only the approved subset. Authored body access and binary media use separate operations and grants, keeping large payloads and sensitive authored content distinct from ordinary metadata. The inventory is generated from the field schemas, so changes to a group should be made in its source owner and then reflected by the catalog generator. A listed group is an available contract, not an implicit grant or a promise that every content kind has every field.",
+          "topics": [
+            "strict projections",
+            "exact field grants",
+            "separate body and asset access"
+          ],
+          "children": []
+        },
+        {
+          "text": "Host operation inventory",
+          "slug": "host-operation-inventory",
+          "level": 2,
+          "summary": "The host operation inventory enumerates generated operation IDs and the hosts listed by each source descriptor. It lets readers compare desktop, browser and terminal catalog contents and see operations restricted to one environment, such as graphical actions or native file flows. These are source claims backed by host composition and tests. The independent required-family fixture compares against fixed plan rows; it currently passes for this snapshot. Terminal scene-composer draft control remains excluded because there is no scene-bound Terminal composer owner, while nonvisual turn operations are included. The report is not a packaged-host or release certification.",
+          "topics": [
+            "operation IDs",
+            "declared hosts",
+            "independent acceptance matrix"
+          ],
+          "children": []
+        },
+        {
+          "text": "Host totals",
+          "slug": "host-totals",
+          "level": 2,
+          "summary": "The totals count how many generated descriptors currently include each host in their source metadata. A single operation is counted once per host, so totals across hosts may exceed the operation catalog size. These figures help track the breadth of declared support but do not measure user-flow completeness, test coverage, deployment behavior or security approval. The required-family test checks a different question: whether every plan-required operation is available on each expected host and no unexpected host is claimed. Host-specific integration tests supply evidence that a descriptor's service can actually work at its public boundary. Read the count only as an inventory snapshot, and refresh it from the generator whenever operation sources or supported host composition changes.",
+          "topics": [
+            "host totals",
+            "inventory counts",
+            "not release evidence"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "reference/extending/file-reader-test",
+      "path": "docs/reference/extending/file-reader-test.md",
+      "title": "Exercise the native file reader",
+      "audience": "dev",
+      "summary": "This fixture reads only a file you explicitly choose. Use a fresh temporary directory and the isolated Studio fixture; do not select a library, credential, or provider file.",
+      "tags": [],
+      "related": [],
+      "semanticSummary": "This guide exercises the extension file reader through a temporary artifact and the isolated desktop Studio fixture. It creates a unique directory and sample text file, packs the checked-in file-reader example, then installs it while granting only file picking and reading. The user selects the exact temporary path through the host action card and reviews the name and read limit before continuing. The result is checked for its bounded text preview, byte count, and digest. The guide states that the WebView packaging boundary has not been verified, avoiding a broader release claim.",
+      "topics": [
+        "temporary fixture",
+        "host file selection",
+        "packaging limits"
+      ],
+      "anchors": [
+        {
+          "text": "Build a temporary artifact",
+          "slug": "build-a-temporary-artifact",
+          "level": 2,
+          "summary": "The PowerShell setup creates a uniquely named temporary directory, writes a two-line sample, and packs the checked-in file-reader example to a file inside that same directory. The user retains both paths in variables for the following host exercise. Because the directory name includes a fresh GUID, these commands avoid clobbering an existing repository artifact or fixture. The guide does not remove the directory, so the selected sample and package remain available for inspection after the run.",
+          "topics": [
+            "GUID directory",
+            "sample file",
+            "packed example"
+          ],
+          "children": []
+        },
+        {
+          "text": "Exercise the production host path",
+          "slug": "exercise-the-production-host-path",
+          "level": 2,
+          "summary": "The user opens an isolated desktop fixture, reviews the package in Settings, approves only `files.pick` and `files.read`, and enables it. Running the example presents a host-owned file action card; the user chooses the temporary sample and explicitly reviews its filename and full-file limit before proceeding. The host-rendered result should include the name, byte count, SHA-256 digest, and first 2,000 text characters. Revoking the package should remove its command and result. File data moves as bounded chunks through the authenticated local API, not to a network destination.",
+          "topics": [
+            "exact file review",
+            "opaque handle",
+            "host-rendered result"
+          ],
+          "children": []
+        },
+        {
+          "text": "Limits",
+          "slug": "limits",
+          "level": 2,
+          "summary": "The selected file is bounded to 65,536 bytes for this example. File-action tickets expire, and the chosen handle is scoped to one invocation, package digest, grant revision, and runtime epoch. The document distinguishes the production QuickJS worker path from packaged deployment evidence: the current implementation has not been verified inside a packaged WebView runtime. A successful isolated desktop run therefore demonstrates the checked host path and its limit, not universal packaging support or a stronger filesystem guarantee.",
+          "topics": [
+            "byte limit",
+            "invocation-scoped ticket",
+            "WebView evidence"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
       "id": "reference/extending/make-a-theme",
       "path": "docs/reference/extending/make-a-theme.md",
       "title": "Make a theme",
@@ -8542,6 +8783,152 @@
             "exemption lists",
             "sceneField",
             "kind-lists guard"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "reference/extending/quickstart",
+      "path": "docs/reference/extending/quickstart.md",
+      "title": "Extension developer quickstart",
+      "audience": "dev",
+      "summary": "This exercise starts from an empty temporary folder, uses only the checked-in public example and CLI, and installs the packed artifact through Settings. It reads character names only. The optional library-wide read can be denied while the p",
+      "tags": [],
+      "related": [],
+      "semanticSummary": "This quickstart walks a developer from a checked-in extension example to a deterministic package artifact, a narrow permission review, and a host-rendered result. It uses a fresh temporary folder, validates the package for one host, and compares two pack outputs. The example asks for optional library metadata access and a required panel operation, showing how denial differs from install failure. The page explains the typed SDK bridge, preview/apply behavior, update and revoke semantics, host availability, and troubleshooting. Desktop and Browser command menus pass staged or active refs separately from guest input, with a 16-ref limit; Terminal has no current-piece selector, so commands must use explicit resource selectors supported by the operation. Three more examples cover draft review, scene events, and prompt contributions.",
+      "topics": [
+        "temporary package workflow",
+        "permission review",
+        "generated SDK",
+        "checked examples"
+      ],
+      "anchors": [
+        {
+          "text": "1. Copy a working example into a clean folder",
+          "slug": "1-copy-a-working-example-into-a-clean-folder",
+          "level": 2,
+          "summary": "The exercise starts from the checked-in character-audit example and copies its manifest and entry into a uniquely named temporary directory. It runs the host-aware package check, packs the same source twice, and compares artifact hashes to confirm deterministic output. Both commands validate and bundle without evaluating the entry file. The entry has a bounded UTF-8 size, and import rules restrict dependencies to package-local paths or the generated SDK. The temporary directory is deliberately unique so the workflow does not overwrite an existing fixture or repository file.",
+          "topics": [
+            "temporary source",
+            "package check",
+            "deterministic pack"
+          ],
+          "children": []
+        },
+        {
+          "text": "2. Review one optional permission and install",
+          "slug": "2-review-one-optional-permission-and-install",
+          "level": 2,
+          "summary": "The install walkthrough asks the developer to review the package identity and each operation request in Settings. `ui.panel.set` is needed to show the command result, while `content.list` is an optional library-wide metadata grant for character IDs, kinds, and names. The example does not request bodies, prompts, descriptions, or media. The first run denies the optional grant and demonstrates an actionable denial in the panel. A second permission review grants the scope, after which the same command lists bounded character names without changing library content.",
+          "topics": [
+            "optional grant",
+            "metadata scope",
+            "permission denial"
+          ],
+          "children": []
+        },
+        {
+          "text": "3. How the command and panel use the SDK",
+          "slug": "3-how-the-command-and-panel-use-the-sdk",
+          "level": 2,
+          "summary": "The SDK example imports `bunzai` from the generated package and defines a command handler with `bunzai.extension.define`. Its typed operation methods are wrappers over one broker bridge, rather than direct host callbacks. The command requests only the declared character metadata fields, then sends a value-only panel descriptor to the host. The manifest declares both operation permissions and the command and panel contribution IDs. The host validates the declared panel and draws it; extension code cannot return HTML, handler source, or permission controls. The broker checks grants at invocation time.",
+          "topics": [
+            "command registration",
+            "broker bridge",
+            "panel descriptor"
+          ],
+          "children": []
+        },
+        {
+          "text": "4. Update, disable, and revoke",
+          "slug": "4-update-disable-and-revoke",
+          "level": 2,
+          "summary": "Updates require a new package review when the artifact bytes change. The walkthrough recommends writing the updated package to a new file, checking its identity and digest, and reapproving only operation requests that remain acceptable. Disabling stops activation while preserving the installed package. Revoking removes grants and stops package-owned panels and actions. Removing the extension and its data also deletes its private settings and activity records, but it does not delete library content. These distinctions help developers document expected recovery behavior without implying that an old approval transfers to new bytes.",
+          "topics": [
+            "update review",
+            "disable",
+            "revoke and remove"
+          ],
+          "children": []
+        },
+        {
+          "text": "Preview and apply for content edits",
+          "slug": "preview-and-apply-for-content-edits",
+          "level": 2,
+          "summary": "Content mutation is staged as a preview or draft before persistence. The extension inspects the host's exact before-and-after review, then calls the corresponding apply operation with the expected revision and preview fingerprint. A preview alone does not save a change. Resource scope remains explicit: a grant for selected IDs covers those targets, while a library-wide grant is broader and needs deliberate review. The workflow separates proposed content from committed content and makes stale revisions visible instead of silently merging concurrent edits.",
+          "topics": [
+            "semantic draft",
+            "expected revision",
+            "selected resource"
+          ],
+          "children": []
+        },
+        {
+          "text": "Host availability",
+          "slug": "host-availability",
+          "level": 2,
+          "summary": "The generated catalog and host-aware check report which operations have concrete adapters on desktop, browser, and terminal. SDK types describe the source catalog, but an installed host determines whether a particular operation is available. Native file selection, network requests, UI gestures, and provider connections have host-specific boundaries. Desktop and Browser command menus attach staged or active refs as separate host context; Terminal has no current-piece selector or `--on` flag, so commands use explicit resource selectors supported by each operation. Naming an operation in a manifest does not make an unsupported host implementation appear. Developers should run `extensions:check` against the actual target host and keep example claims aligned with the adapters that have been exercised.",
+          "topics": [
+            "host adapters",
+            "availability check",
+            "truthful support",
+            "bounded separate invocation context"
+          ],
+          "children": []
+        },
+        {
+          "text": "Troubleshooting",
+          "slug": "troubleshooting",
+          "level": 2,
+          "summary": "The troubleshooting list maps common failures to specific checks: confirm operation IDs in the generated reference, validate the manifest and declared file paths, enable an installed package, and match contribution IDs to defined handlers. For access denial, inspect the exact operation, resources, and fields before granting anything. If an update stops working, review its new bytes and digest. Host-specific failures should be checked on that host rather than inferred from another composition. The guide links to generated API and SDK references for strict schemas and error codes.",
+          "topics": [
+            "operation IDs",
+            "manifest validation",
+            "host troubleshooting"
+          ],
+          "children": []
+        },
+        {
+          "text": "More checked workflows",
+          "slug": "more-checked-workflows",
+          "level": 2,
+          "summary": "Three checked examples extend the basic audit workflow. The draft-writer example stages a two-field character change and applies the reviewed fingerprint under an exact resource grant. The event-panel example subscribes to the safe `scene.opened` summary and displays it through the bounded panel API. The prompt-contributor example adds a manifest-declared candidate to one scene's system prompt stage during host preview. Each source can be copied to a temporary directory, checked for its target host, and packed. Manifest requirements describe requested scope but do not silently grant a library-wide resource selector.",
+          "topics": [
+            "draft example",
+            "event example",
+            "prompt example"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "reference/extending/sdk",
+      "path": "docs/reference/extending/sdk.md",
+      "title": "Generated guest SDK",
+      "audience": "dev",
+      "summary": "Generated from the operation catalog. Each convenience method calls the same `bunzai.call` bridge and is subject to the same authorization.",
+      "tags": [],
+      "related": [],
+      "semanticSummary": "This generated reference maps SDK convenience methods to canonical operation IDs and schema links. Each method uses the same `bunzai.call` bridge, and runtime schemas validate requests and responses at the broker. The SDK also exposes bounded host invocation refs through `bunzai.context.invocation.resources`; these refs are the union of host-selected resources covered by this package's approved grants, separate from guest input and not authority. The broker rechecks each operation against its exact grant before exposing narrowed access. Desktop and Browser menus attach staged or active pieces; Terminal has no current-piece selector and uses explicit operation selectors. Generated output should be refreshed from source rather than edited by hand.",
+      "topics": [
+        "generated SDK",
+        "single broker bridge",
+        "schemas",
+        "grants remain authoritative",
+        "host invocation context"
+      ],
+      "anchors": [
+        {
+          "text": "Host invocation context",
+          "slug": "host-invocation-context",
+          "level": 2,
+          "summary": "This section documents the typed `bunzai.context.invocation.resources` property. It is a read-only array of at most 16 host-selected resource refs covered by the package's approved grants, passed separately from command input. It is not filtered for one operation: the broker rechecks and narrows the resources against each exact operation grant before access. Desktop and Browser command menus attach Library staged refs or the Workbench active piece. Terminal has no current-piece or `--on` selector; handlers use explicit operation selectors where available. This distinction keeps examples honest about host support and authority.",
+          "topics": [
+            "read-only resource refs",
+            "separate from guest input",
+            "host-specific selection"
           ],
           "children": []
         }
@@ -10547,7 +10934,7 @@
       "summary": "Words that mean something particular in Bunzai, and the folder that owns each one. Read this before searching by name: several words here mean two different things, and a few folders are not what their names suggest. For where a specific fi",
       "tags": [],
       "related": [],
-      "semanticSummary": "The glossary answers two questions an agent or new contributor meets first: what does this word mean here, and which folder owns it. It opens with a table explaining every top-level folder, including the ones whose names mislead: src/studio is the Studio's disk storage while its screens live in src/ui, and src/docs is code that checks documentation rather than the documentation itself. Five word tables follow, grouped as the engine and formats, the Studio and Kit, the Stage chat runtime, encryption, and process and docs. Each row gives the word, its meaning in plain language as used in this repository, the owning file or folder, and the trap to avoid, since several words carry two meanings: spoke (a format hub versus a Stage provider), gate (Kit's apply-or-discard pause versus the commit checks), doctor (Kit's self-check versus the planned card health check), keyring (Bunzai's key store versus the Linux Secret Service), and sidecar (a docs summary file versus the Go companion). For finding a single file, the page points to the generated code map at docs/generated/CODE-MAP.md, which lists every source file with the first sentence of its opening comment. The page is kept true by bun run glossary:check, part of verify:ci, which fails when a path the page names no longer exists or when a folder directly under src/ is missing from the folder table. New piece-part, derived-result, PieceStore, search, cold-fill and performance-evidence terms identify the current owner and proof traps. Snapshot, health check, row fingerprint, set aside and Compendium terms name their owners and traps.",
+      "semanticSummary": "The glossary explains project vocabulary, folder ownership, and naming traps, then points readers to the generated code map for individual files. Its folder table includes src/shared for cross-domain helpers and describes src/extensions as the package catalog, SDK, approval lifecycle, and bounded QuickJS runtime. It distinguishes Lua and regex test benches from extension JavaScript guest workers; imported script content remains data until its specific supported isolated worker is invoked. The glossary also covers the engine and formats, Studio and Kit, Stage, encryption, Compendium, snapshots, health checks, and documentation process. Its check requires every direct src folder and every named path to remain valid.",
       "topics": [
         "glossary",
         "vocabulary",
@@ -10564,7 +10951,7 @@
           "text": "Where things live",
           "slug": "where-things-live",
           "level": 2,
-          "summary": "One row per top-level folder. core is the engine's pure center: canonical model, adapter contract, registry, and detection, importing no UI or storage. entities holds one folder per content kind with its schema, runtime check, and capabilities. formats holds one adapter folder per platform, found by folder name. studio is the Studio's disk storage (safe paths, atomic writes, settings, keep-both naming), not its screens, which are in ui, the Studio app with its server, shell, rooms, and desktop window. kit is the terminal agent; stage is the chat runtime being built; sandbox runs untrusted Lua, regex, and trigger scripts only inside isolated benches; site is the public website built into the Pages root; pocket is the in-memory browser build; mcp is protocol wire code; src/docs checks documentation rather than holding it; generated is script output never edited by hand; types holds declarations. specs, docs, scripts, and sidecar complete the map. The light-rays component folder owns the capped Vaudeville OGL spotlight and floor-fog renderer and CSS fallback; proscenium owns the reusable black theater frame, ruby curtains, hanging sign and artwork aperture.",
+          "summary": "One row per top-level folder. core is the pure engine center; entities owns schemas, runtime checks, and capabilities by content kind; formats holds discovered adapters. studio is disk storage, while screens live in ui. kit is the terminal agent; stage is the chat runtime. sandbox contains bounded Lua and regex test benches and extension JavaScript guest workers; imported scripts stay inert until a supported isolated worker runs. shared contains small cross-domain helpers. site is the Pages website; pocket the in-memory browser build; mcp the protocol wire; src/docs checks documentation; generated holds script output; types holds dependency declarations. specs, docs, scripts, and sidecar complete the map. Light-rays owns the capped Vaudeville OGL spotlight and fog renderer and CSS fallback; proscenium owns the reusable theater frame, curtains, sign, and artwork aperture.",
           "topics": [
             "source tree",
             "folders",
@@ -16281,7 +16668,7 @@
           "text": "Settings (drop-in sections)",
           "slug": "settings-drop-in-sections",
           "level": 2,
-          "summary": "Settings tabs derive from section modules and share AppContext persistence. The rail groups Your studio, The agent, The vault and The house, collapsing to chips in narrow panes; protected pages retain recognizable lock lines. Appearance owns themes, accents, chat layout, stage lights and theme package requests. Studio owns home app, first deck, publish targets and marker-checked engine roots, shared with Kit through engines.json. Models shares the provider vault with Kit and offers native keyless Ollama, configurable endpoints and 8K through 128K context choices; lookup cancellation, visible errors and manual model IDs remain available. Connections manages MCP, while Spotify uses the owner's Client ID. Security owns locking, passwords, recovery and health checks; Backups owns copies, restore and plain-folder export. Workbench, Memory and Summaries, Remote access, Updates and About remain separate sections. The library gate replaces the app while locked.",
+          "summary": "Settings tabs derive from section modules and share AppContext persistence. The rail groups Your studio, The agent, The vault and The house, collapsing to chips in narrow panes; protected pages retain recognizable lock lines. Extensions owns package review, operation and appearance grants, enable/disable/revoke, private-data usage and redacted receipt activity. Effect requests use expiring host-owned review tickets, and contributed descriptors render through shared host controls rather than extension HTML or CSS. Appearance owns theme selection, accents, chat layout and stage lights; package lifecycle and scopes use Extensions. Studio owns home app, first deck, publish targets and engine roots. Models shares the provider vault with Kit; Connections manages MCP, and Spotify uses the owner's Client ID. Security owns locking, passwords, recovery and health checks; Backups owns copies and restore. Workbench, Memory and Summaries, Remote access, Updates and About remain separate sections. The library gate replaces the app while locked.",
           "topics": [
             "drop-in SettingsSection",
             "registry-derived tabs",

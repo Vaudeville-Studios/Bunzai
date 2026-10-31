@@ -238,10 +238,12 @@ export class StudioStore {
    * Send-only-what-changed save: no whole-entity read or new studio stamp. The result carries the
    * exact listing snapshot the ContentStore committed, including the preserved studio stamp.
    */
-  async comparePatch(kindRaw: string, idRaw: string, expectedRevision: string, patch: PiecePatch, uploads: readonly PartBlob[] = [], intent: import("../stage/contracts/content-store").SaveIntent = "manual"): Promise<CompareSaveResult> {
+  async comparePatch(kindRaw: string, idRaw: string, expectedRevision: string, patch: PiecePatch, uploads: readonly PartBlob[] = [], intent: import("../stage/contracts/content-store").SaveIntent = "manual", extensionCommit?: import("../stage/contracts/extension-store").ExtensionCommitContext): Promise<CompareSaveResult> {
     const kind = assertStudioEntityKind(kindRaw);
     const id = assertSafeStudioId(idRaw);
-    const result = await this.content().patch(kind, id, expectedRevision, patch, uploads, intent);
+    const result = extensionCommit
+      ? await this.content().patchWithCommit(kind, id, expectedRevision, patch, uploads, intent, extensionCommit)
+      : await this.content().patch(kind, id, expectedRevision, patch, uploads, intent);
     if (result.status !== "saved") return { status: result.status };
     return {
       status: "saved",

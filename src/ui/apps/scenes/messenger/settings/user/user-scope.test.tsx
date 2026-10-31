@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { createElement, type JSX } from "react";
 import { SETTING_KEYS } from "../../../../../../studio/settings-shape";
 import type { AppContext } from "../../../../../app-contract";
-import { teardownAllDoms, type InstalledDom } from "../../../../../_shared/test-dom";
+import type { InstalledDom } from "../../../../../_shared/test-dom";
 import { MUSIC_TAB_PREF } from "../../../stage-music-core";
 import { installSingleDom, mountSingle } from "../../../single-wing-rig";
 import type { WingArgs } from "../../wing-props";
@@ -18,7 +18,7 @@ import { MachineRows } from "./studio";
 
 let installed: InstalledDom;
 beforeAll(() => { installed = installSingleDom(8353); });
-afterAll(async () => { await teardownAllDoms(); });
+afterAll(async () => { await installed.teardown(); });
 
 const rig = (): { env: RowEnv; ctx: AppContext; store: Map<string, unknown>; opened: string[]; apps: string[] } => {
   const store = new Map<string, unknown>();
@@ -28,7 +28,7 @@ const rig = (): { env: RowEnv; ctx: AppContext; store: Map<string, unknown>; ope
     prefs: { get: (k: string) => store.get(k), set: (k: string, v: unknown) => { store.set(k, v); } },
     apps: () => [{ id: "scenes", title: "The Scenes" }, { id: "library", title: "The Library" }],
     openApp: (id: string) => { apps.push(id); },
-    api: { formats: async () => [], listEntities: async () => [], sceneConnections: async () => [], spotifyGet: async () => { throw new Error("offline"); } },
+    api: { formats: async () => [], listEntities: async () => [], sceneConnections: async () => [], spotifyGet: async () => { throw new Error("offline"); }, extensions: { list: async () => [] } },
   } as unknown as AppContext;
   return { store, opened, apps, ctx, env: { ctx, repaint: () => undefined } };
 };

@@ -67,6 +67,7 @@ export function isHostOnlyRoute(p: string, method: string): boolean {
   return (
     p.startsWith("/api/remote/") ||
     p.startsWith("/api/library/") || // unlocking and changing the keys belong to the host alone
+    p.startsWith("/api/extensions/") || // package approval, grants and execution belong to the owning host
     p.startsWith("/api/updates/") || // version timeline + switch: never a guest's to drive
     p === "/api/update-check" || // even the outbound GitHub ping is the host's alone
     /**

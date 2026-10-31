@@ -36,6 +36,10 @@ import { MIGRATION_43_SCENE_STATE } from "./migration-43-scene-state";
 import { MIGRATION_44_VERSION_WRITES } from "./migration-44-version-writes";
 import { MIGRATION_45_GLOBAL_OPS } from "./migration-45-global-ops";
 import { MIGRATION_46_DRAMATURG } from "./migration-46-dramaturg";
+import { MIGRATION_47_EXTENSIONS } from "./migration-47-extensions";
+import { MIGRATION_48_STATE_REVISIONS } from "./migration-48-state-revisions";
+import { MIGRATION_49_EXTENSION_LOGS } from "./migration-49-extension-logs";
+import { MIGRATION_50_CHECKPOINT_EXTENSION_OWNER } from "./migration-50-checkpoint-extension-owner";
 
 export const MIGRATIONS: readonly Migration[] = [
   {
@@ -457,4 +461,8 @@ export const MIGRATIONS: readonly Migration[] = [
   MIGRATION_44_VERSION_WRITES,
   MIGRATION_45_GLOBAL_OPS,
   MIGRATION_46_DRAMATURG,
+  MIGRATION_47_EXTENSIONS,
+  MIGRATION_48_STATE_REVISIONS,
+  MIGRATION_49_EXTENSION_LOGS,
+  MIGRATION_50_CHECKPOINT_EXTENSION_OWNER,
 ];

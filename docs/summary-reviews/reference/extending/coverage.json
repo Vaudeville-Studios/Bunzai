@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/coverage",
+  "sourcePath": "docs/reference/extending/coverage.md",
+  "sourceHash": "sha256:a7a5d1aedf26c12b4a7617bd12bd187fe48c555c4c5a5ad2d4e6f11acd4d8d03",
+  "semanticSummaryHash": "sha256:67f09d9ba5d9f36dd023d89d434db7b9fde5553aea7d3d3fa3f9344c9c055af7",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Root independently approved documentation-summary accuracy for source SHA-256 a7a5d1aedf26c12b4a7617bd12bd187fe48c555c4c5a5ad2d4e6f11acd4d8d03. This approval covers documentation accuracy only, not security or release readiness.",
+  "reviewedAt": "2026-10-31T13:40:01.691Z"
+}

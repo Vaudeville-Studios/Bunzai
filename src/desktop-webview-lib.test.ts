@@ -1,6 +1,6 @@
-/** webviewWorkerEnv: on Linux the window worker gets its library from $XDG_RUNTIME_DIR, never from TMPDIR. */
+/** The window worker receives a verified physical native-library path on Linux and Windows. */
 import { afterAll, expect, test } from "bun:test";
-import { chmodSync, linkSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, linkSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { webviewWorkerEnv } from "./desktop-webview-lib";
@@ -8,6 +8,7 @@ import { webviewWorkerEnv } from "./desktop-webview-lib";
 const runtime = mkdtempSync(join(tmpdir(), "bunzai-runtime-"));
 afterAll(() => rmSync(runtime, { recursive: true, force: true }));
 const shipped = (arch: string): Buffer => readFileSync(join(import.meta.dir, "..", "node_modules", "webview-bun", "build", `libwebview-${arch}.so`));
+const shippedWindows = (): Buffer => readFileSync(join(import.meta.dir, "..", "node_modules", "webview-bun", "build", "libwebview.dll"));
 
 test.if(process.platform === "linux")("on Linux it unpacks the library into the runtime folder once and names it in WEBVIEW_PATH, keeping the rest", async () => {
   const env = await webviewWorkerEnv({ XDG_RUNTIME_DIR: runtime, TMPDIR: "/no/such/dir", HOME: "/home/x" }, "linux", "x64");
@@ -30,6 +31,38 @@ test("keeps the default off Linux, without a runtime folder, or when WEBVIEW_PAT
   expect(await webviewWorkerEnv({ XDG_RUNTIME_DIR: runtime }, "win32")).toBeNull();
   expect(await webviewWorkerEnv({}, "linux")).toBeNull();
   expect(await webviewWorkerEnv({ XDG_RUNTIME_DIR: runtime, WEBVIEW_PATH: "/opt/lib.so" }, "linux")).toBeNull();
+});
+
+test.if(process.platform === "win32")("Windows unpacks the embedded DLL under LocalAppData and preserves the caller environment", async () => {
+  const local = join(runtime, "windows-local");
+  mkdirSync(local);
+  const env = await webviewWorkerEnv({ LOCALAPPDATA: local, PATH: "kept" }, "win32", "x64");
+  const path = env?.["WEBVIEW_PATH"];
+  expect(path?.startsWith(join(local, "Bunzai", "webview"))).toBe(true);
+  expect(path?.endsWith(".dll")).toBe(true);
+  expect(readFileSync(path!).equals(shippedWindows())).toBe(true);
+  expect(env?.["PATH"]).toBe("kept");
+  const written = statSync(path!).mtimeMs;
+  expect((await webviewWorkerEnv({ LOCALAPPDATA: local }, "win32", "x64"))?.["WEBVIEW_PATH"]).toBe(path);
+  expect(statSync(path!).mtimeMs).toBe(written);
+});
+
+test.if(process.platform === "win32")("Windows refuses a reparse-point support directory and a modified cached DLL", async () => {
+  const local = join(runtime, "junction-local");
+  const outside = join(runtime, "junction-target");
+  mkdirSync(local);
+  mkdirSync(outside);
+  symlinkSync(outside, join(local, "Bunzai"), "junction");
+  expect(await webviewWorkerEnv({ LOCALAPPDATA: local }, "win32", "x64")).toBeNull();
+
+  const cleanLocal = join(runtime, "corrupt-local");
+  mkdirSync(cleanLocal);
+  const first = await webviewWorkerEnv({ LOCALAPPDATA: cleanLocal }, "win32", "x64");
+  const target = first?.["WEBVIEW_PATH"];
+  const altered = readFileSync(target!);
+  altered[0] = altered[0]! ^ 1;
+  writeFileSync(target!, altered);
+  expect(await webviewWorkerEnv({ LOCALAPPDATA: cleanLocal }, "win32", "x64")).toBeNull();
 });
 
 test.if(process.platform === "linux")("a runtime folder it cannot write to keeps the default instead of failing the launch", async () => {

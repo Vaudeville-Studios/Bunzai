@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/entities/skill",
   "sourcePath": "docs/reference/entities/skill.md",
-  "sourceHash": "sha256:24218039990e96fdddd37ba72185c65cd169205b2cfb854f6c4f49e554457116",
-  "summary": "The skill entity page covers CanonicalSkill: instructions the model gets only when they matter, with a name, a one-line description the model reads when it may pick the skill, and macro-rendered text. A skill turns on always, when its triggers match, or while the model has it open, and its triggers are a lorebook entry's own fields matched by the lore engine's own matcher. A scene links skills by id in its prompting like tools and trackers, a turn reads them through its one library reader, and the ones on ride as one Skills block at the preset's skills marker, reserved by the budget so they are never dropped. The model opens and closes picked skills with open_skill and close_skill, kept in the skills scene-state slot. The Workbench editor supports activation and trigger editing. Promptbook cards provide named placements and Together groups with fixed budget protection; the scene panel and Kit editing remain unbuilt. Live verification remains unavailable.",
+  "sourceHash": "sha256:af28c7e4226dd0879625c0d759c5872aea8a69ba4fbf8ef1213bd75e4094fddb",
+  "summary": "The skill entity page covers CanonicalSkill: instructions the model gets only when they matter, with a name, a one-line description the model reads when it may pick the skill, and macro-rendered text. A skill turns on always, when its triggers match, or while the model has it open, and its triggers are a lorebook entry's own fields matched by the lore engine's own matcher. A scene links skills by id in its prompting like tools and trackers, a turn reads them through its one library reader, and the ones on ride as one Skills block at the preset's skills marker, reserved by the budget so they are never dropped. The model opens and closes picked skills with open_skill and close_skill, kept in the skills scene-state slot. The Workbench editor supports activation and trigger editing. Extensions may stage reviewed changes to the name, description or authored instructions as inert canonical text; draft review and apply own persistence. Promptbook cards provide named placements and Together groups with fixed budget protection. Live verification remains unavailable.",
   "topics": [
     "CanonicalSkill",
     "skillVerdict",
@@ -62,8 +62,8 @@
       "slug": "editing-and-placement",
       "title": "Editing and placement",
       "level": 2,
-      "sourceHash": "sha256:8fdf289780a7372bcfe17478ac16a854a0acc1ef31e75f3faba4c25287d76223",
-      "summary": "The Workbench editor uses the existing revision-checked piece session for instructions, activation and shared triggers. Primary matches can require any or all, with older pieces defaulting to any. Promptbook Skill cards occupy named positions and can join adjacent Prompt cards in one message, retaining existing activation and fixed budget protection. Duplicate named-slot placement through include is refused. The dedicated scene Skills panel, manual close route and Kit authoring remain unbuilt; generic Kit piece operations work. Editor and placement evidence is unit based, with live UI verification blocked by browser access.",
+      "sourceHash": "sha256:cce64da0380e03c94a9b7cd8fe8f36eb8b0ca5fffc8e93681b79a1a8b2976473",
+      "summary": "The Workbench editor uses the existing revision-checked piece session for instructions, activation and shared triggers. Extensions can stage a reviewed update to name, description or authored instructions through the semantic draft API; those values remain inert and require explicit host review and revision-matched apply. Primary matches can require any or all, with older pieces defaulting to any. Promptbook Skill cards occupy named positions and can join adjacent Prompt cards in one message, retaining existing activation and fixed budget protection. Duplicate named-slot placement through include is refused. The dedicated scene Skills panel and manual close route remain unbuilt. Editor and placement evidence is unit based, with live UI verification blocked by browser access.",
       "topics": [
         "skill editor",
         "open_skill",

@@ -133,6 +133,13 @@ export class StudioConflictError extends Error {
   }
 }
 
+export class NoConnectionError extends StudioConflictError {
+  constructor(message = "this scene has no connection; pick one in the AI wing") {
+    super(message);
+    this.name = "NoConnectionError";
+  }
+}
+
 export const isStudioWriteError = (error: unknown): error is StudioWriteError =>
   error instanceof StudioWriteError || hasErrorName(error, "StudioWriteError");
 

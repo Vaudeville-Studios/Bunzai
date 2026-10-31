@@ -6,7 +6,7 @@ const command: KitCommand = {
   aliases: ["/q"],
   summary: "leave Kit",
   group: "session",
-  run: (ctx) => ctx.quit(),
+  run: (ctx) => { queueMicrotask(() => ctx.quit()); },
 };
 
 export default command;

@@ -61,7 +61,7 @@ const studioDir = join(homedir(), "Documents", "Bunzai Studio");
 // As the packaged app does: the window comes up first and
 // the encrypted library opens behind it; an unopened library.db would answer 423 forever.
 const library = createLibrary(studioDir);
-const { url: uiUrl, stop } = startUi(PORT, studioDir, undefined, library); // no packaged assets -> live source + dev watch
+const { url: uiUrl, stop, close } = startUi(PORT, studioDir, undefined, library); // no packaged assets -> live source + dev watch
 void library.open();
 console.log(`Bunzai (dev) is up at ${uiUrl} - live source, no rebuild needed`);
 
@@ -73,6 +73,7 @@ startDesktopWindow(() => new Worker(join(import.meta.dir, "desktop-window.ts")),
   openInBrowser(uiUrl);
 }, async () => {
   stop();
+  await close();
   await library.close();
   process.exit(0);
 });

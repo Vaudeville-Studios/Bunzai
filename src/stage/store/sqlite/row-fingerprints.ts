@@ -47,7 +47,7 @@ export const FP_SPECS: readonly FpSpec[] = [
   s("swipe_history", ["message_id", "swipe_id", "n"], ["content"], []),
   s("swipe_traces", ["message_id", "position"], ["trace_json"], []),
   s("director_states", ["message_id", "position"], ["cell"], ["version"]),
-  s("turn_checkpoints", ["id"], ["content", "trace_json", "provider_request_id", "deltas_json"], ["branch_id", "kind", "message_id", "base_version", "started_at", "saved_at"], 2), // v2: deltas_json (migration 43)
+  s("turn_checkpoints", ["id"], ["content", "trace_json", "provider_request_id", "deltas_json", "extension_owner_json"], ["branch_id", "kind", "message_id", "base_version", "started_at", "saved_at"], 3), // v3: extension_owner_json (migration 50); v2: deltas_json (migration 43)
   s("swipe_deltas", ["swipe_id", "seq"], ["path_json", "value_json"], ["slot", "removed", "at"]),
   s("message_deltas", ["message_id", "seq"], ["path_json", "value_json"], ["slot", "removed", "at", "swipe_id"], 2), // v2: swipe_id (migration 44)
   s("state_keyframes", ["branch_id", "message_id"], ["state_json"], []),
@@ -55,6 +55,14 @@ export const FP_SPECS: readonly FpSpec[] = [
   s("branch_state", ["branch_id"], ["state_json"], ["tip_message_id", "tip_swipe_id"]),
   s("branch_variables", ["branch_id"], ["variables_json"], []),
   s("scene_folders", ["id"], ["name"], ["created_at"]),
+  s("extension_packages", ["digest"], ["body_cell"], ["bytes"]),
+  s("extension_controls", ["id_hash"], ["body_cell"], ["revision"]),
+  s("extension_data", ["package_hash", "key_hash"], ["body_cell"], ["revision", "bytes"]),
+  s("extension_receipts", ["seq"], ["body_cell"], ["package_hash", "receipt_hash"]),
+  s("extension_logs", ["seq"], ["body_cell"], ["package_hash", "log_hash"]),
+  s("extension_budget_usage", ["package_hash", "operation_hash", "grant_revision"], ["body_cell"], []),
+  s("extension_budget_reservations", ["reservation_hash"], ["body_cell"], ["package_hash"]),
+  s("extension_runtime_lease", ["singleton"], ["owner_cell"], ["epoch", "expires_at", "last_now"]),
 ];
 
 export const specOf = (table: string): FpSpec | undefined => FP_SPECS.find((spec) => spec.table === table);

@@ -1,7 +1,7 @@
 /** History reads and restores, pinned to the live row's monotonic write identity. */
 import { COLD_READ_LIMIT } from "./cold-read-budget";
 import type { ParsedCanonicalEntity } from "../../entities/runtime-schema";
-import { StudioConflictError, StudioReadError } from "../../studio/errors";
+import { StudioConflictError } from "../../studio/errors";
 
 import type { DocumentBackend, EntityKind } from "../contracts/content-store";
 import { revisionFromParts } from "../../entities/canonical-revision";
@@ -10,32 +10,17 @@ import type { KnownBlobs } from "../../entities/piece-parts-blob";
 import { holdFill } from "./content-store-hold";
 import { contentSummaryOf, decode, restoreWrite } from "./content-store-write";
 import { buildSummary } from "./summary-content";
+import { readStableStoredVersion } from "./content-store-history-read";
 
 const MAX_HISTORY_ATTEMPTS = 5;
 
 export async function readStoredVersion(backend: DocumentBackend, kind: EntityKind, id: string, version: number): Promise<ParsedCanonicalEntity | null> {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const row = await backend.get(kind, id);
-    if (!row) return null;
-    const { rows, quarantined } = await backend.versions(kind, id);
-    const current = async () => (await backend.get(kind, id))?.writeId === row.writeId;
-    if (quarantined.includes(version)) {
-      if (!(await current())) continue;
-      throw new StudioReadError(`${kind} ${id} version ${version} is damaged`, "unreadable-json");
-    }
-    if (!rows.some((entry) => entry.version === version)) {
-      if (await current()) return null;
-      continue;
-    }
+  return readStableStoredVersion(backend, kind, id, version, async () => {
     const parts = await backend.parts(kind, id, version);
-    const latest = await backend.get(kind, id);
-    if (!latest) return null;
-    if (latest.writeId !== row.writeId) continue;
     if (!parts) return null;
     const decoded = decode(kind, id, parts);
     return decoded.ok ? decoded.entity : null;
-  }
-  throw new StudioConflictError(`${kind} ${id} changed repeatedly while reading history`);
+  });
 }
 
 export async function restoreStoredVersion(

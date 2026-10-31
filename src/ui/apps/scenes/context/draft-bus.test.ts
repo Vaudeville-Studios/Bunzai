@@ -1,6 +1,11 @@
 /** The draft bus: caret inserts, draft inserts, and mentions queued until a composer registers (Ping with no composer open). */
-import { describe, expect, test as it } from "bun:test";
-import { insertAtCaret, insertIntoDraft, queueForDraft, registerInserter } from "./draft-bus";
+import { afterAll, beforeAll, describe, expect, test as it } from "bun:test";
+import { installDom, type InstalledDom } from "../../../_shared/test-dom";
+import { insertAtCaret, insertIntoDraft, queueForDraft, registerDraftReplacer, registerInserter, replaceComposerDraft } from "./draft-bus";
+
+let installed: InstalledDom;
+beforeAll(() => { installed = installDom("<!doctype html><html><body></body></html>", { url: "http://127.0.0.1:8324/", extraGlobals: ["CustomEvent"] }); });
+afterAll(async () => installed.teardown());
 
 describe("insertAtCaret", () => {
   it("fills an empty draft", () => expect(insertAtCaret("", "@Vera", 0, 0)).toEqual({ text: "@Vera", caret: 5 }));
@@ -51,5 +56,18 @@ describe("queueForDraft", () => {
     const got: string[] = [];
     registerInserter("q3", (p) => { got.push(p); return true; })();
     expect(got).toEqual(["@Vera"]);
+  });
+});
+
+describe("replaceComposerDraft", () => {
+  it("invokes the registered draft replacement callback once", async () => {
+    const applied: string[] = [];
+    const off = registerDraftReplacer("replace-1", (text) => { applied.push(text); return true; });
+    await expect(replaceComposerDraft("replace-1", "reviewed replacement", 50)).resolves.toBe(true);
+    expect(applied).toEqual(["reviewed replacement"]);
+    off();
+  });
+  it("returns stale when no composer accepts the replacement", async () => {
+    expect(await replaceComposerDraft("replace-missing", "not applied", 1)).toBe(false);
   });
 });

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "reference/architecture",
   "sourcePath": "docs/reference/architecture.md",
-  "sourceHash": "sha256:71efe7756fdaeae512f8611c8e50ecce6661f1bbdd2026696355bf851c011103",
+  "sourceHash": "sha256:3af8f6331c7c0444a1897d5cbaa3c5bdc2386b408dd8e3c873b87bc605812c7c",
   "summary": "This reference maps Bunzai's canonical conversion engine, scene runtime and host layers. Every external format maps through one canonical superset; escrow retains original source and binary carriers without carrying private or executable payloads across formats. KindAdapter contracts, exhaustive shape parity and strict canonical decoders reject schema drift, while serialization reports describe loss. Detection ranks kind-correct adapters and folder discovery supplies the registry. Bundles extract and re-embed lorebooks. Semantic capabilities cover pure previews, progressive discovery, bounded reads, persistent drafts, result eviction and paging, independently approved documentation, and explicit durable apply with revision checks and re-read verification. Layering reuses the same engine across the CLI, installed Studio and static browser Studio. The encrypted stage separates versioned pieces, Studio documents and chats; folders remain import/export boundaries. Its source map names database, crypto, snapshot, health, asset and search owners. Scale and release claims require bounded, artifact-matched evidence. The reusable roleplay source API keeps the current canonical turn orchestration and injects stores, providers and readers. Its runtime owns live turns, gates, tracker rounds, recovery and accepted host task completion through shutdown. Desktop consumes it; a caller-owned terminal runner is unit-proven. Browser bundling and a scripted Node turn establish source compatibility only. A standalone shared-library terminal command awaits durable cross-process checkpoint ownership; packaged release behavior remains separately unverified.",
   "topics": [
     "hub and spoke conversion",
@@ -233,8 +233,8 @@
       "slug": "source-of-truth",
       "title": "Source of truth",
       "level": 2,
-      "sourceHash": "sha256:242bb034f071c3e274a97e3e08a50306407dbfccbea9f74fc707643b7f4099ec",
-      "summary": "The map names canonical, registry, adapter, loader, format overlay, MIME, bundles, derivation, database, encryption and entity owners, now including snapshots, the health check and the host-only care routes. Scale evidence is bounded and artifact-matched; CLI launch differs from desktop identity; source paths are reviewed while runtime metrics and physical RSS remain unproved.",
+      "sourceHash": "sha256:f423d3d4e7821535244686b33afe645b86d07239f308e034c3c8612e7912d0da",
+      "summary": "The source map names canonical, registry, adapter, loader, overlay, MIME, bundle, derivation, persistence, encryption and entity owners, including snapshots, health and care routes. Appearance packages share a contract, inventory and runtime resolver; legacy import has a separate owner. Shared theme reads are in `extensions/theme-read-routes.ts`; Desktop and Pocket call them, while Studio polls revisions. Scale evidence is bounded; CLI launch differs from desktop identity, and runtime metrics and RSS remain unproved.",
       "topics": [
         "canonical and adapter owners",
         "registry and loader owners",

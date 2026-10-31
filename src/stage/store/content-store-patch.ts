@@ -15,7 +15,8 @@ import { hasValidFolderParents } from "../../entities/lorebook/folder-edges";
 import type { Original } from "../../core/canonical";
 import { deepEq, isRecord as record, isRecord } from "../../core/guards";
 import { StudioReadError, StudioValidationError } from "../../studio/errors";
-import type { DocumentBackend, EntityKind, PartBlob, PiecePatch, SaveIfUnchangedResult, SaveIntent } from "../contracts/content-store";
+import type { DocumentBackend, EntityKind, PartBlob, PartChange, PiecePatch, SaveIfUnchangedResult, SaveIntent } from "../contracts/content-store";
+import type { ExtensionCommitContext } from "../contracts/extension-store";
 import { ColdReadDamageError, contentSummaryOf, diffAgainst } from "./content-store-write";
 import { holdFill } from "./content-store-hold";
 import { hashHex } from "../../core/sha256";
@@ -378,6 +379,8 @@ export async function patchPiece(
   keepVersions: number,
   intent: SaveIntent = "manual",
   coldFill?: (kind: EntityKind, id: string, writeId: number, mode?: "hold") => Promise<{ writeId: number; filled: { entity: ParsedCanonicalEntity; parts: PartRecord[] }; valid(): boolean; release(): void } | { status: "missing" | "stale" }>,
+  extensionCommit?: ExtensionCommitContext,
+  onCommitted?: (revision: string, change: PartChange) => void,
 ): Promise<SaveIfUnchangedResult> {
   const kind = kindRaw;
   let coldValid: (() => boolean) | undefined;
@@ -463,7 +466,7 @@ export async function patchPiece(
   const wrote = await backend.write(
     nextRow,
     { kind, id, version: nextVersion, revision, savedAt: t, reason: intent === "autosave" ? "autosave" : "save", autosaveStartedAt },
-    { when: "writeId", expected: row.writeId, ...(coldValid ? { valid: coldValid } : {}) },
+    { when: "writeId", expected: row.writeId, ...(coldValid ? { valid: coldValid } : {}), ...(extensionCommit ? { extensionCommit } : {}) },
     summary,
     change,
   );
@@ -473,6 +476,7 @@ export async function patchPiece(
     dropCachedPiece(token, kind, id);
     return (await backend.get(kind, id)) ? { status: "stale" } : { status: "missing" };
   }
+  onCommitted?.(revision, change);
   await backend.pruneVersions(kind, id, keepVersions);
   if (coldValid && !coldValid()) {
     dropCachedPiece(token, kind, id);

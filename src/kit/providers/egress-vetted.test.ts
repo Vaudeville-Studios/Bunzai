@@ -34,6 +34,22 @@ test("the request connects to the one vetted address, resolved once, with the or
   expect(url.href).toBe("https://cdn.example/a.png");
 });
 
+test("a live authority check runs after DNS validation immediately before every redirect-hop request", async () => {
+  const order: string[] = [];
+  const deps: VettedDeps = {
+    resolve: async (host) => { order.push(`dns:${host}`); return [PUBLIC]; },
+    send: async (request) => { order.push(`send:${request.url.hostname}`); return request.url.pathname === "/start" ? new Response(null, { status: 302, headers: { location: "https://other.example/end" } }) : ok(); },
+  };
+  await guardedFetchVetted("https://cdn.example/start", { assertCurrent: async () => { order.push("authority"); } }, deps);
+  expect(order).toEqual(["dns:cdn.example", "authority", "send:cdn.example", "dns:other.example", "authority", "send:other.example"]);
+
+  let sent = false;
+  await expect(guardedFetchVetted("https://cdn.example/a", { assertCurrent: async () => { throw new EgressBlocked("access changed"); } }, {
+    resolve: async () => [PUBLIC], send: async () => { sent = true; return ok(); },
+  })).rejects.toThrow("access changed");
+  expect(sent).toBe(false);
+});
+
 test("a name with any private answer, or no answer, is refused before anything is sent", async () => {
   const d = rig({ "evil.example": [PUBLIC, "127.0.0.1"], "lan.example": ["192.168.0.5"] });
   for (const link of ["https://evil.example/a", "https://lan.example/a", "https://127.0.0.1/a", "https://[::1]/a", "https://nowhere.example/a"]) {
@@ -74,6 +90,30 @@ test("a body past the byte cap errors the stream instead of delivering the rest"
   expect(total).toBeLessThanOrEqual(4096);
 });
 
+test("every status body is capped, and a mutating redirect is canceled without replay", async () => {
+  const chunk = new Uint8Array(64);
+  const tooLarge = new Response(new ReadableStream<Uint8Array>({ start: (c) => c.enqueue(chunk) }), { status: 429 });
+  const limited = await guardedFetchVetted("https://cdn.example/a", { maxBytes: 16 }, rig({ "cdn.example": [PUBLIC] }, () => tooLarge));
+  await expect(limited.response.arrayBuffer()).rejects.toBeInstanceOf(EgressBlocked);
+
+  let canceled = false;
+  const redirect = new Response(new ReadableStream({ cancel: () => { canceled = true; } }), { status: 307, headers: { location: "https://cdn.example/again" } });
+  const d = rig({ "cdn.example": [PUBLIC] }, () => redirect);
+  await expect(guardedFetchVetted("https://cdn.example/write", { method: "POST", body: new TextEncoder().encode("{}") }, d)).rejects.toBeInstanceOf(EgressBlocked);
+  expect(canceled).toBe(true);
+  expect(d.sent).toHaveLength(1);
+});
+
+test("vetted requests carry an explicit method and bounded caller body; GET bodies are refused", async () => {
+  const d = rig({ "cdn.example": [PUBLIC] });
+  const body = new TextEncoder().encode("{\"ok\":true}");
+  await guardedFetchVetted("https://cdn.example/write", { method: "POST", body }, d);
+  expect(d.sent[0]!.method).toBe("POST");
+  expect([...d.sent[0]!.body!]).toEqual([...body]);
+  await expect(guardedFetchVetted("https://cdn.example/read", { body }, d)).rejects.toBeInstanceOf(EgressBlocked);
+  await expect(guardedFetchVetted("https://cdn.example/write", { method: "PUT", body: new Uint8Array(1_048_577) }, d)).rejects.toBeInstanceOf(EgressBlocked);
+});
+
 test("the caller's signal and the time cap both reach the transport", async () => {
   const d = rig({ "cdn.example": [PUBLIC] });
   const controller = new AbortController();
@@ -93,14 +133,14 @@ import { Readable } from "node:stream";
 import type { request as httpsRequest } from "node:https";
 import { pinnedSender } from "./egress";
 
-interface Seen { options: Parameters<typeof httpsRequest>[0] & { lookup?: (h: string, o: object, cb: (...a: unknown[]) => void) => void } }
+interface Seen { options: { hostname: string; port: number; path: string; method?: string; headers?: Record<string, string>; lookup?: (h: string, o: object, cb: (...a: unknown[]) => void) => void }; body?: Uint8Array }
 function connector(reply: (n: number) => { status: number; headers?: Record<string, string> }): { request: typeof httpsRequest; seen: Seen[] } {
   const seen: Seen[] = [];
   const request = ((options: Seen["options"], cb: (res: Readable & { statusCode: number; headers: Record<string, string> }) => void) => {
     seen.push({ options });
     const r = reply(seen.length);
     const handlers: Record<string, (e: Error) => void> = {};
-    return { on: (ev: string, fn: (e: Error) => void) => { handlers[ev] = fn; }, end: () => cb(Object.assign(Readable.from([Buffer.from("ok")]), { statusCode: r.status, headers: r.headers ?? {} })) };
+    return { on: (ev: string, fn: (e: Error) => void) => { handlers[ev] = fn; }, end: (body?: Uint8Array) => { seen.at(-1)!.body = body; cb(Object.assign(Readable.from([Buffer.from("ok")]), { statusCode: r.status, headers: r.headers ?? {} })); } };
   }) as unknown as typeof httpsRequest;
   return { request, seen };
 }
@@ -120,6 +160,15 @@ test("the real transport connects to the vetted address while the request keeps 
   expect(opts.path).toBe("/a.png?x=1");
   expect(opts.headers["accept"]).toBe("image/*");
   expect(lookupOf(c.seen[0]!)).toBe(PUBLIC);
+});
+
+test("the pinned HTTPS sender preserves an explicit method and sends only the supplied bytes", async () => {
+  const c = connector(() => ({ status: 200 }));
+  const body = new TextEncoder().encode("payload");
+  await pinnedSender(c.request)({ url: new URL("https://cdn.example/write"), address: PUBLIC, headers: {}, signal: new AbortController().signal, method: "PATCH", body });
+  expect(c.seen[0]!.options.method).toBe("PATCH");
+  expect([...c.seen[0]!.body!]).toEqual([...body]);
+  expect(c.seen[0]!.options.headers).toEqual({ "accept-encoding": "identity" });
 });
 
 test("a second resolution to another address is never used: the name is resolved once and every hop connects to its own vetted address", async () => {

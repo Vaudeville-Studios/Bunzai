@@ -8,6 +8,7 @@
  */
 import { Webview, SizeHint } from "webview-bun";
 import { nameProcessForDesktop } from "./desktop-app-id";
+import { setExecutableWindowIcon } from "./desktop-window-icon";
 
 declare const self: Worker;
 
@@ -21,6 +22,7 @@ self.onmessage = (event: MessageEvent<{ url: string; title?: string }>) => {
   });
   wv.title = title;
   wv.navigate(event.data.url);
-  wv.run(); // blocks THIS worker until the user closes the window
+  const releaseIcon = setExecutableWindowIcon(wv.unsafeWindowHandle);
+  try { wv.run(); } finally { releaseIcon(); } // blocks THIS worker until close; icon handles outlive the HWND
   self.postMessage({ closed: true });
 };

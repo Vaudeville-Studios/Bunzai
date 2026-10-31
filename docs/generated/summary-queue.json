@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-30",
+  "generated": "2026-10-31",
   "targetChars": 90000,
-  "totalPages": 133,
-  "totalSourceChars": 1629903,
+  "totalPages": 140,
+  "totalSourceChars": 1696826,
   "batches": [
     {
       "id": "batch-001",
-      "sourceChars": 89591,
+      "sourceChars": 82922,
       "pages": [
         {
           "docId": "01-VISION",
@@ -117,7 +117,7 @@
           "sourcePath": "docs/decisions/ADR-012-macro-evaluation-boundary.md",
           "sidecarPath": "docs/summaries/decisions/ADR-012-macro-evaluation-boundary.json",
           "sectionCount": 7,
-          "sourceChars": 8492,
+          "sourceChars": 8855,
           "status": "APPROVED"
         },
         {
@@ -134,6 +134,22 @@
           "sidecarPath": "docs/summaries/decisions/ADR-014-reusable-roleplay-core.json",
           "sectionCount": 2,
           "sourceChars": 2312,
+          "status": "APPROVED"
+        },
+        {
+          "docId": "decisions/ADR-015-extension-runtime",
+          "sourcePath": "docs/decisions/ADR-015-extension-runtime.md",
+          "sidecarPath": "docs/summaries/decisions/ADR-015-extension-runtime.json",
+          "sectionCount": 2,
+          "sourceChars": 3285,
+          "status": "APPROVED"
+        },
+        {
+          "docId": "decisions/ADR-016-extension-command-and-prompt-hooks",
+          "sourcePath": "docs/decisions/ADR-016-extension-command-and-prompt-hooks.md",
+          "sidecarPath": "docs/summaries/decisions/ADR-016-extension-command-and-prompt-hooks.json",
+          "sectionCount": 3,
+          "sourceChars": 3921,
           "status": "APPROVED"
         },
         {
@@ -167,7 +183,13 @@
           "sectionCount": 4,
           "sourceChars": 5595,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-002",
+      "sourceChars": 89339,
+      "pages": [
         {
           "docId": "guide/faq",
           "sourcePath": "docs/guide/faq.md",
@@ -181,15 +203,9 @@
           "sourcePath": "docs/guide/getting-started.md",
           "sidecarPath": "docs/summaries/guide/getting-started.json",
           "sectionCount": 5,
-          "sourceChars": 6403,
+          "sourceChars": 6415,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-002",
-      "sourceChars": 85728,
-      "pages": [
+        },
         {
           "docId": "guide/importing",
           "sourcePath": "docs/guide/importing.md",
@@ -269,7 +285,13 @@
           "sectionCount": 6,
           "sourceChars": 6991,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-003",
+      "sourceChars": 66802,
+      "pages": [
         {
           "docId": "guide/platforms/pygmalion",
           "sourcePath": "docs/guide/platforms/pygmalion.md",
@@ -285,13 +307,7 @@
           "sectionCount": 3,
           "sourceChars": 3575,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-003",
-      "sourceChars": 56163,
-      "pages": [
+        },
         {
           "docId": "guide/platforms/risu",
           "sourcePath": "docs/guide/platforms/risu.md",
@@ -360,14 +376,14 @@
     },
     {
       "id": "batch-004",
-      "sourceChars": 54466,
+      "sourceChars": 54573,
       "pages": [
         {
           "docId": "reference/architecture",
           "sourcePath": "docs/reference/architecture.md",
           "sidecarPath": "docs/summaries/reference/architecture.json",
           "sectionCount": 14,
-          "sourceChars": 34184,
+          "sourceChars": 34291,
           "status": "APPROVED"
         },
         {
@@ -390,14 +406,14 @@
     },
     {
       "id": "batch-005",
-      "sourceChars": 173092,
+      "sourceChars": 174190,
       "pages": [
         {
           "docId": "reference/components",
           "sourcePath": "docs/reference/components.md",
           "sidecarPath": "docs/summaries/reference/components.json",
           "sectionCount": 3,
-          "sourceChars": 173092,
+          "sourceChars": 174190,
           "status": "APPROVED"
         }
       ]
@@ -506,7 +522,7 @@
     },
     {
       "id": "batch-007",
-      "sourceChars": 89864,
+      "sourceChars": 86849,
       "pages": [
         {
           "docId": "reference/entities/dice",
@@ -577,9 +593,15 @@
           "sourcePath": "docs/reference/entities/promptformat.md",
           "sidecarPath": "docs/summaries/reference/entities/promptformat.json",
           "sectionCount": 2,
-          "sourceChars": 2178,
+          "sourceChars": 2503,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-008",
+      "sourceChars": 85468,
+      "pages": [
         {
           "docId": "reference/entities/quickreply",
           "sourcePath": "docs/reference/entities/quickreply.md",
@@ -587,13 +609,7 @@
           "sectionCount": 5,
           "sourceChars": 3340,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-008",
-      "sourceChars": 65890,
-      "pages": [
+        },
         {
           "docId": "reference/entities/README",
           "sourcePath": "docs/reference/entities/README.md",
@@ -623,7 +639,7 @@
           "sourcePath": "docs/reference/entities/skill.md",
           "sidecarPath": "docs/summaries/reference/entities/skill.json",
           "sectionCount": 4,
-          "sourceChars": 5754,
+          "sourceChars": 6082,
           "status": "APPROVED"
         },
         {
@@ -649,13 +665,37 @@
           "sectionCount": 6,
           "sourceChars": 11684,
           "status": "APPROVED"
+        },
+        {
+          "docId": "reference/extending/api",
+          "sourcePath": "docs/reference/extending/api.md",
+          "sidecarPath": "docs/summaries/reference/extending/api.json",
+          "sectionCount": 0,
+          "sourceChars": 15910,
+          "status": "APPROVED"
         }
       ]
     },
     {
       "id": "batch-009",
-      "sourceChars": 76468,
+      "sourceChars": 72178,
       "pages": [
+        {
+          "docId": "reference/extending/coverage",
+          "sourcePath": "docs/reference/extending/coverage.md",
+          "sidecarPath": "docs/summaries/reference/extending/coverage.json",
+          "sectionCount": 4,
+          "sourceChars": 13010,
+          "status": "APPROVED"
+        },
+        {
+          "docId": "reference/extending/file-reader-test",
+          "sourcePath": "docs/reference/extending/file-reader-test.md",
+          "sidecarPath": "docs/summaries/reference/extending/file-reader-test.json",
+          "sectionCount": 3,
+          "sourceChars": 2174,
+          "status": "APPROVED"
+        },
         {
           "docId": "reference/extending/make-a-theme",
           "sourcePath": "docs/reference/extending/make-a-theme.md",
@@ -672,6 +712,28 @@
           "sourceChars": 5881,
           "status": "APPROVED"
         },
+        {
+          "docId": "reference/extending/quickstart",
+          "sourcePath": "docs/reference/extending/quickstart.md",
+          "sidecarPath": "docs/summaries/reference/extending/quickstart.json",
+          "sectionCount": 8,
+          "sourceChars": 8319,
+          "status": "APPROVED"
+        },
+        {
+          "docId": "reference/extending/sdk",
+          "sourcePath": "docs/reference/extending/sdk.md",
+          "sidecarPath": "docs/summaries/reference/extending/sdk.json",
+          "sectionCount": 1,
+          "sourceChars": 12945,
+          "status": "APPROVED"
+        }
+      ]
+    },
+    {
+      "id": "batch-010",
+      "sourceChars": 76772,
+      "pages": [
         {
           "docId": "reference/formats/agnai",
           "sourcePath": "docs/reference/formats/agnai.md",
@@ -695,13 +757,7 @@
           "sectionCount": 4,
           "sourceChars": 4723,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-010",
-      "sourceChars": 70436,
-      "pages": [
+        },
         {
           "docId": "reference/formats/lumiverse",
           "sourcePath": "docs/reference/formats/lumiverse.md",
@@ -717,7 +773,13 @@
           "sectionCount": 13,
           "sourceChars": 16482,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-011",
+      "sourceChars": 70514,
+      "pages": [
         {
           "docId": "reference/formats/novelai",
           "sourcePath": "docs/reference/formats/novelai.md",
@@ -741,13 +803,7 @@
           "sectionCount": 4,
           "sourceChars": 4369,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-011",
-      "sourceChars": 85745,
-      "pages": [
+        },
         {
           "docId": "reference/formats/risu",
           "sourcePath": "docs/reference/formats/risu.md",
@@ -763,7 +819,13 @@
           "sectionCount": 8,
           "sourceChars": 14665,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-012",
+      "sourceChars": 72460,
+      "pages": [
         {
           "docId": "reference/formats/rolecall",
           "sourcePath": "docs/reference/formats/rolecall.md",
@@ -787,13 +849,7 @@
           "sectionCount": 10,
           "sourceChars": 23218,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-012",
-      "sourceChars": 89172,
-      "pages": [
+        },
         {
           "docId": "reference/formats/vaud-json",
           "sourcePath": "docs/reference/formats/vaud-json.md",
@@ -807,7 +863,7 @@
           "sourcePath": "docs/reference/glossary.md",
           "sidecarPath": "docs/summaries/reference/glossary.json",
           "sectionCount": 6,
-          "sourceChars": 14831,
+          "sourceChars": 14974,
           "status": "APPROVED"
         },
         {
@@ -817,7 +873,13 @@
           "sectionCount": 0,
           "sourceChars": 899,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-013",
+      "sourceChars": 87264,
+      "pages": [
         {
           "docId": "reference/kit/tools",
           "sourcePath": "docs/reference/kit/tools.md",
@@ -849,13 +911,7 @@
           "sectionCount": 7,
           "sourceChars": 6948,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-013",
-      "sourceChars": 83751,
-      "pages": [
+        },
         {
           "docId": "reference/platforms/marinara/characters",
           "sourcePath": "docs/reference/platforms/marinara/characters.md",
@@ -879,7 +935,13 @@
           "sectionCount": 8,
           "sourceChars": 9763,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-014",
+      "sourceChars": 88990,
+      "pages": [
         {
           "docId": "reference/platforms/marinara/data-and-interop",
           "sourcePath": "docs/reference/platforms/marinara/data-and-interop.md",
@@ -967,13 +1029,7 @@
           "sectionCount": 9,
           "sourceChars": 4054,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-014",
-      "sourceChars": 68790,
-      "pages": [
+        },
         {
           "docId": "reference/platforms/sillytavern/macro-operators",
           "sourcePath": "docs/reference/platforms/sillytavern/macro-operators.md",
@@ -997,7 +1053,13 @@
           "sectionCount": 4,
           "sourceChars": 5499,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-015",
+      "sourceChars": 79233,
+      "pages": [
         {
           "docId": "reference/platforms/sillytavern/personas-and-data-bank",
           "sourcePath": "docs/reference/platforms/sillytavern/personas-and-data-bank.md",
@@ -1053,13 +1115,7 @@
           "sectionCount": 3,
           "sourceChars": 3320,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-015",
-      "sourceChars": 77841,
-      "pages": [
+        },
         {
           "docId": "reference/scene-state",
           "sourcePath": "docs/reference/scene-state.md",
@@ -1067,7 +1123,13 @@
           "sectionCount": 13,
           "sourceChars": 36458,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-016",
+      "sourceChars": 72603,
+      "pages": [
         {
           "docId": "reference/security/archives",
           "sourcePath": "docs/reference/security/archives.md",
@@ -1099,13 +1161,7 @@
           "sectionCount": 11,
           "sourceChars": 16312,
           "status": "APPROVED"
-        }
-      ]
-    },
-    {
-      "id": "batch-016",
-      "sourceChars": 83515,
-      "pages": [
+        },
         {
           "docId": "reference/security/safe-rendering",
           "sourcePath": "docs/reference/security/safe-rendering.md",
@@ -1121,7 +1177,13 @@
           "sectionCount": 8,
           "sourceChars": 13571,
           "status": "APPROVED"
-        },
+        }
+      ]
+    },
+    {
+      "id": "batch-017",
+      "sourceChars": 52295,
+      "pages": [
         {
           "docId": "reference/security/secrets-and-keys",
           "sourcePath": "docs/reference/security/secrets-and-keys.md",
@@ -1149,21 +1211,21 @@
       ]
     },
     {
-      "id": "batch-017",
-      "sourceChars": 288097,
+      "id": "batch-018",
+      "sourceChars": 293080,
       "pages": [
         {
           "docId": "reference/ui",
           "sourcePath": "docs/reference/ui.md",
           "sidecarPath": "docs/summaries/reference/ui.json",
           "sectionCount": 34,
-          "sourceChars": 288097,
+          "sourceChars": 293080,
           "status": "APPROVED"
         }
       ]
     },
     {
-      "id": "batch-018",
+      "id": "batch-019",
       "sourceChars": 4726,
       "pages": [
         {

@@ -35,7 +35,7 @@ test("the list is numbered 1 to n and holds the real health check at 24, never a
   expect(MIGRATIONS.some((m) => /reserved|placeholder/i.test(m.name))).toBe(false);
   expect(MIGRATIONS[24]!.id).toBe(25);
   expect(MIGRATIONS[25]!.id).toBe(26);
-  expect(MIGRATIONS.at(-1)!.id).toBe(46);
+  expect(MIGRATIONS.at(-1)!.id).toBe(50);
 });
 
 test("a database from before migration 24 upgrades cleanly through 24, 25 and 26", () => {
@@ -300,4 +300,24 @@ test("migration 46 adds dramaturg_threads: existing scenes have none, and a purg
   d.statement("INSERT INTO dramaturg_threads (chat_id, revision, cell) VALUES ('c1', 1, 'x')").run();
   d.statement("DELETE FROM chats WHERE id = 'c1'").run();
   expect(d.statement("SELECT count(*) AS n FROM dramaturg_threads").get()).toEqual({ n: 0 });
+});
+
+test("migrations 47-50 add extension tables, revisioned state, logs, and checkpoint ownership", () => {
+  const path = file();
+  const before = reopen(path, 46);
+  before.close(); open.pop();
+  const d = reopen(path);
+  expect(names(d).slice(-4).map(({ id, name }) => ({ id, name }))).toEqual([
+    { id: 47, name: "executable extensions" },
+    { id: 48, name: "revisioned state documents" },
+    { id: 49, name: "extension operational logs" },
+    { id: 50, name: "turn checkpoint extension owner" },
+  ]);
+  expect(columns(d, "extension_packages")).toEqual(["digest", "bytes", "body_cell"]);
+  expect(columns(d, "extension_controls")).toEqual(["id_hash", "revision", "body_cell"]);
+  expect(columns(d, "extension_data")).toEqual(["package_hash", "key_hash", "revision", "bytes", "body_cell"]);
+  expect(columns(d, "extension_runtime_lease")).toEqual(["singleton", "epoch", "owner_cell", "expires_at", "last_now"]);
+  expect(columns(d, "extension_logs")).toEqual(["seq", "package_hash", "log_hash", "body_cell"]);
+  expect(columns(d, "studio_state")).toEqual(["key", "body", "updated_at", "revision"]);
+  expect(columns(d, "turn_checkpoints")).toContain("extension_owner_json");
 });

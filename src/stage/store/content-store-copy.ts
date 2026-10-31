@@ -12,6 +12,7 @@ import { StudioConflictError, StudioValidationError } from "../../studio/errors"
 
 import { assertSafeStudioId } from "../../studio/path-policy";
 import type { ContentSummary, DocumentBackend, EntityKind } from "../contracts/content-store";
+import type { ExtensionCommitContext } from "../contracts/extension-store";
 import { holdFill } from "./content-store-hold";
 import { buildPartText, contentSummaryOf } from "./content-store-write";
 import { buildSummary } from "./summary-content";
@@ -26,6 +27,7 @@ export async function duplicateHeld(
   transform: (entity: ParsedCanonicalEntity) => ParsedCanonicalEntity,
   clock: () => number,
   coldFill?: (kind: EntityKind, id: string, writeId: number, mode?: "hold") => Promise<ColdFillResult>,
+  extensionCommit?: ExtensionCommitContext,
 ): Promise<ContentSummary | null> {
   for (let attempt = 0; attempt < 3; attempt++) {
     const row = await backend.get(kind, id);
@@ -53,7 +55,7 @@ export async function duplicateHeld(
           version: { kind, id: copyId, version: 1, revision, savedAt: t, reason: "create" as const, autosaveStartedAt: null },
         };
         const summary = buildSummary(copy, (sha) => known.blobs.has(sha) || known.held.has(sha));
-        const wrote = await backend.write(made.row, made.version, { when: "absent" }, summary, { put: next.map(buildPartText), drop: [] });
+        const wrote = await backend.write(made.row, made.version, { when: "absent", ...(extensionCommit ? { extensionCommit } : {}) }, summary, { put: next.map(buildPartText), drop: [] });
         if (wrote) return contentSummaryOf(made.row, copy, summary.content);
       }
       throw new StudioValidationError("no free id left for keep-both");

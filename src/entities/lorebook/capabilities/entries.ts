@@ -3,6 +3,7 @@
  */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { ContentCapability } from "../../capabilities";
 import type { CanonicalLorebook } from "../schema";
 import {
@@ -41,6 +42,7 @@ const update = defineContentCapability<z.infer<typeof updateInput>, CanonicalLor
   action: "update",
   summary: "Change the title, content, note, enabled state, or constant state of one lorebook entry.",
   aliases: ["edit lore entry", "change lore", "update world info"],
+  extensionExposure: { operationId: "content.draft.lorebook.entries.update", fields: [{ input: "entryId", path: "body.entries" }], hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect" },
   input: updateInput,
   preview(entity, { entryId, patch }) {
     const before = lorebookBody(entity);
@@ -77,6 +79,7 @@ const reorder = defineContentCapability<z.infer<typeof reorderInput>, CanonicalL
   action: "reorder",
   summary: "Move one lorebook entry to a specific position in the authored entry order.",
   aliases: ["move lore entry", "reorder world info"],
+  extensionExposure: { operationId: "content.draft.lorebook.entries.reorder", fields: [{ input: "entryId", path: "body.entries" }], hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect" },
   input: reorderInput,
   preview(entity, { entryId, toIndex }) {
     const before = lorebookBody(entity);
@@ -111,6 +114,7 @@ const enable = defineContentCapability<z.infer<typeof enableInput>, CanonicalLor
   action: "enable",
   summary: "Enable or disable one or more lorebook entries as one change.",
   aliases: ["disable lore", "enable world info", "bulk enable entries"],
+  extensionExposure: { operationId: "content.draft.lorebook.entries.enable", fields: [{ input: "entryIds", path: "body.entries" }], hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect" },
   input: enableInput,
   preview(entity, { entryIds, enabled }) {
     const before = lorebookBody(entity);
@@ -147,6 +151,7 @@ const remove = defineContentCapability<z.infer<typeof removeInput>, CanonicalLor
   action: "remove",
   summary: "Remove one or more lorebook entries from a draft, with exact affected ids in the preview.",
   aliases: ["delete lore entries", "remove world info"],
+  extensionExposure: { operationId: "content.draft.lorebook.entries.remove", fields: [{ input: "entryIds", path: "body.entries" }], hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect" },
   input: removeInput,
   preview(entity, { entryIds }) {
     const before = lorebookBody(entity);

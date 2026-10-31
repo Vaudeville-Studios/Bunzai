@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:27f1fe1d8c28de39b037b53165faab93a18aa4187c1cfe7dbad4dcb82f39ece4",
-  "semanticSummaryHash": "sha256:cf5f743cc83e3c8051cf65573b1de104950595e70f9145f263cc813e744eb7fb",
+  "sourceHash": "sha256:51ff266f124e455d230484343cdf9233588f28f084f9a9cfc8b27b7d7f6106ec",
+  "semanticSummaryHash": "sha256:a7a921a17c65d457150c4739353ffb83d2336e66770513933a2adb4fea19976f",
   "verdict": "APPROVE",
-  "reviewer": "/root/landing_review",
-  "notes": "Independently reviewed the complete staged repository-owner migration diff and these changed document sources against their existing semantic summaries and approved baseline. Live source, release APIs, helper pins, documentation links, README and Pages canonical/preview URLs now point to Vaudeville-Studios/Bunzai. The staged helper migration changes repository location only, preserving digests and download validation. Historical design prototypes retain old URLs and are outside published build inputs. Summary meaning remains unchanged and staged hashes validate. This receipt does not claim transfer authorization review, live deployment proof or a new audit of unchanged documentation.",
-  "reviewedAt": "2026-10-31T07:15:11.185Z"
+  "reviewer": "root",
+  "notes": "Root independently approved documentation-summary accuracy for source SHA-256 51ff266f124e455d230484343cdf9233588f28f084f9a9cfc8b27b7d7f6106ec. This approval covers documentation accuracy only, not security or release readiness.",
+  "reviewedAt": "2026-10-31T13:40:01.625Z"
 }

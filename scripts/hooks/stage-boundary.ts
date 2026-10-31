@@ -15,10 +15,14 @@ import { SKIP_DIRS, SOURCE_EXTS, walk } from "./walk";
 const COMPOSITION_ROOTS: readonly string[] = [
   // The app wires the encrypted library in here, and only here.
   "src/ui/library-root.ts",
+  // The open helper constructs all native stores over the database from library-root.
+  "src/ui/library-open.ts",
   // Builds the snapshot store over that same library: the one other file that names a backend.
   "src/ui/library-snapshots.ts",
   // The static browser Studio wires its memory stores in here: it has no library, only this page.
   "src/pocket/runtime.ts",
+  // Theme lifecycle tests compose the in-memory extension store with the service fixture.
+  "src/extensions/theme-test-fixture.ts",
 ];
 
 const sourceFiles = (root: string): string[] => walk(root, (_path, name) => SOURCE_EXTS.has(extname(name)), SKIP_DIRS);

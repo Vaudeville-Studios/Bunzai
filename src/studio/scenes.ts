@@ -44,7 +44,7 @@ export function greetingsOf(character: unknown): string[] {
 }
 
 /** The cast and its frozen snapshot a new scene starts from: the card (and persona, when it is still in the library) at their current versions, as the library holds them now. */
-export async function freezeCast(studio: StudioStoreLike, characterId: string, personaId: unknown): Promise<{ title: string; cast: Cast; snapshot: CastSnapshot }> {
+export async function freezeCast(studio: Pick<StudioStoreLike, "readVersioned">, characterId: string, personaId: unknown): Promise<{ title: string; cast: Cast; snapshot: CastSnapshot }> {
   const character = await studio.readVersioned("character", characterId);
   if (!character) throw new StudioNotFoundError(`character "${characterId}" is not in the library`);
   const persona = typeof personaId === "string" && personaId ? await studio.readVersioned("persona", personaId) : null;

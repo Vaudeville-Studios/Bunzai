@@ -3,8 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { memoryStateStore } from "../stage/store/memory/state-store";
-import { createThemeLifecycle } from "../extensions/theme-lifecycle";
+import { unifiedThemeService } from "../extensions/theme-test-fixture";
 import { StudioStore } from "../studio/store";
 import { SettingsStore } from "../studio/settings";
 import { createHandler } from "./server";
@@ -21,8 +20,10 @@ describe("remote theme boundary", () => {
   test("approved LAN readers get effective appearance but never lifecycle writes", async () => {
     await withDir(async (dir) => {
       const sec = filledSec();
-      const service = await createThemeLifecycle(memoryStateStore(), []);
-      const reads = { opened: () => null, themeReader: async () => service } as Parameters<typeof createHandler>[12];
+      const service = await unifiedThemeService();
+      const themeReader = { effective: service.themeEffective, asset: service.themeAsset, confirmHealthy: service.themeConfirmHealthy,
+        markBroken: service.themeMarkBroken, revisionStamp: service.themeRevision };
+      const reads = { opened: () => null, themeReader: async () => themeReader } as Parameters<typeof createHandler>[12];
       const handler = createHandler(new StudioStore(dir), new SettingsStore(dir), undefined, sec,
         undefined, undefined, undefined, undefined, true, undefined, undefined, undefined, reads);
       const response = await handler(apiReq("/api/themes/effective"));
@@ -33,6 +34,7 @@ describe("remote theme boundary", () => {
       expect(await revision.json()).toMatchObject({ epoch: expect.stringMatching(/^[a-f0-9]{48}$/), revision: 0 });
       const mutation = await handler(apiReq("/api/themes/disable", { method: "POST", token: sec.token, contentType: "application/json", body: JSON.stringify({ id: "theater" }) }));
       expect(mutation.status).toBe(403);
+      await service.close();
     });
   });
 

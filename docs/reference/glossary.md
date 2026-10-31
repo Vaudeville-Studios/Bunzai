@@ -21,14 +21,15 @@ when a folder directly under `src/` is missing from the table below.
 | `src/ui/components/proscenium/` | Reusable black theater frame with ruby curtains, a hanging sign and an artwork screen. |
 | `src/kit/` | Kit, the terminal agent: its session loop, tools, commands, key vault, and screens. |
 | `src/stage/` | The Stage, the chat runtime being built: contracts, the SQLite store, encryption, providers, and pipeline hooks. |
-| `src/extensions/` | Validated data-only appearance packages, their folder-discovered theme/example inventory, and the sealed install, approval, audit, and revoke lifecycle. The QuickJS runtime remains planned. |
-| `src/sandbox/` | Untrusted scripts (Lua, regex, triggers) run only inside isolated test benches the person opens. |
+| `src/extensions/` | Validated extension packages, generated operation catalogs and SDK, and the sealed install, approval, audit, and revoke lifecycle. Untrusted JavaScript runs through the bounded QuickJS runtime. |
+| `src/sandbox/` | Lua and regex test benches, plus extension JavaScript guest workers. Imported script content remains data; execution requires its supported isolated worker. |
 | `src/site/` | The public website built into the GitHub Pages root: its pages, style, and the one script that reads the releases list. |
 | `src/pocket/` | The browser-only Studio for the static web build, kept in memory with nothing saved. |
 | `src/mcp/` | Bunzai's Model Context Protocol wire code. |
 | `src/docs/` | Code that finds and checks documentation for the in-app readers. Not the documentation itself, which is the top-level `docs/`. |
 | `src/generated/` | Files written by scripts (import seams, packaged format lists). Never edit by hand. |
 | `src/types/` | Type declarations for dependencies that ship none. |
+| `src/shared/` | Small cross-domain helpers with one shared behavior owner. |
 | `docs/` | Documentation: decisions (`docs/decisions/`), references, and guides. |
 | `scripts/` | Build, generation, and check scripts; `scripts/hooks/` holds the commit and push gates. |
 | `sidecar/` | The Go remote-access companion, built separately. |

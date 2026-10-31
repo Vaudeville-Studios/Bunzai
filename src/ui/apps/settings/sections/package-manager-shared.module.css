@@ -1,0 +1,5 @@
+.manager { display: grid; gap: .8rem; min-width: 0; color: var(--text); }
+.manager h3, .manager h4 { margin: 0; color: var(--text); font-family: var(--font-fancy); }
+.manager p { margin: 0; color: var(--text-soft); font-size: var(--text-body); line-height: 1.45; overflow-wrap: anywhere; }
+.catalog { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,16rem),1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.catalog > li { display: grid; align-content: start; gap: .5rem; min-width: 0; border-top: 3px solid var(--bk-role-select); padding: .7rem 0; }

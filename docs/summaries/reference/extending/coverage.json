@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/coverage",
+  "sourcePath": "docs/reference/extending/coverage.md",
+  "sourceHash": "sha256:a7a5d1aedf26c12b4a7617bd12bd187fe48c555c4c5a5ad2d4e6f11acd4d8d03",
+  "summary": "This generated coverage report combines discovered semantic capabilities, strict content field groups, source-declared operation availability by host, and per-host catalog totals. It distinguishes capabilities that exist in the application from those explicitly reviewed for extension exposure and backed by a strict operation adapter. Field groups do not imply access without a matching grant. Host rows describe generated descriptors and their adapter claims, not security certification or packaged release behavior. The fixed required-family test compares expected plan IDs and host combinations with the catalog and passes for this source snapshot. Terminal scene-composer draft control is excluded because that host has no scene-bound composer owner. Read the coverage with the normative matrix and host integration evidence; passing the matrix alone does not prove every release boundary.",
+  "topics": [
+    "capability inventory",
+    "field groups",
+    "host availability",
+    "required matrix remains red"
+  ],
+  "sections": [
+    {
+      "slug": "semantic-capability-inventory",
+      "title": "Semantic capability inventory",
+      "level": 2,
+      "sourceHash": "sha256:3157fa9586efc68083e8c51ca96739c81131675569715eb3d1ce790921342894",
+      "summary": "This section compares the capability modules discovered in the repository with the subset that has explicit extension exposure metadata and a corresponding strict operation descriptor. Discovery tells the application which semantic capabilities exist; it does not authorize an extension to invoke them. Exposure metadata is owned alongside the capability semantics and identifies the reviewed operation, fields, resources, confirmation, budget and supported hosts. The adapter count then reports whether a generated descriptor currently exists for that exposed operation. This relationship helps reveal capabilities that are still unreviewed or lack an operation adapter, while avoiding the assumption that every internal editor or Kit action should become an extension API. Counts are generated from the current source scan and catalog and should be checked alongside the fixed required-family acceptance test.",
+      "topics": [
+        "discovered capabilities",
+        "review metadata",
+        "strict adapters"
+      ],
+      "children": []
+    },
+    {
+      "slug": "strict-content-field-groups",
+      "title": "Strict content field groups",
+      "level": 2,
+      "sourceHash": "sha256:81c5d2c24266bde484bf283f05978b106a5d39323d330efbb35d58c760d6be36",
+      "summary": "This section lists the reviewed field groups available to scoped content read operations. Each group names a bounded projection rather than exposing an entire mutable stored entity. A package requests exact fields and resources, the grant matcher narrows those values, and the operation projects only the approved subset. Authored body access and binary media use separate operations and grants, keeping large payloads and sensitive authored content distinct from ordinary metadata. The inventory is generated from the field schemas, so changes to a group should be made in its source owner and then reflected by the catalog generator. A listed group is an available contract, not an implicit grant or a promise that every content kind has every field.",
+      "topics": [
+        "strict projections",
+        "exact field grants",
+        "separate body and asset access"
+      ],
+      "children": []
+    },
+    {
+      "slug": "host-operation-inventory",
+      "title": "Host operation inventory",
+      "level": 2,
+      "sourceHash": "sha256:41e0946e30ef85ebaa15380ef7d5bdf9c9a4603217b7d44eb9498a135e30c04a",
+        "summary": "The host operation inventory enumerates generated operation IDs and the hosts listed by each source descriptor. It lets readers compare desktop, browser and terminal catalog contents and see operations restricted to one environment, such as graphical actions or native file flows. These are source claims backed by host composition and tests. The independent required-family fixture compares against fixed plan rows; it currently passes for this snapshot. Terminal scene-composer draft control remains excluded because there is no scene-bound Terminal composer owner, while nonvisual turn operations are included. The report is not a packaged-host or release certification.",
+      "topics": [
+        "operation IDs",
+        "declared hosts",
+        "independent acceptance matrix"
+      ],
+      "children": []
+    },
+    {
+      "slug": "host-totals",
+      "title": "Host totals",
+      "level": 2,
+      "sourceHash": "sha256:1952951061aba0f53cd1f47a93f6bb67809f0ebfa692d4ca4c863a915bb81b93",
+      "summary": "The totals count how many generated descriptors currently include each host in their source metadata. A single operation is counted once per host, so totals across hosts may exceed the operation catalog size. These figures help track the breadth of declared support but do not measure user-flow completeness, test coverage, deployment behavior or security approval. The required-family test checks a different question: whether every plan-required operation is available on each expected host and no unexpected host is claimed. Host-specific integration tests supply evidence that a descriptor's service can actually work at its public boundary. Read the count only as an inventory snapshot, and refresh it from the generator whenever operation sources or supported host composition changes.",
+      "topics": [
+        "host totals",
+        "inventory counts",
+        "not release evidence"
+      ],
+      "children": []
+    }
+  ]
+}

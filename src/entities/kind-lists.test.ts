@@ -26,9 +26,13 @@ const ACCENTS = "accent scopes are cast members and the scene, not kinds";
 const TRACE = "prompt trace categories, named after the prompt's sources, not kinds";
 const NOT_KINDS = "the same words used for something else (field names, panel ids, format keys), not kinds";
 const ARCHIVE = "the Lumiverse archive's own tables and scopes, fixed by that format";
+const SCENE_SETTINGS = "scene-setting selector groups include names that coincide with entity kinds; this is the settings group contract, not a kind inventory";
 
 const ALLOWED: Record<string, { lines: number; reason: string }> = {
   "src/core/promptbook.ts": { lines: 1, reason: "Together groups accept only prompt-bearing card kinds, a domain rule rather than all kinds" },
+  "src/extensions/operations/scenes/create.ts": { lines: 2, reason: "scene creation explicitly selects the fixed character and optional persona cast" },
+  "src/extensions/runtime/scene-services.ts": { lines: 2, reason: "scene source projection resolves the fixed character and optional persona cast" },
+  "src/stage/contracts/scene-settings.ts": { lines: 3, reason: SCENE_SETTINGS },
   "src/entities/agent/kind.ts": { lines: 1, reason: "the hub itself: the Agent's links" },
   "src/entities/promptbook/schema.ts": { lines: 1, reason: "the workflow card union is a supported subset, not the Library kind registry" },
   "src/formats/bunzai-workflow/index.ts": { lines: 2, reason: "two native adapters sharing one strict canonical codec" },
@@ -88,7 +92,9 @@ describe("no hand-written kind lists", () => {
     for (const path of new Glob("src/**/*.{ts,tsx}").scanSync(ROOT)) {
       const file = path.replaceAll("\\", "/");
       if (/\.test\.tsx?$|\.d\.ts$|^src\/generated\//.test(file)) continue;
-      const lines = kindListLines(readFileSync(join(ROOT, file), "utf8"));
+      const source = readFileSync(join(ROOT, file), "utf8");
+      if (source.startsWith("/** Generated ")) continue;
+      const lines = kindListLines(source);
       if (lines > 0) found[file] = lines;
     }
     expect(found).toEqual(Object.fromEntries(Object.entries(ALLOWED).map(([file, { lines }]) => [file, lines])));

@@ -56,6 +56,7 @@ import { handOffScene, libraryTrash, SCENES_APP } from "../../_shared/scene-hand
 import { useSetMenu } from "./set-menu";
 import { useLibraryBookCovers } from "./book-cover-room";
 import { Button } from "../../components/button";
+import { LibraryExtensionCommandMenu } from "./extension-command-menu";
 const portraitUrl = (e: StudioEntitySummary): string | null =>
   e.hasPortrait ? storedPortraitUrl(e.kind, e.id) : null;
 
@@ -407,6 +408,7 @@ function Library({ ctx }: { ctx: AppContext }): JSX.Element {
           )}
         </div>
 
+        <LibraryExtensionCommandMenu ctx={ctx} pieces={stagedRefs} />
         <CollectionsBar room={collections} query={query} setQuery={setQuery} staged={stagedRefs} />
 
         <SendBar

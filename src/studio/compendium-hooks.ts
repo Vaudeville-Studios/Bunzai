@@ -16,6 +16,11 @@ import { enqueue } from "./compendium-queue";
 import { undoAll, undoableReceipts } from "./compendium-undo";
 import type { TurnEvent } from "./scene-turn";
 import type { TurnKind } from "./scene-turn-load";
+import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
+import type { ProviderRequestGuard } from "../rp-core";
+import { EXTENSION_BACKGROUND_FIELDS } from "../extensions/contracts/background-fields";
+import { guardedProviderConnect } from "./guarded-provider-connect";
+import { snapshotExtensionCommit } from "../stage/store/extension-commit-access";
 
 const TAIL = 80;
 const COVERED_CHARS = 4_000;
@@ -71,10 +76,21 @@ const later = (chatId: string, work: () => Promise<void>): Promise<void> => enqu
  * The turn route's one call per event. It only schedules: the stream is never held, and a failure cannot reach the reply.
  * Nothing is logged: the content of a book and a reply never goes to a log (F12).
  */
-export function onTurnEvent(deps: CompendiumDeps, chatId: string, kind: TurnKind, event: TurnEvent): Promise<void> {
-  if (event.type === "start" && kind === "reply") return later(chatId, () => fileOlder(deps, chatId));
-  if (event.type === "done") return later(chatId, () => afterDone(deps, chatId, kind, event.message));
+export function onTurnEvent(deps: CompendiumDeps, chatId: string, kind: TurnKind, event: TurnEvent, extensionCommit?: ExtensionCommitContext, providerGuard?: ProviderRequestGuard): Promise<void> {
+  const scoped = extensionCommit ? { ...deps, extensionCommit: snapshotExtensionCommit(extensionCommit) } : deps;
+  if (extensionCommit && !canRunExtensionCompendium(extensionCommit, chatId)) return Promise.resolve();
+  const checked = providerGuard ? { ...scoped, connect: guardedProviderConnect(scoped.connect, providerGuard) } : scoped;
+  if (event.type === "start" && kind === "reply") return later(chatId, () => fileOlder(checked, chatId));
+  if (event.type === "done") return later(chatId, () => afterDone(checked, chatId, kind, event.message));
   return Promise.resolve();
+}
+
+function canRunExtensionCompendium(context: ExtensionCommitContext, chatId: string): boolean {
+  const access = context.access;
+  return !!access?.resources.some((resource) => resource.kind === "scene" && resource.id === chatId)
+    && access.fields.includes(EXTENSION_BACKGROUND_FIELDS.compendiumReceipts)
+    && access.fields.includes(EXTENSION_BACKGROUND_FIELDS.compendiumEntries)
+    && access.resources.some((resource) => resource.kind === "lorebook");
 }
 
 /**

@@ -11,6 +11,7 @@
  */
 import { StudioConflictError } from "../../../studio/errors";
 import type { Branch, CastSnapshotCodec, Chat, ChatStore, Generation, Message, WriteGuard } from "../../contracts/chat-store";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
 import {
   checkCast, checkCutoff, checkGuard, checkMessageInputs,
   checkPage, checkPinned, checkSnapshot, checkText, checkTitle, requireVersion as checkVersion,
@@ -27,6 +28,7 @@ import { compendiumMethods } from "./chat-store-compendium";
 import { summaryOnSlot } from "../summary-slot";
 import { splitQuarantine } from "./chat-store-quarantine";
 import { turnMethods } from "./chat-store-turns";
+import { sceneSettingMethods } from "./chat-store-scene-settings";
 import { stateMethods } from "./chat-store-state";
 import { versionMethods } from "./chat-store-versions";
 import { transcriptMethods } from "./chat-store-transcript";
@@ -35,6 +37,7 @@ import { applyPartChange, deletePartsForOwner } from "./piece-parts-sql";
 import { attachRowFingerprints } from "./row-fingerprints";
 import { snapshotMethods } from "./chat-store-snapshots";
 import { LIVE, LIVE_COUNT_SQL, liveBefore, liveOf } from "./swipe-sql";
+import { requireExtensionCommit } from "./extension-commit-guard";
 import { CHAT_COLUMNS, BRANCH_COLUMNS, FORK_POSITION, MESSAGE_COLUMNS, sceneCells, type ChatSql, type BranchSql, type MessageSql, type SwipeSql } from "./chat-store-rows";
 export type { ChatSql, BranchSql, MessageSql, SwipeSql } from "./chat-store-rows";
 export { BRANCH_COLUMNS, MESSAGE_COLUMNS } from "./chat-store-rows";
@@ -331,10 +334,11 @@ export function sqliteChatStoreBackend(
       return changed ? toChat(chatRow(chatId)!) : null;
     },
 
-    async fork(branchId, atMessageId, opts) {
+    async fork(branchId, atMessageId, opts, extensionCommit) {
       const expected = checkGuard(opts);
       const name = opts?.name === undefined ? "branch" : checkTitle(opts.name);
       return write(() => {
+        if (extensionCommit) requireExtensionCommit(database, cipher, extensionCommit);
         const source = writableBranch(branchId);
         const at = one<MessageSql>(`SELECT ${MESSAGE_COLUMNS} FROM messages WHERE id = ?`, atMessageId);
         if (!source || !at || at.branch_id !== branchId || at.cut_id !== null) return null; // spec edge case 1, rule 11
@@ -356,12 +360,12 @@ export function sqliteChatStoreBackend(
       });
     },
 
-    async appendMessage(branchId, input, guard) {
-      return (await write(() => appendMany(branchId, [input], guard)))?.[0] ?? null;
+    async appendMessage(branchId, input, guard, extensionCommit) {
+      return (await write(() => { if (extensionCommit) requireExtensionCommit(database, cipher, extensionCommit); return appendMany(branchId, [input], guard); }))?.[0] ?? null;
     },
 
-    async appendMessages(branchId, inputs, guard) {
-      return write(() => appendMany(branchId, inputs, guard));
+    async appendMessages(branchId, inputs, guard, extensionCommit) {
+      return write(() => { if (extensionCommit) requireExtensionCommit(database, cipher, extensionCommit); return appendMany(branchId, inputs, guard); });
     },
 
     async countMessages(branchId) {
@@ -383,10 +387,11 @@ export function sqliteChatStoreBackend(
       };
     },
 
-    async editSwipe(messageId, swipeId, contentRaw, guard) {
+    async editSwipe(messageId, swipeId, contentRaw, guard, extensionCommit) {
       const content = checkText(contentRaw, "content");
       const expected = checkGuard(guard);
       return write(() => {
+        if (extensionCommit) requireExtensionCommit(database, cipher, extensionCommit);
         const m = writableMessage(messageId);
         const swipe = m && one<SwipeSql>(`SELECT * FROM swipes WHERE message_id = ? AND swipe_id = ? AND ${LIVE}`, messageId, swipeId);
         if (!m || !swipe) return null;
@@ -438,6 +443,7 @@ export function sqliteChatStoreBackend(
     ...stats.api,
     ...cutMethods(kit),
     ...turnMethods({ ...kit, insertSwipe, appendMany }),
+    ...sceneSettingMethods(kit),
     ...folderMethods(kit),
     ...compendiumMethods(kit),
     ...summaryOnSlot({

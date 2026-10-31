@@ -1,13 +1,4 @@
-/**
- * Render-count proof for the scene page:
- * a keystroke in the composer must re-render zero message bubbles, and a streamed reply's tokens must
- * coalesce to at most one render per animation frame instead of one per token, with finished bubbles
- * never re-rendering while it streams. Counted through Prose (scene-bubble.tsx wraps every bubble's
- * text in one Prose), mocked here to a call-counting stand-in that reproduces Prose's own paragraph
- * split - `mock.module` is process-wide in Bun, so the stand-in stays behaviorally identical rather
- * than a bare stub, and no other file under src/ui/apps/scenes renders a Bubble today (grepped before
- * writing this), so there is nothing else in this suite for the mock to disturb.
- */
+/** Purpose: prove scene composer typing leaves bubbles stable and streaming coalesces within animation frames. */
 import { afterAll, beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
 import type { JSDOM } from "jsdom";
 import { installDom, teardownAllDoms, type InstalledDom } from "../../_shared/test-dom";
@@ -179,14 +170,14 @@ async function settle(flushSync: FlushSync, ms = 20): Promise<void> {
   flushSync(() => undefined);
 }
 
-async function mountScenePage(ctx: AppContext): Promise<FlushSync> {
+async function mountScenePage(ctx: AppContext, navigationTicketId?: string, loadId?: string): Promise<FlushSync> {
   const { flushSync } = await import("react-dom");
   const { createRoot } = await import("react-dom/client");
   const { ScenePage } = await import("./scene-page");
   host = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(host);
   root = createRoot(host);
-  flushSync(() => root.render(<ScenePage ctx={ctx} chatId="chat1" onBack={() => undefined} />));
+  flushSync(() => root.render(<ScenePage ctx={ctx} chatId="chat1" navigationTicketId={navigationTicketId} loadId={loadId} onBack={() => undefined} />));
   await settle(flushSync);
   await settle(flushSync);
   return flushSync;
@@ -219,6 +210,16 @@ beforeEach(() => {
 // -- tests -------------------------------------------------------------------------------------
 
 describe("ScenePage: a keystroke never re-renders a bubble", () => {
+  test("a loaded scene reports its claimed navigation ticket to the host", async () => {
+    const notifications: Array<[string, string | null]> = [];
+    const ctx = makeCtx();
+    Object.assign(ctx.api, { extensions: { notifySceneOpened: async (id: string, ticketId: string | null) => { notifications.push([id, ticketId]); return true; } } });
+    const flushSync = await mountScenePage(ctx, "claimed-navigation", "load-correlation");
+    await settle(flushSync);
+    expect(notifications).toEqual([["chat1", "claimed-navigation"]]);
+    unmount(flushSync);
+  });
+
   test("typing 10 characters into the composer renders Prose zero more times", async () => {
     const flushSync = await mountScenePage(makeCtx());
     const textarea = host.querySelector('textarea[aria-label="Message"]') as HTMLTextAreaElement | null;

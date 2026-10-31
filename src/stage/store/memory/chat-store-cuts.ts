@@ -4,6 +4,7 @@
  * changed (rule 17).
  */
 import type { Branch, ChatStore } from "../../contracts/chat-store";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
 import { checkGuard, checkScope } from "../chat-rules";
 import { copyRecord, type ChatRecord, type MessageRecord } from "./chat-records";
 
@@ -22,9 +23,11 @@ export function cutMethods(k: {
   refresh(branchId: string, fromSeq?: number): void;
   copyMessageDeltas(fromId: string, toId: string): void;
   copyBase(fromBranchId: string, toBranchId: string): void;
+  authorizeExtensionCommit(context: ExtensionCommitContext): void;
 }): Pick<ChatStore, "cutMessages" | "restoreCut"> {
   return {
-    async cutMessages(branchId, messageId, scopeRaw, guard) {
+    async cutMessages(branchId, messageId, scopeRaw, guard, extensionCommit) {
+      if (extensionCommit) k.authorizeExtensionCommit(extensionCommit);
       const scope = checkScope(scopeRaw);
       const expected = checkGuard(guard);
       const m = k.writableMessage(messageId);

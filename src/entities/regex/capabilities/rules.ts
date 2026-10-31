@@ -1,6 +1,7 @@
 /** Semantic lifecycle operations for stored regex-rule data; no rule is executed here. */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import { nonEmptyPatch, nullsToUndefined } from "../../_shared/capability-schemas";
 import type { CanonicalRegexSet } from "../schema";
 import { addRegexRule, moveRegexRule, patchRegexRule, removeRegexRule } from "../operations";
@@ -66,6 +67,11 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalRegex
   action: "manage",
   summary: "Add, edit, remove, or reorder stored standalone regex rules without executing them.",
   aliases: ["regex pattern", "replace rule", "regex phases", "reorder regex"],
+  extensionExposure: {
+    operationId: "content.draft.regex.rules.manage",
+    fields: [{ input: "operation", path: "body.rules" }],
+    hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect",
+  },
   input,
   preview: (entity, { operation }) => {
     const body = operation.type === "add"

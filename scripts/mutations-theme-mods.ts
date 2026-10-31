@@ -8,11 +8,11 @@ const CSS = "src/extensions/theme-css.ts";
 const BIN = "src/extensions/theme-binary.ts";
 const SLOT = "src/extensions/slot-registry.ts";
 const CONTRACT = "src/extensions/theme-contract.ts";
-const LIFE = "src/extensions/theme-lifecycle.ts";
+const LIFE = "src/extensions/runtime/theme-service.ts";
 const DOG = "src/ui/shell/protected-watchdog.ts";
 const MOD = "src/ui/shell/theme-mod.ts";
 const PKG = ["src/extensions/theme-mods.test.ts", "src/extensions/theme-contract.test.ts"];
-const LIFETESTS = ["src/extensions/theme-mods-lifecycle.test.ts", "src/extensions/theme-lifecycle.test.ts"];
+const LIFETESTS = ["src/ui/server-theme-extensions.test.ts", "src/extensions/runtime/service.test.ts"];
 const DOGTESTS = ["src/ui/shell/protected-watchdog.test.ts", "src/ui/shell/theme-mods.test.ts"];
 const APPLY = ["src/ui/shell/theme-mods.test.ts"];
 const WATCH = ["src/ui/shell/theme-mod-watch.test.ts"];
@@ -54,14 +54,12 @@ export const THEME_MOD_MUTANTS: NamedMutation[] = [
   one("a declared font need not be used", CONTRACT, "if (declaredFonts.some((f) => !report.fontIds.has(f.id))) return fail();", "", PKG),
   one("the package transport cap is not enforced", CONTRACT, "if (total > MAX_TRANSPORT_BYTES) fail();", "", PKG),
   one("the digest ignores the styles", CONTRACT, "...(styles !== null ? { styles } : {}),", "", PKG),
-  one("safe mode does not resolve to core", LIFE, 'if (options.safeMode) return core("disabled");', "", LIFETESTS),
-  one("a stale digest can mark a theme broken", LIFE, "if ((await resolve(id)).digest !== digest) return;", "", LIFETESTS),
-  one("broken disables instead of revoking", LIFE, 'await mutate(id, "revoke", "broken");', 'await mutate(id, "disable", "broken");', LIFETESTS),
-  one("a crash loop never trips", LIFE, "if (attempts < CRASH_LOOP_LIMIT) {", "if (true) {", LIFETESTS),
-  one("a healthy page does not reset the count", LIFE, "if (!doc.boot || doc.boot.attempts === 0) return;\n    doc.boot = { attempts: 0 };", "if (!doc.boot || doc.boot.attempts === 0) return;", LIFETESTS),
-  one("an unstyled theme counts toward the crash loop", LIFE, "if (out.themeId === null || (out.styles === null && Object.keys(out.slots).length === 0)) return out;", "if (out.themeId === null) return out;", LIFETESTS),
-  one("a file is served for any digest", LIFE, "if (active.digest !== digest) return null;", "", ["src/extensions/theme-mods-lifecycle.test.ts", "src/ui/server-theme-mods.test.ts"]),
-  one("stored data widened behind the lifecycle serves", LIFE, 'if (checked.digest !== row.digest || !same(row.scopes, checked.derivedScopes)) return core("invalid-state");', "", LIFETESTS),
+  one("safe mode does not resolve to core", LIFE, 'if (options.safeThemes || faulted) return core("disabled");', "if (false) return core(\"disabled\");", LIFETESTS),
+  one("a stale digest can mark a theme broken", LIFE, "if (\"fallback\" in found || found.preview.digest !== digest) return false;", 'if ("fallback" in found) return false;', LIFETESTS),
+  one("a broken-theme report never activates fallback mode", LIFE, "faulted = true;\n      healthRevision++;", "faulted = false;\n      healthRevision++;", LIFETESTS),
+  one("a file is served for any digest", LIFE, "if (\"fallback\" in found || found.preview.digest !== digest) return null;", 'if ("fallback" in found) return null;', ["src/extensions/runtime/service.test.ts", "src/ui/server-theme-extensions.test.ts"]),
+  one("unapproved theme assets remain available", LIFE, 'const image = found.control.themeScopes.includes("appearance.assets") ? found.preview.assets.find((item) => item.id === assetId) : undefined;', 'const image = found.preview.assets.find((item) => item.id === assetId);', LIFETESTS),
+  one("stored data widened behind the lifecycle serves", LIFE, "|| control.themeScopes.some((scope) => !inspected.theme!.derivedScopes.includes(scope))", "", LIFETESTS),
   one("the watchdog blames the mod for host offenses too", DOG, "return withMod.filter((o) => !baseline.some((b) => b.kind === o.kind && b.node === o.node) && !hostPositioned(o));", "return withMod;", DOGTESTS),
   one("the mod stays off after a check", DOG, "} finally { setModEnabled(true); }", "} finally { /* left off */ }", DOGTESTS),
   one("opacity is not checked", DOG, "if (Number(s.opacity) < 0.5)", "if (false)", DOGTESTS),

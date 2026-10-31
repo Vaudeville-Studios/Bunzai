@@ -5,10 +5,9 @@ import { deriveThemeScopes, parseAppearance, THEME_SCOPES } from "../../extensio
 import { parseSlots, slotItemCount } from "../../extensions/slot-registry";
 import { checkThemeCss } from "../../extensions/theme-css";
 import type { EffectiveThemeAppearance } from "../../extensions/theme-contract";
-import { isThemePackageId } from "../../extensions/theme-id";
 import { surfaceAttribute, SURFACES, type SurfaceId } from "../../extensions/surface-registry";
 import { installControlsStyle } from "../_shared/controls-style";
-import { DEFAULT_STUDIO_THEME, isStudioTheme, type StudioTheme } from "../../studio/settings-shape";
+import { DEFAULT_STUDIO_THEME, isStudioTheme, studioThemePackageId, type StudioTheme } from "../../studio/settings-shape";
 import { relativeLuminance } from "../_shared/color-math";
 import { paintMod } from "./theme-mod";
 import { FLOOR_PROPS, floorsFromStyle, houseAccentProperties, THEME_PROPERTY_NAMES, themeProperties } from "./theme-tokens";
@@ -41,7 +40,7 @@ function validRefs(list: unknown[], media: readonly string[], value: Record<stri
 /** Validate the response shape at the renderer boundary; unknown theme parts never reach DOM state. */
 export function readEffectiveTheme(value: unknown): EffectiveThemeAppearance | null {
   if (!isRecord(value) || !allowedKeys(value, ["themeId", "packageId", "digest", "grantedScopes", "appearance", "assets", "fonts", "styles", "slots", "fallbackReason", "name"]) || !(value.themeId === null || isStudioTheme(value.themeId))) return null;
-  if (!(value.packageId === null || (typeof value.packageId === "string" && (isStudioTheme(value.packageId) || isThemePackageId(value.packageId)))) || !(value.digest === null || isSha256Hex(value.digest))) return null;
+  if (!(value.packageId === null || typeof value.packageId === "string") || !(value.digest === null || isSha256Hex(value.digest))) return null;
   if (!Array.isArray(value.grantedScopes) || value.grantedScopes.length > THEME_SCOPES.length || !Array.isArray(value.assets) || value.assets.length > 24 || !Array.isArray(value.fonts) || value.fonts.length > 4) return null;
   if (!(value.styles === null || typeof value.styles === "string") || !isRecord(value.slots)) return null;
   const ids = new Set<string>();
@@ -52,7 +51,7 @@ export function readEffectiveTheme(value: unknown): EffectiveThemeAppearance | n
     if (value.name !== undefined || value.grantedScopes.length !== 0 || value.packageId !== null || value.digest !== null || value.appearance !== null || value.assets.length !== 0 || value.fonts.length !== 0 || value.styles !== null || Object.keys(value.slots).length !== 0 || (value.fallbackReason !== undefined && !["not-installed", "disabled", "revoked", "invalid-state"].includes(String(value.fallbackReason)))) return null;
     return value as unknown as EffectiveThemeAppearance;
   }
-  if (value.fallbackReason !== undefined || value.packageId !== value.themeId || value.digest === null) return null;
+  if (value.fallbackReason !== undefined || value.packageId !== studioThemePackageId(value.themeId) || value.digest === null) return null;
   if (value.name !== undefined && (typeof value.name !== "string" || value.name.length === 0 || value.name.length > 80)) return null;
   try {
     const classes = value.styles === null ? new Set<string>() : checkThemeCss(value.styles, { images: imageIds, fonts: fontIds }).classes;

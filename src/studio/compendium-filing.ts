@@ -33,7 +33,7 @@ const MODEL_OPTIONS = { temperature: 0.3, max_tokens: 4096 } as const;
 const bounded = (text: string): string => (text.length > REASON_MAX ? `${text.slice(0, REASON_MAX - 1)}...` : text);
 
 async function settle(deps: CompendiumDeps, id: string, status: CompendiumReceipt["status"], extra: { reason?: string; writes?: ReceiptWrite[]; model?: string } = {}): Promise<CompendiumReceipt> {
-  const done = await deps.chats.settleReceipt(id, { status, ...(extra.reason ? { reason: bounded(extra.reason) } : {}), ...(extra.writes ? { writes: extra.writes } : {}), ...(extra.model ? { model: extra.model } : {}) });
+  const done = await deps.chats.settleReceipt(id, { status, ...(extra.reason ? { reason: bounded(extra.reason) } : {}), ...(extra.writes ? { writes: extra.writes } : {}), ...(extra.model ? { model: extra.model } : {}) }, deps.extensionCommit);
   if (!done) throw new Error("the scene is gone");
   return done;
 }
@@ -53,14 +53,14 @@ export async function fileReply(deps: CompendiumDeps, target: FileTarget, opts: 
     const had = await deps.chats.listReceipts(target.chatId, { branchId: target.branchId, messageId: target.messageId, limit: 200 });
     if (had.some((r) => r.kind === "filing" && r.swipeId === target.swipeId)) return null;
   }
-  const receipt = (await deps.chats.appendReceipt(target.chatId, { branchId: target.branchId, messageId: target.messageId, swipeId: target.swipeId, kind: "filing" }))!;
+  const receipt = (await deps.chats.appendReceipt(target.chatId, { branchId: target.branchId, messageId: target.messageId, swipeId: target.swipeId, kind: "filing" }, deps.extensionCommit))!;
   if (!receipt) return null;
   try {
     return await run(deps, target, receipt.id, scene, settings);
   } catch (error) {
     // Unexpected: whatever was written was recorded by the run that wrote it; this only closes the receipt so nothing stays in flight.
     const current = await deps.chats.receipt(receipt.id);
-    if (current && (current.status === "queued" || current.status === "running")) await deps.chats.settleReceipt(receipt.id, { status: "failed", reason: bounded(toErrorMessage(error, "filing failed")) }).catch(() => undefined);
+    if (current && (current.status === "queued" || current.status === "running")) await deps.chats.settleReceipt(receipt.id, { status: "failed", reason: bounded(toErrorMessage(error, "filing failed")) }, deps.extensionCommit).catch(() => undefined);
     return (await deps.chats.receipt(receipt.id)) ?? null;
   }
 }
@@ -118,7 +118,7 @@ async function run(deps: CompendiumDeps, target: FileTarget, id: string, scene: 
     const result = await writeBook(deps.store, bookId, (entries) => {
       last = stageItems(entries, items, { bookId, newId: deps.newId, budgetBytes: RECEIPT_BUDGET - used });
       return last.entries;
-    });
+    }, deps.extensionCommit);
     const name = writable.find((b) => b.id === bookId)!.name;
     if (result.status === "conflict" || result.status === "missing") {
       changed.push(`"${name}" ${result.status === "missing" ? "is gone" : "changed while filing (entries it touches were edited), so nothing was written to it"}; not filed: ${items.map((i) => `${i.type} ${i.name}`).join(", ")}`);

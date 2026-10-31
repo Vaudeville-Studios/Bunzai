@@ -25,6 +25,7 @@ const INFRA = new Set([
   "catalog.ts",
   "descriptor.ts",
   "exposure.ts",
+  "extension-exposure.ts",
   "index.ts",
   "navigation.ts",
   "operations.ts",

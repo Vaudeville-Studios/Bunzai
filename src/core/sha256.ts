@@ -68,10 +68,35 @@ export function hashHex(value: string | Uint8Array): string {
   return typeof value === "string" ? sha256Hex(value) : sha256HexBytes(value);
 }
 
-const SHA256_HEX = /^[0-9a-f]{64}$/;
+/** Stable JSON text for already-validated values shared by pure domain revision contracts. */
+export function canonicalJsonString(value: unknown): string {
+  const active = new WeakSet<object>();
+  const write = (item: unknown): string => {
+    if (item === null) return "null";
+    if (typeof item === "string" || typeof item === "boolean") return JSON.stringify(item);
+    if (typeof item === "number") {
+      if (!Number.isFinite(item)) throw new TypeError("canonical JSON requires finite numbers");
+      return JSON.stringify(item);
+    }
+    if (typeof item !== "object") throw new TypeError("canonical JSON requires JSON values");
+    if (active.has(item)) throw new TypeError("canonical JSON cannot contain cycles");
+    active.add(item);
+    try {
+      if (Array.isArray(item)) return `[${item.map(write).join(",")}]`;
+      const proto = Object.getPrototypeOf(item);
+      if (proto !== Object.prototype && proto !== null) throw new TypeError("canonical JSON requires plain objects");
+      const object = item as Record<string, unknown>;
+      return `{${Object.keys(object).sort().map((key) => `${JSON.stringify(key)}:${write(object[key])}`).join(",")}}`;
+    } finally { active.delete(item); }
+  };
+  return write(value);
+}
+
+/** The schema-compatible form of the one lowercase SHA-256 digest shape. */
+export const SHA256_HEX_PATTERN = /^[0-9a-f]{64}$/;
 
 /** True for a SHA-256 digest as the library writes it: exactly 64 lowercase hex characters. THE ONE
  *  digest-shape test; asset hashes, revisions and upload references are all checked through it. */
 export function isSha256Hex(value: unknown): value is string {
-  return typeof value === "string" && SHA256_HEX.test(value);
+  return typeof value === "string" && SHA256_HEX_PATTERN.test(value);
 }

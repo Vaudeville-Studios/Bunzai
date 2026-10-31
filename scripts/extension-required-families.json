@@ -1,0 +1,49 @@
+{
+  "description": "Fixed acceptance rows transcribed from section 6 of plans/001-unified-extension-runtime.md. Hosts are expected executable hosts, not merely metadata availability.",
+  "hosts": ["desktop", "browser", "terminal"],
+  "browserFamilies": ["discovery", "content discovery", "content reads", "content drafts", "collections", "scenes", "takes and navigation", "messages", "scene state", "extension data", "prompts", "events", "assets", "ui", "diagnostics", "logs", "character and persona capabilities", "lorebook capabilities", "writing capabilities"],
+  "browserExcludedIds": [],
+  "terminalExcludedFamilies": ["playback", "ui", "clipboard and links"],
+  "terminalExcludedIds": ["ui.scene.open", "ui.editor.open", "composer.draft.set"],
+  "terminalHostAmendments": [
+    {
+      "id": "files.pick",
+      "reason": "Terminal uses a trusted focused TUI path prompt that returns only an opaque host-held handle; guest input never supplies a path.",
+      "evidence": [
+        "src/kit/render/app-terminal-files.integration.test.tsx",
+        "src/kit/extensions/owner.test.ts",
+        "src/kit/render/primitives/safety/extension-file-prompt.test.tsx",
+        "src/kit/extensions/file-actions.test.ts"
+      ]
+    }
+  ],
+  "families": [
+    { "name": "discovery", "ids": ["api.describe", "api.search", "host.features", "permissions.status", "operations.status", "operations.receipts.list"] },
+    { "name": "content discovery", "ids": ["content.kinds", "content.search", "content.list", "content.summary"] },
+    { "name": "content reads", "ids": ["content.read", "content.fields.read", "content.links.read", "content.history.list", "content.history.read"] },
+    { "name": "content drafts", "ids": ["content.create.preview", "content.duplicate.preview", "content.draft.inspect", "content.draft.discard", "content.draft.apply", "content.trash", "content.restore"] },
+    { "name": "collections", "ids": ["collections.list", "collections.read", "collections.create", "collections.membership.preview", "collections.membership.apply"] },
+    { "name": "scenes", "ids": ["scenes.list", "scenes.summary", "scenes.read", "scenes.create", "scenes.settings.preview", "scenes.settings.apply"] },
+    { "name": "takes and navigation", "ids": ["takes.list", "takes.read", "takes.fork", "ui.scene.open", "ui.editor.open"] },
+    { "name": "messages", "ids": ["messages.list", "messages.read", "messages.versions.list", "composer.draft.set", "messages.send", "messages.edit.preview", "messages.edit.apply", "messages.delete"] },
+    { "name": "turn control", "ids": ["turns.start", "turns.continue", "turns.regenerate", "turns.cancel", "turns.status"] },
+    { "name": "scene state", "ids": ["state.slots.describe", "state.read", "state.write.preview", "state.write.apply"] },
+    { "name": "extension data", "ids": ["storage.get", "storage.list", "storage.set", "storage.delete", "settings.read", "settings.update"] },
+    { "name": "prompts", "ids": ["prompts.inspect", "prompts.contribute", "prompts.transform"] },
+    { "name": "events", "ids": ["events.subscribe", "events.unsubscribe", "commands.register"] },
+    { "name": "models", "ids": ["models.list", "models.describe", "models.generate", "models.cancel", "models.usage"] },
+    { "name": "tools", "ids": ["tools.list", "tools.describe", "tools.invoke"] },
+    { "name": "transfers", "ids": ["formats.list", "formats.describe", "transfer.preview", "import.preview", "import.apply", "export.preview", "export.write"] },
+    { "name": "assets", "ids": ["assets.list", "assets.read", "assets.import.preview", "assets.import.apply", "assets.attach.preview", "assets.attach.apply"] },
+    { "name": "playback", "ids": ["playback.status", "playback.play", "playback.pause", "playback.stop"] },
+    { "name": "ui", "ids": ["ui.panel.set", "ui.panel.remove", "ui.notice.show", "ui.dialog.request", "ui.status.set"] },
+    { "name": "files", "ids": ["files.pick", "files.read", "files.write.preview", "files.write.apply"] },
+    { "name": "clipboard and links", "ids": ["clipboard.read", "clipboard.write", "links.open"] },
+    { "name": "network", "ids": ["network.request"] },
+    { "name": "diagnostics", "ids": ["content.validate", "content.tokens.estimate", "macros.describe", "macros.preview", "regex.preview"] },
+    { "name": "logs", "ids": ["logs.write", "logs.readOwn", "diagnostics.runtime"] },
+    { "name": "character and persona capabilities", "ids": ["content.draft.character.identity.update", "content.draft.character.greetings.update", "content.draft.character.prompts.update", "content.draft.character.variants.manage", "content.draft.character.media.update", "content.draft.persona.identity.update", "content.draft.persona.profile.update"] },
+    { "name": "lorebook capabilities", "ids": ["content.draft.lorebook.entries.update", "content.draft.lorebook.entries.reorder", "content.draft.lorebook.entries.enable", "content.draft.lorebook.entries.remove", "content.draft.lorebook.settings.update"] },
+    { "name": "writing capabilities", "ids": ["content.draft.preset.blocks.manage", "content.draft.preset.groups.manage", "content.draft.preset.settings.update", "content.draft.scriptsheet.instruction.update", "content.draft.promptbook.phase-preset.update", "content.draft.skill.instruction.update", "content.draft.promptformat.templates.update"] }
+  ]
+}

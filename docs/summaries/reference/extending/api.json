@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/api",
+  "sourcePath": "docs/reference/extending/api.md",
+  "sourceHash": "sha256:824e2fa17f641abbd3cc8ef271e3d916a59e55eac53a40f5e58d1b87faccf71c",
+  "summary": "This generated reference inventories the extension operations currently described by source-owned descriptors. Each row gives the operation ID, human-facing name, effect class, source-declared hosts, budget class and confirmation policy. The table helps locate an API and compare its broad effect boundary, but it does not replace the strict input and output contracts in the adjacent api.json data artifact. The generator derives both views from operation definitions so documentation follows the catalog rather than a second hand-maintained list. A descriptor's host list means that a concrete adapter is declared for that host; it is not proof that every required user flow is complete. The fixed required-family test remains the acceptance authority and may still fail for host combinations the plan requires. Package authors should pair this inventory with the SDK reference and host-aware package check, and users should inspect the operation's exact resource, field, destination and review requirements before granting access.",
+  "topics": [
+    "operation catalog",
+    "host declarations",
+    "effects and confirmation",
+    "generated schemas"
+  ],
+  "sections": []
+}

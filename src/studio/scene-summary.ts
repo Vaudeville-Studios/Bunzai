@@ -20,6 +20,9 @@ import { playedBody } from "../entities/character/variant";
 import { slotOf } from "../generated/slots";
 import type { CharacterBody } from "../entities/character/schema";
 import type { Chat, ChatConnection, ChatStore, Message, SummarySettings, TakeSummary } from "../stage/contracts/chat-store";
+import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
+import { EXTENSION_BACKGROUND_FIELDS } from "../extensions/contracts/background-fields";
+import { requireCommitResource, snapshotExtensionCommit } from "../stage/store/extension-commit-access";
 import { ProviderError } from "../stage/contracts/provider";
 import { checkTakeSummary } from "../stage/store/summary-rules";
 import { StudioConflictError, StudioNotFoundError } from "./errors";
@@ -34,6 +37,7 @@ export interface SummaryDeps {
   /** Resolves a saved connection (the summary model, or the scene's own); null when Kit no longer has it. */
   connect(connection: ChatConnection): Promise<Connected | null>;
   readLibrary?(kind: string, id: string): Promise<unknown | null>;
+  extensionCommit?: ExtensionCommitContext;
 }
 
 /** A failure in words for the person; it is what the Memory tab shows after "Last summary run failed:". */
@@ -46,10 +50,10 @@ const running = new Set<string>();
 /** Whether a run is going for this scene now (RoleCall's `isSummarizing`). */
 export const isSummarizing = (chatId: string): boolean => running.has(chatId);
 
-interface Setup { chat: Chat; branchId: string; name: string; s: ResolvedSummary; connected: Connected; model: string }
+interface Setup { chat: Chat; branchId: string; name: string; s: ResolvedSummary; connected: Connected; model: string; deps: SummaryDeps }
 
 async function setup(deps: SummaryDeps, chatId: string): Promise<Setup> {
-  const cast = await loadCast(deps.chats, chatId, deps.readLibrary);
+  const cast = await loadCast(deps.chats, chatId, deps.extensionCommit ? undefined : deps.readLibrary);
   if (!cast) throw new StudioNotFoundError("that scene does not exist");
   const { chat, snapshot } = cast;
   const s = resolveSummary(chat.summary?.settings);
@@ -57,16 +61,14 @@ async function setup(deps: SummaryDeps, chatId: string): Promise<Setup> {
   const connected = target ? await deps.connect(target) : null;
   if (!target || !connected) throw new SummaryFailure(NO_MODEL);
   const character = playedBody(bodyOf(snapshot.character) as unknown as CharacterBody, chat.variantId);
-  return { chat, branchId: chat.activeBranchId, name: cardView(character).name, s, connected, model: target.model };
+  return { chat, branchId: chat.activeBranchId, name: cardView(character).name, s, connected, model: target.model, deps };
 }
 
 /** One call: the prompt as the only message, at the summary's own temperature and output budget. A capacity error is told apart so a backfill can split. */
 async function ask(d: Setup, prompt: string, signal?: AbortSignal): Promise<{ text: string; truncated: boolean }> {
   try {
-    const done = await d.connected.provider.send(
-      { model: d.model, messages: [{ role: "user", content: prompt }], options: { temperature: d.s.temperature, max_tokens: d.s.maxTokens, ...(d.s.reasoning ? { reasoning_effort: "low" as const } : {}) } },
-      signal ? { signal } : {},
-    );
+    const request = { model: d.model, messages: [{ role: "user" as const, content: prompt }], options: { temperature: d.s.temperature, max_tokens: d.s.maxTokens, ...(d.s.reasoning ? { reasoning_effort: "low" as const } : {}) } };
+    const done = await d.connected.provider.send(request, signal ? { signal } : {});
     return { text: splitReasoning(done.content).reply.trim(), truncated: done.finish_reason === "length" || done.finish_reason === "max_tokens" };
   } catch (e) {
     if (e instanceof ProviderError && e.code === "context_length_exceeded") throw new Capacity();
@@ -101,13 +103,18 @@ const hasPiece = (read: Read, message: Message): boolean => layersOf(read.state)
  * It is only ever written on that version, never on the message, so choosing another version or cutting the message takes it. The write is refused (StudioConflictError) when a row it removes is no longer
  * what the run read; the person's own text is a different layer and is not part of that check: the piece records the text it saw, and one saved after the run read is newer than the piece and stays shown. Answers the take's summary now.
  */
-async function writeRow(chats: ChatStore, branchId: string, read: Read, message: Message, text: string, through: number, replace: boolean): Promise<TakeSummary> {
+async function writeRow(deps: SummaryDeps, branchId: string, read: Read, message: Message, text: string, through: number, replace: boolean): Promise<TakeSummary> {
+  const { chats } = deps;
   checkTakeSummary({ text, through });
   const row = { version: message.swipes[message.current]!.id, text, through, at: Date.now(), ...read.saw, ...(replace ? { replace: true } : {}) };
   const deltas = blockDeltas(read.state, row);
   // Judged against the state through that version, so only the rows the write removes can be held to what the run read.
   const removals = deltas.filter((d) => d.removed);
-  if (!(await chats.recordDeltas(branchId, row.version, deltas, { expect: heldAs(read.state ?? {}, removals, slotOf) }))) throw new StudioNotFoundError("that message is gone");
+  const guard = { expect: heldAs(read.state ?? {}, removals, slotOf) };
+  const wrote = deps.extensionCommit
+    ? await chats.recordExtensionSummaryDeltas(deps.extensionCommit, branchId, row.version, deltas, guard)
+    : await chats.recordDeltas(branchId, row.version, deltas, guard);
+  if (!wrote) throw new StudioNotFoundError("that message is gone");
   return takeOf(await chats.sceneState(branchId))!;
 }
 
@@ -123,7 +130,7 @@ async function rolling(deps: SummaryDeps, d: Setup, read: Read): Promise<TakeSum
   const out = await ask(d, renderTemplate({ template, characterName: d.name, conversationHistory: history, existingSummary: existing }));
   if (out.text === "") return null;
   if (out.truncated) throw new SummaryFailure(LENGTH);
-  return writeRow(deps.chats, d.branchId, read, tip, out.text, total, true);
+  return writeRow(deps, d.branchId, read, tip, out.text, total, true);
 }
 
 /** A per-exchange run: one `Turn N:` line for the reply that just landed, once per reply (RoleCall `generatePairSummary`). */
@@ -142,34 +149,37 @@ async function pair(deps: SummaryDeps, d: Setup, read: Read, landed: Message): P
   if (!line) return null;
   const existing = read.take?.text ?? "";
   const text = `Turn ${nextTurn(existing)}: ${line}`;
-  return writeRow(deps.chats, d.branchId, read, landed, text, Math.min(all.length, (read.take?.through ?? 0) + 2), false);
+  return writeRow(deps, d.branchId, read, landed, text, Math.min(all.length, (read.take?.through ?? 0) + 2), false);
 }
 
 /** A reply, a new version or a continue has landed: run the automatic summary when it is due. Never throws; a failure is kept on the scene and the next run clears it. */
-export function summarizeAfter(deps: SummaryDeps, chatId: string, kind: TurnKind, landed: Message): Promise<void> {
+export function summarizeAfter(deps: SummaryDeps, chatId: string, kind: TurnKind, landed: Message, extensionCommit?: ExtensionCommitContext): Promise<void> {
+  const runDeps = { ...deps, ...(extensionCommit ? { extensionCommit: snapshotExtensionCommit(extensionCommit) } : {}) };
   return enqueue(chatId, async () => {
     if (running.has(chatId)) return;
     try {
-      const chat = await deps.chats.getChat(chatId);
+      const chat = await runDeps.chats.getChat(chatId);
       const s = resolveSummary(chat?.summary?.settings);
       if (!chat || !automationActive(s)) return;
-      const read = await readTake(deps.chats, landed.branchId);
-      if (s.method === "rolling" && (await deps.chats.countMessages(landed.branchId)) - (read.take?.through ?? 0) < s.interval) return;
+      const read = await readTake(runDeps.chats, landed.branchId);
+      if (s.method === "rolling" && (await runDeps.chats.countMessages(landed.branchId)) - (read.take?.through ?? 0) < s.interval) return;
       if (s.method === "pair" && kind === "continue") return;
       if (running.has(chatId)) return;
       running.add(chatId);
       try {
-        const d = await setup(deps, chatId);
-        await deps.chats.setSummaryError(chatId, null);
-        if (s.method === "pair") await pair(deps, d, read, landed);
-        else await rolling(deps, d, read);
+        const d = await setup(runDeps, chatId);
+        if (runDeps.extensionCommit) requireCommitResource(runDeps.extensionCommit, { kind: "scene", id: chatId }, [EXTENSION_BACKGROUND_FIELDS.summaryError]);
+        await runDeps.chats.setSummaryError(chatId, null, runDeps.extensionCommit);
+        if (s.method === "pair") await pair(runDeps, d, read, landed);
+        else await rolling(runDeps, d, read);
       } finally {
         running.delete(chatId);
       }
     } catch (e) {
       if (!(e instanceof SummaryFailure) && e instanceof StudioConflictError) return;
       const message = e instanceof SummaryFailure ? e.message : e instanceof Capacity ? "The summary model could not take that much text. Lower the messages per summary or choose a model with a larger window." : "Summary generation failed.";
-      await deps.chats.setSummaryError(chatId, message.slice(0, 500)).catch(() => undefined);
+      if (runDeps.extensionCommit) requireCommitResource(runDeps.extensionCommit, { kind: "scene", id: chatId }, [EXTENSION_BACKGROUND_FIELDS.summaryError]);
+      await runDeps.chats.setSummaryError(chatId, message.slice(0, 500), runDeps.extensionCommit).catch(() => undefined);
     }
   }).catch(() => undefined);
 }
@@ -283,7 +293,7 @@ export async function backfill(deps: SummaryDeps, chatId: string, signal?: Abort
       // The block ends at the newest message, or, for Every exchange, at the newest reply (the exchange it last covers).
       const end = mode === "pair" ? [...(await deps.chats.readMessages(d.branchId, { limit: WHOLE_BRANCH })).messages].reverse().find((m) => !m.cut && m.role === "assistant") : tip;
       if (!end) throw new SummaryFailure("There are no messages to summarize yet.");
-      const wrote = await writeRow(deps.chats, d.branchId, read, end, text, total, true);
+      const wrote = await writeRow(deps, d.branchId, read, end, text, total, true);
       await deps.chats.setSummaryError(chatId, null);
       return wrote;
     } catch (e) {

@@ -22,7 +22,7 @@ import { useComposerGrow } from "./composer-grow";
 import { ComposerTools, type ComposerToolsProps } from "./scene-composer-tools";
 import { DraftStatusStrip } from "./scene-draft-status";
 import { useComposerDrafts } from "./use-composer-drafts";
-import { insertAtCaret, publishDraft, registerInserter } from "./context/draft-bus";
+import { insertAtCaret, publishDraft, registerDraftReplacer, registerInserter } from "./context/draft-bus";
 import type { Steering } from "./use-scene-composer";
 
 export function SceneComposer({ api, chatId, prefs, persona, expandTick, name, connected, busy, showAiHint, tools, steering, onSteer, onCancelSteer, onStop, onOpenAiWing, onSend, onEditLast }: {
@@ -51,6 +51,7 @@ export function SceneComposer({ api, chatId, prefs, persona, expandTick, name, c
   /** Only a changed draft is written: a save that changes nothing would still rewrite the settings file. */
   const keep = useDebouncedSave<string>((text) => { if (readDraft(prefs.get(key)) !== text) prefs.set(key, text); }, 1000);
   const edit = (text: string): void => { setDraft(text); keep.push(text); publishDraft(chatId, text); };
+  const replace = (text: string): void => { keep.cancel(); setDraft(text); publishDraft(chatId, text); prefs.set(key, text); keep.push(text); };
   const drafts = useComposerDrafts({ api, chatId, text: draft, setText: edit });
   const [steerText, setSteerText] = useState("");
   const [seen, setSeen] = useState(steering);
@@ -60,8 +61,8 @@ export function SceneComposer({ api, chatId, prefs, persona, expandTick, name, c
   useComposerGrow(field, steering ? steerText : draft);
   useEffect(() => { if (steering) field.current?.focus(); }, [steering]);
   // Ping and suggested actions put text in the draft at the caret; a steering box is not the draft, so it declines.
-  const now = useRef({ draft, steering, edit });
-  now.current = { draft, steering, edit };
+  const now = useRef({ draft, steering, edit, replace });
+  now.current = { draft, steering, edit, replace };
   useEffect(() => registerInserter(chatId, (piece) => {
     const cur = now.current;
     if (cur.steering) return false;
@@ -70,6 +71,11 @@ export function SceneComposer({ api, chatId, prefs, persona, expandTick, name, c
     const next = insertAtCaret(cur.draft, piece, caret.from, caret.to);
     cur.edit(next.text);
     requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(next.caret, next.caret); });
+    return true;
+  }), [chatId]);
+  useEffect(() => registerDraftReplacer(chatId, (text) => {
+    if (now.current.steering) return false;
+    now.current.replace(text);
     return true;
   }), [chatId]);
   // The message menu's Expand as character: the pill strip opens over the box, which takes the outline.

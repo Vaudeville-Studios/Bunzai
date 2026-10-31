@@ -3,7 +3,12 @@
  * same-file copies, size-mismatched containment, and clone-ok escapes are not.
  */
 import { expect, test } from "bun:test";
-import { cssClones, cssRulesOf, fnClones, functionsOf, pairId } from "./clones-core";
+import { cloneSourcePaths, cssClones, cssRulesOf, fnClones, functionsOf, pairId } from "./clones-core";
+
+test("clone source inventory includes unique tracked and untracked source paths", () => {
+  expect(cloneSourcePaths("src/a.ts\nsrc/new.ts\nsrc/a.ts\nsrc/a.test.ts\n", (path) => path.endsWith(".ts") && !path.endsWith(".test.ts")))
+    .toEqual(["src/a.ts", "src/new.ts"]);
+});
 
 const body = (v: string, f: string): string => `
 export function ${f}(items: { at: number; label: string }[], now: number): string[] {

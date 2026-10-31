@@ -2,21 +2,25 @@
 import { expect, test } from "bun:test";
 import { runRegexBatchSandboxed, runRegexSandboxed } from "./run-in-worker";
 
-test("static Pages refuses regex before creating a same-origin worker", async () => {
+test("static Pages refuses regex when its opaque worker bundle is unavailable", async () => {
   const scope = globalThis as typeof globalThis & { document?: Document };
   const prior = scope.document;
+  const dataScope = globalThis as typeof globalThis & { __BUNZAI_POCKET_DATA__?: unknown };
+  const priorData = dataScope.__BUNZAI_POCKET_DATA__;
   scope.document = {
-    querySelector: () => ({ getAttribute: () => "browser" }),
+    querySelector: (selector: string) => selector === 'meta[name="bunzai-runtime"]' ? { getAttribute: () => "browser" } : null,
   } as unknown as Document;
+  Reflect.deleteProperty(dataScope, "__BUNZAI_POCKET_DATA__");
   try {
     const result = await runRegexSandboxed("sample", [], {
       phase: "output",
-      workerFactory: () => { throw new Error("must not start"); },
     });
     expect(result).toMatchObject({ ok: false, error: expect.stringContaining("isolated sandbox origin") });
   } finally {
     if (prior) scope.document = prior;
     else Reflect.deleteProperty(scope, "document");
+    if (priorData === undefined) Reflect.deleteProperty(dataScope, "__BUNZAI_POCKET_DATA__");
+    else dataScope.__BUNZAI_POCKET_DATA__ = priorData;
   }
 });
 

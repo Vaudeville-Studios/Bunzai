@@ -8,6 +8,7 @@ import { DamagedDataError } from "../../damaged-data-error";
 import type { CellCipher } from "../../crypto/cell-cipher";
 import { openBlobs } from "./blob-sql";
 import { openPartCell } from "./piece-parts-sql";
+import { extensionTurnOwnerSchema } from "../../contracts/extension-turn-owner";
 
 type Row = Record<string, string | number | null>;
 
@@ -56,7 +57,7 @@ export const CELL_COLUMNS: Readonly<Record<string, readonly CellColumn[]>> = {
   swipe_history: [{ column: "content" }],
   swipe_traces: [{ column: "trace_json", json: true }],
   director_states: [{ column: "cell", json: true }],
-  turn_checkpoints: [{ column: "content" }, { column: "trace_json", json: true }, { column: "provider_request_id" }, { column: "deltas_json", json: true }],
+  turn_checkpoints: [{ column: "content" }, { column: "trace_json", json: true }, { column: "provider_request_id" }, { column: "deltas_json", json: true }, { column: "extension_owner_json", json: true }],
   swipe_deltas: [{ column: "path_json", json: true }, { column: "value_json", json: true }],
   message_deltas: [{ column: "path_json", json: true }, { column: "value_json", json: true }],
   state_keyframes: [{ column: "state_json", json: true }],
@@ -64,6 +65,14 @@ export const CELL_COLUMNS: Readonly<Record<string, readonly CellColumn[]>> = {
   branch_base: [{ column: "state_json", json: true }],
   branch_variables: [{ column: "variables_json", json: true }],
   scene_folders: [{ column: "name" }],
+  extension_packages: [{ column: "body_cell", json: true }],
+  extension_controls: [{ column: "body_cell", json: true }],
+  extension_data: [{ column: "body_cell", json: true }],
+  extension_receipts: [{ column: "body_cell", json: true }],
+  extension_logs: [{ column: "body_cell", json: true }],
+  extension_budget_usage: [{ column: "body_cell", json: true }],
+  extension_budget_reservations: [{ column: "body_cell", json: true }],
+  extension_runtime_lease: [{ column: "owner_cell" }],
 };
 
 /** The full AAD of a plain cell column, as the stores seal it. */
@@ -104,7 +113,12 @@ export async function damagedColumns(cipher: CellCipher, table: string, row: Row
     if (cell === null || cell === undefined) continue;
     attempt(c.column, () => {
       const text = cipher.open(whereOf(table, c), String(cell));
-      if (c.json) JSON.parse(text);
+      if (c.json) {
+        const value: unknown = JSON.parse(text);
+        if (table === "turn_checkpoints" && c.column === "extension_owner_json" && !extensionTurnOwnerSchema.safeParse(value).success) {
+          throw new DamagedDataError("turn_checkpoints.extension_owner_json", "the owner binding has an invalid shape");
+        }
+      }
     });
   }
   return bad;

@@ -7,11 +7,13 @@ import { norm, stripComments } from "./lib";
 
 const isTest = (p: string): boolean => /\.test\.tsx?$/.test(p);
 const inSrc = (p: string): boolean => p.startsWith("src/") && !isTest(p);
+const generatedOperationMetadata = (path: string, source: string): boolean =>
+  norm(path) === "src/generated/extension-operation-metadata.ts" && source.startsWith("/** Generated host-safe operation metadata. */");
 
 /** A SHA-256 digest is checked by isSha256Hex, not by a pattern of 64 hex characters written out again. */
 export function sha256PatternOutsideHome(path: string, source: string): string | null {
   const p = norm(path);
-  if (!inSrc(p) || p === "src/core/sha256.ts") return null;
+  if (!inSrc(p) || p === "src/core/sha256.ts" || generatedOperationMetadata(p, source)) return null;
   if (!/\[(?:a-f0-9|0-9a-f|A-Fa-f0-9|0-9A-Fa-f)\]\{64\}/.test(stripComments(source))) return null;
   return `${p}: spells out a 64-hex-character pattern. Use isSha256Hex from src/core/sha256.ts (and assetRouteSha for an /api/asset/ path).`;
 }
@@ -42,11 +44,12 @@ const BYTE_LITERAL_ALLOWED: Readonly<Record<string, string>> = {
   "src/ui/_shared/download-sink.ts": "how much of a download streams to a Blob before it is flushed, not a limit",
   "src/formats/janitor/index.ts": "Janitor's external avatar-upload policy, independent of this app's media buffering limits",
   "src/ui/apps/scenes/props/dramaturg/dramaturg-live.ts": "aggregate retained plaintext conversation-cache budget, independent of media payload limits",
+  "src/sandbox/javascript/limits.ts": "QuickJS WASM linear-memory ceiling, distinct from payload and media bounds",
 };
 
 export function byteLimitLiteralOutsideHome(path: string, source: string): string | null {
   const p = norm(path);
-  if (!inSrc(p) || BYTE_LITERAL_ALLOWED[p] !== undefined) return null;
+  if (!inSrc(p) || BYTE_LITERAL_ALLOWED[p] !== undefined || generatedOperationMetadata(p, source)) return null;
   const clean = stripComments(source);
   if (!/\b(?:10|32|128)\s*\*\s*1024\s*\*\s*1024\b|\b(?:10_?485_?760|33_?554_?432|134_?217_?728)\b/.test(clean)) return null;
   return `${p}: writes a 10, 32 or 128 MiB byte limit as a number. Import IMAGE_MAX_BYTES, ASSET_MAX_BYTES, ASSET_BATCH_BYTES or JSON_BODY_MAX_BYTES (core/media), or add this file to BYTE_LITERAL_ALLOWED in scripts/hooks/single-source-limits.ts with its reason.`;

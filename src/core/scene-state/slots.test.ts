@@ -19,7 +19,10 @@ const files = readdirSync(FOLDER).filter((f) => f.endsWith(".ts") && !f.endsWith
 describe("the slot list", () => {
   test("holds exactly the slot files, each under its own id (a file that makes a list of slots from a table names them all: tracker.inventory is in tracker.ts)", () => {
     expect([...new Set(SLOTS.map((s): string => (s.id.includes(".") ? s.id.slice(0, s.id.indexOf(".")) : slotFile(s.id))))].sort()).toEqual([...files].sort());
-    for (const slot of SLOTS) expect(slotOf(slot.id.endsWith(":*") ? slot.id.slice(0, -1) + "x" : slot.id)).toBe(slot);
+    for (const slot of SLOTS) {
+      const sample = slot.id === "ext:*" ? "ext:fixture.extension:x" : slot.id.endsWith(":*") ? slot.id.slice(0, -1) + "x" : slot.id;
+      expect(slotOf(sample)).toBe(slot);
+    }
     expect(slotOf("nope")).toBeUndefined();
   });
 
@@ -95,6 +98,14 @@ describe("slot families", () => {
   test("the generated lookup resolves a linked tracker slot to the family, and the checks a store runs accept its deltas", () => {
     expect(slotOf("tracker-record:abc")?.id).toBe("tracker-record:*");
     expect(slotOf("tracker-list:abc")?.diff).toBe("keyed-list");
+  });
+
+  test("extension slots require a package namespace and bounded slot id", () => {
+    expect(slotOf("ext:fixture.extension:memory")?.id).toBe("ext:*");
+    expect(slotOf(`ext:${"a".repeat(65)}:memory`)).toBeUndefined();
+    expect(slotOf("ext:fixture.extension:Uppercase")).toBeUndefined();
+    expect(slotOf("ext:memory")).toBeUndefined();
+    expect(slotOf(`ext:fixture.extension:${"a".repeat(65)}`)).toBeUndefined();
   });
 });
 

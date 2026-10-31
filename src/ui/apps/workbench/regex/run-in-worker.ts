@@ -8,6 +8,7 @@ import type { RegexRunOptions, RegexRunResult } from "../../../../core/regex";
 import type { RegexRule } from "../../../../entities/regex/schema";
 import { isBrowserStudio } from "../../../../browser-mode";
 import { toErrorMessage } from "../../../_shared/error-message";
+import { createOpaqueRegexWorker } from "../../../../sandbox/regex/opaque-worker";
 
 const HARD_TIMEOUT_MS = 750;
 /** A batch earns a little more time per text, up to a ceiling. */
@@ -42,7 +43,9 @@ function callWorker<T>(
   ceiling: number,
   read: (data: { result?: unknown; texts?: unknown }) => T | null,
 ): Promise<{ ok: true; value: T } | RegexFailure> {
-  if (isBrowserStudio()) {
+  const browser = isBrowserStudio();
+  const regexWorkerSource = browser ? (globalThis as typeof globalThis & { __BUNZAI_POCKET_DATA__?: { browserSandbox?: { regexWorkerSource?: string } } }).__BUNZAI_POCKET_DATA__?.browserSandbox?.regexWorkerSource : undefined;
+  if (browser && !options.workerFactory && !regexWorkerSource) {
     return Promise.resolve({
       ok: false,
       reason: "error",
@@ -55,7 +58,7 @@ function callWorker<T>(
   return new Promise((resolve) => {
     let worker: Worker;
     try {
-      worker = workerFactory?.() ?? new Worker(workerHref(), { type: "module" });
+      worker = workerFactory?.() ?? (browser ? createOpaqueRegexWorker(regexWorkerSource!) : new Worker(workerHref(), { type: "module" }));
     } catch (error) {
       resolve({
         ok: false,

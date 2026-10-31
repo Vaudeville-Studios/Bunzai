@@ -2,7 +2,7 @@
  * Read-only meta-tool for searching, browsing, outlining, and reading Bunzai docs.
  */
 import { z } from "zod";
-import type { HarnessTool } from "./tool";
+import type { ExtensionToolContext, HarnessTool } from "./tool";
 import {
   findOutlineSection,
   type DocOutlineSection,
@@ -93,28 +93,7 @@ const renderExpandedSection = (
 
 /** Create the drop-in tool; the docs repository arrives through ToolContext at dispatch. */
 export function createDocsQueryTool(): HarnessTool<z.infer<typeof input>> {
-  return {
-    name: "docs_query",
-    description:
-      "Search, traverse collapsed collections and page outlines, or read Bunzai docs. "
-      + "Prefer a whole-document read for context; use section reads for targeted nuggets. "
-      + "Continue bounded reads with the returned offset.",
-    exposure: "direct",
-    effect: "read",
-    input,
-    concurrencyKey: (args) => {
-      switch (args.action) {
-        case "search":
-          return `docs/search/${args.audience ?? "all"}/${args.query.toLowerCase()}`;
-        case "browse":
-          return `docs/browse/${args.collection ?? "root"}/${args.audience ?? "all"}/${args.offset ?? 0}/${args.limit ?? 12}`;
-        case "outline":
-          return `docs/outline/${args.id}/${args.section ?? "root"}`;
-        case "read":
-          return `docs/read/${args.id}/${args.section ?? "all"}/${args.offset ?? 0}`;
-      }
-    },
-    async execute(args, { docs }) {
+  const execute = async (args: z.infer<typeof input>, { docs }: ExtensionToolContext) => {
       if (!docs) {
         return {
           summary: "docs unavailable",
@@ -248,7 +227,27 @@ export function createDocsQueryTool(): HarnessTool<z.infer<typeof input>> {
         summary: `docs read ${page.id}${suffix}`,
         output: `${page.body}${continuation}`,
       };
+  };
+  return {
+    name: "docs_query",
+    description:
+      "Search, traverse collapsed collections and page outlines, or read Bunzai docs. "
+      + "Prefer a whole-document read for context; use section reads for targeted nuggets. "
+      + "Continue bounded reads with the returned offset.",
+    exposure: "direct",
+    effect: "read",
+    input,
+    concurrencyKey: (args) => {
+      switch (args.action) {
+        case "search": return `docs/search/${args.audience ?? "all"}/${args.query.toLowerCase()}`;
+        case "browse": return `docs/browse/${args.collection ?? "root"}/${args.audience ?? "all"}/${args.offset ?? 0}/${args.limit ?? 12}`;
+        case "outline": return `docs/outline/${args.id}/${args.section ?? "root"}`;
+        case "read": return `docs/read/${args.id}/${args.section ?? "all"}/${args.offset ?? 0}`;
+      }
     },
+    execute(args, context) { return execute(args, context); },
+    extensionExposure: { hosts: ["desktop", "terminal"], resourceKind: "kit-tool", sensitivity: "public" },
+    executeExtension: execute,
   };
 }
 

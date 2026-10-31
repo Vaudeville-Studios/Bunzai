@@ -8,7 +8,7 @@ import { createTurnRuntime } from "./scene-turn-runtime";
 import type { Provider, ProviderCompletion, ProviderRequest } from "../stage/contracts/provider";
 import { memoryChatStore } from "../stage/store/chat-store";
 import { memoryStateStore } from "../stage/store/memory/state-store";
-import { forecastRequest, tryFormula } from "./scene-forecast";
+import { assembleExtensionPromptPreview, EXTENSION_PROMPT_PREVIEW_MAX_BYTES, forecastRequest, listExtensionPromptScenes, tryFormula } from "./scene-forecast";
 import { NoConnectionError, runTurn, type Connected, type TurnEvent } from "./scene-turn";
 import { answerReview } from "./scene-turn-review";
 
@@ -105,6 +105,24 @@ describe("forecastRequest", () => {
     await s.chats.setCompendium(s.chat.id, { on: true, recall: { on: true } });
     const on = await forecastRequest(s.deps, { chatId: s.chat.id, draft: "Hi" });
     expect(on.notes).toEqual(["The Compendium's recall is not run for a forecast; its entries are added when you send."]);
+  });
+});
+
+describe("extension prompt preview assembly", () => {
+  test("uses the canonical stored-scene assembly without connecting to a model or saving the draft", async () => {
+    const s = await scene({ connection: false });
+    expect(await listExtensionPromptScenes(s.chats)).toEqual([{ id: s.chat.id, title: s.chat.title }]);
+    const request = await assembleExtensionPromptPreview(s.deps, { chatId: s.chat.id, draft: "A local draft." });
+    expect(request.sceneId).toBe(s.chat.id);
+    expect(request.messages.some((message) => message.role === "assistant" && message.content.includes("Evening."))).toBe(true);
+    expect(request.messages.at(-1)).toEqual({ role: "user", content: "A local draft." });
+    expect(s.sent).toHaveLength(0);
+    expect((await s.chats.readMessages(s.chat.activeBranchId, { limit: 10 })).messages.map((message) => message.swipes[message.current]!.content)).toEqual(["Evening."]);
+  });
+
+  test("rejects drafts beyond the shared value-byte ceiling before scene assembly", async () => {
+    const s = await scene({ connection: false });
+    await expect(assembleExtensionPromptPreview(s.deps, { chatId: s.chat.id, draft: "x".repeat(EXTENSION_PROMPT_PREVIEW_MAX_BYTES + 1) })).rejects.toThrow(/byte limit/);
   });
 });
 

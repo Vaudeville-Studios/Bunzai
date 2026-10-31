@@ -2,18 +2,19 @@
 import * as registry from "../core/registry";
 import f0 from "../formats/agnai/index";
 import f1 from "../formats/backyard/index";
-import f2 from "../formats/image-pack/index";
-import f3 from "../formats/janitor/index";
-import f4 from "../formats/lumiverse/index";
-import f5 from "../formats/lumiverse-archive/index";
-import f6 from "../formats/marinara/index";
-import f7 from "../formats/novelai/index";
-import f8 from "../formats/pygmalion/index";
-import f9 from "../formats/risu/index";
-import f10 from "../formats/rolecall/index";
-import f11 from "../formats/saucepan/index";
-import f12 from "../formats/sillytavern/index";
-import f13 from "../formats/vaud-json/index";
+import f2 from "../formats/bunzai-workflow/index";
+import f3 from "../formats/image-pack/index";
+import f4 from "../formats/janitor/index";
+import f5 from "../formats/lumiverse/index";
+import f6 from "../formats/lumiverse-archive/index";
+import f7 from "../formats/marinara/index";
+import f8 from "../formats/novelai/index";
+import f9 from "../formats/pygmalion/index";
+import f10 from "../formats/risu/index";
+import f11 from "../formats/rolecall/index";
+import f12 from "../formats/saucepan/index";
+import f13 from "../formats/sillytavern/index";
+import f14 from "../formats/vaud-json/index";
 
 export function registerPackagedFormats(): void {
   for (const a of Array.isArray(f0) ? f0 : [f0]) registry.register(a);
@@ -30,4 +31,5 @@ export function registerPackagedFormats(): void {
   for (const a of Array.isArray(f11) ? f11 : [f11]) registry.register(a);
   for (const a of Array.isArray(f12) ? f12 : [f12]) registry.register(a);
   for (const a of Array.isArray(f13) ? f13 : [f13]) registry.register(a);
+  for (const a of Array.isArray(f14) ? f14 : [f14]) registry.register(a);
 }

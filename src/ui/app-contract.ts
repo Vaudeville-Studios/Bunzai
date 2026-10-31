@@ -29,7 +29,8 @@ import type { SearchApi } from "./app-contract-search";
 import type { SpotifyApi } from "./app-contract-spotify";
 import type { PieceStore } from "./_shared/piece-store";
 import type { MacroEngineInfo, MacroResolveAsk, MacroResolveResult } from "./app-contract-macro";
-import type { EffectiveThemeAppearance } from "../extensions/theme-contract";
+import type { EffectiveThemeAppearance, ImageMedia } from "../extensions/theme-contract";
+import type { ExtensionManagerApi } from "../extensions/runtime/service";
 export type { MacroEngineInfo, MacroResolveAsk, MacroResolveResult } from "./app-contract-macro";
 export type { EditableEntity, EditedEntitySave, LightEditableEntity, StagedAssetUpload } from "./app-contract-editor";
 
@@ -79,7 +80,9 @@ export interface AppManifestEntry {
  * there is no `root` - a BunzaiApp renders JSX, the shell owns the DOM. */
 export interface AppContext {
   /** authenticated-local API base (loopback server) */
-  api: ScenesApi & CompendiumApi & CompendiumAiApi & ParticipantsApi & ImportCompletionApi & SearchApi & SpotifyApi & {
+  api: ScenesApi & CompendiumApi & CompendiumAiApi & ParticipantsApi & ImportCompletionApi & SearchApi & SpotifyApi & { extensions: ExtensionManagerApi } & {
+    /** Read one package-declared inert theme image only through its digest- and scope-bound host route. */
+    readExtensionThemeAsset(packageId: string, assetId: string, themeDigest: string, assetDigest: string, mediaType: ImageMedia, signal?: AbortSignal): Promise<Uint8Array>;
     listEntities(kind?: string): Promise<StudioEntitySummary[]>;
     getEntitySummary(kind: string, id: string): Promise<StudioEntitySummary | null>;
     studioInventory(kind?: string): Promise<{

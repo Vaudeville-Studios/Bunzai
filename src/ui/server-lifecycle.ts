@@ -9,7 +9,7 @@ import { toErrorMessage } from "../error-message";
 
 export interface LifecycleDeps {
   /** stop the Bun server (releases the port); filled by startUi */
-  stop: () => void;
+  stop: () => void | Promise<void>;
   /** process exit, injectable for tests */
   exit: (code: number) => void;
   /** respawn this same command detached, injectable for tests */
@@ -46,10 +46,10 @@ export const realSpawnSelf = (): void => {
  * So the exit is the one thing that always happens. A cleanup that fails is reported and stepped
  * over, because a port released by exiting is better than a port held by a process nobody can see.
  */
-const teardown = (deps: LifecycleDeps, respawn: boolean): void => {
+const teardown = async (deps: LifecycleDeps, respawn: boolean): Promise<void> => {
   try {
     try {
-      deps.stop(); // port freed BEFORE the child boots, so the rebind never races
+      await deps.stop(); // port freed and accepted work settled BEFORE the child boots
     } catch (e) {
       console.error("server: shutting down anyway, cleanup failed:", toErrorMessage(e));
     }
@@ -63,11 +63,11 @@ const teardown = (deps: LifecycleDeps, respawn: boolean): void => {
 
 /** Answer first so the page gets its ok, then tear down on the next tick. */
 export function handleShutdown(deps: LifecycleDeps): Response {
-  setTimeout(() => teardown(deps, false), 80);
+  setTimeout(() => { void teardown(deps, false); }, 80);
   return Response.json({ ok: true });
 }
 
 export function handleRestart(deps: LifecycleDeps): Response {
-  setTimeout(() => teardown(deps, true), 80);
+  setTimeout(() => { void teardown(deps, true); }, 80);
   return Response.json({ ok: true, restarting: true });
 }

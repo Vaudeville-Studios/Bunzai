@@ -1,5 +1,5 @@
 /** Narrow opened-library reads shared by local and approved remote Studio handlers. */
-import { createThemeService, type ThemeReadService } from "./server-theme-extensions";
+import type { ThemeReadService } from "./server-theme-extensions";
 import type { PackagedAssets } from "./assets";
 import type { LibraryHandle, OpenedLibrary } from "./library-root";
 
@@ -14,10 +14,10 @@ export interface LibraryReadCapability {
   themeReader(): Promise<ThemeReadService | null>;
 }
 
-export function libraryReadCapability(library: LibraryHandle | undefined, packaged?: PackagedAssets): LibraryReadCapability | undefined {
+type ExtensionOwner = { get(): Promise<({ themeEffective: ThemeReadService["effective"]; themeAsset: ThemeReadService["asset"]; themeRevision: ThemeReadService["revisionStamp"]; themeMarkBroken: ThemeReadService["markBroken"]; themeConfirmHealthy: ThemeReadService["confirmHealthy"] }) | null> };
+
+export function libraryReadCapability(library: LibraryHandle | undefined, _packaged?: PackagedAssets, extensionOwner?: ExtensionOwner): LibraryReadCapability | undefined {
   if (!library) return undefined;
-  let themeOwner: OpenedLibrary | null = null;
-  let themeService: Promise<ThemeReadService> | null = null;
   return { opened: () => {
     const opened = library.opened();
     return opened ? {
@@ -25,17 +25,10 @@ export function libraryReadCapability(library: LibraryHandle | undefined, packag
       isCurrent: () => library.opened() === opened,
     } : null;
   }, themeReader: async () => {
-    const opened = library.opened();
-    if (!opened?.stateStore) return null;
-    if (themeOwner !== opened || !themeService) {
-      themeOwner = opened;
-      let pending: ReturnType<typeof createThemeService>;
-      pending = createThemeService(opened.stateStore, packaged).catch((error) => {
-        if (themeService === pending) themeService = null;
-        throw error;
-      });
-      themeService = pending;
-    }
-    return themeService;
+    if (!extensionOwner) return null;
+    const runtime = await extensionOwner.get();
+    if (!runtime) return null;
+    return { effective: runtime.themeEffective, asset: runtime.themeAsset, revisionStamp: runtime.themeRevision,
+      markBroken: runtime.themeMarkBroken, confirmHealthy: runtime.themeConfirmHealthy };
   } };
 }

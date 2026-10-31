@@ -82,7 +82,7 @@ test("the data-parts and hooks themes and variants reach are still there", async
 
 test("the registry keeps every section id, opens on Appearance, and groups the tabs into the four acts", () => {
   const real = realSections;
-  expect(real.map((s) => s.id).sort()).toEqual(["about", "appearance", "backups", "connections", "memory", "models", "remote-access", "security", "spotify", "studio", "updates", "workbench"]);
+  expect(real.map((s) => s.id).sort()).toEqual(["about", "appearance", "backups", "connections", "extensions", "memory", "models", "remote-access", "security", "spotify", "studio", "updates", "workbench"]);
   expect(real[0]!.id).toBe("appearance");
-  expect(real.map((s) => s.act)).toEqual(["studio", "studio", "studio", "studio", "agent", "agent", "agent", "vault", "vault", "house", "house", "house"]);
+  expect(real.map((s) => s.act)).toEqual(["studio", "studio", "studio", "studio", "agent", "agent", "agent", "vault", "vault", "house", "house", "house", "house"]);
 });

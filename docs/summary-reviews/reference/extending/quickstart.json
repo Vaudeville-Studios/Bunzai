@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/quickstart",
+  "sourcePath": "docs/reference/extending/quickstart.md",
+  "sourceHash": "sha256:6005e6c45fd88466751cb385179b9554f09d2e29f2193753ab57463797c0e7a9",
+  "semanticSummaryHash": "sha256:85dd3c57ff2dc6360db03e270199acc0200474b47f186e17e42a641e6286bc49",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Root independently approved documentation-summary accuracy for source SHA-256 6005e6c45fd88466751cb385179b9554f09d2e29f2193753ab57463797c0e7a9. This approval covers documentation accuracy only, not security or release readiness.",
+  "reviewedAt": "2026-10-31T13:40:01.523Z"
+}

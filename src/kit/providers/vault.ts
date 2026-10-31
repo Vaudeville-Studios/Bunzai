@@ -11,7 +11,7 @@ import { open, seal } from "../keystore/keystore";
 import { identityStatus } from "../keystore/backends/identity-file";
 import type { Sealed, Unlock } from "../keystore/types";
 import { writeAtomicReplace } from "../../studio/atomic-file";
-import { isRecord } from "../../core/guards";
+import { isRecord, recOr } from "../../core/guards";
 
 /** The person's Spotify link: their own app's Client ID (not a secret) and the sign-in's refresh token (a secret). */
 export interface SpotifyLink { clientId?: string; refreshToken?: string }
@@ -223,7 +223,7 @@ function toVault(value: unknown): Vault {
   const raw = record["spotify"];
   if (raw !== undefined && (!isRecord(raw) || !Object.keys(raw).every((key) => ["clientId", "refreshToken"].includes(key))
     || (raw.clientId !== undefined && typeof raw.clientId !== "string") || (raw.refreshToken !== undefined && typeof raw.refreshToken !== "string"))) throw new Error(DAMAGED_VAULT);
-  const link = isRecord(raw) ? raw : {};
+  const link = recOr(raw);
   const spotify: SpotifyLink = {
     ...(typeof link["clientId"] === "string" && link["clientId"] ? { clientId: link["clientId"] } : {}),
     ...(typeof link["refreshToken"] === "string" && link["refreshToken"] ? { refreshToken: link["refreshToken"] } : {}),

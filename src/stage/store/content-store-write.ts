@@ -18,6 +18,7 @@
  * (`coldFillParts`, S5), so it lives here rather than being duplicated in each.
  */
 import { COLD_READ_LIMIT } from "./cold-read-budget";
+import { utf8ByteLength } from "../../shared/utf8";
 import { revisionFromParts } from "../../entities/canonical-revision";
 import { assemble, decodePart, decodePartHolding, decompose, kindPartsFor, type PartRecord } from "../../entities/piece-parts";
 import { parseCanonicalEntity, type ParsedCanonicalEntity } from "../../entities/runtime-schema";
@@ -93,7 +94,7 @@ function graphBytes(value: unknown): number {
       const next = frame.iterator.next();
       if (!next.done) {
         stack.push(frame);
-        bytes += Buffer.byteLength(next.value, "utf8");
+        bytes += utf8ByteLength(next.value);
         if (Object.prototype.hasOwnProperty.call(frame.object, next.value)) stack.push({ value: (frame.object as Record<string, unknown>)[next.value] });
       }
       continue;
@@ -101,7 +102,7 @@ function graphBytes(value: unknown): number {
     const item = frame.value;
     nodes++;
     bytes += 128;
-    if (typeof item === "string") bytes += Buffer.byteLength(item, "utf8");
+    if (typeof item === "string") bytes += utf8ByteLength(item);
     else if (item && typeof item === "object") {
       if (seen.has(item)) continue;
       seen.add(item);
@@ -192,11 +193,11 @@ export async function coldFillParts(
   let references = 0;
   let nodes = 0;
   for (const part of parts) {
-    inputBytes += Buffer.byteLength(part.text, "utf8");
+    inputBytes += utf8ByteLength(part.text);
     nodes += jsonTokenCount(part.text, Math.ceil(limits.charge / 128) - nodes);
     references += part.blobs.length + (part.refs?.length ?? 0);
     for (const blob of part.blobs) {
-      inputBytes += blob.payload.kind === "bytes" ? blob.payload.bytes.byteLength : Buffer.byteLength(blob.payload.text, "utf8");
+      inputBytes += blob.payload.kind === "bytes" ? blob.payload.bytes.byteLength : utf8ByteLength(blob.payload.text);
     }
     if (inputBytes * 2 + (parts.length + references) * 2048 + nodes * 128 > limits.charge) {
       throw new Error("this piece exceeds the bounded cold-read memory limit");

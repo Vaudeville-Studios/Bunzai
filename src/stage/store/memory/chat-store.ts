@@ -10,10 +10,12 @@
 import { StudioConflictError, ChatAlreadyImportedError } from "../../../studio/errors";
 
 import type { Branch, CastSnapshotCodec, Chat, ChatStore, Message, SceneFolder, WriteGuard } from "../../contracts/chat-store";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
 import { copyRecord, forkPositionOf, publicMessage, type ChatRecord, type MessageRecord } from "./chat-records";
 import { folderMethods } from "./chat-store-folders";
 import { receiptMethods } from "./chat-store-receipts";
 import { settingsMethods } from "./chat-store-settings";
+import { sceneSettingMethods } from "./chat-store-scene-settings";
 import { summaryMethods } from "./chat-store-summary";
 import { summaryOnSlot } from "../summary-slot";
 import { directorMethods } from "./chat-store-director";
@@ -40,6 +42,7 @@ export function memoryChatStoreBackend(
   snapshotCodec: CastSnapshotCodec,
   clock: () => number = Date.now,
   newId: () => string = () => crypto.randomUUID(),
+  options: { authorizeExtensionCommit?: (context: ExtensionCommitContext) => void } = {},
 ): ChatStore {
   const chats = new Map<string, ChatRecord>();
   const branches = new Map<string, Branch>();
@@ -67,6 +70,10 @@ export function memoryChatStoreBackend(
   };
   const liveMessages = (branchId: string): MessageRecord[] =>
     (branchOrder.get(branchId) ?? []).map((id) => messages.get(id)!).filter((m) => !m.cut);
+  const authorizeExtensionCommit = (context: ExtensionCommitContext): void => {
+    if (!options.authorizeExtensionCommit) throw new Error("extension commit authorization is unavailable");
+    options.authorizeExtensionCommit(context);
+  };
   const touch = (record: ChatRecord): void => { record.chat = { ...record.chat, updatedAt: clock() }; };
   /** Throws, before anything changes, when a guarded write's base is out of date (edge case 9). */
   const requireVersion = (branchId: string, expected: number | undefined): void => {
@@ -110,11 +117,14 @@ export function memoryChatStoreBackend(
   };
 
   const stats = statsCounters(clock);
-  const scene = stateMethods({ messages, branchOrder, liveChatOfBranch, requireVersion });
-  const { turnOpen, ...turns } = turnMethods({
+  let branchTurnOpen = (_branchId: string): boolean => false;
+  const scene = stateMethods({ messages, branchOrder, liveChatOfBranch, requireVersion, authorizeExtensionCommit, branchTurnOpen: (branchId) => branchTurnOpen(branchId) });
+  const { turnOpen, branchTurnOpen: hasBranchTurn, ...turns } = turnMethods({
     clock, newId, messages, branchVersion: (id) => branches.get(id)!.version, liveChatOfBranch, writableMessage, requireVersion, bump, appendMany, state: scene,
+    authorizeExtensionCommit,
   });
-  const { drop: dropReceipts, ...receiptApi } = receiptMethods({ chats, branches, clock, newId });
+  branchTurnOpen = hasBranchTurn;
+  const { drop: dropReceipts, ...receiptApi } = receiptMethods({ chats, branches, clock, newId, authorizeExtensionCommit });
   const castApi = castMethods({ chats, snapshotCodec, clock, turnOpen, stats });
   const transcript = transcriptMethods({ branches, messages, branchOrder, liveMessages });
 
@@ -122,16 +132,17 @@ export function memoryChatStoreBackend(
     ...turns,
     ...scene.api,
     ...versionMethods({ chats, branches, clock, newId, writableMessage, requireVersion, bump, refresh: scene.refresh }),
-    ...cutMethods({ branches, messages, branchOrder, clock, newId, writableMessage, liveMessages, liveChatOfBranch, requireVersion, bump, touch, refresh: scene.refresh, copyMessageDeltas: scene.copyMessageDeltas, copyBase: scene.copyBase }),
+    ...cutMethods({ branches, messages, branchOrder, clock, newId, writableMessage, liveMessages, liveChatOfBranch, requireVersion, bump, touch, refresh: scene.refresh, copyMessageDeltas: scene.copyMessageDeltas, copyBase: scene.copyBase, authorizeExtensionCommit }),
     ...hiddenMethods({ writableMessage, requireVersion, bump }),
     ...swipeCutMethods({ messages, branchOrder, deletedBranches, chats, branches, clock, writableMessage, requireVersion, bump, touch, liveChatOfBranch, refresh: scene.refresh }),
     ...castApi,
     ...stats.api,
     ...transcript,
-    ...receiptApi, ...settingsMethods({ chats, turnOpen, clock, newId }), ...summaryMethods({ chats }),
+    ...receiptApi, ...settingsMethods({ chats, turnOpen, clock, newId }), ...sceneSettingMethods({ chats, turnOpen, authorizeExtensionCommit }), ...summaryMethods({ chats, authorizeExtensionCommit }),
     ...summaryOnSlot({ sceneState: scene.api.sceneState, tip: async (b) => (branchOrder.get(b) ?? []).map((id) => messages.get(id)!).findLast((m) => !m.cut)?.id ?? null, recordMessageDeltas: scene.api.recordMessageDeltas, now: clock, newId }), ...directorMethods({ chats, branches, messages, branchOrder, clock }),
     ...folderMethods({ clock, newId, chats, folders }),
-    async createChat(input) {
+    async createChat(input, extensionCommit) {
+      if (extensionCommit) authorizeExtensionCommit(extensionCommit);
       const title = checkTitle(input?.title);
       const cast = checkCast(input?.cast);
       const snapshot = checkSnapshot(input?.snapshot, cast);
@@ -270,7 +281,8 @@ export function memoryChatStoreBackend(
       return structuredClone(record.chat);
     },
 
-    async fork(branchId, atMessageId, opts) {
+    async fork(branchId, atMessageId, opts, extensionCommit) {
+      if (extensionCommit) authorizeExtensionCommit(extensionCommit);
       const expected = checkGuard(opts);
       const name = opts?.name === undefined ? "branch" : checkTitle(opts.name);
       const record = liveChatOfBranch(branchId);
@@ -313,11 +325,13 @@ export function memoryChatStoreBackend(
       return structuredClone(branch);
     },
 
-    async appendMessage(branchId, input, guard) {
+    async appendMessage(branchId, input, guard, extensionCommit) {
+      if (extensionCommit) authorizeExtensionCommit(extensionCommit);
       return appendMany(branchId, [input], guard)?.[0] ?? null;
     },
 
-    async appendMessages(branchId, inputs, guard) {
+    async appendMessages(branchId, inputs, guard, extensionCommit) {
+      if (extensionCommit) authorizeExtensionCommit(extensionCommit);
       return appendMany(branchId, inputs, guard);
     },
 
@@ -338,7 +352,8 @@ export function memoryChatStoreBackend(
       };
     },
 
-    async editSwipe(messageId, swipeId, contentRaw, guard) {
+    async editSwipe(messageId, swipeId, contentRaw, guard, extensionCommit) {
+      if (extensionCommit) authorizeExtensionCommit(extensionCommit);
       const content = checkText(contentRaw, "content");
       const expected = checkGuard(guard);
       const m = writableMessage(messageId);

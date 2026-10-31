@@ -64,7 +64,7 @@ export interface ChatStoreSummaries {
   /** Changes the scene's summary settings (rule 45): a key left out of the patch stays, null goes back to the default. Refused whole when malformed. Bumps no version and moves no updatedAt; null for an absent or deleted scene. */
   setSummarySettings(chatId: string, patch: SummarySettingsPatch): Promise<Chat | null>;
   /** Keeps the last automatic summary run's failure in words, or clears it with null (rule 45). Bumps no version and moves no updatedAt; null for an absent or deleted scene. */
-  setSummaryError(chatId: string, error: string | null): Promise<Chat | null>;
+  setSummaryError(chatId: string, error: string | null, extensionCommit?: import("./extension-store").ExtensionCommitContext): Promise<Chat | null>;
   /** A take's summary (rule 45), the text of the `summary` slot's rows the take shows; null when it has none, or the take is absent. */
   summaryOf(branchId: string): Promise<TakeSummary | null>;
   /**

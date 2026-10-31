@@ -416,9 +416,9 @@ Desktop uses `src/ui/server-scene-composition.ts` to supply library readers, pro
 | Row fingerprints and the health check (scan, lane cell checks, repairs) | `src/stage/store/sqlite/row-fingerprints.ts`, `migration-24-health-check.ts`, `health-check.ts`, `health-scan.ts`, `health-page.ts`, `health-lane.ts`, `health-repair.ts`, `health-move.ts` (also `health-cells.ts`, `health-closure.ts`, `health-labels.ts`, `health-roll-target.ts`, `health-structure.ts`, `health-types.ts`), and the lane worker `maintenance-worker.ts` |
 | Backups and health routes (host only) | `src/ui/server-library-care.ts`, reached from `src/ui/server-library.ts` |
 | Encryption at rest: keys, keyring, cell format | `src/stage/crypto/` |
-| Appearance package contract, discovery, sealed grants and effective resolution | `src/extensions/theme-contract.ts`, `src/extensions/theme-appearance.ts`, `src/extensions/theme-inventory.ts`, `src/extensions/theme-lifecycle.ts` |
+| Appearance contract, built-in inventory, one-way legacy import and unified extension resolution | `src/extensions/theme-contract.ts`, `src/extensions/theme-appearance.ts`, `src/extensions/theme-inventory.ts`, `src/extensions/legacy-theme-migrations.ts`, `src/extensions/runtime/theme-service.ts` |
 | Surface and variant ids, the difference score, and the painter that projects a theme onto `--bk-*` tokens | `src/extensions/surface-registry.ts`, `src/extensions/theme-difference.ts`, `src/ui/shell/theme-tokens.ts`, `src/ui/_shared/surface-variant.ts` |
-| Theme package routes and revision-only polling | `src/ui/server-theme-extensions.ts`, `src/pocket/theme-route.ts`, `src/ui/shell/use-theme-events.ts` |
+| Shared theme read routes and revision-only polling | `src/extensions/theme-read-routes.ts`, `src/ui/server-theme-extensions.ts`, `src/pocket/runtime.ts`, `src/ui/shell/use-theme-events.ts` |
 | Separate workspace and temporary overlay destinations; explicit promotion and shared draft owners | `src/ui/shell/store-navigation.ts`, `src/ui/shell/AppSurface.tsx`, `src/ui/shell/AppRooms.tsx` |
 | RoleCall-style bottom dock, discovered app roster, persistent collapse preference and keyboard navigation | `src/ui/shell/Dock.tsx`, `src/ui/shell/dock-core.ts`, `src/ui/shell/bottom-dock.module.css` |
 | Character superset | `src/entities/character/schema.ts` |

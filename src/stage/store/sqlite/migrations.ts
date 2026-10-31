@@ -36,6 +36,10 @@ import { MIGRATION_43_SCENE_STATE } from "./migration-43-scene-state";
 import { MIGRATION_44_VERSION_WRITES } from "./migration-44-version-writes";
 import { MIGRATION_45_GLOBAL_OPS } from "./migration-45-global-ops";
 import { MIGRATION_46_DRAMATURG } from "./migration-46-dramaturg";
+import { MIGRATION_48_EXTENSIONS } from "./migration-48-extensions";
+import { MIGRATION_49_STATE_REVISIONS } from "./migration-49-state-revisions";
+import { MIGRATION_50_EXTENSION_LOGS } from "./migration-50-extension-logs";
+import { MIGRATION_51_CHECKPOINT_EXTENSION_OWNER } from "./migration-51-checkpoint-extension-owner";
 
 export const MIGRATIONS: readonly Migration[] = [
   {
@@ -456,7 +460,8 @@ export const MIGRATIONS: readonly Migration[] = [
   MIGRATION_43_SCENE_STATE,
   MIGRATION_44_VERSION_WRITES,
   MIGRATION_45_GLOBAL_OPS,
-  MIGRATION_46_DRAMATURG,  {
+  MIGRATION_46_DRAMATURG,
+  {
     id: 47,
     name: "rp-core journals",
     sql: `
@@ -482,4 +487,8 @@ export const MIGRATIONS: readonly Migration[] = [
     `,
   },
 
+  MIGRATION_48_EXTENSIONS,
+  MIGRATION_49_STATE_REVISIONS,
+  MIGRATION_50_EXTENSION_LOGS,
+  MIGRATION_51_CHECKPOINT_EXTENSION_OWNER,
 ];

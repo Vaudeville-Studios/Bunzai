@@ -9,8 +9,10 @@ import type { Provider, ProviderCompletion, ProviderRequest } from "../stage/con
 import { memoryChatStore } from "../stage/store/chat-store";
 import { memoryStateStore } from "../stage/store/memory/state-store";
 import { deleteGuide, saveGuide } from "./guides";
-import { runTurn, type Connected, type TurnEvent } from "./scene-turn";
+import { runTurn, stopTurn, type Connected, type TurnEvent } from "./scene-turn";
 import { varsOf } from "../core/scene-state/vars-bridge";
+import { countText } from "../core/tokens";
+import { answerReview } from "./scene-turn-review";
 
 const vera = {
   kind: "character",
@@ -26,7 +28,7 @@ const withPrefill: PresetBody = {
   systemPrompts: { assistantPrefill: "Preset:" },
 };
 
-async function scene() {
+async function scene(options: { context?: number; applyExtensionPrompts?: (sceneId: string, messages: readonly { role: "system" | "user" | "assistant" | "tool"; content: string }[], signal: AbortSignal) => Promise<readonly string[]> } = {}) {
   let now = 1_000;
   const chats = memoryChatStore(() => now);
   const state = memoryStateStore();
@@ -44,16 +46,17 @@ async function scene() {
   const deps = { runtime: createTurnRuntime(),
     chats,
     state,
-    connect: async (): Promise<Connected | null> => ({ provider, kind: "openrouter", context: 32_000 }),
+    connect: async (): Promise<Connected | null> => ({ provider, kind: "openrouter", context: options.context ?? 32_000 }),
     readPreset: async () => withPrefill,
     readLorebook: async () => null,
     now: () => (now += 10),
     randomSeed: () => 7,
+    ...(options.applyExtensionPrompts ? { applyExtensionPrompts: options.applyExtensionPrompts } : {}),
   };
   const events: TurnEvent[] = [];
-  const turn = async () => {
+  const turn = async (inspect = false) => {
     const version = (await chats.readMessages(chat.activeBranchId, { limit: 1 })).branchVersion!;
-    return runTurn(deps, { chatId: chat.id, kind: "reply", expectedVersion: version }, (e) => events.push(e));
+    return runTurn(deps, { chatId: chat.id, kind: "reply", expectedVersion: version, ...(inspect ? { inspect: true } : {}) }, (e) => events.push(e));
   };
   /** Another exchange: the person writes, and the reply is asked for. */
   const next = async (text: string) => {
@@ -61,7 +64,11 @@ async function scene() {
     await turn();
   };
   const texts = (i: number) => sent[i]!.messages.map((m) => `${m.role}:${m.content}`);
-  return { chats, state, chat, sent, events, turn, next, texts, now: () => now };
+  const trace = async () => {
+    const message = (await chats.readMessages(chat.activeBranchId, { limit: 50 })).messages.at(-1)!;
+    return (await chats.swipeTrace(message.id, message.swipes[message.current]!.id)) as Record<string, unknown>;
+  };
+  return { chats, state, chat, sent, events, turn, next, texts, trace, deps, now: () => now };
 }
 
 describe("the scene note on a live scene", () => {
@@ -140,5 +147,50 @@ describe("guides on a live scene", () => {
     await s.chats.recordMessageDeltas(branch, tip.id, [{ slot: "vars", path: ["mood"], value: "stormy", at: 5 }]);
     await s.next("More");
     expect(varsOf(await s.chats.sceneState(branch)).get("mood")!.value).toBe("stormy");
+  });
+});
+
+describe("extension prompt contributions", () => {
+  test("a required hook failure stops before provider send and does not add a partial transcript message", async () => {
+    const s = await scene({ applyExtensionPrompts: async () => { throw new Error("required prompt hook failed"); } });
+    const before = (await s.chats.readMessages(s.chat.activeBranchId, { limit: 50 })).messages;
+    await s.turn();
+    expect(s.sent).toHaveLength(0);
+    expect((await s.chats.readMessages(s.chat.activeBranchId, { limit: 50 })).messages).toEqual(before);
+    expect(s.events.at(-1)).toMatchObject({ type: "failed" });
+  });
+
+  test("a named append reaches the provider and the stored token trace", async () => {
+    const text = "Keep the archive quiet.";
+    const s = await scene({ applyExtensionPrompts: async () => [text] });
+    await s.turn();
+    expect(s.events.at(-1)!.type).toBe("done");
+    expect(s.sent[0]!.messages).toContainEqual({ role: "system", content: text });
+    const storedTrace = await s.trace();
+    expect(storedTrace).not.toBeNull();
+    const blocks = storedTrace!["blocks"] as { source: Record<string, string>; role: string; tokens: number }[];
+    expect(blocks).toContainEqual({ source: { kind: "prompt", name: "Extension contributions" }, role: "system", tokens: countText(text) });
+  });
+
+  test("a contribution that overflows is rejected before send, including after reviewed edits", async () => {
+    const s = await scene({ context: 5_000, applyExtensionPrompts: async () => ["x".repeat(16_000)] });
+    await s.turn();
+    expect(s.sent).toHaveLength(0);
+    expect(s.events.at(-1)).toMatchObject({ type: "failed", code: "context_length_exceeded" });
+
+    const reviewed = await scene({ context: 100_000, applyExtensionPrompts: async () => ["small instruction"] });
+    const pending = reviewed.turn(true);
+    for (let i = 0; i < 200 && !reviewed.events.some((event) => event.type === "review"); i++) await new Promise((resolve) => setTimeout(resolve, 5));
+    const review = reviewed.events.find((event) => event.type === "review");
+    if (!review) {
+      const start = reviewed.events.find((event) => event.type === "start");
+      if (start?.type === "start") stopTurn(reviewed.deps.runtime, reviewed.chat.id, start.turnId);
+      await pending;
+      throw new Error(`review was not requested; last event: ${JSON.stringify(reviewed.events.at(-1))}`);
+    }
+    answerReview(reviewed.deps.runtime, reviewed.chat.id, review.type === "review" ? review.turnId : "", { kind: "send", edits: { 0: "x".repeat(500_000) } });
+    await pending;
+    expect(reviewed.sent).toHaveLength(0);
+    expect(reviewed.events.at(-1)).toMatchObject({ type: "failed", code: "context_length_exceeded" });
   });
 });

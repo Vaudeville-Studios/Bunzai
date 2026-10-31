@@ -20,6 +20,26 @@ await rm(site, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 await bakeFormatRegistry(root);
 
+// A self-contained classic Worker avoids module-worker/CORS fetches from the opaque Browser frame.
+// QuickJS receives the shipped WASM bytes through wasmBinary; the placeholder URL is never fetched.
+const extensionWorkerBuild = await Bun.build({
+  entrypoints: [join(root, "src", "sandbox", "javascript", "worker.ts")],
+  target: "browser", format: "iife", minify: true, define: { "import.meta.url": '"https://bunzai.invalid/quickjs.js"' },
+});
+if (!extensionWorkerBuild.success || extensionWorkerBuild.outputs.length !== 1) {
+  throw new Error(`pages build: opaque QuickJS worker bundle failed: ${extensionWorkerBuild.logs.map((log) => log.message).join("; ")}`);
+}
+const extensionWorkerJs = await extensionWorkerBuild.outputs[0]!.text();
+const regexWorkerBuild = await Bun.build({
+  entrypoints: [join(root, "src", "sandbox", "regex", "worker.ts")],
+  target: "browser", format: "iife", minify: true,
+});
+if (!regexWorkerBuild.success || regexWorkerBuild.outputs.length !== 1) {
+  throw new Error(`pages build: opaque regex worker bundle failed: ${regexWorkerBuild.logs.map((log) => log.message).join("; ")}`);
+}
+const regexWorkerJs = await regexWorkerBuild.outputs[0]!.text();
+const quickJsWasmBase64 = Buffer.from(await Bun.file(join(root, "node_modules", "@jitl", "quickjs-wasmfile-release-sync", "dist", "emscripten-module.wasm")).arrayBuffer()).toString("base64");
+
 const write = async (relative: string, body: string | Uint8Array): Promise<void> => {
   const path = join(output, ...relative.split("/"));
   await mkdir(dirname(path), { recursive: true });
@@ -91,10 +111,13 @@ await write("pocket-data.js", `globalThis.__BUNZAI_POCKET_DATA__=${JSON.stringif
   docFigures,
   themePackages,
   exampleThemePackages,
+  browserSandbox: { workerSource: extensionWorkerJs, wasmBase64: quickJsWasmBase64, regexWorkerSource: regexWorkerJs },
 })};\n`);
 await write("pocket.js", await bundleBrowser(join(root, "src", "pocket", "index.ts")));
 await write("search-worker.js", await bundleBrowser(join(root, "src", "pocket", "search-worker.ts")));
 await write("tokens.css", await Bun.file(join(ui, "theme", "tokens.css")).text());
+await cp(join(ui, "theme", "fonts"), join(output, "fonts"), { recursive: true });
+await cp(join(root, "src", "site", "fonts"), join(output, "fonts"), { recursive: true });
 for (const [name, [file]] of Object.entries(ICON_FILES)) await copyFile(join(root, "build", file), join(output, name));
 
 const rawHtml = await Bun.file(join(ui, "index.html")).text();

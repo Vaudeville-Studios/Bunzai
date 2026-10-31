@@ -63,8 +63,12 @@ starting.
    written). Do not add another execution path for sealed scripts. Macro templates are governed separately by
    [ADR-012](docs/decisions/ADR-012-macro-evaluation-boundary.md): a closed-world, in-process
    interpreter under `src/core/macros/` may evaluate them, bounded and data-only, reachable only
-   from the macro test bench, the transfer report, prompt assembly, and chat display. Codecs still never
-   evaluate; macro text stays opaque payload at every import and conversion boundary.
+   from the macro test bench, the transfer report, prompt assembly, chat display, and the
+   user-invoked extension `macros.preview` operation accepted by ADR-015. That operation requires a
+   manifest-declared command, fresh host confirmation, bounded value-only context, read-only mode,
+   and regex disabled; it evaluates only after confirmation. Event, prompt-hook, background,
+   scheduled, import, save, and codec paths never evaluate; macro text stays opaque payload at every
+   import and conversion boundary.
 4. **Folders are the schema.** Apps, format adapters, settings sections, deck views, wizard
    steps, and tours are drop-in folders. Never register anything in a central list when a
    drop-in folder is possible.

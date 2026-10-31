@@ -7,7 +7,7 @@ import { OverlayWidgets } from "./overlay";
 import { useEffect, useState, type JSX } from "react";
 import { useDramaturgCacheLifetime } from "./props/dramaturg/dramaturg-live";
 import type { AppContext, BunzaiApp } from "../../app-contract";
-import { handedScene, handOffScene, onSceneHandoff, SCENES_APP } from "../../_shared/scene-handoff";
+import { handedScene, handedSceneTicket, handedSceneLoadId, handOffScene, onSceneHandoff, SCENES_APP } from "../../_shared/scene-handoff";
 import { LIST_STYLE } from "./list-style";
 import { SCENE_STYLE } from "./scene-style";
 import { CAST_STYLE } from "./cast/cast-style";
@@ -84,15 +84,17 @@ const MARK_SVG =
 function Scenes({ ctx }: { ctx: AppContext }): JSX.Element {
   useDramaturgCacheLifetime();
   const [open, setOpen] = useState(handedScene);
+  const [navigationTicketId, setNavigationTicketId] = useState(handedSceneTicket);
+  const [loadId, setLoadId] = useState(handedSceneLoadId);
   const [tree, setTree] = useState<string | null>(null);
-  useEffect(() => onSceneHandoff(() => { setOpen(handedScene()); setTree(null); }), []);
+  useEffect(() => onSceneHandoff(() => { setOpen(handedScene()); setNavigationTicketId(handedSceneTicket()); setLoadId(handedSceneLoadId()); setTree(null); }), []);
   return (
     <>
       <style>{LIST_STYLE + SCENE_STYLE + CAST_STYLE + PARTICIPANTS_STYLE + TOOLS_STYLE + COMPOSER_STYLE + HISTORY_STYLE + COMPARE_STYLE + DRAFT_STYLE + CORRECT_STYLE + INSPECTOR_STYLE + FIND_STYLE + TURN_STYLE + WING_STYLE + REASONING_STYLE + PRESET_STYLE + PROMPTING_STYLE + REGEX_STYLE + CHOICES_STYLE + LORE_STYLE + LORE_ENTRY_STYLE + COMPENDIUM_SHELL_STYLE + COMPENDIUM_DASH_STYLE + COMPENDIUM_BROWSE_STYLE + COMPENDIUM_TREE_STYLE + COMPENDIUM_ACTIVITY_STYLE + GRAPH_STYLE + POPOUT_STYLE + BOOTH_STYLE + BOOTH_TOOLS_STYLE + GENERATION_STYLE + LOADOUT_STYLE + BACKDROP_STYLE + PROPS_STYLE + TRACKER_STYLE + BATTLE_STYLE + ITEMS_STYLE + REFRESH_STYLE + PARTY_STYLE + CORRUPTION_STYLE + BONDS_STYLE + EVENTS_STYLE + SPELLBOOK_STYLE + CYCLES_STYLE + CODEX_STYLE + STORYBOARDS_STYLE + HARE_STYLE + DRAMATURG_STYLE + DIRECTOR_STYLE + TOKENS_STYLE + SCENE_VARIANTS_STYLE + PARAMS_STYLE + MUSIC_STYLE + SPOTIFY_STYLE + TREE_STYLE + FINAL_CUT_STYLE + FINAL_CUT_ACTIVITY_STYLE + STAGE_STYLE + STAGE_LOOK_STYLE + CONTEXT_STYLE + THIS_TURN_STYLE + LORE_STATE_STYLE + NEXT_SEND_STYLE + MEMORY_STYLE}</style>
       {open && tree === open
         ? <BranchTree ctx={ctx} chatId={open} onBack={() => setTree(null)} onOpen={() => setTree(null)} />
         : open
-        ? <LayoutGate key={open} ctx={ctx}><ScenePage ctx={ctx} chatId={open} onBack={() => handOffScene(null)} onTree={setTree} /></LayoutGate>
+        ? <LayoutGate key={open} ctx={ctx}><ScenePage ctx={ctx} chatId={open} navigationTicketId={navigationTicketId} loadId={loadId} onBack={() => handOffScene(null)} onTree={setTree} /></LayoutGate>
         : <ScenesList ctx={ctx} onOpen={(id) => handOffScene(id)} />}
     </>
   );

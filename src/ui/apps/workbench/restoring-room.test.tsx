@@ -33,7 +33,7 @@ beforeEach(() => installed.reinstall());
 function makeCtx(restoring: boolean, restoreFailure: string | null = null): AppContext {
   return {
     pieces: new PieceStore(),
-    api: { listEntities: async () => [] } as unknown as AppContext["api"],
+    api: { listEntities: async () => [], extensions: { list: async () => [] } } as unknown as AppContext["api"],
     setStatus: () => undefined,
     openApp: () => undefined,
     prefs: { get: () => undefined, set: () => undefined },

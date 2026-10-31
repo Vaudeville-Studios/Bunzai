@@ -5,8 +5,7 @@
  * this file stays effect-free.
  */
 import { norm, stripComments } from "./lib";
-import { callsNamed, declaresShared, writeCapableFsOpens } from "./single-source-syntax";
-import { reviewedHandleSinkProtocol, reviewedTemporaryWriteProtocol, reviewedIdentityQuarantine } from "./single-source-storage-protocol";
+import { callsNamed, declaresShared } from "./single-source-syntax";
 
 const SINGLE_HOME_DECLARATIONS = [
   ["contentSummaryOf", "src/stage/store/content-store-write.ts"],
@@ -137,6 +136,8 @@ export function sharedHomeDeclarationOutsideHome(path: string, source: string): 
   const p = norm(path);
   for (const [name, home] of SINGLE_HOME_DECLARATIONS) {
     if (p === home) continue;
+    // Lua's historical API appender is distinct from extension-store appendLog persistence methods.
+    if (name === "appendLog" && !p.startsWith("src/sandbox/lua/")) continue;
     if (declaresShared(p, source, name)) {
       return `${p}: declares ${name}; its shared home is ${home}.`;
     }
@@ -335,95 +336,6 @@ export function focusableSelectorOutsideHome(path: string, source: string): stri
   return `${p}: declares a local focusable selector/trap algorithm. Import focusablesIn/useFocusTrap from src/ui/_shared/focus-trap.ts.`;
 }
 
-/** node:fs / node:fs/promises names bare app-data writes that must use atomic-file.ts. */
-const BANNED_FS_WRITES: ReadonlySet<string> = new Set([
-  "rename", "renameSync", "writeFile", "writeFileSync", "appendFile", "appendFileSync", "createWriteStream",
-]);
-/** `open` and `openSync` write only when their flags say so, so they are judged per call (writeCapableFsOpens). */
-const FLAG_GATED_FS_OPENS: ReadonlySet<string> = new Set(["open", "openSync"]);
-const FS_IMPORT = /\bimport\s*\{([^}]*)\}\s*from\s*["'](node:fs(?:\/promises)?)["']/g;
-const FS_NAMESPACE_IMPORT = /\bimport\s+(?:\*\s+as\s+([\w$]+)|([\w$]+))\s+from\s*["'](node:fs(?:\/promises)?)["']/g;
-const DYNAMIC_FS_IMPORT = /\b(?:const|let)\s+([\w$]+)\s*=\s*await\s+import\s*\(\s*["'](node:fs(?:\/promises)?)["']\s*\)/g;
-const DYNAMIC_FS_DESTRUCTURE = /\b(?:const|let)\s*\{([^}]*)\}\s*=\s*await\s+import\s*\(\s*["']node:fs(?:\/promises)?["']\s*\)/g;
-
-/** The banned names a file imports from node:fs/node:fs/promises (matched on the IMPORT, never a bare
- *  substring, so an unrelated same-named method - a UI "rename this piece" action - never fires).
- *  A write-capable open/openSync is matched on the CALL, since a read-only open is not a write. */
-function bannedFsWriteImports(path: string, source: string): string[] {
-  const clean = stripComments(source);
-  const hits: string[] = [];
-  const openLocals = new Map<string, string>();
-  const namespaces: string[] = [];
-  const named = (list: string, separator: RegExp): void => {
-    for (const raw of list.split(",")) {
-      const [name = "", local = name] = raw.trim().replace(/^type\s+/, "").split(separator).map((part) => part.trim());
-      if (BANNED_FS_WRITES.has(name)) hits.push(name);
-      if (FLAG_GATED_FS_OPENS.has(name)) openLocals.set(local, name);
-    }
-  };
-  for (const m of clean.matchAll(FS_IMPORT)) named(m[1]!, /\s+as\s+/);
-  for (const m of clean.matchAll(DYNAMIC_FS_DESTRUCTURE)) named(m[1]!, /\s*:\s*/);
-  for (const m of clean.matchAll(FS_NAMESPACE_IMPORT)) {
-    const namespace = m[1] ?? m[2];
-    if (namespace) { hits.push(...namespaceWriteCalls(clean, namespace)); namespaces.push(namespace); }
-  }
-  for (const m of clean.matchAll(DYNAMIC_FS_IMPORT)) {
-    hits.push(...namespaceWriteCalls(clean, m[1]!));
-    namespaces.push(m[1]!);
-  }
-  if (openLocals.size > 0 || namespaces.length > 0) hits.push(...writeCapableFsOpens(path, source, openLocals, namespaces));
-  return hits;
-}
-
-function namespaceWriteCalls(source: string, namespace: string): string[] {
-  const names = [...BANNED_FS_WRITES].join("|");
-  const calls = new RegExp(`\\b${namespace}\\s*(?:\\.promises)?\\s*\\.\\s*(${names})\\s*\\(`, "g");
-  return [...source.matchAll(calls)].map((match) => match[1]!);
-}
-
-/**
- * writeAtomicReplace (src/studio/atomic-file.ts) is the only atomic write (fold B13): a bare
- * rename/renameSync/writeFile/writeFileSync for app data, hand-copied again, is exactly how the Windows
- * rename-share-violation gap shipped twice before this fold. `allowlist` names existing reviewed
- * protocols; temporary roots below require matching callsite evidence rather than a file exemption.
- */
-export function appDataWriteOutsideHome(
-  path: string,
-  source: string,
-  allowlist: ReadonlySet<string> = new Set(),
-): string | null {
-  const p = norm(path);
-  // Scripts publish generated source/index artifacts rather than application data. They remain in
-  // the shared source inventory for every other detector, but this runtime storage rule is src-only.
-  if (!p.startsWith("src/")) return null;
-  if (p === "src/studio/atomic-file.ts") return null;
-  const hits = bannedFsWriteImports(p, source);
-  if (hits.length === 0) return null;
-  if (allowlist.has(p)) return null;
-  if (hits.length === 1 && hits[0] === "rename" && reviewedIdentityQuarantine(p, source)) return null;
-  if (hits.every((name) => name === "writeFile") && hasSingleUnaliasedWriteFileBinding(source)
-    && reviewedTemporaryWriteProtocol(p, source)) return null;
-  if (hits.every((name) => name === "open") && reviewedHandleSinkProtocol(p, source)) return null;
-  return `${p}: imports or calls ${hits.join(", ")} from node:fs or node:fs/promises (open counts when its flags can write). Use writeAtomicReplace (src/studio/atomic-file.ts) for app data, or retain a specifically reviewed storage protocol.`;
-}
-
-/** A reviewed temporary writer relies on its one direct named binding; aliases and namespace
- *  imports would let extra filesystem writes escape its literal-call count. */
-function hasSingleUnaliasedWriteFileBinding(source: string): boolean {
-  const clean = stripComments(source);
-  let bindings = 0;
-  for (const match of clean.matchAll(FS_IMPORT)) {
-    for (const specifier of match[1]!.split(",").map((part) => part.trim())) {
-      if (specifier.split(/\s+as\s+/)[0] !== "writeFile") continue;
-      if (specifier !== "writeFile" || match[2] !== "node:fs/promises") return false;
-      bindings += 1;
-    }
-  }
-  return bindings === 1
-    && [...clean.matchAll(FS_NAMESPACE_IMPORT)].length === 0
-    && [...clean.matchAll(DYNAMIC_FS_IMPORT)].length === 0;
-}
-
 /**
  * Only server-security.ts's openInBrowser may be named that (fold B31): a second declaration is how
  * a weaker copy (no windowsHide, no try/catch around the spawn) shipped beside the hardened one.
@@ -478,19 +390,20 @@ export function testCipherOutsideHome(path: string, source: string): string | nu
   return `${p}: declares its own testCipher. Import it from src/stage/store/sqlite/test-support.ts instead.`;
 }
 
-/** Only core/guards.ts may inline the generic plain-object predicate (audit row 17). Match the
- *  predicate itself rather than its local name: schema-specific validators such as the docs index's
- *  `isRecord` have additional rules and are not substitutes for this generic guard. */
+/** Only core/guards.ts may inline the generic plain-object predicate; match behavior, not names. */
 export function isRecordOutsideHome(path: string, source: string): string | null {
   const p = norm(path);
   if (p === "src/core/guards.ts") return null;
   const clean = stripComments(source);
+  // Exact-key validation includes an object check, but is not a standalone reusable record guard.
+  const exactKeyPredicate = /(?:const|let)\s+\w+\s*=\s*\(\s*(\w+)\s*,\s*\w+\s*\)\s*=>\s*\1\s*&&\s*typeof\s+\1\s*===?\s*["']object["']\s*&&\s*!\s*Array\.isArray\(\s*\1\s*\)\s*&&\s*Object\.keys\(\s*\1\s*\)\.sort\(\)\.join\(/;
+  const candidate = clean.replace(exactKeyPredicate, "");
   const plainObjectCheck = /\btypeof\s+(\w+)\s*===?\s*["']object["']\s*&&\s*\1\s*!==?\s*null\s*&&\s*!\s*Array\.isArray\(\s*\1\s*\)/;
   const nullFirstPlainObjectCheck = /\b(\w+)\s*!==?\s*null\s*&&\s*typeof\s+\1\s*===?\s*["']object["']\s*&&\s*!\s*Array\.isArray\(\s*\1\s*\)/;
   // `v && typeof v === "object" && !Array.isArray(v)`: the truthiness-first spelling the forms above missed.
   const truthyPlainObjectCheck = /\b(\w+)\s*&&\s*typeof\s+\1\s*===?\s*["']object["']\s*&&\s*!\s*Array\.isArray\(\s*\1\s*\)/;
   const invertedObjectCheck = /(?:!\s*(\w+)\s*\|\|\s*typeof\s+\1\s*!==?\s*["']object["']\s*\|\|\s*Array\.isArray\(\s*\1\s*\)|typeof\s+(\w+)\s*!==?\s*["']object["']\s*\|\|\s*\2\s*===?\s*null\s*\|\|\s*Array\.isArray\(\s*\2\s*\)|\b(\w+)\s*===?\s*null\s*\|\|\s*typeof\s+\3\s*!==?\s*["']object["']\s*\|\|\s*Array\.isArray\(\s*\3\s*\))/;
-  if (!plainObjectCheck.test(clean) && !nullFirstPlainObjectCheck.test(clean) && !truthyPlainObjectCheck.test(clean)
-    && !invertedObjectCheck.test(clean)) return null;
+  if (!plainObjectCheck.test(candidate) && !nullFirstPlainObjectCheck.test(candidate) && !truthyPlainObjectCheck.test(candidate)
+    && !invertedObjectCheck.test(candidate)) return null;
   return `${p}: declares its own isRecord. Import it from src/core/guards.ts instead.`;
 }

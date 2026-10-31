@@ -67,6 +67,10 @@ it "Skills".
 
 ## Editing and placement
 
+Extensions may stage a reviewed update to a Skill's name, description, or authored instructions through
+`content.draft.skill.instruction.update`. The instructions remain inert canonical text in this operation; the
+extension does not evaluate them. The normal draft review and apply operations own confirmation and persistence.
+
 The Workbench editor edits instructions, activation and shared trigger controls through the existing
 revision-checked piece session. Primary triggers can match any or all; older pieces default to any.
 Promptbook Skill cards can occupy named positions and join adjacent Prompt cards in one message.

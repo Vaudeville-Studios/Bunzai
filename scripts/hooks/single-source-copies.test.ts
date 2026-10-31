@@ -55,6 +55,11 @@ describe("isRecordOutsideHome: the truthiness-first spelling", () => {
   test("does not flag truthiness plus typeof without the array exclusion", () => {
     expect(isRecordOutsideHome("src/ui/a.tsx", 'if (json && typeof json === "object") return 1;')).toBeNull();
   });
+  test("keeps the inline opaque-frame exact-key predicate distinct from isRecord", () => {
+    const exactKeys = 'const exact=(object,keys)=>object&&typeof object===\'object\'&&!Array.isArray(object)&&Object.keys(object).sort().join(\',\')===keys;';
+    expect(isRecordOutsideHome("src/sandbox/javascript/opaque-frame.ts", exactKeys)).toBeNull();
+    expect(isRecordOutsideHome("src/sandbox/javascript/opaque-frame.ts", `${exactKeys} const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);`)).toContain("core/guards.ts");
+  });
 });
 
 describe("magicBytesOutsideHome", () => {

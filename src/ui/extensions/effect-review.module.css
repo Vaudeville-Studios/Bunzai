@@ -1,0 +1,9 @@
+.review { display: grid; gap: .35rem; min-width: 0; border-left: 3px solid var(--bk-role-select); padding-left: .65rem; }
+.group { min-width: 0; }
+.group h5 { margin: .25rem 0; color: var(--text); font: 600 var(--text-control) var(--font-body); }
+.group ul { display: grid; gap: .3rem; margin: .25rem 0; padding-inline-start: 1.25rem; }
+.group dl { display: grid; gap: .3rem; margin: .25rem 0; }
+.group dl > div { display: grid; grid-template-columns: minmax(7rem, .5fr) minmax(0, 1fr); gap: .5rem; border-bottom: 1px solid var(--seam); padding: .25rem 0; }
+.group dt { color: var(--text-soft); font-size: var(--text-control); overflow-wrap: anywhere; }
+.group dd { min-width: 0; margin: 0; color: var(--text); }
+.value { display: grid; grid-template-columns: minmax(7rem, .5fr) minmax(0, 1fr); gap: .5rem; margin: .2rem 0; color: var(--text); font-size: var(--text-control); overflow-wrap: anywhere; }

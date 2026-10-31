@@ -6,16 +6,17 @@ import { isColdReadLimit } from "../stage/contracts/content-store";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { toErrorMessage } from "../error-message";
 
-import { pumpStream, readStreamCapped } from "../core/stream-bytes";
+import { pumpStream } from "../core/stream-bytes";
 import { fileSink } from "./server-body";
 import { STALE_SESSION } from "./_shared/session-marker";
 
 /** Re-exported so callers that already import from this module keep one import. */
 export { STALE_SESSION } from "./_shared/session-marker";
 import { ADAPTER_INPUT_MAX_BYTES } from "../core/adapter-input";
-import { JSON_BODY_MAX_BYTES } from "../core/media/limits";
-import { hasErrorName, isRecord } from "../core/guards";
+import { hasErrorName } from "../core/guards";
 import { isLibraryLocked, isStudioNotFoundError, isSceneCastMissingError, isStudioBusyError, isStudioReadError, STUDIO_BUSY_CODE, isStudioValidationError, isStudioConflictError, isStudioWriteError } from "../studio/errors";
+import { err, json, refusal, refuseDeclaredLength } from "./server-extension-http";
+export { err, json, readBodyCapped, readJsonObject } from "./server-extension-http";
 
 
 /** Inspect upload ceiling (bytes): the same file ceiling every other door uses, so a file the studio
@@ -39,19 +40,9 @@ export function createSecurityContext(): UiSecurityContext {
   };
 }
 
-export const json = (v: unknown, status = 200): Response =>
-  new Response(JSON.stringify(v), {
-    status,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "no-store",
-      "x-content-type-options": "nosniff",
-    },
-  });
 /** The shape of an id in a body or query: letters, digits, underscores and hyphens. */
 export const ROUTE_ID = /^[\w-]+$/;
 
-export const err = (message: string, status = 400): Response => json({ error: message }, status);
 /** Retryable refusal: 503, a stable code the client recognises, and how soon to ask again. */
 const busy = (message: string): Response => {
   const res = json({ error: message, code: STUDIO_BUSY_CODE }, 503);
@@ -154,30 +145,6 @@ function tokensEqual(a: string, b: string): boolean {
   return timingSafeEqual(ba, bb);
 }
 
-/** The 400 or 413 a request body that could not be read in full answers with; null when content-length is fine. */
-function refuseDeclaredLength(req: Request, limit: number): Response | null {
-  const cl = req.headers.get("content-length");
-  if (cl === null) return null;
-  const n = Number(cl);
-  if (!Number.isFinite(n) || n < 0) return err("invalid content-length", 400);
-  return n > limit ? err("payload too large", 413) : null;
-}
-
-const refusal = (reason: "too-large" | "aborted" | "failed"): Response =>
-  reason === "too-large" ? err("payload too large", 413) : err("failed to read body", 400);
-
-/** Read a request body with a hard byte cap (413 on overflow, early on a declared length): one copy, via the byte pump. */
-export async function readBodyCapped(
-  req: Request,
-  limit: number,
-): Promise<{ ok: true; bytes: Uint8Array } | { ok: false; response: Response }> {
-  const refused = refuseDeclaredLength(req, limit);
-  if (refused) return { ok: false, response: refused };
-  const declared = Number(req.headers.get("content-length") ?? 0);
-  const read = await readStreamCapped(req.body, limit, { signal: req.signal, sizeHint: declared });
-  return read.ok ? read : { ok: false, response: refusal(read.reason) };
-}
-
 /**
  * Stream a request body straight to a file with the same cap contract as readBodyCapped, holding one chunk at a
  * time: a `.lvbak` can be multi-gigabyte by design. The caller owns `destPath`'s lifecycle (its directory, and
@@ -200,21 +167,6 @@ export async function streamBodyToFile(
   return result.ok ? result : { ok: false, response: refusal(result.reason) };
 }
 
-export async function readJsonCapped(
-  req: Request,
-  limit = JSON_BODY_MAX_BYTES,
-): Promise<{ ok: true; value: unknown } | { ok: false; response: Response }> {
-  const capped = await readBodyCapped(req, limit);
-  if (!capped.ok) return capped;
-  if (capped.bytes.length === 0) return { ok: true, value: null };
-  try {
-    const text = new TextDecoder("utf-8", { fatal: true }).decode(capped.bytes);
-    return { ok: true, value: JSON.parse(text) as unknown };
-  } catch {
-    return { ok: false, response: err("invalid json", 400) };
-  }
-}
-
 /**
  * The "require a JSON object body" sequence nearly every mutating route repeated by hand: a
  * content-type check, a capped read, and an object-shape check. 415 on the wrong content type, the
@@ -222,17 +174,6 @@ export async function readJsonCapped(
  * not an object (an array, a string, a number, or null) - the check some call sites skipped,
  * casting straight into a typed shape instead.
  */
-export async function readJsonObject(
-  req: Request,
-  limit = JSON_BODY_MAX_BYTES,
-): Promise<{ ok: true; value: Record<string, unknown> } | { ok: false; response: Response }> {
-  if (!contentTypeIs(req, "application/json")) return { ok: false, response: err("unsupported media type", 415) };
-  const parsed = await readJsonCapped(req, limit);
-  if (!parsed.ok) return parsed;
-  if (!isRecord(parsed.value)) return { ok: false, response: err("expected an object", 400) };
-  return { ok: true, value: parsed.value };
-}
-
 /** A required, non-empty string field from a parsed JSON object, or a 400 naming it. */
 export function requireStringField(obj: Record<string, unknown>, key: string): string | Response {
   const v = obj[key];

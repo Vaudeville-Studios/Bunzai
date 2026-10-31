@@ -20,6 +20,7 @@ import { createSceneCore } from "./server-scene-composition";
 import { sceneRuntimeFor } from "./server-scene-runtime";
 import { isRecord, str } from "../core/guards";
 import type { ChatBackdrop, ChatConnection, ChatPreset, ChatStore } from "../stage/contracts/chat-store";
+import type { ProviderRole } from "../stage/contracts/provider";
 import type { StateStore } from "../stage/contracts/state-store";
 import { listModelsFor } from "../kit/providers/adapters";
 import { connect } from "../kit/providers/scene-connect";
@@ -246,7 +247,7 @@ async function models(id: string): Promise<Response> {
 }
 
 /** One turn as server-sent events. Errors before it opens are plain HTTP errors, thrown to the caller. */
-async function stream(chats: ChatStore, state: StateStore, readPreset: ReadPreset, readLorebook: ReadLorebook, b: Body, studio?: StudioStoreLike, compendium?: CompendiumDeps | null, settings?: SettingsStoreLike): Promise<Response> {
+async function stream(chats: ChatStore, state: StateStore, readPreset: ReadPreset, readLorebook: ReadLorebook, b: Body, studio?: StudioStoreLike, compendium?: CompendiumDeps | null, settings?: SettingsStoreLike, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>): Promise<Response> {
   const kind = b["kind"] === "swipe" || b["kind"] === "reply" || b["kind"] === "continue" ? b["kind"] : null;
   const expectedVersion = b["expectedVersion"];
   if (!kind || typeof expectedVersion !== "number") return err('expected { chatId, kind: "reply" | "swipe" | "continue", expectedVersion }');
@@ -267,7 +268,7 @@ async function stream(chats: ChatStore, state: StateStore, readPreset: ReadPrese
     buffered.push(e);
     controllerSend(e);
   });
-  const core = createSceneCore(chats, state, readPreset, readLorebook, studio, settings, compendium);
+  const core = createSceneCore(chats, state, readPreset, readLorebook, studio, settings, compendium, dispatchExtensionEvent, applyExtensionPrompts);
   const turn = core.runTurn(
     { chatId: str(b["chatId"]), kind, expectedVersion, ...(fallback ? { fallback } : {}), ...(typeof b["guidance"] === "string" ? { guidance: b["guidance"] } : {}), ...(b["inspect"] === true ? { inspect: true } : {}) },
     (e) => {
@@ -327,7 +328,7 @@ function reviewDecision(b: Body): ReviewDecision | null {
 }
 
 /** The turn routes, or null when the path is not one of them. */
-export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, state: StateStore, readPreset: ReadPreset, readLorebook: ReadLorebook, b: Body | null, studio?: StudioStoreLike, compendium?: CompendiumDeps | null, settings?: SettingsStoreLike): Promise<Response | null> {
+export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, state: StateStore, readPreset: ReadPreset, readLorebook: ReadLorebook, b: Body | null, studio?: StudioStoreLike, compendium?: CompendiumDeps | null, settings?: SettingsStoreLike, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>): Promise<Response | null> {
   const p = url.pathname;
   if (req.method === "GET") {
     if (p === "/api/chats/connections") return connections();
@@ -340,7 +341,7 @@ export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, 
     const records = home ? libraryFor(home)?.core : undefined;
     const core = records ? await records.sceneFor(str(b["chatId"])) : null;
     if (core && (await chats.getChat(str(b["chatId"])))?.activeBranchId !== core.branchId) return err("this take is not connected to rp-core yet", 409);
-    return records && home && core ? coreStream(chats, records, home, core.sessionId, b) : stream(chats, state, readPreset, readLorebook, b, studio, compendium, settings);
+    return records && home && core ? coreStream(chats, records, home, core.sessionId, b) : stream(chats, state, readPreset, readLorebook, b, studio, compendium, settings, dispatchExtensionEvent, applyExtensionPrompts);
   }
   if (p === "/api/chats/review") {
     const decision = reviewDecision(b);

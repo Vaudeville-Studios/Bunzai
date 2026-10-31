@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "docId": "decisions/ADR-016-extension-command-and-prompt-hooks",
+  "sourcePath": "docs/decisions/ADR-016-extension-command-and-prompt-hooks.md",
+  "sourceHash": "sha256:d4f03950654ba3532eff0ebf025f94af72c12760e8d95bb746af9280122d471d",
+  "summary": "ADR-016 defines separate host-visible command registration and prompt-candidate operations. Commands remain manifest-declared; `commands.register` only replaces the installed package's enabled subset using trusted package identity and revision checks. Prompt hooks may contribute and then transform only their own invocation-local candidate, under separate grants and shared size/count bounds. Required failures abort before provider send; optional failures are counted by host control state and suspend after three consecutive failures. The ADR records the security semantics and evidence gates; it does not claim every host composition or release boundary is verified.",
+  "topics": [
+    "manifest-bound command IDs",
+    "host-visible registration subset",
+    "isolated prompt candidates",
+    "required and optional failures",
+    "host parity evidence"
+  ],
+  "sections": [
+    {
+      "slug": "command-registration",
+      "title": "Command registration",
+      "level": 2,
+      "sourceHash": "sha256:19801ecab830d8888633eb871d2ca1645fc8ffc5ff3213963d49d872692c81ef",
+      "summary": "The manifest remains the identity and handler authority. Guest initialization binds handlers only to declared IDs; `commands.register` replaces the host-visible enabled subset with an exact manifest subset, using the current package identity and trusted commit revision. Install seeds all declared IDs to preserve existing behavior. The operation cannot add handlers, rename commands, change grants or control another package, and all activation paths must honor the stored subset.",
+      "topics": [
+        "manifest identity",
+        "exact replacement subset",
+        "trusted revision",
+        "activation enforcement"
+      ],
+      "children": []
+    },
+    {
+      "slug": "prompt-contribution-and-transformation",
+      "title": "Prompt contribution and transformation",
+      "level": 2,
+      "sourceHash": "sha256:23806dc60199052267ec0285015a3e9c2a50d9846b838cbddf19f5934cf5da23",
+      "summary": "Prompt hooks run only at a host-owned active hook. A package may contribute one bounded candidate and later transform only that same package/hook candidate; it cannot replace the assembled prompt. Operations use separate grants and invocation-local state. Prompt activation admits only operations explicitly marked safe for that origin and still applies ordinary exact grants. Candidates are ordered deterministically and share count/byte limits. Required hook failure aborts before provider send; optional failures use host-owned control state, reset on success and suspend after three consecutive failures. Revocation is checked before accepting output, and failed or stale candidates are discarded.",
+      "topics": [
+        "per-hook candidate isolation",
+        "prompt-safe origin policy",
+        "deterministic ordering and bounds",
+        "revocation recheck",
+        "host-owned suspension"
+      ],
+      "children": []
+    },
+    {
+      "slug": "evidence-required",
+      "title": "Evidence required",
+      "level": 2,
+      "sourceHash": "sha256:6310b394af55501d26e48255da08fc28d537df9c15aa37e06a1cdb3a1040987a",
+      "summary": "The ADR names the required evidence: exact command-subset validation and isolation, install defaults, disabled-command rejection on each composed host, per-hook contribution and transformation isolation, independent grants and common bounds. Catalog and UI metadata must come from source definitions. These are acceptance requirements, not proof that all host integrations or packaged behavior have passed.",
+      "topics": [
+        "registration isolation tests",
+        "hook isolation tests",
+        "catalog ownership",
+        "acceptance is evidence-gated"
+      ],
+      "children": []
+    }
+  ]
+}

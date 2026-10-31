@@ -2,7 +2,7 @@
  * Sandbox-only loopback host (ADR-009).
  *
  * Distinct origin (ephemeral port on 127.0.0.1). Serves ONLY immutable sandbox bootstrap assets:
- * worker module + wasmoon glue.wasm. No /api, no session token, no studio paths, no index HTML.
+ * Lua/regex/QuickJS workers and their WASM bytes. No /api, no session token, no studio paths, no index HTML.
  * CORS is limited to the exact UI origin so the module worker can load cross-origin.
  */
 
@@ -17,17 +17,26 @@ export interface SandboxHostOptions {
 }
 
 const SANDBOX_CSP =
-  "default-src 'none'; script-src 'self'; connect-src 'self'; worker-src 'self'; " +
-  "wasm-unsafe-eval 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+  "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; worker-src 'self'; " +
+  "base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 const nosniff = { "x-content-type-options": "nosniff" as const };
+const MAX_SANDBOX_TEXT_BYTES = 8 * 1024 * 1024;
+
+function boundedText(value: string): string | null {
+  return new TextEncoder().encode(value).byteLength <= MAX_SANDBOX_TEXT_BYTES ? value : null;
+}
+
+function builtText(output: { size: number; text(): Promise<string> }): Promise<string | null> {
+  return output.size <= MAX_SANDBOX_TEXT_BYTES ? output.text() : Promise.resolve(null);
+}
 
 // Wasmoon carries defensive dynamic imports for Node-only fallbacks. They are unreachable in a browser
 // worker (which has `location`), but Bun otherwise attempts to resolve them while producing this bundle.
 const WASMOON_BROWSER_EXTERNALS = ["module", "url", "fs", "path", "child_process", "crypto"];
 
 /** Paths the sandbox authority is allowed to serve. Everything else fails closed. */
-export const SANDBOX_ALLOWLIST = ["/sandbox/worker.js", "/sandbox/regex-worker.js", "/sandbox/glue.wasm"] as const;
+export const SANDBOX_ALLOWLIST = ["/sandbox/worker.js", "/sandbox/regex-worker.js", "/sandbox/glue.wasm", "/sandbox/extension-worker.js", "/sandbox/extension-frame.js", "/sandbox/extension-frame.html", "/sandbox/quickjs.wasm"] as const;
 
 export function isSandboxAllowlistedPath(pathname: string): boolean {
   return (SANDBOX_ALLOWLIST as readonly string[]).includes(pathname);
@@ -58,6 +67,8 @@ function deny(): Response {
 
 async function buildWorkerJs(packaged?: PackagedAssets): Promise<Response | null> {
   if (packaged?.sandboxWorkerJs) {
+    const source = boundedText(packaged.sandboxWorkerJs);
+    if (source === null) return null;
     return new Response(packaged.sandboxWorkerJs, {
       headers: {
         "content-type": "text/javascript; charset=utf-8",
@@ -75,7 +86,9 @@ async function buildWorkerJs(packaged?: PackagedAssets): Promise<Response | null
     external: WASMOON_BROWSER_EXTERNALS,
   });
   if (!built.success || built.outputs.length === 0) return null;
-  return new Response(await built.outputs[0]!.text(), {
+  const source = await builtText(built.outputs[0]!);
+  if (source === null) return null;
+  return new Response(source, {
     headers: {
       "content-type": "text/javascript; charset=utf-8",
       "cache-control": "no-store",
@@ -87,6 +100,8 @@ async function buildWorkerJs(packaged?: PackagedAssets): Promise<Response | null
 
 async function buildRegexWorkerJs(packaged?: PackagedAssets): Promise<Response | null> {
   if (packaged?.regexWorkerJs) {
+    const source = boundedText(packaged.regexWorkerJs);
+    if (source === null) return null;
     return new Response(packaged.regexWorkerJs, {
       headers: {
         "content-type": "text/javascript; charset=utf-8",
@@ -99,7 +114,9 @@ async function buildRegexWorkerJs(packaged?: PackagedAssets): Promise<Response |
   const entry = fileURLToPath(new URL("../sandbox/regex/worker.ts", import.meta.url));
   const built = await Bun.build({ entrypoints: [entry], target: "browser", format: "esm" });
   if (!built.success || built.outputs.length === 0) return null;
-  return new Response(await built.outputs[0]!.text(), {
+  const source = await builtText(built.outputs[0]!);
+  if (source === null) return null;
+  return new Response(source, {
     headers: {
       "content-type": "text/javascript; charset=utf-8",
       "cache-control": "no-store",
@@ -107,6 +124,56 @@ async function buildRegexWorkerJs(packaged?: PackagedAssets): Promise<Response |
       ...nosniff,
     },
   });
+}
+
+async function buildExtensionWorkerJs(packaged?: PackagedAssets): Promise<Response | null> {
+  if (packaged?.extensionWorkerJs) {
+    const source = boundedText(packaged.extensionWorkerJs);
+    if (source === null) return null;
+    return new Response(source, {
+    headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store", "content-security-policy": SANDBOX_CSP, ...nosniff },
+    });
+  }
+  const entry = fileURLToPath(new URL("../sandbox/javascript/worker.ts", import.meta.url));
+  const built = await Bun.build({ entrypoints: [entry], target: "browser", format: "esm" });
+  if (!built.success || built.outputs.length === 0) return null;
+  const source = await builtText(built.outputs[0]!);
+  if (source === null) return null;
+  return new Response(source, {
+    headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store", "content-security-policy": SANDBOX_CSP, ...nosniff },
+  });
+}
+
+async function buildExtensionFrameJs(packaged?: PackagedAssets): Promise<Response | null> {
+  if (packaged?.extensionFrameJs) {
+    const source = boundedText(packaged.extensionFrameJs);
+    if (source === null) return null;
+    return new Response(source, {
+    headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store", "content-security-policy": SANDBOX_CSP, ...nosniff },
+    });
+  }
+  const entry = fileURLToPath(new URL("../sandbox/javascript/extension-frame.ts", import.meta.url));
+  const built = await Bun.build({ entrypoints: [entry], target: "browser", format: "esm" });
+  if (!built.success || built.outputs.length === 0) return null;
+  const source = await builtText(built.outputs[0]!);
+  if (source === null) return null;
+  return new Response(source, {
+    headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store", "content-security-policy": SANDBOX_CSP, ...nosniff },
+  });
+}
+
+async function extensionFrameHtml(packaged?: PackagedAssets): Promise<string | null> {
+  if (packaged?.extensionFrameHtml) return packaged.extensionFrameHtml;
+  const path = fileURLToPath(new URL("../sandbox/javascript/extension-frame.html", import.meta.url));
+  const file = Bun.file(path);
+  return file.size <= MAX_SANDBOX_TEXT_BYTES && await file.exists() ? file.text() : null;
+}
+
+function quickJsWasmResponse(packaged?: PackagedAssets): Response {
+  const wasm = packaged?.quickJsWasmB64
+    ? Buffer.from(packaged.quickJsWasmB64, "base64")
+    : Bun.file(fileURLToPath(new URL("../../node_modules/@jitl/quickjs-wasmfile-release-sync/dist/emscripten-module.wasm", import.meta.url)));
+  return new Response(wasm, { headers: { "content-type": "application/wasm", "cache-control": "public, max-age=86400", "content-security-policy": SANDBOX_CSP, ...nosniff } });
 }
 
 function glueWasmResponse(): Response {
@@ -181,6 +248,37 @@ export function createSandboxHandler(
       return req.method === "HEAD"
         ? new Response(null, { status: 200, headers })
         : new Response(body.body, { status: 200, headers });
+    }
+
+    if (p === "/sandbox/extension-frame.html") {
+      const html = await extensionFrameHtml(opts.packaged);
+      if (!html) return deny();
+      const headers = new Headers({ "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff", "content-security-policy": `default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; worker-src 'self'; frame-ancestors ${allowOrigin}; base-uri 'none'; form-action 'none'; object-src 'none'` });
+      for (const [k, v] of Object.entries(corsHeaders(acao))) headers.set(k, v);
+      return req.method === "HEAD" ? new Response(null, { status: 200, headers }) : new Response(html, { headers });
+    }
+
+    if (p === "/sandbox/extension-frame.js") {
+      const body = await buildExtensionFrameJs(opts.packaged);
+      if (!body) return deny();
+      const headers = new Headers(body.headers);
+      for (const [k, v] of Object.entries(corsHeaders(acao))) headers.set(k, v);
+      return req.method === "HEAD" ? new Response(null, { status: 200, headers }) : new Response(body.body, { status: 200, headers });
+    }
+
+    if (p === "/sandbox/extension-worker.js") {
+      const body = await buildExtensionWorkerJs(opts.packaged);
+      if (!body) return deny();
+      const headers = new Headers(body.headers);
+      for (const [k, v] of Object.entries(corsHeaders(acao))) headers.set(k, v);
+      return req.method === "HEAD" ? new Response(null, { status: 200, headers }) : new Response(body.body, { status: 200, headers });
+    }
+
+    if (p === "/sandbox/quickjs.wasm") {
+      const body = quickJsWasmResponse(opts.packaged);
+      const headers = new Headers(body.headers);
+      for (const [k, v] of Object.entries(corsHeaders(acao))) headers.set(k, v);
+      return req.method === "HEAD" ? new Response(null, { status: 200, headers }) : new Response(body.body, { status: 200, headers });
     }
 
     if (p === "/sandbox/glue.wasm") {

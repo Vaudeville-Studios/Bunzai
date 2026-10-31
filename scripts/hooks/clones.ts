@@ -12,7 +12,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { cssClones, cssRulesOf, fnClones, functionsOf, pairId, type Clone, type CssPrint, type FnPrint } from "./clones-core";
+import { cloneSourcePaths, cssClones, cssRulesOf, fnClones, functionsOf, pairId, type Clone, type CssPrint, type FnPrint } from "./clones-core";
 
 const BASELINE = "scripts/hooks/clones-baseline.json";
 const CACHE = "node_modules/.cache/bunzai-clones.json";
@@ -34,7 +34,7 @@ function prints(file: string): Entry {
   return entry;
 }
 
-const tracked = execFileSync("git", ["ls-files"], { encoding: "utf8", maxBuffer: 1 << 28 }).split("\n").filter((f) => (isCode(f) || isCss(f)) && existsSync(f));
+const tracked = cloneSourcePaths(execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { encoding: "utf8", maxBuffer: 1 << 28 }), (f) => (isCode(f) || isCss(f)) && existsSync(f));
 const allFns = tracked.filter(isCode).flatMap((f) => prints(f).fns ?? []);
 const allCss = tracked.filter(isCss).flatMap((f) => prints(f).css ?? []);
 mkdirSync("node_modules/.cache", { recursive: true });

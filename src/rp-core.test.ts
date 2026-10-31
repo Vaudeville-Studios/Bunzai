@@ -1,21 +1,24 @@
 /** Reusable core isolation, shutdown and request parity through real turns on isolated memory stores. */
 import { expect, test } from "bun:test";
-import { createRoleplayCore, type Connected, type Provider, type ProviderRequest, type TurnEvent } from "./rp-core";
+import { createRoleplayCore, type Connected, type Provider, type ProviderRequest, type ProviderRequestGuard, type TurnEvent } from "./rp-core";
+import { ProviderError } from "./stage/contracts/provider";
 import { memoryChatStore } from "./stage/store/chat-store";
 import { memoryStateStore } from "./stage/store/memory/state-store";
 import { runTurn } from "./studio/scene-turn";
 import { createTurnRuntime } from "./studio/scene-turn-runtime";
 import { DIRECTOR_PROP_ID } from "./core/director/settings";
+import type { ExtensionCommitContext } from "./stage/contracts/extension-store";
+import type { ChatConnection } from "./stage/contracts/chat-store";
 
-async function scene(connect?: () => Promise<Connected | null>) {
+async function scene(connect?: (connection: ChatConnection) => Promise<Connected | null>, authorizeExtensionCommit?: (context: ExtensionCommitContext) => void) {
   let id = 0, now = 1_000;
-  const chats = memoryChatStore(() => now, () => `id-${++id}`);
+  const chats = memoryChatStore(() => now, () => `id-${++id}`, authorizeExtensionCommit ? { authorizeExtensionCommit } : {});
   const chat = await chats.createChat({ title: "Night", cast: { character: { id: "vera", version: 1 } }, snapshot: { character: { kind: "character", id: "vera", body: { identity: { name: "Vera", description: "Keeps the light." }, persona: {}, prompts: {}, greetings: {}, examples: {}, media: {}, attribution: {}, discovery: {} } } } });
   await chats.setConnection(chat.id, { id: "conn", model: "model" });
   await chats.appendMessage(chat.activeBranchId, { role: "user", content: "Any storms?" });
   const requests: ProviderRequest[] = [];
   const provider: Provider = { id: "conn", async send(request) { requests.push(structuredClone(request)); return { content: "Rain soon.", finish_reason: "stop", raw: {} }; } };
-  const deps = { chats, state: memoryStateStore(), connect: connect ?? (async () => ({ provider, kind: "openrouter", context: 32_000 })), readPreset: async () => null, readLorebook: async () => null, now: () => ++now, randomSeed: () => 7 };
+  const deps = { chats, state: memoryStateStore(), connect: connect ? (connection: ChatConnection) => connect(connection) : async () => ({ provider, kind: "openrouter", context: 32_000 }), readPreset: async () => null, readLorebook: async () => null, now: () => ++now, randomSeed: () => 7 };
   const core = createRoleplayCore(deps);
   const input = { chatId: chat.id, kind: "reply" as const, expectedVersion: (await chats.readMessages(chat.activeBranchId, { limit: 1 })).branchVersion! };
   const events: TurnEvent[] = [];
@@ -90,6 +93,118 @@ test("the reusable API sends the canonical engine's request and commits the same
   expect(terminal.requests).toEqual(desktop.requests);
   expect(await terminal.messages()).toEqual(await desktop.messages());
   await Promise.all([desktop.core.close(), terminal.core.close()]);
+});
+
+test("a turn carries its trusted commit fence across a paused provider and refuses a stale commit", async () => {
+  let release!: () => void, entered!: () => void;
+  const providerGate = new Promise<void>((resolve) => { release = resolve; });
+  const providerEntered = new Promise<void>((resolve) => { entered = resolve; });
+  let live = true;
+  const s = await scene(async () => ({
+    provider: { id: "conn", async send() { entered(); await providerGate; return { content: "Must not commit.", finish_reason: "stop", raw: {} }; } },
+    kind: "openrouter", context: 32_000,
+  }), (context) => {
+    expect(context.packageId).toBe("bunzai.extension.test");
+    if (!live) throw new Error("extension commit fence is stale");
+  });
+  const commit: ExtensionCommitContext = {
+    owner: "runtime-owner", epoch: 7, packageId: "bunzai.extension.test", packageDigest: "a".repeat(64),
+    policyFingerprint: "b".repeat(64), grantRevision: 3, operation: "turns.start",
+    access: { resources: [{ kind: "scene", id: s.chat.id }], fields: [], methods: [], destinations: [] }, now: () => 1_000,
+  };
+  const work = s.core.runTurn(s.input, s.emit, commit);
+  try {
+    await providerEntered;
+    live = false;
+    release();
+    await work;
+    expect(await s.messages()).toHaveLength(1);
+    expect((await s.chats.resumeIncomplete()).map(({ content }) => content)).toEqual([""]);
+    expect(s.events.some((event) => event.type === "done")).toBe(false);
+  } finally {
+    release();
+    await s.core.close();
+  }
+});
+
+test("an extension turn remains admitted until its approved after-turn jobs settle", async () => {
+  let entered!: () => void, release!: () => void;
+  const jobStarted = new Promise<void>((resolve) => { entered = resolve; });
+  const jobGate = new Promise<void>((resolve) => { release = resolve; });
+  const s = await scene(undefined, () => undefined);
+  const core = createRoleplayCore({ ...s.deps, afterEvent: async (_input, event) => {
+    if (event.type !== "done") return;
+    entered();
+    await jobGate;
+  } });
+  const commit: ExtensionCommitContext = {
+    owner: "runtime-owner", epoch: 9, packageId: "bunzai.extension.test", packageDigest: "a".repeat(64),
+    policyFingerprint: "b".repeat(64), grantRevision: 3, operation: "turns.start",
+    access: { resources: [{ kind: "scene", id: s.chat.id }], fields: [], methods: [], destinations: [] }, now: () => 1_000,
+  };
+  let settled = false;
+  const work = core.runTurn(s.input, s.emit, commit).then(() => { settled = true; });
+  try {
+    await jobStarted;
+    expect(settled).toBe(false);
+  } finally {
+    release();
+    await work;
+    await core.close();
+  }
+  expect(settled).toBe(true);
+});
+
+test("package state written during a provider pause stays on the checkpoint and commits with that reply", async () => {
+  let release!: () => void, entered!: () => void;
+  const providerGate = new Promise<void>((resolve) => { release = resolve; });
+  const providerEntered = new Promise<void>((resolve) => { entered = resolve; });
+  const s = await scene(async () => ({
+    provider: { id: "conn", async send() { entered(); await providerGate; return { content: "The reply commits.", finish_reason: "stop", raw: {} }; } },
+    kind: "openrouter", context: 32_000,
+  }), () => undefined);
+  const turnCommit: ExtensionCommitContext = {
+    owner: "runtime-owner", epoch: 10, packageId: "bunzai.extension.test", packageDigest: "a".repeat(64),
+    policyFingerprint: "b".repeat(64), grantRevision: 3, operation: "turns.start",
+    access: { resources: [{ kind: "scene", id: s.chat.id }, { kind: "host-connection", id: "conn" }], fields: ["turn.run", "model.prompt"], methods: [], destinations: ["connection:conn"] }, now: () => 1_001,
+  };
+  const stateCommit: ExtensionCommitContext = {
+    ...turnCommit, operation: "state.write.apply",
+    access: { resources: [{ kind: "scene", id: s.chat.id }, { kind: "take", id: s.chat.activeBranchId }], fields: ["state"], methods: [], destinations: [] },
+  };
+  const work = s.core.runTurn(s.input, s.emit, turnCommit);
+  try {
+    await providerEntered;
+    const turnId = s.events.find((event): event is Extract<TurnEvent, { type: "start" }> => event.type === "start")?.turnId;
+    if (!turnId) throw new Error("turn checkpoint was not opened");
+    expect(await s.chats.appendPendingExtensionDeltas(turnId, stateCommit.packageId, s.input.expectedVersion,
+      [{ slot: "ext:bunzai.extension.test:notes", path: ["draft"], value: "approved", at: 1_001 }], stateCommit)).toBe(true);
+    release();
+    await work;
+    expect(await s.chats.sceneState(s.chat.activeBranchId)).toMatchObject({ "ext:bunzai.extension.test:notes": { draft: { value: "approved" } } });
+  } finally {
+    release();
+    await work;
+    await s.core.close();
+  }
+});
+
+test("an extension provider guard blocks an unreviewed fallback connection before its send", async () => {
+  let fallbackSends = 0;
+  const primary: Provider = { id: "conn", async send() { throw new ProviderError("temporary", { category: "service_unavailable", code: "service_unavailable", status: 503 }); } };
+  const fallback: Provider = { id: "fallback", async send() { fallbackSends++; return { content: "unreviewed", finish_reason: "stop", raw: {} }; } };
+  const s = await scene(async (connection) => ({ provider: connection.id === "conn" ? primary : fallback, kind: "openrouter", context: 32_000 }));
+  const attempted: string[] = [];
+  const guard: ProviderRequestGuard = async (connection, request, _io, send) => {
+    attempted.push(`${connection.id}:${connection.model}:${request.model}`);
+    if (connection.id !== "conn" || connection.model !== "model" || request.model !== "model") throw new Error("fallback is not in the review");
+    return send(request);
+  };
+  try {
+    await s.core.runTurn({ ...s.input, fallback: { id: "fallback", model: "other-model" } }, s.emit, undefined, guard);
+    expect(fallbackSends).toBe(0);
+    expect(attempted).toContain("fallback:other-model:other-model");
+  } finally { await s.core.close(); }
 });
 
 test("close during checkpoint creation never starts a narrator or Director call", async () => {

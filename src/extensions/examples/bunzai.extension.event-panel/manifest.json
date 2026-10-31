@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "bunzai.extension.event-panel",
+  "version": "1.0.0",
+  "name": "Scene opened panel",
+  "description": "Subscribes to the safe scene.opened event and updates a host-drawn panel.",
+  "author": "Bunzai example",
+  "api": { "major": 1, "minMinor": 0, "maxMinor": 0 },
+  "entry": "main.js",
+  "requirements": [
+    { "operation": "events.subscribe", "resources": ["event", "scene"], "fields": ["payload"], "methods": [], "destinations": [], "purpose": "Receive a scene.opened summary for a user-selected scene", "required": true },
+    { "operation": "ui.panel.set", "resources": [], "fields": ["panel"], "methods": [], "destinations": [], "purpose": "Show the most recent safe scene-opened summary", "required": true }
+  ],
+  "contributions": [
+    { "type": "command", "id": "subscribe", "label": "Subscribe to scene opened", "operation": "events.subscribe" },
+    { "type": "panel", "id": "opened-panel", "title": "Scene activity", "events": ["scene.opened"] }
+  ]
+}

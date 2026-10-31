@@ -39,11 +39,13 @@ import {
   type PieceChangeEvent,
   type SummaryRow,
   type VersionRow,
-  type WriteCondition,
 } from "../../contracts/content-store";
+import { utf8ByteLength } from "../../../shared/utf8";
 import { breather } from "../breather";
 import { coldReadCharge } from "../cold-read-budget";
 import { memoryAssetReads } from "./document-assets";
+import { conditionHolds } from "./document-write-condition";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
 
 /** One key per spelling-insensitive id (spec behavior 12a). */
 const keyOf = (kind: string, id: string): string => `${kind}\u0000${foldId(id)}`;
@@ -58,18 +60,12 @@ interface PartRow {
   blobKeys: readonly string[];
 }
 
-function conditionHolds(current: DocumentRow | undefined, retired: boolean, condition: WriteCondition): boolean {
-  switch (condition.when) {
-    case "absent":
-      return current === undefined && !retired;
-    case "writeId":
-      return current !== undefined && current.writeId === condition.expected;
-    case "always":
-      return true;
-  }
-}
-
-export function memoryDocumentBackend(): DocumentBackend {
+export function memoryDocumentBackend(options: { authorizeExtensionCommit?: (context: ExtensionCommitContext) => void } = {}): DocumentBackend {
+  const authorizeExtensionCommit = (context: ExtensionCommitContext | undefined): void => {
+    if (!context) return;
+    if (!options.authorizeExtensionCommit) throw new Error("extension commits are unsupported by this memory backend");
+    options.authorizeExtensionCommit(context);
+  };
   const rows = new Map<string, DocumentRow>();
   const versionLog = new Map<string, VersionRow[]>();
   const summaries = new Map<string, SummaryRow>();
@@ -196,6 +192,7 @@ export function memoryDocumentBackend(): DocumentBackend {
     },
 
     async write(row, version, condition, summary = null, change) {
+      authorizeExtensionCommit(condition.extensionCommit);
       const key = keyOf(row.kind, row.id);
       if (condition.when === "writeId" && row.writeId !== condition.expected + 1) return false;
       if (condition.when === "always" && buriedKeys.has(key)) return false;
@@ -253,12 +250,12 @@ export function memoryDocumentBackend(): DocumentBackend {
       let count = 0, refs = 0, bytes = 0;
       for (const part of list) if (part.toVersion === null) {
         count++;
-        bytes += Buffer.byteLength(part.text, "utf8");
+        bytes += utf8ByteLength(part.text);
         refs += part.blobKeys.length;
         for (const blobKey of part.blobKeys) {
           const payload = blobs.get(blobKey);
           if (!payload) throw new Error("a part references a blob that no longer exists");
-          bytes += payload.kind === "bytes" ? payload.bytes.byteLength : Buffer.byteLength(payload.text, "utf8");
+          bytes += payload.kind === "bytes" ? payload.bytes.byteLength : utf8ByteLength(payload.text);
         }
         if (coldReadCharge(bytes, count, refs) > maxCharge) return { status: "too-large" };
       }
@@ -277,12 +274,12 @@ export function memoryDocumentBackend(): DocumentBackend {
       let refs = 0;
       let bytes = 0;
       for (const part of visible) {
-        bytes += Buffer.byteLength(part.text, "utf8");
+        bytes += utf8ByteLength(part.text);
         for (const blobKey of part.blobKeys) {
           refs++;
           const payload = blobs.get(blobKey);
           if (!payload) throw new Error("a part references a blob that no longer exists");
-          bytes += payload.kind === "bytes" ? payload.bytes.byteLength : Buffer.byteLength(payload.text, "utf8");
+          bytes += payload.kind === "bytes" ? payload.bytes.byteLength : utf8ByteLength(payload.text);
         }
       }
       return { writeId: row.writeId, parts: visible.length, refs, bytes };
@@ -311,7 +308,7 @@ export function memoryDocumentBackend(): DocumentBackend {
     async lightPartBounded(kind, id, name, at, maxBytes) {
       const p = (parts.get(keyOf(kind, id)) ?? []).find((part) => part.name === name && part.fromVersion <= at && (part.toVersion === null || part.toVersion > at));
       if (!p) return { status: "missing" };
-      return Buffer.byteLength(p.text, "utf8") > maxBytes ? { status: "too-large" } : { status: "ok", text: p.text };
+      return utf8ByteLength(p.text) > maxBytes ? { status: "too-large" } : { status: "ok", text: p.text };
     },
 
     async lightBlobs(kind, id, name, at, expectedHashes, selectedHashes) {
@@ -339,7 +336,8 @@ export function memoryDocumentBackend(): DocumentBackend {
       return p ? (await materializeParts(snapshotParts([p])))[0] ?? null : null;
     },
 
-    async bury(kind, id, graveId, deletedAt, capture, expectedRevision) {
+    async bury(kind, id, graveId, deletedAt, capture, expectedRevision, extensionCommit) {
+      authorizeExtensionCommit(extensionCommit);
       const key = keyOf(kind, id);
       const row = rows.get(key);
       if (!row || graves.has(graveId)) return false;
@@ -367,7 +365,8 @@ export function memoryDocumentBackend(): DocumentBackend {
       return found ? { ...found.grave } : null;
     },
 
-    async unbury(graveId) {
+    async unbury(graveId, extensionCommit) {
+      authorizeExtensionCommit(extensionCommit);
       const found = graves.get(graveId);
       if (!found) return false;
       const { graveId: _grave, deletedAt: _at, ...own } = found.grave;

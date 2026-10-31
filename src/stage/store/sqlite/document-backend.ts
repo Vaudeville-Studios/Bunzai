@@ -45,6 +45,7 @@ import { documentPartReads } from "./document-backend-parts";
 import { appendPieceChange, onePieceSummary, readPieceChanges } from "./piece-change-journal";
 import type { StageDatabase } from "./database";
 import { attachRowFingerprints } from "./row-fingerprints";
+import { requireExtensionCommit } from "./extension-commit-guard";
 
 interface DocumentSql {
   kind: string;
@@ -225,6 +226,7 @@ export function sqliteDocumentBackend(database: StageDatabase, cipher: CellCiphe
       const values = rowValues(row);
       const docKey = values[1];
       return transaction(() => {
+        if (condition.extensionCommit) requireExtensionCommit(database, cipher, condition.extensionCommit);
         if (condition.when === "writeId" && row.writeId !== condition.expected + 1) return false;
         if (condition.when === "writeId" && condition.valid && !condition.valid()) return false;
         if (condition.when === "always" && keyIsBuried(statement, row.kind, docKey)) return false;

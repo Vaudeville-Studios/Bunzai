@@ -34,9 +34,14 @@ import capabilityModule24 from "../entities/preset/capabilities/blocks";
 import capabilityModule25 from "../entities/preset/capabilities/groups";
 import capabilityModule26 from "../entities/preset/capabilities/notes";
 import capabilityModule27 from "../entities/preset/capabilities/settings";
-import capabilityModule28 from "../entities/regex/capabilities/notes";
-import capabilityModule29 from "../entities/regex/capabilities/rules";
-import capabilityModule30 from "../entities/regex/capabilities/settings";
+import capabilityModule28 from "../entities/promptbook/capabilities/phase-preset";
+import capabilityModule29 from "../entities/promptformat/capabilities/templates";
+import capabilityModule30 from "../entities/regex/capabilities/notes";
+import capabilityModule31 from "../entities/regex/capabilities/rules";
+import capabilityModule32 from "../entities/regex/capabilities/settings";
+import capabilityModule33 from "../entities/scriptsheet/capabilities/instruction";
+import capabilityModule34 from "../entities/skill/capabilities/instruction";
+import capabilityModule35 from "../entities/tool/capabilities/definition";
 
 const capabilityModules: readonly unknown[] = [
   capabilityModule0,
@@ -70,6 +75,11 @@ const capabilityModules: readonly unknown[] = [
   capabilityModule28,
   capabilityModule29,
   capabilityModule30,
+  capabilityModule31,
+  capabilityModule32,
+  capabilityModule33,
+  capabilityModule34,
+  capabilityModule35,
 ];
 
 /** Every semantic capability, generated from the drop-in folders. */

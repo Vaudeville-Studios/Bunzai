@@ -1,6 +1,7 @@
 /** Semantic item lifecycle for a pack's default or named group. */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import { nonEmptyPatch } from "../../_shared/capability-schemas";
 import type { CanonicalPack } from "../schema";
 import { addPackItem, patchPackItem, removePackItem, reorderPack } from "../operations";
@@ -32,6 +33,7 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalPack>
   action: "manage",
   summary: "Add, edit, remove, or reorder typed media items in the default or a named pack group.",
   aliases: ["pack face", "expression image", "sprite item", "reorder faces"],
+  extensionExposure: { operationId: "content.draft.pack.items.manage", fields: [{ input: "operation", path: "body.pack.items" }, { input: "operation", path: "body.groups" }], hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect" },
   input,
   preview: (entity, { target, operation }) => {
     const body = operation.type === "add"

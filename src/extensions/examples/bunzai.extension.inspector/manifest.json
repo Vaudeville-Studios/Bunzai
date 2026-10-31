@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "bunzai.extension.inspector",
+  "version": "1.0.0",
+  "name": "Operation inspector",
+  "description": "Lists host operations and marks this package's granted operations.",
+  "author": "Bunzai example",
+  "api": { "major": 1, "minMinor": 0, "maxMinor": 0 },
+  "entry": "main.js",
+  "requirements": [
+    { "operation": "api.describe", "resources": [], "fields": [], "methods": [], "destinations": [], "purpose": "Show available operation metadata", "required": true }
+  ],
+  "contributions": [
+    { "type": "command", "id": "inspect", "label": "Inspect available operations", "operation": "api.describe" }
+  ]
+}

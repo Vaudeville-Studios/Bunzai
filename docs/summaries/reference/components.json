@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:f46f64b97bfd52cd5d1b8a753913fd855a23ad885482a40de1cb64fdb99427c6",
-  "summary": "Generated lookup of current exported UI entries. The generator scans TSX exports under src/ui and create/build/swatch/inject helpers under src/ui/_shared; each row lists a name, source path, TypeScript signature and available documentation/style data. The opening table maps common interface needs to existing controls, including buttons, icon buttons, tabs, rows, dialogs, toggles and theme tokens. The React table includes current exported shell, app, editor, scene, settings and shared controls, including Core Wing, Context wing, Proscenium and LightRays where exported. The helper table covers the matching shared TypeScript helpers. Use the rows to locate source and inspect signatures, not as a separate behavior contract. The markdown is generated with scripts/hooks/component-catalog.ts and the pre-commit --check detects drift; run the generator after export changes. The catalog covers discovery, not every internal component or runtime state; consult reference/ui and owning source for actual behavior and layout.",
+  "sourceHash": "sha256:132278d58e723d603de2251c9579ed34bc5de30da402553830abcb9066c49f35",
+  "summary": "The component catalog is generated from exported React components under src/ui and selected helpers under src/ui/_shared. Its two tables report source file, signature, optional documentation and styles. Reuse a catalog entry before creating another control; behavior remains owned by the component source and reference/ui. Current extension-related entries include the package manager, bounded guest renderer, settings editor, effect-review surface, and Library/Workbench host-command menu. The command menu reuses the shared virtual-row primitive to bound mounted options while keeping keyboard navigation and an in-flight command reachable. ScenePage also exposes the identifiers used for verified navigation handoff. The catalog is discovery metadata, not a behavior registry or release proof.",
   "topics": [
     "generated component catalog",
     "component-catalog.ts hook",
@@ -35,17 +35,17 @@
       "slug": "components-react-tsx",
       "title": "Components (React, `.tsx`)",
       "level": 2,
-      "sourceHash": "sha256:bdb07f0cc307549e32211a7e03e32353a3332105df1643aff4326ba7ed1356fd",
-      "summary": "The generated React table lists current exported TSX entries across shell, apps, editors and shared controls, with source paths, signatures and available documentation/style data. Entries include Core Wing and the installed Context wing, plus Proscenium and LightRays, editors, app surfaces and settings controls where exported. Each row is discovered from the current source tree; it is not a second registry or proof of behavior. Use it to find an entry and read its owner for live props and behavior. The table is regenerated from exports by the component catalog script, so inventory changes should come from source rather than hand edits.",
+      "sourceHash": "sha256:882489e42c97f08604664a8ffa1381e94543434f7d70da227daf8c4d89f34fa7",
+      "summary": "The React table lists exported components from the shell, Library, Workbench, Scenes, Settings and shared UI. Extension entries include the manager, guest renderer, settings editor, effect-review panel and host-command menu used in Library and Workbench. The menu uses the existing virtual-row primitive for a bounded DOM window and retains keyboard access to commands. ScenePage exposes navigation-ticket and load identifiers for verified handoff. Rows are generated discovery metadata; consult reference/ui and component source for behavior. Other entries include shared controls, editors, panels and app-specific surfaces.",
       "topics": [
         "React tsx exports",
         "shell Dock App",
         "workbench editors presenters",
         "library settings docs apps",
         "signature and styles columns",
-        "Props wing and TrackHare",
-        "Messenger shell and settings rows",
-        "RoomHeader and Panel"
+        "RoomHeader and Panel",
+        "extension effect review and host command menus",
+        "ScenePage navigation handoff props"
       ],
       "children": []
     },

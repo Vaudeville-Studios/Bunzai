@@ -8,7 +8,10 @@
  */
 import type { ChatCompendium, ChatStore, CompendiumReceipt, ReceiptKind, ReceiptStatus } from "../../contracts/chat-store";
 import { StudioConflictError } from "../../../studio/errors";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import { EXTENSION_BACKGROUND_FIELDS } from "../../../extensions/contracts/background-fields";
 import { fail } from "../chat-rules";
+import { requireCommitResource } from "../extension-commit-access";
 import { checkCompendium, mergeCompendium } from "../compendium-rules";
 import { applySettle, checkReceiptInput, checkReceiptPage, checkSettle, receiptBody, requireReceiptSize } from "../receipt-rules";
 import { participantMethods } from "./chat-store-participants";
@@ -21,6 +24,7 @@ import { dramaturgMethods } from "./chat-store-dramaturg";
 import { treeMethods } from "./chat-store-trees";
 import type { ChatSqlKit } from "./chat-store-cuts";
 import { isQuarantinableDecodeError } from "./quarantine";
+import { requireExtensionCommit } from "./extension-commit-guard";
 
 interface ReceiptSql {
   id: string; chat_id: string; branch_id: string; message_id: string | null; swipe_id: string | null;
@@ -87,11 +91,15 @@ export function compendiumMethods(k: ChatSqlKit): CompendiumMethods {
       return found ? k.toChat(k.chatRow(chatId)!) : null;
     },
 
-    async appendReceipt(chatId, inputRaw) {
+    async appendReceipt(chatId, inputRaw, extensionCommit) {
       const input = checkReceiptInput(inputRaw);
       return k.write(() => {
         if (!k.liveChat(chatId)) return null;
         if (k.branchRow(input.branchId)?.chat_id !== chatId) fail("branchId is not a take of this scene");
+        if (extensionCommit) {
+          requireCommitResource(extensionCommit, { kind: "scene", id: chatId }, [EXTENSION_BACKGROUND_FIELDS.compendiumReceipts]);
+          requireExtensionCommit(k.database, cipher, extensionCommit);
+        }
         if (input.undoes !== undefined && k.one<{ chat_id: string }>("SELECT chat_id FROM compendium_receipts WHERE id = ?", input.undoes)?.chat_id !== chatId) fail("undoes is not a receipt of this scene");
         const at = k.clock();
         const receipt: CompendiumReceipt = { id: k.newId(), chatId, ...input, at, settledAt: at };
@@ -104,11 +112,15 @@ export function compendiumMethods(k: ChatSqlKit): CompendiumMethods {
       });
     },
 
-    async settleReceipt(receiptId, settleRaw) {
+    async settleReceipt(receiptId, settleRaw, extensionCommit) {
       const change = checkSettle(settleRaw);
       return k.write(() => {
         const found = live(receiptId);
         if (found?.damaged) throw new StudioConflictError("that receipt is damaged and cannot be changed");
+        if (found && extensionCommit) {
+          requireCommitResource(extensionCommit, { kind: "scene", id: found.chatId }, [EXTENSION_BACKGROUND_FIELDS.compendiumReceipts]);
+          requireExtensionCommit(k.database, cipher, extensionCommit);
+        }
         return found && settle(found, applySettle(found, change, k.clock()));
       });
     },

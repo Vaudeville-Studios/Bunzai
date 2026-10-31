@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "bunzai.extension.file-reader",
+  "version": "1.0.0",
+  "name": "Selected file reader",
+  "description": "Reads a user-selected UTF-8 text file after host review.",
+  "author": "Bunzai example",
+  "api": { "major": 1, "minMinor": 0, "maxMinor": 0 },
+  "entry": "main.js",
+  "requirements": [
+    { "operation": "files.pick", "resources": [], "fields": [], "methods": [], "destinations": [], "purpose": "Choose one local text file for this command", "required": true },
+    { "operation": "files.read", "resources": [], "fields": ["file.contents"], "methods": [], "destinations": [], "purpose": "Read the selected file after showing its name and size", "required": true }
+  ],
+  "contributions": [
+    { "type": "command", "id": "read-file", "label": "Read a selected text file", "operation": "files.read" }
+  ]
+}

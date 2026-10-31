@@ -23,6 +23,11 @@ describe("sha256PatternOutsideHome", () => {
     expect(sha256PatternOutsideHome("src/ui/a.ts", "// /^[a-f0-9]{64}$/")).toBeNull();
     expect(sha256PatternOutsideHome("src/ui/a.ts", "/^[a-f0-9]{32}$/.test(x)")).toBeNull();
   });
+  test("recognizes only catalog metadata generated from checked source schemas", () => {
+    const generated = "/** Generated host-safe operation metadata. */\n{\"pattern\":\"^[a-f0-9]{64}$\"}";
+    expect(sha256PatternOutsideHome("src/generated/extension-operation-metadata.ts", generated)).toBeNull();
+    expect(sha256PatternOutsideHome("src/generated/extension-operation-metadata.ts", generated.replace("Generated host-safe", "Edited"))).toContain("isSha256Hex");
+  });
 });
 
 describe("uploadedRefPatternOutsideHome", () => {
@@ -46,11 +51,18 @@ describe("byteLimitLiteralOutsideHome", () => {
   });
   test("allows the homes, the reasoned exceptions, tests, other sizes and kilobyte math", () => {
     expect(byteLimitLiteralOutsideHome("src/core/media/limits.ts", "x = 32 * 1024 * 1024")).toBeNull();
+    expect(byteLimitLiteralOutsideHome("src/sandbox/javascript/limits.ts", "x = 128 * 1024 * 1024")).toBeNull();
     expect(byteLimitLiteralOutsideHome("src/core/media/image-limit.ts", "x = 10 * 1024 * 1024")).toBeNull();
     expect(byteLimitLiteralOutsideHome("src/core/preset/render/runner.ts", "x = 32 * 1024 * 1024")).toBeNull();
     expect(byteLimitLiteralOutsideHome("src/ui/a.test.ts", "x = 32 * 1024 * 1024")).toBeNull();
     expect(byteLimitLiteralOutsideHome("src/ui/a.ts", "x = 64 * 1024 * 1024; y = 32 * 1024; z = 132 * 1024 * 1024")).toBeNull();
     expect(byteLimitLiteralOutsideHome("src/ui/a.ts", "// 32 * 1024 * 1024")).toBeNull();
+  });
+  test("recognizes only catalog byte limits generated from checked source schemas", () => {
+    const generated = "/** Generated host-safe operation metadata. */\n{\"maximum\":33554432}";
+    expect(byteLimitLiteralOutsideHome("src/generated/extension-operation-metadata.ts", generated)).toBeNull();
+    expect(byteLimitLiteralOutsideHome("src/generated/extension-operation-metadata.ts", generated.replace("Generated host-safe", "Edited"))).toContain("byte limit");
+    expect(byteLimitLiteralOutsideHome("src/generated/other.ts", generated)).toContain("byte limit");
   });
 });
 

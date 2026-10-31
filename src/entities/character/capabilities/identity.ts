@@ -3,6 +3,7 @@
  */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { CanonicalCharacter } from "../schema";
 import { nonEmptyPatch, nullableOptionalText, previewCharacterPatch, targetSchema } from "./shared";
 
@@ -38,6 +39,11 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalChara
   action: "update",
   summary: "Change a character's portable name, nickname, tagline, or casting-card identity facts.",
   aliases: ["rename character", "edit identity", "change pronouns", "casting card"],
+  extensionExposure: {
+    operationId: "content.draft.character.identity.update",
+    fields: Object.entries(paths).map(([input, path]) => ({ input: `patch.${input}`, path: `body.${path}` })),
+    hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect",
+  },
   input,
   preview: (entity, { target, patch }) =>
     previewCharacterPatch(entity, patch, paths, target.variantId),

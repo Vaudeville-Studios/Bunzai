@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/api",
+  "sourcePath": "docs/reference/extending/api.md",
+  "sourceHash": "sha256:61d6c099d1f3b222d346ffa6e86afb2a0183050bcb75401f81e92777dd733b68",
+  "semanticSummaryHash": "sha256:cab002cc1efe17d580836eefe251b7231ee3fea8a49d7f2488eb976c24d83060",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Independently reviewed current generated API catalog and source descriptors. The summary correctly describes descriptor-owned host notes, current passing required-family matrix, strict schemas/grants, and the Core-linked compatibility limits without claiming engine parity or release certification.",
+  "reviewedAt": "2026-10-31T22:54:40.476Z"
+}

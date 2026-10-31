@@ -11,7 +11,7 @@ import { openStageDatabase } from "./database";
 import { MIGRATIONS } from "./migrations";
 
 /** Rows that describe who can unlock this library or what it is doing now: a restore never changes them. */
-export const KEEP_TABLES = ["_migrations", "keyring", "devices", "lock_settings", "maintenance", "library_meta", "derived_usage", "sqlite_stat1", "sqlite_sequence"] as const;
+export const KEEP_TABLES = ["_migrations", "keyring", "devices", "lock_settings", "maintenance", "library_meta", "derived_usage", "extension_runtime_lease", "sqlite_stat1", "sqlite_sequence"] as const;
 /** Rebuildable caches: emptied by a restore, since they describe content that just changed. */
 export const CLEARED_TABLES = ["derived_rows"] as const;
 /** The change journal: emptied and its sequence skipped, so every follower sees a gap and reloads. */
@@ -19,6 +19,7 @@ export const JOURNAL_TABLE = "piece_changes";
 /** Everything a person wrote or collected: replaced whole by a restore. */
 export const CONTENT_TABLES = [
   "blob_refs", "blobs", "branch_base", "branch_state", "branch_variables", "branches", "chats", "compendium_receipts", "compendium_trees", "core_entries", "core_scene_links", "core_sessions", "director_states", "document_graves", "document_summaries", "document_versions",
+  "extension_budget_reservations", "extension_budget_usage", "extension_controls", "extension_data", "extension_logs", "extension_packages", "extension_receipts",
   "documents", "dramaturg_threads", "grave_summaries", "grave_versions", "kit_sessions", "legacy_document_graves_v17", "legacy_document_summaries_v17",
   "legacy_document_versions_v17", "legacy_documents_v17", "legacy_grave_summaries_v17", "legacy_grave_versions_v17", "message_deltas", "messages",
   "persona_stats",

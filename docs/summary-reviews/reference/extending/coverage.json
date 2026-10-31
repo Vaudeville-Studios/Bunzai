@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/coverage",
+  "sourcePath": "docs/reference/extending/coverage.md",
+  "sourceHash": "sha256:5062f77c6b261b5d982846917a710c15a2e9ecb6f1e40571db5c9a88130f3fdb",
+  "semanticSummaryHash": "sha256:f69f6f82e9d597fd7821fd6a38056e628e9ffd6206d5da0e3b1adf3572a15670",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Independently reviewed current generated coverage and descriptors. Required-family matrix status is current and accurate; rp-core compatibility, Browser/Pocket ownership limits, descriptor notes, grants, and non-certification boundaries are accurately described.",
+  "reviewedAt": "2026-10-31T22:54:40.068Z"
+}

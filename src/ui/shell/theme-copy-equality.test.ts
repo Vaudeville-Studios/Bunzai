@@ -5,10 +5,10 @@
  * Host CSS cannot be computed in the unit DOM, so scan:theme-keys proves the other half: no selector names an id.
  */
 import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
-import { memoryStateStore } from "../../stage/store/memory/state-store";
-import { createThemeLifecycle } from "../../extensions/theme-lifecycle";
 import { COLOUR_ONLY_THEMES } from "../../extensions/theme-difference";
 import { exampleThemeInventory, themeInventory } from "../../extensions/theme-inventory";
+import { installThemeFixture, unifiedThemeService } from "../../extensions/theme-test-fixture";
+import type { ThemePackageInput } from "../../extensions/theme-contract";
 import { installDom, type InstalledDom } from "../_shared/test-dom";
 import { MOD_STYLE_ID, removeMod } from "./theme-mod";
 import { CORE_THEME_APPEARANCE, paintTheme, readEffectiveTheme } from "./theme";
@@ -38,16 +38,18 @@ for (const input of inputs) {
   const original = input as unknown as Pkg;
   const sourceId = original.manifest.id;
   test(`${sourceId}: a copy under a new id paints an identical root`, async () => {
-    const themes = await createThemeLifecycle(memoryStateStore(), [input]);
-    const copy = clone(original);
+    const themes = await unifiedThemeService(true);
+    try {
+    const copy = clone(input) as unknown as ThemePackageInput;
+    const copyManifest = copy.manifest as { id: string; name: string };
     const copyId = "bunzai.theme.copy-of-" + sourceId.replace(/^bunzai\.theme\./, "");
-    copy.manifest.id = copyId;
-    copy.manifest.name = "Copy of " + original.manifest.name;
-    const review = await themes.inspect(copy);
-    await themes.install(review.challenge, review.preview.digest, "approve");
+    copyManifest.id = copyId;
+    copyManifest.name = "Copy of " + original.manifest.name;
+    if (sourceId.startsWith("bunzai.theme.")) await installThemeFixture(themes, input);
+    await installThemeFixture(themes, copy);
 
-    const builtin = await themes.effective(sourceId);
-    const clone3p = await themes.effective(copyId);
+    const builtin = await themes.themeEffective(sourceId);
+    const clone3p = await themes.themeEffective(copyId);
     expect(clone3p.themeId).toBe(copyId);
     expect(builtin.themeId).toBe(sourceId);
     // an identity theme picks variants on most surfaces; the colour-only default picks none and must still copy exactly
@@ -58,5 +60,6 @@ for (const input of inputs) {
     const b = paintedRoot(clone3p, copyId);
     paintTheme(CORE_THEME_APPEARANCE);
     expect(b).toEqual(a);
+    } finally { await themes.close(); }
   });
 }

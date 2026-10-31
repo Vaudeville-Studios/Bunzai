@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:f46f64b97bfd52cd5d1b8a753913fd855a23ad885482a40de1cb64fdb99427c6",
-  "semanticSummaryHash": "sha256:4ebe059ee3ff6047224012a835ed1263c1f4096676460fd28aa4241694f19d33",
+  "sourceHash": "sha256:132278d58e723d603de2251c9579ed34bc5de30da402553830abcb9066c49f35",
+  "semanticSummaryHash": "sha256:cfd43d5c0a27d64957e65bff5fd7c30034a9080727db6443b450dc139f23f5aa",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Documentation accuracy only: summarizes the generated catalog inventory and current exported UI/helper tables; behavior remains owned by source.",
-  "reviewedAt": "2026-10-31T16:51:59.209Z"
+  "notes": "Independently reviewed generated component inventory and current catalog source. The summary accurately names the extension manager, bounded renderer, settings/effect review, existing virtualized host-command menu, and navigation handoff; it distinguishes discovery metadata from behavior and release proof.",
+  "reviewedAt": "2026-10-31T22:54:39.238Z"
 }

@@ -3,6 +3,7 @@
  */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { CanonicalPersona } from "../schema";
 import { nonEmptyPatch, nullableOptionalText, previewPersonaPatch, targetSchema } from "./shared";
 
@@ -48,6 +49,11 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalPerso
   action: "update",
   summary: "Change structured persona sections, traits, ordering, pronouns, or casting facts.",
   aliases: ["persona sections", "persona traits", "persona pronouns", "persona appearance"],
+  extensionExposure: {
+    operationId: "content.draft.persona.profile.update",
+    fields: Object.entries(paths).map(([input, path]) => ({ input: `patch.${input}`, path: `body.${path}` })),
+    hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect",
+  },
   input,
   preview: (entity, { patch }) => previewPersonaPatch(entity, patch, paths),
 });

@@ -11,6 +11,7 @@ import { checkPersonaInput, refusePersonaChange, requireSnapshotVersion, revertM
 import type { CellCipher } from "../../crypto/cell-cipher";
 import { BRANCH_COLUMNS, MESSAGE_COLUMNS, type BranchSql, type ChatSql, type MessageSql } from "./chat-store";
 import type { StageDatabase } from "./database";
+import { requireExtensionCommit } from "./extension-commit-guard";
 import { statsCounters } from "./chat-store-stats";
 import type { StateSql } from "./chat-store-state";
 import { applyPartChange, openPartSnapshot, snapshotPartsAt } from "./piece-parts-sql";
@@ -93,10 +94,11 @@ export function cutMethods(k: ChatSqlKit): CutMethods {
   };
 
   return {
-    async cutMessages(branchId, messageId, scopeRaw, guard) {
+    async cutMessages(branchId, messageId, scopeRaw, guard, extensionCommit) {
       const scope = checkScope(scopeRaw);
       const expected = checkGuard(guard);
       return k.write(() => {
+        if (extensionCommit) requireExtensionCommit(k.database, k.cipher, extensionCommit);
         const m = k.writableMessage(messageId);
         if (!m || m.branch_id !== branchId) return null;
         const branch = k.branchRow(branchId)!;

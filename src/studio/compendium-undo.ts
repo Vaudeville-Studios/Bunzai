@@ -24,7 +24,7 @@ export async function undoReceipt(deps: CompendiumDeps, chatId: string, receiptI
   if (r.status === "undone") return (r.undoneBy ? await deps.chats.receipt(r.undoneBy) : null) ?? r;
   if (!REVERSIBLE.has(r.kind) || !UNDOABLE.has(r.status)) throw new StudioConflictError(`a ${r.status} ${r.kind} receipt has nothing to undo`);
 
-  const undo = (await deps.chats.appendReceipt(chatId, { branchId: r.branchId, kind: "undo", status: "running", undoes: r.id, ...(r.messageId ? { messageId: r.messageId } : {}), ...(r.swipeId ? { swipeId: r.swipeId } : {}) }))!;
+  const undo = (await deps.chats.appendReceipt(chatId, { branchId: r.branchId, kind: "undo", status: "running", undoes: r.id, ...(r.messageId ? { messageId: r.messageId } : {}), ...(r.swipeId ? { swipeId: r.swipeId } : {}) }, deps.extensionCommit))!;
   const restored: ReceiptWrite[] = [];
   const skipped: string[] = [];
   try {
@@ -44,7 +44,7 @@ export async function undoReceipt(deps: CompendiumDeps, chatId: string, receiptI
           next = next.map((e) => (e.id === w.entryId ? setFields(entry, verdict.set, verdict.remove) : e));
         }
         return next;
-      });
+      }, deps.extensionCommit);
       if (result.status === "conflict") skipped.push(`a book changed while undoing (${result.ids.join(", ")}); nothing was written to it`);
       else {
         restored.push(...mine.restored);
@@ -52,11 +52,11 @@ export async function undoReceipt(deps: CompendiumDeps, chatId: string, receiptI
       }
     }
   } catch (error) {
-    return (await deps.chats.settleReceipt(undo.id, { status: "failed", reason: toErrorMessage(error, "undo failed").slice(0, 1500), writes: restored }))!;
+    return (await deps.chats.settleReceipt(undo.id, { status: "failed", reason: toErrorMessage(error, "undo failed").slice(0, 1500), writes: restored }, deps.extensionCommit))!;
   }
   const status = skipped.length === 0 ? "filed" : restored.length > 0 ? "partly_filed" : "failed";
-  const settled = (await deps.chats.settleReceipt(undo.id, { status, writes: restored, ...(skipped.length > 0 ? { reason: `skipped: ${skipped.join("; ")}`.slice(0, 1500) } : {}) }))!;
-  if (status === "filed") await deps.chats.settleReceipt(r.id, { status: "undone", undoneBy: undo.id });
+  const settled = (await deps.chats.settleReceipt(undo.id, { status, writes: restored, ...(skipped.length > 0 ? { reason: `skipped: ${skipped.join("; ")}`.slice(0, 1500) } : {}) }, deps.extensionCommit))!;
+  if (status === "filed") await deps.chats.settleReceipt(r.id, { status: "undone", undoneBy: undo.id }, deps.extensionCommit);
   return settled;
 }
 

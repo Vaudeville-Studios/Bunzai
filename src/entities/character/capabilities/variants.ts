@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { CapabilityChange } from "../../capabilities";
 import type { CanonicalCharacter, CharacterVariant } from "../schema";
 import {
@@ -124,6 +125,11 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalChara
   action: "manage",
   summary: "Add, remove, rename, configure, or restore inheritance for a character variant.",
   aliases: ["alternate character", "variant mode", "use base field", "remove variant"],
+  extensionExposure: {
+    operationId: "content.draft.character.variants.manage",
+    fields: [{ input: "operation", path: "body.variants" }],
+    hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect",
+  },
   input,
   preview: (entity, { operation: action }) => {
     const updated = applyOperation(entity, action);

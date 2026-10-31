@@ -27,7 +27,7 @@ import { EngineActionError, exportCanonical, formatMeta, inspectBytes } from "..
 import { parseCollectionEdit } from "../ui/collection-edit";
 import type { DocsIndex, DocFigure } from "../ui/docs-types";
 import { disableVolatileWebStorage, enableVolatileWebStorage } from "../ui/_shared/web-storage";
-import { announceBrowserStudioChange, announceBrowserStudioResync, announceBrowserThemeRevision } from "../browser-mode";
+import { announceBrowserStudioChange, announceBrowserStudioResync } from "../browser-mode";
 import { parseStudioPatchRequest } from "../ui/_shared/studio-patch-request";
 import { handleStudioRead } from "../ui/_shared/studio-read-route";
 import { LIBRARY_LOCKED_EVENT } from "../ui/_shared/api-fetch";
@@ -36,9 +36,12 @@ import { createSearchService } from "../stage/search/search-service";
 import { SearchWorkerClient } from "../stage/search/search-worker-client";
 import { applyMembershipDiff, collectionMemberships } from "../ui/library-search";
 import { handlePocketAsset } from "./asset-routes";
-import { handlePocketThemeRoute } from "./theme-route";
-import { createThemeLifecycle } from "../extensions/theme-lifecycle";
+import { listScenes, openScene } from "../studio/scenes";
+import { handleThemeReadRoutes } from "../extensions/theme-read-routes";
 import type { ThemePackageInput } from "../extensions/theme-contract";
+import { createPocketExtensionOwner } from "./extension-owner";
+import { memoryExtensionStore } from "../stage/store/memory/extension-store";
+import { handleExtensionRoutes } from "../ui/server-extension-runtime";
 
 interface PocketData {
   manifests: unknown[];
@@ -47,6 +50,7 @@ interface PocketData {
   docFigures: DocFigure[];
   themePackages?: Record<string, ThemePackageInput>;
   exampleThemePackages?: Record<string, ThemePackageInput>;
+  browserSandbox?: { workerSource: string; wasmBase64: string; regexWorkerSource?: string };
 }
 
 declare global {
@@ -108,10 +112,11 @@ export function installPocketRuntime(): () => void {
   // The temporary browser Studio keeps its pieces and its own documents in memory stores, the same
   // stores the app uses over SQLite, so it behaves exactly as the library does and forgets everything
   // on reload.
-  const backend = memoryDocumentBackend();
+  const extensionStore = memoryExtensionStore();
+  const backend = memoryDocumentBackend({ authorizeExtensionCommit: (context) => extensionStore.assertCommitContext(context) });
   const content = createContentStore(backend);
-  const chats = memoryChatStore();
-  const state = memoryStateStore();
+  const chats = memoryChatStore(Date.now, undefined, { authorizeExtensionCommit: (context) => extensionStore.assertCommitContext(context) });
+  const state = memoryStateStore({ authorizeExtensionCommit: (context) => extensionStore.assertCommitContext(context) });
   const store = new StudioStore(STUDIO_DIR, () => content);
   const settings = new SettingsStore(STUDIO_DIR, () => state);
   const collections = new CollectionsStore(STUDIO_DIR, () => state);
@@ -185,20 +190,28 @@ export function installPocketRuntime(): () => void {
   };
   const data = globalThis.__BUNZAI_POCKET_DATA__;
   if (!data) throw new Error("browser studio data is missing");
-  const themes = createThemeLifecycle(state, Object.values(data.themePackages ?? {}), Object.values(data.exampleThemePackages ?? {}));
-  let unsubscribeThemes = (): void => undefined;
-  void themes.then((service) => {
-    if (closed) return;
-    unsubscribeThemes = service.subscribe(announceBrowserThemeRevision);
-    if (closed) unsubscribeThemes();
-  }).catch(() => undefined);
+  const extensionOwner = createPocketExtensionOwner({ content, chats, state, store: extensionStore, themes: Object.values(data.themePackages ?? {}), ...(data.browserSandbox ? { browserSandbox: data.browserSandbox } : {}) })
+    .catch((reason: unknown) => { console.error("Browser extension runtime failed to start", reason instanceof Error ? reason.name : "unknown failure"); return null; });
   const route = async (request: Request): Promise<Response> => {
       if (closed) return error("browser studio is closed", 423);
       const url = new URL(request.url);
       const path = url.pathname;
       try {
-      const themeResponse = await handlePocketThemeRoute(request, url, themes, settings, { json, error, contentTypeIs, readJson });
-      if (themeResponse) return themeResponse;
+      if (path.startsWith("/api/extensions/")) return (await handleExtensionRoutes(request, url, await extensionOwner)) ?? error("not found");
+        if (path === "/api/chats/list" && request.method === "GET") return json(await listScenes(chats, store));
+      if (path === "/api/chats/open" && request.method === "GET") {
+        const opened = await openScene(chats, store, url.searchParams.get("id") ?? "");
+        return opened ? json(opened) : error("that scene is gone", 404);
+      }
+      if (path.startsWith("/api/themes/")) {
+        const owner = await extensionOwner;
+        if (!owner) return error("unified theme runtime is unavailable", 503);
+        const themeResponse = await handleThemeReadRoutes(request, url, {
+          effective: owner.themeEffective, asset: owner.themeAsset, revisionStamp: owner.themeRevision,
+          markBroken: owner.themeMarkBroken, confirmHealthy: owner.themeConfirmHealthy,
+        }, settings, { json, error });
+        return themeResponse ?? error("theme route not found", 404);
+      }
       const assetResponse = await handlePocketAsset(request, url, store, chats, () => !closed);
       if (assetResponse) return assetResponse;
       if (path === "/api/asset/discard" && request.method === "POST") {
@@ -439,11 +452,12 @@ export function installPocketRuntime(): () => void {
   };
   globalThis.fetch = pocketFetch as typeof fetch;
   return () => {
+    if (closed) return;
     closed = true;
-    unsubscribeThemes();
     if (uploadExpiryTimer) clearTimeout(uploadExpiryTimer);
     uploadExpiryTimer = null;
     lifetime.abort();
+    void extensionOwner.then((owner) => owner?.close()).catch(() => undefined);
     replay.close();
     search.dispose();
     for (const ref of staged.keys()) removeUpload(ref);

@@ -51,6 +51,17 @@ describe("health scan: a healthy library", () => {
 });
 
 describe("health scan: damaged cells", () => {
+  test("a malformed sealed extension owner on a turn checkpoint is reported as damage", async () => {
+    const l = await library();
+    const branch = get<{ version: number }>(l, "SELECT version FROM branches WHERE id = ?", l.branchId);
+    run(l, "INSERT INTO turn_checkpoints (id, branch_id, kind, message_id, content, base_version, started_at, saved_at, extension_owner_json) VALUES (?, ?, 'reply', NULL, ?, ?, 1, 1, ?)",
+      "damaged-owner", l.branchId, l.cipher.seal("turn_checkpoints.content", "partial reply"), branch.version,
+      l.cipher.seal("turn_checkpoints.extension_owner_json", JSON.stringify({ packageId: "fixture.extension" })));
+    const finding = only(await scan(l), "cell-unreadable", "turn_checkpoints");
+    expect(finding).toHaveLength(1);
+    expect(finding[0]).toMatchObject({ column: "extension_owner_json", cause: "the extension authority that owns pending scene state would not open, or does not belong to this row" });
+  });
+
   test("a flipped byte in a reply names the chat and the reply in plain words, and offers roll back when its history exists", async () => {
     const l = await library();
     const swipe = get<{ message_id: string; position: number; content: string }>(l, "SELECT message_id, position, content FROM swipes WHERE message_id = ? AND position = 0", l.messageIds[2]!);

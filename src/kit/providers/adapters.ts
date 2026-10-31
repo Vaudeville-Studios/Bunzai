@@ -52,7 +52,7 @@ export async function buildModel(config: ProviderConfig | null): Promise<Languag
 /** Query the provider's live model list through the same egress gate. Returns null when the spoke
  * has no models endpoint (manual entry). Request failures remain errors so setup can explain and
  * retry them instead of misreporting every failure as an empty model list. */
-export async function listModelsFor(config: ProviderConfig, signal?: AbortSignal): Promise<ModelInfo[] | null> {
+export async function listModelsFor(config: ProviderConfig, signal?: AbortSignal, assertCurrent?: () => Promise<void>): Promise<ModelInfo[] | null> {
   signal?.throwIfAborted();
   const spoke = (await spokes()).get(config.kind);
   if (!spoke?.listModels) return null;
@@ -79,6 +79,6 @@ export async function listModelsFor(config: ProviderConfig, signal?: AbortSignal
     f.preconnect = (): void => {};
     return f as unknown as FetchFunction;
   });
-  const fetch = speaksHttp(spoke) ? guardedFetch(allowedHost(config, spoke)) : refusing();
+  const fetch = speaksHttp(spoke) ? guardedFetch(allowedHost(config, spoke), globalThis.fetch, assertCurrent) : refusing();
   return spoke.listModels(config, fetch, signal);
 }

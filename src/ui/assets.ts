@@ -34,6 +34,11 @@ export interface PackagedAssets {
   sandboxWorkerJs?: string;
   /** browser-bundled regex worker, served only by the sandbox authority */
   regexWorkerJs?: string;
+  /** QuickJS guest wrapper bundle and interpreter bytes; served only by the sandbox authority */
+  extensionWorkerJs?: string;
+  extensionFrameJs?: string;
+  extensionFrameHtml?: string;
+  quickJsWasmB64?: string;
 }
 
 /** One served-icon inventory shared by development, desktop packaging and the static browser studio. */

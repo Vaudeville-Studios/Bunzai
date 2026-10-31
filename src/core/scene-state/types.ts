@@ -22,7 +22,7 @@ export interface Delta {
  * starts with (a chat import). The writer is decided by the door, never taken from a request; who may call each door is held by
  * stage/store/scene-state-guard.test.ts.
  */
-export type SlotWriter = "turn" | "background" | "person" | "import";
+export type SlotWriter = "turn" | "background" | "person" | "import" | "extension";
 
 /** How a slot's changes are cut into deltas and folded back: the whole value, one delta per field, or one per row of a list. */
 export type DiffStrategy = "value" | "fields" | "keyed-list";

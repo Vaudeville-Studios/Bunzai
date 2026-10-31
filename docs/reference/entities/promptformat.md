@@ -20,6 +20,10 @@ have. The piece is stored whole so the files are not lost. The Library card says
 never written into the piece. There is no editor: opening one on the Workbench shows that line and the fields, read-only, and a wireframe for a real viewer
 is at `design/wireframes/features/prompt-format/index.html`.
 
+An extension may stage reviewed edits to the stored name, instruct/context scalar fields, or author notes through
+`content.draft.promptformat.templates.update`. These fields remain inert canonical data; this operation does not apply
+the templates to prompt assembly. Draft review and apply own confirmation and persistence.
+
 ## Fields
 
 | Field | Type | Meaning |

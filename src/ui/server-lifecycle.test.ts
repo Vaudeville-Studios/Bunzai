@@ -11,7 +11,7 @@ describe("lifecycle", () => {
   test("shutdown: replies ok, then stop and exit(0)", async () => {
     const calls: string[] = [];
     const res = handleShutdown({
-      stop: () => calls.push("stop"),
+      stop: () => { calls.push("stop"); },
       exit: (c) => calls.push(`exit${c}`),
       spawnSelf: () => calls.push("spawn"),
     });
@@ -24,7 +24,7 @@ describe("lifecycle", () => {
   test("restart: stop comes before spawnSelf, then exit", async () => {
     const calls: string[] = [];
     const res = handleRestart({
-      stop: () => calls.push("stop"),
+      stop: () => { calls.push("stop"); },
       exit: (c) => calls.push(`exit${c}`),
       spawnSelf: () => calls.push("spawn"),
     });
@@ -73,7 +73,7 @@ describe("a teardown step that fails", () => {
      */
     const calls: string[] = [];
     handleRestart({
-      stop: () => calls.push("stop"),
+      stop: () => { calls.push("stop"); },
       exit: (c) => calls.push(`exit${c}`),
       spawnSelf: () => { throw new Error("binary moved"); },
     });

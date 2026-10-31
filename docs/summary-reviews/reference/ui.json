@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:1efb877d68fc5a7fe5542f95fc2e83d4c62604a6bbac6bf2778c5deccd566ffc",
-  "semanticSummaryHash": "sha256:f875936c51eb0ddb4b30f711703f5b7bb7d8901080638008bf4ff94bdd632c32",
+  "sourceHash": "sha256:929f8689615e4c1b77fff6092948f7ee457900adbc19331cd3b04c9647b9bd1e",
+  "semanticSummaryHash": "sha256:4cbf9be8d2fe4be8d077159857928a9e1189203ebac38146173740c6fd01c00b",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root approved documentation accuracy for source hash 1efb877d68fc5a7fe5542f95fc2e83d4c62604a6bbac6bf2778c5deccd566ffc; summary describes the opening color hold, direct accelerated two-color cuts, directional shards cleared before each next prop, and full-color source fallback.",
-  "reviewedAt": "2026-10-31T22:14:03.242Z"
+  "notes": "Independently reviewed the updated UI reference and summary. The public auditorium preroll is distinguished from the installed velvet landing; Browser extension support is limited to reviewed Browser operations in volatile memory, while provider/native/Core scene limitations and the standalone test bench remain clear.",
+  "reviewedAt": "2026-10-31T22:54:39.659Z"
 }

@@ -1,0 +1,2 @@
+.commandScroll { max-height: min(24rem, 50dvh); overflow-y: auto; overscroll-behavior: contain; }
+.commandRows { width: 100%; }

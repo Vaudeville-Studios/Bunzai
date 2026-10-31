@@ -15,7 +15,7 @@ import { SETTING_KEYS, budgetMsOf } from "../studio/settings-shape";
 export const choiceDefaultsOf = (settings: SettingsStoreLike | undefined): ((presetId: string) => Promise<Record<string, unknown> | undefined>) | undefined =>
   settings ? async (presetId) => defaultsFor((await settings.read() as unknown as Record<string, unknown>)[PRESET_CHOICE_DEFAULTS_KEY], presetId) : undefined;
 
-export const regexReaderOf = (studio: StudioStoreLike | undefined): ((id: string) => Promise<RegexSetBody | null>) | undefined =>
+export const regexReaderOf = (studio: Pick<StudioStoreLike, "read"> | undefined): ((id: string) => Promise<RegexSetBody | null>) | undefined =>
   studio ? bodyReader<RegexSetBody>(studio, "regex") : undefined;
 
 /** The reply's tool time budget from the settings (SETTING_KEYS.toolBudgetMs): a positive finite number of ms, else nothing (the turn then uses its default). */
@@ -35,7 +35,7 @@ export const trackerReaderOf = (studio: StudioStoreLike | undefined): ReadTracke
   studio ? async (id) => (await readPiece((kind, pieceId) => studio.read(kind, pieceId), "tracker", id)) as TrackerBody | null : undefined;
 
 /** The optional turn dependencies, present only when their source is. */
-export const sceneReaders = (studio: StudioStoreLike | undefined, settings: SettingsStoreLike | undefined) => {
+export const sceneReaders = (studio: Pick<StudioStoreLike, "read"> | undefined, settings: SettingsStoreLike | undefined) => {
   const readRegex = regexReaderOf(studio);
   const choiceDefaults = choiceDefaultsOf(settings);
   const toolBudgetMs = toolBudgetOf(settings);

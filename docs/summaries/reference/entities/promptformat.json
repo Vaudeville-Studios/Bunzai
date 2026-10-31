@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/entities/promptformat",
   "sourcePath": "docs/reference/entities/promptformat.md",
-  "sourceHash": "sha256:986d6e3f7adf45f3f0bbb394bf41d82b14a627783458d558aa398cf494e8f7b4",
-  "summary": "Prompt format entity is the canonical piece for SillyTavern instruct and context templates: a name plus optional instruct and context halves, each ST's own field names with scalar values, and optional notes. One piece holds both because ST binds them by name. Nothing applies it, since Bunzai has no text-completion connection; the Library card says so in a computed line and the Workbench opens it read-only. The sillytavern-promptformat codec reads either file or a master wrapper and writes one half back as its file or a pair as the wrapper; pairing happens in the Library import.",
+  "sourceHash": "sha256:d57b9d3a8fe63ca4db48b6e16c5c66edad593de25f3f33bcad7465d895fc25cf",
+  "summary": "Prompt format entity is the canonical piece for SillyTavern instruct and context templates: a name plus optional instruct and context halves, each ST's own field names with scalar values, and optional notes. One piece holds both because ST binds them by name. Nothing applies it, since Bunzai has no text-completion connection; the Library card says so in a computed line and the Workbench opens it read-only. Extensions may stage reviewed changes to the stored name, scalar template fields and notes, but the templates remain inert and are not applied to prompt assembly. The sillytavern-promptformat codec reads either file or a master wrapper and writes one half back as its file or a pair as the wrapper; pairing happens in the Library import.",
   "topics": [
     "CanonicalPromptFormat",
     "instruct and context halves",

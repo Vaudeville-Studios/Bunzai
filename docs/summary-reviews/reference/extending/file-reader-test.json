@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/file-reader-test",
+  "sourcePath": "docs/reference/extending/file-reader-test.md",
+  "sourceHash": "sha256:30dd153ac25d07d441f734b7fa2dab98b5c6e14f1826bfe2128eea8f581bc75d",
+  "semanticSummaryHash": "sha256:7b835542bd67929f0509a80b7c2cdc4d968515a9018ac8cc93ee86e9535431e7",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Documentation accuracy and tested pack/worker contract only. Full GUI denial/update/revoke and packaged WebView reader remain unverified; this is not security or release approval.",
+  "reviewedAt": "2026-10-31T12:53:42.677Z"
+}

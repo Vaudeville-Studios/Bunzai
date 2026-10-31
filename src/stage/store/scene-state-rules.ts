@@ -17,7 +17,16 @@ import { checkNumber, fail, isJson, onlyKeys } from "./scalar-rules";
 
 /** A list of deltas, each for a declared slot with a path its strategy reads and a JSON value. There is no size cap: a turn's writes are bounded by their sources (the model's output, the macro engine's output cap). Returns a private copy. */
 /** The words a refusal uses for each writer. */
-const WRITER_WORDS: Readonly<Record<SlotWriter, string>> = { turn: "a reply", background: "a background writer", person: "a person's edit", import: "an import" };
+const WRITER_WORDS: Readonly<Record<SlotWriter, string>> = { turn: "a reply", background: "a background writer", person: "a person's edit", import: "an import", extension: "an extension" };
+
+/** Only the dedicated host writer door may call this validator; every delta must name its own package prefix. */
+export function checkExtensionDeltas(value: unknown, packageId: string): Delta[] {
+  if (!/^[a-z0-9][a-z0-9.-]{0,159}$/.test(packageId)) fail("invalid extension slot owner");
+  const deltas = checkImportedDeltas(value, "extension");
+  const prefix = `ext:${packageId}:`;
+  if (deltas.some(({ slot }) => !slot.startsWith(prefix) || !/^[a-z][a-z0-9._-]{0,63}$/.test(slot.slice(prefix.length)))) fail("extension slot is outside its package namespace");
+  return deltas;
+}
 
 /**
  * Checks deltas as a write by `writer` (the door it came through: SlotWriter), or as a description of held values (`"held"`, a guard's

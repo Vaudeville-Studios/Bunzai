@@ -325,7 +325,7 @@ const WRITES: Record<string, (chats: ChatStore, store: StudioStoreLike, b: Body,
   },
 };
 
-async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLike, settings: SettingsStoreLike, session = ""): Promise<Response> {
+async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLike, settings: SettingsStoreLike, session = "", dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: import("../stage/contracts/provider").ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>): Promise<Response> {
   const p = url.pathname;
   try {
     const chats = requireChats(libraryChatsFor(store.studioPath()));
@@ -335,7 +335,7 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
     const readLorebook = lorebookReader(store);
     const filingDeps = compendiumDepsFor(chats, state, store);
     if (req.method === "GET") {
-      const turn = await handleTurnRoute(req, url, chats, state, readPreset, readLorebook, null);
+      const turn = await handleTurnRoute(req, url, chats, state, readPreset, readLorebook, null, store, filingDeps, settings, dispatchExtensionEvent, applyExtensionPrompts);
       if (turn) return turn;
       const filing = await handleCompendiumRoute(req, url, chats, filingDeps, null);
       if (filing) return filing;
@@ -454,7 +454,7 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
     if (p === "/api/chats/core-settings") return handleCoreSettings(b, chats, records, store.studioPath());
     const refusal = await coreWriteGuard(p, b, records);
     if (refusal) return refusal;
-    const turn = await handleTurnRoute(req, url, chats, state, readPreset, readLorebook, b, store, filingDeps, settings);
+    const turn = await handleTurnRoute(req, url, chats, state, readPreset, readLorebook, b, store, filingDeps, settings, dispatchExtensionEvent, applyExtensionPrompts);
     if (turn) return turn;
     const filing = await handleCompendiumRoute(req, url, chats, filingDeps, b);
     if (filing) return filing;
@@ -494,6 +494,6 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
   }
 }
 
-export function handleChatRoute(req: Request, url: URL, store: StudioStoreLike, settings: SettingsStoreLike, session = ""): Promise<Response> {
-  return ownChatRequest(store, () => handleChatRouteOwned(req, url, store, settings, session));
+export function handleChatRoute(req: Request, url: URL, store: StudioStoreLike, settings: SettingsStoreLike, session = "", dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: import("../stage/contracts/provider").ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>): Promise<Response> {
+  return ownChatRequest(store, () => handleChatRouteOwned(req, url, store, settings, session, dispatchExtensionEvent, applyExtensionPrompts));
 }

@@ -13,6 +13,9 @@ import type { ParsedCanonicalEntity } from "../entities/runtime-schema";
 import { entityRevision } from "../kit/changes/revision";
 import { buildPiecePatch } from "../entities/editor-patch";
 import type { StudioStoreLike } from "./contracts";
+import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
+import { requireCommitResource } from "../stage/store/extension-commit-access";
+import { EXTENSION_BACKGROUND_FIELDS } from "../extensions/contracts/background-fields";
 
 export type BookStore = Pick<StudioStoreLike, "read" | "comparePatch">;
 
@@ -59,13 +62,13 @@ function changesOf(base: readonly LorebookEntry[], next: readonly LorebookEntry[
 const movedSince = (changes: readonly EntryChange[], base: readonly LorebookEntry[], fresh: readonly LorebookEntry[]): string[] =>
   changes.filter((c) => !deepEq(base.find((e) => e.id === c.id), fresh.find((e) => e.id === c.id))).map((c) => c.id);
 
-async function attempt(store: BookStore, bookId: string, edit: BookEdit): Promise<BookWrite> {
+async function attempt(store: BookStore, bookId: string, edit: BookEdit, commit?: ExtensionCommitContext): Promise<BookWrite> {
   const base = await readBook(store, bookId);
   if (!base) return { status: "missing" };
   const baseEntries = base.entity.body.entries;
   const planned = changesOf(baseEntries, edit(baseEntries));
   if (planned.length === 0) return { status: "unchanged" };
-  const sent = await send(store, base, planned);
+  const sent = await send(store, base, planned, commit);
   if (sent !== "stale") return sent;
 
   const fresh = await readBook(store, bookId);
@@ -75,26 +78,27 @@ async function attempt(store: BookStore, bookId: string, edit: BookEdit): Promis
   const outside = movedSince(again, baseEntries, fresh.entity.body.entries);
   if (outside.length > 0) return { status: "conflict", ids: outside };
   if (again.length === 0) return { status: "unchanged" };
-  const second = await send(store, fresh, again);
+  const second = await send(store, fresh, again, commit);
   return second === "stale" ? { status: "conflict", ids: again.map((c) => c.id) } : second;
 }
 
-async function send(store: BookStore, book: Book, changes: readonly EntryChange[]): Promise<BookWrite | "stale"> {
+async function send(store: BookStore, book: Book, changes: readonly EntryChange[], commit?: ExtensionCommitContext): Promise<BookWrite | "stale"> {
   const byId = new Map(changes.map((c) => [c.id, c.after]));
   const kept = book.entity.body.entries.map((e) => byId.get(e.id) ?? e);
   const added = changes.filter((c) => !c.before).map((c) => c.after);
   const next = { ...book.entity, body: { ...book.entity.body, entries: [...kept, ...added] } } as ParsedCanonicalEntity;
   const patch = buildPiecePatch(book.entity, next);
-  const result = await store.comparePatch!("lorebook", book.entity.id, book.revision, patch, undefined, "manual");
+  if (commit) requireCommitResource(commit, { kind: "lorebook", id: book.entity.id }, [EXTENSION_BACKGROUND_FIELDS.compendiumEntries]);
+  const result = await store.comparePatch!("lorebook", book.entity.id, book.revision, patch, undefined, "manual", commit);
   if (result.status !== "saved") return result.status === "stale" ? "stale" : { status: "missing" };
   return { status: "saved", revision: result.revision, changes: [...changes] };
 }
 
 /** Edits one book as a single revision-checked patch, after any write already queued for the same book. */
-export function writeBook(store: BookStore, bookId: string, edit: BookEdit): Promise<BookWrite> {
+export function writeBook(store: BookStore, bookId: string, edit: BookEdit, commit?: ExtensionCommitContext): Promise<BookWrite> {
   const lanes = queues.get(store) ?? new Map<string, Promise<unknown>>();
   queues.set(store, lanes);
-  const run = (lanes.get(bookId) ?? Promise.resolve()).catch(() => undefined).then(() => attempt(store, bookId, edit));
+  const run = (lanes.get(bookId) ?? Promise.resolve()).catch(() => undefined).then(() => attempt(store, bookId, edit, commit));
   lanes.set(bookId, run);
   void run.finally(() => lanes.get(bookId) === run && lanes.delete(bookId)).catch(() => undefined);
   return run;

@@ -46,10 +46,10 @@ async function boot(): Promise<void> {
   // only if there is no window to raise does it open one onto the running studio.
   const library = createLibrary(studioDir);
   const { server, ours } = await claimDesktopPort(portOverride, (port) => {
-    const { url, stop } = startUi(port, studioDir, assets, library);
-    return { url, stop };
+    const { url, stop, close } = startUi(port, studioDir, assets, library);
+    return { url, stop, close };
   });
-  const { url: uiUrl, stop } = server;
+  const { url: uiUrl, stop, close } = server;
   if (ours) void library.open();
   else await library.close();
   if (await focusExisting(ours, TITLE, Number(new URL(uiUrl).port))) process.exit(0);
@@ -68,6 +68,7 @@ async function boot(): Promise<void> {
     reportWindowFailure(uiUrl, (e as ErrorEvent).message ?? e);
   }, async () => {
     stop();
+    await close();
     await library.close();
     process.exit(0);
   });

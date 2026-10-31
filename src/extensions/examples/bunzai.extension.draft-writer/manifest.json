@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "bunzai.extension.draft-writer",
+  "version": "1.0.0",
+  "name": "Character identity draft",
+  "description": "Previews a character identity change and applies it only after host review.",
+  "author": "Bunzai example",
+  "api": { "major": 1, "minMinor": 0, "maxMinor": 0 },
+  "entry": "main.js",
+  "requirements": [
+    { "operation": "content.draft.character.identity.update", "resources": ["character"], "fields": ["body.identity.name", "body.identity.tagline"], "methods": [], "destinations": [], "purpose": "Preview a bounded identity change for one selected character", "required": true },
+    { "operation": "content.draft.apply", "resources": ["character"], "fields": ["draft"], "methods": [], "destinations": [], "purpose": "Apply the exact identity draft after host review", "required": true }
+  ],
+  "contributions": [
+    { "type": "command", "id": "rename-mira", "label": "Preview Mira's new identity", "operation": "content.draft.apply" }
+  ]
+}

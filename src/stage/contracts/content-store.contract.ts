@@ -296,6 +296,7 @@ export function contentStoreContract(label: string, makeBackend: () => DocumentB
         const { versions } = await store.versions("character", "vera");
         expect(versions.map((v) => [v.version, v.reason])).toEqual([[1, "create"], [2, "save"], [3, "restore"]]);
         expect((await store.readVersion("character", "vera", 2))?.body).toMatchObject({ identity: { name: "Mistake" } });
+        expect((await store.readVersionHeld("character", "vera", 2))?.body).toMatchObject({ identity: { name: "Mistake" } });
       });
 
       test("12. restoring a version equal to the current body writes nothing", async () => {

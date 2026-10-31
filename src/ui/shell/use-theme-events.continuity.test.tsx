@@ -3,9 +3,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, expect, test } from "bun:te
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { installDom, flushTasks, type InstalledDom } from "../_shared/test-dom";
-import { createThemeLifecycle } from "../../extensions/theme-lifecycle";
-import { themeInventory } from "../../extensions/theme-inventory";
-import { memoryStateStore } from "../../stage/store/memory/state-store";
+import { unifiedThemeService } from "../../extensions/theme-test-fixture";
 import { parseSettings } from "../../studio/settings-shape";
 import { LIBRARY_LOCKED_EVENT } from "../_shared/api-fetch";
 import { BROWSER_THEME_REVISION_EVENT } from "../../browser-mode";
@@ -14,8 +12,8 @@ import { paintTheme, CORE_THEME_APPEARANCE } from "./theme";
 import { removeMod } from "./theme-mod";
 import { useThemeChangeStream } from "./use-theme-events";
 
-const themes = await createThemeLifecycle(memoryStateStore(), await themeInventory());
-const effective = await themes.effective("theater");
+const themes = await unifiedThemeService(true);
+const effective = await themes.themeEffective("theater");
 const original = useShellStore.getState(), originalFetch = globalThis.fetch;
 let installed: InstalledDom, root: Root, revision: unknown, pending: boolean;
 let finish: ((value: Response) => void) | null, reads: number, cleared: number;
@@ -48,7 +46,7 @@ afterEach(async () => {
   await act(async () => { root.unmount(); finish?.(Response.json(effective)); await flushTasks(); });
   unsubscribe(); removeMod(); globalThis.fetch = originalFetch; useShellStore.setState(original); document.body.replaceChildren();
 });
-afterAll(async () => { await installed.teardown(); });
+afterAll(async () => { await installed.teardown(); await themes.close(); });
 function Watch() { useThemeChangeStream(); return null; }
 const mount = async () => { await act(async () => { root.render(<Watch />); await flushTasks(); }); };
 const focus = async () => { await act(async () => { window.dispatchEvent(new Event("focus")); await flushTasks(); }); };

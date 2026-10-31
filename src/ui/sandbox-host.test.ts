@@ -13,14 +13,16 @@ import { createSecurityContext, injectSandboxOriginMeta, injectSessionMeta } fro
 const UI_ORIGIN = "http://127.0.0.1:8321";
 
 describe("sandbox allowlist", () => {
-  test("only the two workers and wasm paths are allowlisted", () => {
+  test("only the sandbox worker and WASM asset paths are allowlisted", () => {
     expect(isSandboxAllowlistedPath("/sandbox/worker.js")).toBe(true);
     expect(isSandboxAllowlistedPath("/sandbox/regex-worker.js")).toBe(true);
     expect(isSandboxAllowlistedPath("/sandbox/glue.wasm")).toBe(true);
+    expect(isSandboxAllowlistedPath("/sandbox/extension-worker.js")).toBe(true);
+    expect(isSandboxAllowlistedPath("/sandbox/quickjs.wasm")).toBe(true);
     expect(isSandboxAllowlistedPath("/api/studio/save")).toBe(false);
     expect(isSandboxAllowlistedPath("/")).toBe(false);
     expect(isSandboxAllowlistedPath("/sandbox/../api/settings")).toBe(false);
-    expect(SANDBOX_ALLOWLIST.length).toBe(3);
+    expect(SANDBOX_ALLOWLIST.length).toBe(7);
   });
 });
 
@@ -69,6 +71,27 @@ describe("createSandboxHandler", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("access-control-allow-origin")).toBe(UI_ORIGIN);
     expect(res.headers.get("content-type")).toContain("text/javascript");
+  });
+
+  test("builds the QuickJS wrapper and serves a separate WASM asset from the isolated origin", async () => {
+    const handler = createSandboxHandler({ allowOrigin: UI_ORIGIN });
+    const worker = await handler(new Request("http://127.0.0.1:9/sandbox/extension-worker.js", { headers: { origin: UI_ORIGIN } }));
+    const wasm = await handler(new Request("http://127.0.0.1:9/sandbox/quickjs.wasm", { headers: { origin: UI_ORIGIN } }));
+    expect(worker.status).toBe(200);
+    expect(worker.headers.get("access-control-allow-origin")).toBe(UI_ORIGIN);
+    expect(await worker.text()).toContain("QuickJS");
+    expect(wasm.status).toBe(200);
+    expect(wasm.headers.get("content-type")).toBe("application/wasm");
+    expect((await wasm.arrayBuffer()).byteLength).toBe(503_134);
+  }, 60_000);
+
+  test("serves a trusted parent-locked frame without any API authority", async () => {
+    const handler = createSandboxHandler({ allowOrigin: UI_ORIGIN });
+    const frame = await handler(new Request("http://127.0.0.1:9/sandbox/extension-frame.html?parent=ignored", { headers: { origin: UI_ORIGIN } }));
+    expect(frame.status).toBe(200);
+    expect(frame.headers.get("content-security-policy")).toContain(`frame-ancestors ${UI_ORIGIN}`);
+    expect(frame.headers.get("content-security-policy")).toContain("wasm-unsafe-eval");
+    expect(await frame.text()).toContain("/sandbox/extension-frame.js");
   });
 
   test("rejects non-loopback allowOrigin at construction", () => {

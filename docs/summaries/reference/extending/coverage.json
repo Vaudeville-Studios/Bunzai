@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/coverage",
+  "sourcePath": "docs/reference/extending/coverage.md",
+  "sourceHash": "sha256:5062f77c6b261b5d982846917a710c15a2e9ecb6f1e40571db5c9a88130f3fdb",
+  "summary": "This generated report combines discovered capabilities, reviewed strict field groups, source-declared operation hosts and per-host totals. Discovery is not authorization; field groups require matching grants. The fixed required-family matrix currently passes for this snapshot. Host notes identify compatibility limits: Desktop and Terminal refuse extension writes, turns and local prompt preview on rp-core-linked scenes, and cannot create extension scenes; Browser/Pocket has no rp-core owner and supports its in-memory legacy path. Core-owned turns do not yet invoke extension prompt or scene-event hooks. These inventories and tests do not certify a packaged release.",
+  "topics": [
+    "capability inventory",
+    "field groups",
+    "host availability",
+    "required-family matrix passes"
+  ],
+  "sections": [
+    {
+      "slug": "rp-core-compatibility",
+      "title": "rp-core compatibility",
+      "level": 2,
+      "sourceHash": "sha256:c374bdfab6d12e49f2fba081c7159a9bb4d039a70da76492ec7ee859953f4c0c",
+      "summary": "The compatibility note separates first-party rp-core turns from extension operations on legacy scenes. Desktop and Terminal refuse extension scene creation and refuse legacy extension writes, turns and local prompt previews when a target is Core-linked. Core-owned turns do not yet run extension prompt or scene-event hooks. Browser/Pocket has no rp-core owner and retains the in-memory legacy scene path. These are compatibility boundaries, not a second engine or a release-security certification.",
+      "topics": [
+        "rp-core linked scenes",
+        "legacy-scene compatibility",
+        "host-specific refusals"
+      ],
+      "children": []
+    },
+    {
+      "slug": "semantic-capability-inventory",
+      "title": "Semantic capability inventory",
+      "level": 2,
+      "sourceHash": "sha256:3157fa9586efc68083e8c51ca96739c81131675569715eb3d1ce790921342894",
+      "summary": "This section compares the capability modules discovered in the repository with the subset that has explicit extension exposure metadata and a corresponding strict operation descriptor. Discovery tells the application which semantic capabilities exist; it does not authorize an extension to invoke them. Exposure metadata is owned alongside the capability semantics and identifies the reviewed operation, fields, resources, confirmation, budget and supported hosts. The adapter count then reports whether a generated descriptor currently exists for that exposed operation. This relationship helps reveal capabilities that are still unreviewed or lack an operation adapter, while avoiding the assumption that every internal editor or Kit action should become an extension API. Counts are generated from the current source scan and catalog and should be checked alongside the fixed required-family acceptance test.",
+      "topics": [
+        "discovered capabilities",
+        "review metadata",
+        "strict adapters"
+      ],
+      "children": []
+    },
+    {
+      "slug": "strict-content-field-groups",
+      "title": "Strict content field groups",
+      "level": 2,
+      "sourceHash": "sha256:81c5d2c24266bde484bf283f05978b106a5d39323d330efbb35d58c760d6be36",
+      "summary": "This section lists the reviewed field groups available to scoped content read operations. Each group names a bounded projection rather than exposing an entire mutable stored entity. A package requests exact fields and resources, the grant matcher narrows those values, and the operation projects only the approved subset. Authored body access and binary media use separate operations and grants, keeping large payloads and sensitive authored content distinct from ordinary metadata. The inventory is generated from the field schemas, so changes to a group should be made in its source owner and then reflected by the catalog generator. A listed group is an available contract, not an implicit grant or a promise that every content kind has every field.",
+      "topics": [
+        "strict projections",
+        "exact field grants",
+        "separate body and asset access"
+      ],
+      "children": []
+    },
+    {
+      "slug": "host-operation-inventory",
+      "title": "Host operation inventory",
+      "level": 2,
+      "sourceHash": "sha256:3afd63e7320585f50bac9ded7b55487ae6022a6783266ed969b41f41936d5c44",
+      "summary": "The inventory lists operation IDs, descriptor-declared hosts and any descriptor-owned compatibility note. Browser-only scene creation and graphical or native-file operations are examples of host-specific availability. The independent required-family fixture compares against fixed plan rows and passes for this snapshot. Desktop and Terminal legacy-scene restrictions are called out on affected descriptors; host availability is not a claim that every engine path has parity or that the package is release-certified.",
+      "topics": [
+        "operation IDs",
+        "declared hosts",
+        "independent acceptance matrix"
+      ],
+      "children": []
+    },
+    {
+      "slug": "host-totals",
+      "title": "Host totals",
+      "level": 2,
+      "sourceHash": "sha256:1df35e553e40fc99bca87d1a12cff72af521fce7c3c8d586c84566000a3e6f04",
+      "summary": "The totals count how many generated descriptors currently include each host in their source metadata. A single operation is counted once per host, so totals across hosts may exceed the operation catalog size. These figures help track the breadth of declared support but do not measure user-flow completeness, test coverage, deployment behavior or security approval. The required-family test checks a different question: whether every plan-required operation is available on each expected host and no unexpected host is claimed. Host-specific integration tests supply evidence that a descriptor's service can actually work at its public boundary. Read the count only as an inventory snapshot, and refresh it from the generator whenever operation sources or supported host composition changes.",
+      "topics": [
+        "host totals",
+        "inventory counts",
+        "not release evidence"
+      ],
+      "children": []
+    }
+  ]
+}

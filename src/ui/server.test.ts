@@ -216,7 +216,7 @@ describe("createHandler security", () => {
     });
     expect((await handler(make())).status).toBe(403);
     expect((await handler(make({ token: sec.token, origin: "https://attacker.invalid" }))).status).toBe(403);
-    expect((await handler(make({ token: sec.token }))).status).toBe(503);
+    expect((await handler(make({ token: sec.token }))).status).toBe(410);
   });
 
   test("settings POST rejects text/plain before save", async () => {

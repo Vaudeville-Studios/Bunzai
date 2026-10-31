@@ -11,8 +11,11 @@ import { LockedError } from "../crypto/keyring";
 import { createContentStore } from "./content-store";
 import { openStageDatabase, type StageDatabase } from "./sqlite/database";
 import { sqliteChatStore } from "./sqlite-chat-store";
+import { sqliteStateStore } from "./sqlite/state-store";
+import { sqliteExtensionStore } from "./sqlite/extension-store";
 import { sqliteDocumentBackend } from "./sqlite/document-backend";
 import { MIGRATIONS } from "./sqlite/migrations";
+import { sha256HexBytes } from "../../core/sha256";
 
 const open: StageDatabase[] = [];
 afterEach(() => {
@@ -52,6 +55,8 @@ test("every store method refuses while locked, and nothing in the database chang
   const backend = sqliteDocumentBackend(d, cipher);
   const library = createContentStore(backend);
   const chats = sqliteChatStore(d, cipher);
+  const state = sqliteStateStore(d, cipher);
+  const extensions = sqliteExtensionStore(d, cipher, () => 1_000);
   const card = {
     schemaVersion: CANONICAL_SCHEMA_VERSION,
     kind: "character",
@@ -63,6 +68,17 @@ test("every store method refuses while locked, and nothing in the database chang
   await library.save({ ...card, id: "mira" });
   const chat = await chats.createChat({ title: "T", cast: { character: { id: "mira", version: 1 } }, snapshot: { character: card } });
   const m = await chats.appendMessage(chat.activeBranchId, { role: "user", content: "hi" });
+  const extensionLease = await extensions.acquireRuntimeFence("00000000-0000-4000-8000-000000000001", 1_000, 30_000);
+  if (!extensionLease) throw new Error("extension store fixture lease unavailable");
+  const extensionControl = { id: "fixture.extension", revision: 0, packageDigest: "a".repeat(64), policyFingerprint: "b".repeat(64), grantRevision: 1,
+    grants: [{ operation: "state.write.apply", resources: [{ kind: "scene", id: chat.activeBranchId }], fields: ["scene.extension-state"], methods: [], destinations: [], duration: "persistent" as const, budget: { requests: 4, bytes: 20_000, tokens: 0 } }],
+    themeScopes: [], eventSubscriptions: [], registeredCommands: [], promptFailures: [], suspendedPromptIds: [], hostTrusted: false, enabled: true, recoveryRequired: false, dataVersion: 0, legacyThemeImport: "complete" as const };
+  await extensions.compareAndSaveControl(extensionControl, -1, extensionLease);
+  const extensionCommit = { ...extensionLease, packageId: extensionControl.id, packageDigest: extensionControl.packageDigest, policyFingerprint: extensionControl.policyFingerprint,
+    grantRevision: extensionControl.grantRevision, operation: "state.write.apply", access: { resources: [{ kind: "scene", id: chat.activeBranchId }], fields: ["scene.extension-state"], methods: [], destinations: [] }, now: () => 1_000 };
+  const readVersioned = state.readVersioned;
+  const compareAndWrite = state.compareAndWrite;
+  if (!readVersioned || !compareAndWrite) throw new Error("fixture state store lacks extension CAS support");
   const gone = await chats.createChat({ title: "Gone", cast: { character: { id: "mira", version: 1 } }, snapshot: { character: card } });
   await chats.deleteChat(gone.id);
   const swipe = m!.swipes[0]!.id;
@@ -135,6 +151,28 @@ test("every store method refuses while locked, and nothing in the database chang
     ["setBranchBase", () => chats.setBranchBase(chat.activeBranchId, [{ slot: "vars", path: ["a"], value: 1, at: 1 }])],
     ["recordMessageDeltas", () => chats.recordMessageDeltas(chat.activeBranchId, m!.id, [{ slot: "vars", path: ["a"], value: 1, at: 1 }])],
     ["recordDeltas", () => chats.recordDeltas(chat.activeBranchId, m!.swipes[0]!.id, [{ slot: "vars", path: ["a"], value: 1, at: 1 }])],
+    ["recordExtensionMessageDeltas", () => chats.recordExtensionMessageDeltas(extensionCommit, chat.activeBranchId, m!.id,
+      [{ slot: "ext:fixture.extension:state", path: ["value"], value: 1, at: 1 }], { expectedVersion: 0 })],
+    ["state.readVersioned", () => readVersioned("collections")],
+    ["state.write", () => state.write("collections", "{}")],
+    ["state.compareAndWrite", () => compareAndWrite("collections", "{}", -1, extensionCommit)],
+    ["extension.readControl", () => extensions.readControl(extensionControl.id)],
+    ["extension.compareAndSaveData", () => extensions.compareAndSaveData(extensionControl.id, "prefs", { safe: true }, -1, extensionCommit)],
+    ["extension.acquireRuntimeFence", () => extensions.acquireRuntimeFence("00000000-0000-4000-8000-000000000002", 1_001, 30_000)],
+    ["extension.renewRuntimeFence", () => extensions.renewRuntimeFence(extensionLease, 1_001, 30_000)],
+    ["extension.releaseRuntimeFence", () => extensions.releaseRuntimeFence(extensionLease)],
+    ["extension.savePackage", () => extensions.savePackage({ digest: sha256HexBytes(new Uint8Array([1])), bytes: new Uint8Array([1]) }, extensionLease)],
+    ["extension.readPackage", () => extensions.readPackage("a".repeat(64))],
+    ["extension.listControls", () => extensions.listControls()],
+    ["extension.compareAndSaveControl", () => extensions.compareAndSaveControl({ ...extensionControl, revision: 1 }, 0, extensionLease)],
+    ["extension.readData", () => extensions.readData(extensionControl.id, "prefs")],
+    ["extension.listDataKeys", () => extensions.listDataKeys(extensionControl.id, 10)],
+    ["extension.deleteData", () => extensions.deleteData(extensionControl.id, "prefs", -1, extensionCommit)],
+    ["extension.reserveBudget", () => extensions.reserveBudget({ packageId: extensionControl.id, operation: "state.write.apply", grantRevision: 1, id: "locked-reserve", bytes: 1, tokens: 0 }, { requests: 1, bytes: 1, tokens: 0 }, extensionLease)],
+    ["extension.settleBudget", () => extensions.settleBudget(extensionControl.id, "locked-reserve", 0, 0, extensionLease)],
+    ["extension.finalizeAbandonedBudget", () => extensions.finalizeAbandonedBudget(extensionControl.id, extensionLease)],
+    ["extension.appendReceipt", () => extensions.appendReceipt({ id: "locked-receipt", packageId: extensionControl.id, operation: "state.write.apply", effect: "write", status: "admitted", createdAt: 1_000, resourceCount: 1 }, extensionLease)],
+    ["extension.listReceipts", () => extensions.listReceipts(extensionControl.id, null, 10)],
     ["setConnection", () => chats.setConnection(chat.id, { id: "c", model: "m" })],
     ["setPreset", () => chats.setPreset(chat.id, { kind: "preset", id: "p", toggles: {}, samplers: {} })],
     ["setLore", () => chats.setLore(chat.id, { added: [], off: [] })],
@@ -158,6 +196,11 @@ test("every store method refuses while locked, and nothing in the database chang
     ["setTracker", () => chats.setTracker(chat.id, "resources", { context: "never" })],
     ["setSummarySettings", () => chats.setSummarySettings(chat.id, { auto: true })],
     ["setSummaryError", () => chats.setSummaryError(chat.id, "x")],
+    ["recordExtensionSummaryDeltas", () => chats.recordExtensionSummaryDeltas(extensionCommit, chat.activeBranchId, "any-message", [])],
+    ["appendPendingExtensionDeltas", () => chats.appendPendingExtensionDeltas("any-turn", "fixture.extension", 0, [], extensionCommit)],
+    ["readSceneSetting", () => chats.readSceneSetting(chat.id, { group: "connection" })],
+    ["previewSceneSetting", () => chats.previewSceneSetting(chat.id, { group: "connection" }, { group: "connection", value: { id: "c", model: "m" } })],
+    ["applySceneSetting", () => chats.applySceneSetting(chat.id, { group: "connection" }, { group: "connection", value: { id: "c", model: "m" } }, "0".repeat(64), extensionCommit)],
     ["summaryOf", () => chats.summaryOf(chat.activeBranchId)],
     ["setSummary", () => chats.setSummary(chat.activeBranchId, { text: "x", through: 1 })],
     ["setDirectorSettings", () => chats.setDirectorSettings(chat.id, { personality: "the-oracle" })],

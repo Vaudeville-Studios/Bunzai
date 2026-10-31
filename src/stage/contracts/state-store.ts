@@ -27,6 +27,10 @@ export function checkStateKey(key: unknown): StateKey {
 export interface StateStore {
   /** The text last written for this key, or null when nothing has been. */
   read(key: StateKey): Promise<string | null>;
+  /** Text and monotonically increasing revision for one document; missing documents use revision -1. */
+  readVersioned?(key: StateKey): Promise<{ text: string | null; revision: number }>;
   /** Replaces the text for this key, atomically. */
   write(key: StateKey, text: string): Promise<void>;
+  /** Extension-only compare-and-write checked against the live package authority in the same transaction. */
+  compareAndWrite?(key: StateKey, text: string, expectedRevision: number, context: import("./extension-store").ExtensionCommitContext): Promise<"saved" | "stale">;
 }

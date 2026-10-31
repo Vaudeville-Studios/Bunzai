@@ -7,6 +7,7 @@
  */
 import type { ParsedCanonicalEntity } from "../entities/runtime-schema";
 import type { AssetLookup, AssetSize, GraveSummary, LightStoredEntity, StoredBody, StoredOriginalEntry, StoredPortraitAsset, StoredPortraitContent, StoredRisuNamedAssets, PartBlob, PiecePatch, SaveIntent } from "../stage/contracts/content-store";
+import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
 import type { CompareCreateResult, CompareSaveResult, EntitySummary, StudioInventory } from "./store";
 import type { StudioSettings } from "./settings-shape";
 import type { ThumbnailSize } from "../stage/store/asset-thumbnails";
@@ -42,7 +43,7 @@ export interface StudioStoreLike {
   /** A keep-both copy made by reference, never opening the piece whole; null when it is not there. */
   duplicate?(kind: string, id: string): Promise<EntitySummary | null>;
   compareAndSave(raw: unknown, expectedRevision: string): Promise<CompareSaveResult>;
-  comparePatch?(kind: string, id: string, expectedRevision: string, patch: PiecePatch, uploads?: readonly PartBlob[], intent?: SaveIntent): Promise<CompareSaveResult>;
+  comparePatch?(kind: string, id: string, expectedRevision: string, patch: PiecePatch, uploads?: readonly PartBlob[], intent?: SaveIntent, extensionCommit?: ExtensionCommitContext): Promise<CompareSaveResult>;
 }
 
 export interface SettingsStoreLike {

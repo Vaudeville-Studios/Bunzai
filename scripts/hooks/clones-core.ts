@@ -14,6 +14,10 @@ export const CSS_SIM = 0.7;
 const K = 10;
 const W = 6;
 
+export function cloneSourcePaths(gitPaths: string, isSource: (path: string) => boolean): string[] {
+  return [...new Set(gitPaths.split(/\r?\n/).filter((path) => path && isSource(path)))].sort();
+}
+
 export type FnPrint = { file: string; name: string; line: number; tokens: number; fp: number[] };
 export type CssPrint = { file: string; selector: string; decls: string[] };
 export type Clone = { a: string; b: string; sim: number };

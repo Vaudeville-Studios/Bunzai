@@ -9,6 +9,7 @@
 import type { CommandContext } from "../commands/command";
 import type { Session } from "./session-model";
 import type { SessionSummary } from "./projection";
+import type { TerminalExtensionRuntime } from "../extensions/owner";
 
 export interface SessionActions {
   /** Every saved session, newest first (the store's tolerant list). */
@@ -40,4 +41,5 @@ export const SESSIONS_UNAVAILABLE = "Sessions are unavailable in this build.";
 /** The command context once the sessions capability is wired. Commands narrow to this to reach it. */
 export interface SessionCommandContext extends CommandContext {
   readonly sessions?: SessionActions;
+  readonly extensions?: TerminalExtensionRuntime;
 }

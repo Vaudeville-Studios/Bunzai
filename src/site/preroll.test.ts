@@ -17,12 +17,12 @@ function fixture(reduced = false, failedSlug = "") {
       let source = "";
       Object.defineProperties(image, {
         complete: { configurable: true, get: () => source.length > 0 },
-        naturalWidth: { configurable: true, get: () => source.length > 0 && (!failedSlug || !source.includes(`${failedSlug}-v1.webp`)) ? 120 : 0 },
-        naturalHeight: { configurable: true, get: () => source.length > 0 && (!failedSlug || !source.includes(`${failedSlug}-v1.webp`)) ? 120 : 0 },
+        naturalWidth: { configurable: true, get: () => source.length > 0 && (!failedSlug || !source.includes(`${failedSlug}-v`)) ? 120 : 0 },
+        naturalHeight: { configurable: true, get: () => source.length > 0 && (!failedSlug || !source.includes(`${failedSlug}-v`)) ? 120 : 0 },
         decode: { configurable: true, value: () => Promise.resolve() },
         src: { configurable: true, get: () => source, set: (value: string) => {
           source = value;
-          queueMicrotask(() => image.dispatchEvent(new win.Event(failedSlug && source.includes(`${failedSlug}-v1.webp`) ? "error" : "load")));
+          queueMicrotask(() => image.dispatchEvent(new win.Event(failedSlug && source.includes(`${failedSlug}-v`) ? "error" : "load")));
         } },
       });
     }
@@ -58,19 +58,27 @@ function fixture(reduced = false, failedSlug = "") {
 }
 
 async function flush(): Promise<void> { for (let i = 0; i < 80; i++) await Promise.resolve(); }
+async function enterWords(f: ReturnType<typeof fixture>): Promise<void> {
+  f.advance(4000);
+  await flush();
+  f.advance(0);
+  await flush();
+}
 
-test("the single phrase table maps all 32 lines to distinct props with a two-second Bunzai mark ending", () => {
+test("the single phrase table maps all 32 lines to distinct props and distinct hard-entry motions", () => {
   expect(SCREEN_PREROLL_PHRASES).toHaveLength(32);
-  expect(new Set(SCREEN_PREROLL_PHRASES.map(phrase => phrase[3])).size).toBe(32);
-  expect(SCREEN_PREROLL_PHRASES.slice(0, 8).map(phrase => phrase[3])).toEqual([
+  expect(new Set(SCREEN_PREROLL_PHRASES.map(phrase => phrase.symbol)).size).toBe(32);
+  expect(SCREEN_PREROLL_PHRASES.slice(0, 8).map(phrase => phrase.symbol)).toEqual([
     "oz", "harry-potter", "inception", "phantom", "howl-moving-castle", "death-note", "uncharted", "one-piece",
   ]);
-  expect(SCREEN_PREROLL_PHRASES[8]).toEqual(["BOUNDLESS", "lilac", 1200, "back-to-future"]);
-  expect(SCREEN_PREROLL_PHRASES.every(phrase => phrase[2] >= 1000)).toBe(true);
-  expect(SCREEN_PREROLL_PHRASES.at(-1)).toEqual(["YOURS", "rose", 2200, "bunzai-logo"]);
+  expect(SCREEN_PREROLL_PHRASES[8]).toMatchObject({ text: "BOUNDLESS", tone: "lilac", duration: 1200, symbol: "back-to-future" });
+  expect(SCREEN_PREROLL_PHRASES.every(phrase => phrase.duration >= 1000)).toBe(true);
+  expect(SCREEN_PREROLL_PHRASES.at(-1)).toMatchObject({ text: "YOURS", tone: "rose", duration: 2200, symbol: "bunzai-logo" });
+  expect(new Set(SCREEN_PREROLL_PHRASES.map(phrase => phrase.motion.join("|"))).size).toBe(32);
+  expect(SCREEN_PREROLL_PHRASES.every(phrase => phrase.motion[2] >= 90 && phrase.motion[2] <= 180)).toBe(true);
 });
 
-test("the film shows one transparent symbol beside intact words and impacts only once per phrase", async () => {
+test("the film shows one transparent symbol beside intact words and coordinates a single hard entry", async () => {
   const f = fixture();
   const prefix = f.root.querySelector<HTMLElement>("[data-preroll-prefix]")!;
   const word = f.root.querySelector<HTMLElement>("[data-preroll-word]")!;
@@ -81,10 +89,9 @@ test("the film shows one transparent symbol beside intact words and impacts only
   expect(f.root.querySelector("[data-preroll-symbol]")!.hasAttribute("src")).toBe(false);
   let completed = 0;
   runScreenPreroll(f.doc, () => { completed++; });
-  f.advance(4000);
-  await flush();
+  await enterWords(f);
   expect(word.textContent).toBe("A STAGE");
-  expect(f.symbol.getAttribute("src")).toBe("media/preroll-symbols/oz-v1.webp");
+  expect(f.symbol.getAttribute("src")).toBe("media/preroll-symbols/oz-v2.webp");
   expect(prefix.textContent).toBe("ALL THE WORLD'S");
   expect(symbolStage.classList.contains("is-stencilled")).toBe(false);
   expect(word.classList.contains("is-changing")).toBe(false);
@@ -93,6 +100,11 @@ test("the film shows one transparent symbol beside intact words and impacts only
   f.advance(1);
   expect(symbolStage.classList.contains("is-stencilled")).toBe(true);
   expect(word.classList.contains("is-changing")).toBe(true);
+  expect(word.textContent).toBe("A STAGE");
+  expect(word.style.clipPath).toBe("");
+  expect(word.style.opacity).toBe("");
+  expect(word.style.getPropertyValue("--word-entry-transform")).toBe(SCREEN_PREROLL_PHRASES[0]!.motion[0]);
+  expect(word.style.getPropertyValue("--word-entry-duration")).toBe("150ms");
   expect(canvas.hidden).toBe(false);
   f.advance(1299);
   await flush();
@@ -100,7 +112,7 @@ test("the film shows one transparent symbol beside intact words and impacts only
   f.advance(1);
   await flush();
   expect(word.textContent).toBe("A STORY");
-  expect(f.symbol.getAttribute("src")).toBe("media/preroll-symbols/harry-potter-v1.webp");
+  expect(f.symbol.getAttribute("src")).toBe("media/preroll-symbols/harry-potter-v2.webp");
   expect(completed).toBe(0);
   f.root.querySelector<HTMLButtonElement>("[data-preroll-skip]")!.click();
   expect(completed).toBe(1);
@@ -110,10 +122,9 @@ test("the film shows one transparent symbol beside intact words and impacts only
 test("the final YOURS line uses the existing full-color Bunzai mark without stencil recoloring", async () => {
   const f = fixture();
   runScreenPreroll(f.doc, () => {});
-  f.advance(4000);
-  await flush();
+  await enterWords(f);
   for (let i = 0; i < SCREEN_PREROLL_PHRASES.length - 1; i++) {
-    f.advance(SCREEN_PREROLL_PHRASES[i]![2]);
+    f.advance(SCREEN_PREROLL_PHRASES[i]!.duration);
     await flush();
   }
   expect(f.root.querySelector("[data-preroll-word]")!.textContent).toBe("YOURS");
@@ -127,8 +138,7 @@ test("the final YOURS line uses the existing full-color Bunzai mark without sten
 test("hidden tabs pause the symbol reveal hold and reduced motion skips symbol downloads", async () => {
   const f = fixture();
   runScreenPreroll(f.doc, () => {});
-  f.advance(4000);
-  await flush();
+  await enterWords(f);
   f.advance(250);
   Object.defineProperty(f.doc, "hidden", { value: true, configurable: true });
   f.doc.dispatchEvent(new f.win.Event("visibilitychange"));
@@ -152,14 +162,13 @@ test("hidden tabs pause the symbol reveal hold and reduced motion skips symbol d
 test("a preloaded symbol error settles promptly and leaves the following phrase available", async () => {
   const f = fixture(false, "oz");
   runScreenPreroll(f.doc, () => {});
-  f.advance(4000);
-  await flush();
+  await enterWords(f);
   const progress = f.root.querySelector<HTMLElement>("[data-preroll-progress]")!;
   expect(f.root.querySelector("[data-preroll-word]")!.textContent).toBe("A STAGE");
   expect(progress.textContent).toContain("could not be loaded");
-  f.advance(SCREEN_PREROLL_PHRASES[0]![2]);
+  f.advance(SCREEN_PREROLL_PHRASES[0]!.duration);
   await flush();
   expect(f.root.querySelector("[data-preroll-word]")!.textContent).toBe("A STORY");
-  expect(f.symbol.getAttribute("src")).toBe("media/preroll-symbols/harry-potter-v1.webp");
+  expect(f.symbol.getAttribute("src")).toBe("media/preroll-symbols/harry-potter-v2.webp");
   f.dom.window.close();
 });

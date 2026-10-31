@@ -1,5 +1,7 @@
 # Preroll symbol replacement
 
+Historical v1 record. The current paper art and effects are described in `preroll-paper-revision.md`, with v2 assets and exact edit prompts in `preroll-paper-assets.json`. Original generation sources are retained; the v1 delivery copies are superseded.
+
 One asset per phrase. Generated with the built-in image_gen tool; no API/CLI. Each cutout uses true alpha. Text stays whole, with no clip masks. The symbol is the only artwork affected by the image-to-outline shader.
 
 Asset destination: `docs/media/preroll-symbols/<slug>-v1.webp`.

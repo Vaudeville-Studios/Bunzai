@@ -13,7 +13,7 @@ body[data-page="home"] > .wrap { display: none; }
 .cinema-shell { position: absolute; isolation: isolate; top: 0; left: 50%; translate: -50% 0; width: max(100%, calc(var(--cinema-height) * 1.7768)); aspect-ratio: 1672 / 941; container-type: inline-size; outline-offset: -3px; }
 /* clone-ok: the website auditorium background has independent bounds and stacking from Library cover layers. */
 .cinema-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: -2; transition: filter 1.2s ease; }
-.cinema-light, .cinema-projector, .screen-preroll-symbol-stencil { /* clone-ok: site projection and single-symbol stencil share page-local bounds. */ position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cinema-light, .cinema-projector, .screen-preroll-symbol-stencil, .screen-preroll-splatter { /* clone-ok: site projection and paper-symbol overlays share page-local bounds. */ position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .cinema-light, .cinema-projector { mix-blend-mode: screen; }
 .cinema-light { z-index: -1; opacity: .85; }
 .cinema-projector { z-index: 2; opacity: 0; transition: opacity 1.5s ease .45s; }
@@ -56,23 +56,24 @@ body[data-page="home"] > .wrap { display: none; }
 .screen-preroll .screen-wordmark em { color: var(--pink); font-style: normal; }
 .screen-preroll-type { width: max-content; max-width: 100%; color: var(--peach); font: 700 clamp(15px, 3cqw, 42px)/1.3 var(--disp); letter-spacing: .12em; white-space: nowrap; }
 .screen-preroll-words { gap: 12px; isolation: isolate; }
-.screen-preroll-content { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(72px, .34fr) minmax(0, 1fr); align-items: center; gap: clamp(12px, 3cqw, 36px); width: min(100%, 1100px); }
-.screen-preroll-symbol-stage { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1; }
-.screen-preroll-symbol { display: block; width: 100%; height: 100%; object-fit: contain; }
-.screen-preroll-symbol-stencil { visibility: hidden; }
+.screen-preroll-content { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(72px, .34fr) minmax(0, 1fr); align-items: center; gap: clamp(12px, 7cqw, 72px); width: min(100%, 1100px); }
+.screen-preroll-symbol-stage { --symbol-main: var(--pink); --symbol-shadow: color-mix(in srgb, var(--symbol-main) 55%, var(--ink)); position: relative; isolation: isolate; display: block; width: 100%; height: auto; aspect-ratio: 1; }
+.screen-preroll-symbol-stage[data-tone="gold"] { --symbol-main: var(--peach); }
+.screen-preroll-symbol-stage[data-tone="mint"] { --symbol-main: var(--mint); }
+.screen-preroll-symbol-stage[data-tone="sky"] { --symbol-main: var(--sky); }
+.screen-preroll-symbol-stage[data-tone="lilac"] { --symbol-main: var(--lilac); }
+.screen-preroll-symbol, .screen-preroll-symbol-stencil { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; object-fit: contain; }
+.screen-preroll-splatter { inset: -25%; z-index: 0; width: 150%; height: 150%; }
+.screen-preroll-symbol-stencil { z-index: 2; color: var(--symbol-main); border-color: var(--symbol-shadow); visibility: hidden; }
 .screen-preroll-symbol-stage.is-stencilled .screen-preroll-symbol-stencil { visibility: visible; }
-.screen-preroll-symbol-stage.is-stencilled .screen-preroll-symbol { filter: saturate(1.6) contrast(1.25); }
-.screen-preroll-symbol-stage.is-logo .screen-preroll-symbol { width: 78%; height: 78%; }
 .screen-preroll-copy { display: grid; justify-items: start; gap: clamp(8px, 1.4cqw, 16px); min-width: 0; text-align: left; }
 .screen-preroll-prefix { color: var(--fg2); }
 .screen-preroll-word { --word-accent: var(--pink); display: block; max-width: 100%; color: var(--word-accent); font: 800 clamp(20px, 5cqw, 68px)/1.08 var(--disp); letter-spacing: .035em; text-wrap: balance; text-shadow: 2px 3px 0 var(--ink); }
 .screen-preroll-progress { margin: 0; color: var(--fg2); font: 500 12px/1.4 var(--mono); }
-.screen-preroll-word.is-changing { animation: preroll-word-slam .4s cubic-bezier(.16,.8,.22,1) both; }
-@keyframes preroll-word-slam {
-  0% { opacity: .45; transform: translateY(-.35em) scale(1.28) skewX(-7deg); }
-  38% { opacity: 1; transform: translateY(.08em) scale(.96) skewX(2deg); }
-  68% { transform: translateY(-.02em) scale(1.025) skewX(-.5deg); }
-  100% { opacity: 1; transform: none; }
+.screen-preroll-word.is-changing { animation: preroll-word-entry var(--word-entry-duration, 140ms) steps(3, end) both; transform-origin: var(--word-entry-origin, 50% 50%); }
+@keyframes preroll-word-entry {
+  from { transform: var(--word-entry-transform, translateY(-80%)); }
+  to { transform: none; }
 }
 .screen-preroll-word[data-tone="gold"] { --word-accent: var(--peach); }
 .screen-preroll-word[data-tone="mint"] { --word-accent: var(--mint); }
@@ -133,7 +134,7 @@ body[data-page="home"] > .wrap { display: none; }
   .screen-title p { font-size: 16px; }
   .screen-title a { font-size: 13px; margin-top: 15px; }
   .screen-preroll-card { gap: 12px; }
-  .screen-preroll-content { grid-template-columns: minmax(64px, .3fr) minmax(0, 1fr); gap: 10px; }
+  .screen-preroll-content { grid-template-columns: minmax(64px, .3fr) minmax(0, 1fr); gap: clamp(18px, 6vw, 26px); }
   .screen-preroll-word { font-size: clamp(20px, 7cqw, 42px); }
   .screen-preroll-card > span, .screen-preroll-prefix { letter-spacing: .12em; }
   .screen-preroll-skip { right: 6px; bottom: 5px; min-height: 24px; }

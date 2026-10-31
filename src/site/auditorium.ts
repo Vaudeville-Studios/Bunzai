@@ -16,7 +16,7 @@ export function auditoriumBody(): string {
 <article class="screen-preroll-card" data-preroll-card="presents"><p class="screen-preroll-type">VAUDEVILLE PRESENTS</p></article>
 <article class="screen-preroll-card screen-preroll-words" data-preroll-card="words">
 <div class="screen-preroll-content">
-<div class="screen-preroll-symbol-stage" data-preroll-symbol-stage aria-hidden="true"><img class="screen-preroll-symbol" data-preroll-symbol alt="" decoding="async"><canvas class="screen-preroll-symbol-stencil" data-preroll-symbol-stencil></canvas></div>
+<div class="screen-preroll-symbol-stage" data-preroll-symbol-stage aria-hidden="true"><canvas class="screen-preroll-splatter" data-preroll-splatter aria-hidden="true"></canvas><img class="screen-preroll-symbol" data-preroll-symbol alt="" decoding="async"><canvas class="screen-preroll-symbol-stencil" data-preroll-symbol-stencil aria-hidden="true"></canvas></div>
 <div class="screen-preroll-copy"><span class="screen-preroll-prefix" data-preroll-prefix>ALL THE WORLD'S</span><strong class="screen-preroll-word" data-preroll-word data-tone="rose"></strong><p class="screen-preroll-progress" data-preroll-progress role="status" hidden></p></div>
 </div>
 <p class="screen-preroll-tagline" data-preroll-tagline hidden>All the worlds: your stage</p></article>

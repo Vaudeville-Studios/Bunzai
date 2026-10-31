@@ -108,13 +108,17 @@ Clicking Begin the showing dims the room and pushes the camera toward the screen
 curtain-opening film plays. The recovered Vaudeville title cards then run inside the screen: an
 independent-production credit, `VAUDEVILLE PRESENTS`, and a 32-phrase Shakespeare sequence.
 Each phrase pairs intact, unmasked text with one recognizable story prop, such as Oz's ruby slippers
-or Harry Potter's spectacles and lightning bolt. The prop appears in full color for 300ms, then its
-transparent cutout resolves into a posterized stencil with inked edges on the same impact as the
-word slam. WebGL affects only the symbol; the original full-color cutout remains visible if the
-renderer is unavailable. The last `YOURS` pairs with the existing Bunzai bunny mark. The source
-mapping and image-generation prompts are recorded in `plans/preroll-symbols.md`. Skip and replay are
-available, and hidden tabs pause the sequence. Reduced motion skips the curtain and title animation
-and opens the first product picture directly. Native title content and
+or Harry Potter's spectacles and lightning bolt. Props share a Persona- and Danganronpa-inspired
+layered-paper illustration style, independent of each story's native art style. Each prop appears
+in full color for 300ms, then hard-cuts to exactly two flat colors: its phrase's main color and a
+shadow color. A torn-paper burst starts at the same beat and drifts slowly while the next phrase
+prepares. Every phrase has its own short, abrupt text entry; the complete words remain visible
+without masks. If the WebGL renderer is unavailable, the prop stays in full color. The last `YOURS`
+pairs with the existing Bunzai bunny mark in its original colors, with the burst behind it. The
+revision and prompt source are in `plans/preroll-paper-revision.md`; v2 asset sources and prompts are
+listed in `plans/preroll-paper-assets.json`. Skip and replay are available, and hidden tabs pause
+the sequence. Reduced motion skips the curtain and title animation and opens the first product
+picture directly. Native title content and
 pictures sit inside the artwork's empty screen. Each picture pairs with
 live text explaining the feature and the pictured view, plus a link to its tour page. Pictures
 crossfade and their descriptions slide into place; reduced motion removes these transitions.

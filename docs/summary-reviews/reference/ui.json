@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:5dc277c94cdb74c19f0f38e9b54cb949dd469d8261678735ed30db49a5aea069",
-  "semanticSummaryHash": "sha256:6bff4fb499938719e2afc8160a03a87bec48a2718d1cecee77035ec30e8955f3",
+  "sourceHash": "sha256:f1274b6df71752279ad58ebae0c6dfb67fb9ccd31fc477c6422c3430c281fd85",
+  "semanticSummaryHash": "sha256:fa307f2c124bed040939b0c857ebc3a42917156a9a9bd591909865c469342a86",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root reviewed current UI source hash 5dc277c94cdb74c19f0f38e9b54cb949dd469d8261678735ed30db49a5aea069 and approved the summary wording for documentation accuracy only. This does not approve security, release, or deployment behavior.",
-  "reviewedAt": "2026-10-31T18:15:00.826Z"
+  "notes": "Root approved documentation accuracy for source hash f1274b6df71752279ad58ebae0c6dfb67fb9ccd31fc477c6422c3430c281fd85; summary describes intact phrase text, shared paper props, 300ms color hold, two-color cut, synchronized slow burst, image fallback, and reviewed host behavior.",
+  "reviewedAt": "2026-10-31T19:07:31.348Z"
 }

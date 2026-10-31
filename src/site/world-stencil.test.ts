@@ -32,7 +32,7 @@ test("forced colors keeps the original transparent cutout and skips the GPU sten
   f.win.HTMLCanvasElement.prototype.getContext = (() => { contextRequests++; return null; }) as typeof f.win.HTMLCanvasElement.prototype.getContext;
   const stencil = createWorldStencil(f.canvas, f.image);
   expect(await stencil.prepare()).toBe(false);
-  stencil.activate();
+  stencil.activate("#f04", "#302");
   expect(stencil.ready()).toBe(false);
   expect(contextRequests).toBe(0);
   expect(f.image.hidden).toBe(false);
@@ -46,7 +46,7 @@ test("reduced motion leaves the selected cutout as the only visible picture", as
   let contextRequests = 0;
   f.win.HTMLCanvasElement.prototype.getContext = (() => { contextRequests++; return null; }) as typeof f.win.HTMLCanvasElement.prototype.getContext;
   const stencil = createWorldStencil(f.canvas, f.image);
-  stencil.activate();
+  stencil.activate("#f04", "#302");
   stencil.refresh();
   expect(await stencil.prepare()).toBe(false);
   expect(stencil.ready()).toBe(false);
@@ -66,7 +66,7 @@ test("WebGL failure leaves the source cutout visible and the stencil canvas tran
   console.error = () => {};
   try {
     const stencil = createWorldStencil(f.canvas, f.image);
-    stencil.activate();
+    stencil.activate("#f04", "#302");
     stencil.refresh();
     expect(await stencil.prepare()).toBe(false);
     expect(stencil.ready()).toBe(false);

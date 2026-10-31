@@ -24,7 +24,6 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSPr
 import { ThemeSlot } from "../../_shared/theme-slot";
 import type { AppContext } from "../../app-contract";
 import { copyText } from "../../_shared/clipboard";
-import { Ic } from "../../_shared/ic";
 import { useSurfaceVariant } from "../../_shared/surface-variant";
 import { useDismissHoldMenus } from "./use-dismiss-hold-menus";
 import { toErrorMessage } from "../../_shared/error-message";
@@ -41,9 +40,9 @@ import { CutFromDialog, CutLine, type CutScope } from "./scene-cuts";
 import { ZoomArt } from "./scene-portrait-zoom";
 import { CHAR_TONE, USER_TONE, useSceneAccents } from "./scene-accents";
 import { DeleteTakeDialog, ForkDialog, TakesControl } from "./scene-takes";
-import { WingPanel, WingRails } from "./scene-wings";
+import { WINGS, WingPanel } from "./scene-wings";
 import { CORE_WING, wingOf, propWings } from "./scene-wing-data";
-import { WingSlot } from "./scene-wing-frame";
+import { FullChatWings } from "./layouts/full-chat-wings";
 import { useWingShell } from "./use-wing-shell";
 import { SwapLine } from "./cast/swap-line";
 import { useUserArt } from "./cast/use-user-art";
@@ -88,13 +87,14 @@ import { currentIndex, selectedSwipe, swipeCount, useSceneSwipePreview } from ".
 import { SceneCompare } from "./scene-compare";
 import { useSceneFind } from "./use-scene-find";
 import { chatLayoutOf } from "./chat-layout";
+import { AdditionalLayout } from "./layouts/additional-layout";
 import { Messenger } from "./messenger/messenger";
 import { useScenePrograms } from "./messenger/programs";
 import { useMessengerOpen } from "./messenger/use-messenger-open";
 import { usePublishSceneSignals } from "./scene-signals";
 import { wingPanels } from "./messenger/wing-props";
 import { authorOf, useReplyNotes, useTranscriptDecor } from "./messenger/transcript/use-transcript-decor";
-import { Button, IconButton, Tile } from "../../components/button";
+import { Button, IconButton } from "../../components/button";
 const stale = (e: unknown): boolean => /\bversion\b|409/i.test(toErrorMessage(e));
 export function ScenePage({ ctx, chatId, onBack, onTree }: { ctx: AppContext; chatId: string; onBack(): void; /** Opens the Branching Tree (RoleCall's "View Full Branching Tree"). */ onTree?(chatId: string): void }): JSX.Element {
   const { api, setStatus } = ctx;
@@ -105,8 +105,9 @@ export function ScenePage({ ctx, chatId, onBack, onTree }: { ctx: AppContext; ch
   const [wing, setWing] = useState<string | null>(null);
   const { list: registeredProps, wings: propWingCatalog } = useRegisteredProps();
   const { root, widthOf, resizeOf } = useWingShell(ctx.prefs, wing, setWing, propWingCatalog);
-  const messenger = chatLayoutOf(ctx.prefs) === "messenger";
-  const { msnRequest, msnOpen, setMsnOpen, openWing, away, stageRequest } = useMessengerOpen(messenger, wing, setWing);
+  const layout = chatLayoutOf(ctx.prefs) ?? "stage";
+  const messenger = layout === "messenger", desktop = layout === "desktop98";
+  const { msnRequest, msnOpen, setMsnOpen, openWing, away, stageRequest } = useMessengerOpen(messenger || desktop, wing, setWing);
   const [, setPrefTick] = useState(0); // the app prefs are not reactive: a display switch re-renders the page by hand
   const [presetBody, setPresetBody] = useState<PresetBody | null>(null);
   const reasoning = useSceneReasoning(ctx.api, scene?.chat.preset, scene?.chat.prompting);
@@ -114,7 +115,7 @@ export function ScenePage({ ctx, chatId, onBack, onTree }: { ctx: AppContext; ch
   const propsState = useSceneProps(ctx, chatId);
   const propsOn = propsState.load.state === "ready" ? propsState.load.on : null;
   const speakers = useDialogueSpeakers(ctx, scene, propsOn);
-  const programs = useScenePrograms(messenger, scene ?? undefined, propsOn, registeredProps, ctx.prefs, ctx.pieces);
+  const programs = useScenePrograms(messenger || desktop, scene ?? undefined, propsOn, registeredProps, ctx.prefs, ctx.pieces);
   const [menu, setMenu] = useState<{ id: string; which: "more" | "delete" | "history" } | null>(null);
   const [takesOpen, setTakesOpen] = useState(false);   const hud = useSurfaceVariant("scene.hud");
   const [dialog, setDialog] = useState<Dialog | null>(null);
@@ -464,7 +465,9 @@ export function ScenePage({ ctx, chatId, onBack, onTree }: { ctx: AppContext; ch
       {messenger ? (
         <Messenger ctx={ctx} chatId={chatId} scene={scene} name={name} personaName={personaName || "Your persona"} programs={programs} request={msnRequest} actions={<>{takes}{update}</>} args={wingArgs ?? null} loreBooks={loreBooks} onTake={switchTake} onFind={find.open}
           onBack={onBack} onSurface={setMsnOpen} renderProgram={(p) => (p.panel && scene ? <PopoutSlot kind={p.panel} ctx={ctx} chat={scene.chat} onChat={(chat) => setScene((s) => (s ? { ...s, chat } : s))} /> : wingBody(p.wing, p.tab, true))}>{chat}</Messenger>
-      ) : <>
+      ) : layout !== "stage" ? <AdditionalLayout layout={layout} chatId={chatId} name={name} portrait={charArt} actions={<>{takes}{update}</>} onBack={onBack} wing={wing} onWing={setWing} renderWing={(id) => wingBody(id)} programs={programs} request={msnRequest} onSurface={setMsnOpen}
+        wings={[...WINGS, ...(scene?.core ? [CORE_WING] : []), ...propWings(registeredProps, propsOn)]} renderProgram={(p) => p.panel && scene ? <PopoutSlot kind={p.panel} ctx={ctx} chat={scene.chat} onChat={(chat) => setScene((s) => s ? { ...s, chat } : s)} /> : wingBody(p.wing, p.tab, true)}
+        backdrop={<><div className="bgm" /><BackdropLayer ctx={ctx} backdrop={scene?.chat.backdrop} character={cardBackdrop} /><ThemeSlot id="scene.backdrop" /></>}>{chat}</AdditionalLayout> : <>
       <div className="play" data-part="scene.root">
         <div className="bgm" />
         <BackdropLayer ctx={ctx} backdrop={scene?.chat.backdrop} character={cardBackdrop} />
@@ -477,11 +480,7 @@ export function ScenePage({ ctx, chatId, onBack, onTree }: { ctx: AppContext; ch
         </header>
         {chat}
       </div>
-      <WingRails open={wing} onToggle={(id) => setWing(wing === id ? null : id)} extra={[...(scene?.core ? [CORE_WING] : []), ...propWings(registeredProps, propsOn)]} />
-      {wing && <><div className="wback" aria-hidden="true" /><div data-part="scene.paused"><Tile kind="icon" size="lg" label="Close the wing" icon={<Ic name="lucide:pause" size={26} />} caption="SCENE PAUSED" onClick={() => setWing(null)} /></div></>}
-      {(["l", "r"] as const).map((sd) => (
-        <WingSlot key={sd} side={sd} open={side === sd}>{wing && side === sd && wingBody(wing)}</WingSlot>
-      ))}
+      <FullChatWings wing={wing} side={side} onWing={setWing} renderWing={(id) => wingBody(id)} extra={[...(scene?.core ? [CORE_WING] : []), ...propWings(registeredProps, propsOn)]} />
       </>}
       {scene && <PopoutHost ctx={ctx} chat={scene.chat} kinds={popoutKindsFor(WING_POPOUTS, registeredProps, propsOn ?? [])} onChat={(chat) => setScene((s) => (s ? { ...s, chat } : s))} />}
       {versions.toast && <Toast message={versions.toast.message} actionLabel="Undo" onAction={versions.undo} />}

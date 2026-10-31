@@ -1618,7 +1618,7 @@ Settings is built from section modules: one file in `src/ui/apps/settings/sectio
 `SettingsSection` (id, label, order, `Component: (props: { ctx }) => JSX.Element`);
 `sections/registry.ts` is the one stated seam. The rail derives from the registry (`src/ui/apps/settings/
 index.tsx`); every control is call-and-response against live settings (theme/accent repaint
-instantly). Appearance's house-accent palette labels its theme-aware first color **default**; its Chat layout row (`settings/sections/chat-layout-row.tsx`: Full Chat or Messenger; unset shows Full Chat without saving it) is the studio-wide chat layout, the same key the first-open chooser saves. Shipped
+instantly). Appearance's house-accent palette labels its theme-aware first color **default**; its Chat layout row (`settings/sections/chat-layout-row.tsx`: Full Chat, Familiar, Basic, Desktop 98, Messenger or Immersive; unset shows Full Chat without saving it) is the studio-wide chat layout, the same key the first-open chooser saves. Shipped
 sections: Appearance (theme and house accent), Models (the provider vault),
 Connections (MCP in both directions), Spotify (the person's own Client ID and the sign-in), Studio (home app, Library first deck, publish targets, and
 the engine checkouts on this machine), Security (the library's lock, and its health check), Backups
@@ -1840,3 +1840,23 @@ The Control Booth character navigator offers **Export scene**, exporting the hos
 frozen cast as JSON, rather than the complete rp-core journal. Linked scenes refuse unsupported
 legacy transcript and setup mutations; native Ollama and OpenAI-chat compatible providers are
 supported. External-core sources live in the `vendor/rp-core` submodule.
+
+### Additional chat layouts from VAUDEVILLE
+
+`scenes.chatLayout` accepts Full Chat, Familiar, Basic, Desktop 98, Messenger and Immersive.
+The first-open chooser, Appearance settings and Messenger settings share `layout-options.ts`.
+These are presentation choices, independent of the theme's `scene.layout` variant.
+All six keep ScenePage's transcript, composer, turns and edits; no second chat store is created.
+Familiar reserves a left tool drawer beside a wide conversation; on narrow panes it opens as a modal.
+Basic keeps the portrait and conversation with tools behind Scene settings; Immersive uses a larger
+portrait and quieter, translucent chrome. Desktop 98 uses VAUDEVILLE's window reducer, draggable
+and resizable windows, minimize/maximize/restore, a Start menu and taskbar. Programs render the
+existing wing bodies and rp-core is reachable for linked scenes. Visited programs remain mounted,
+so opening another tool or minimizing a window keeps its draft. Window geometry is temporary for
+the mounted scene; it is not saved across app restarts. Container queries adapt the layouts, and
+narrow Desktop 98 shows one active window above its taskbar.
+
+Messenger transcript avatars keep a fixed 40 px square and circular crop, including under theme
+packages that enlarge Full Chat portraits. The theme cannot stretch the Messenger avatar wrapper.
+
+Matinee 1.0.4 reserves a separate 160 × 224 px portrait column in Full Chat (80 × 112 px in narrow panes). Its package rules target the Full Chat play surface, leaving Messenger and the additional layout shells to control their own geometry.

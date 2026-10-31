@@ -74,7 +74,7 @@ export function buildPrograms(scene: OpenScene | undefined, propsOn: readonly st
   if (!scene) return [];
   const stage = STAGE_TABS.filter((t) => t.visible({ scene, propsOn, prefs })).flatMap((t) => STAGE[t.id] ?? []);
   const panels = props.flatMap((p) => (p.panel && hasOwnProgram(p) && propsOn?.includes(p.id) ? [{ id: `prop-${p.id}`, wing: "props", title: p.name, icon: p.icon, panel: messengerKind(p.panel) }] : []));
-  return [...BEFORE_STAGE, ...stage, ...AFTER_STAGE, ...panels, ...trackersProgram(props, propsOn, scene.chat.prompting?.trackers, libraryHasTrackers)];
+  return [...BEFORE_STAGE, ...stage, ...AFTER_STAGE, ...(scene.core ? [at("core", undefined, "core", "rp-core", "lucide:cpu")] : []), ...panels, ...trackersProgram(props, propsOn, scene.chat.prompting?.trackers, libraryHasTrackers)];
 }
 
 /** The same list while nothing about it changed, so the shell's effects do not run again on every message. */

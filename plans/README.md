@@ -6,7 +6,7 @@ These plans record intended implementation. Current implementation and verificat
 
 | Plan | Title | Priority | Effort/risk | Dependencies | Status |
 | --- | --- | --- | --- | --- | --- |
-| [001](001-unified-extension-runtime.md) | One capability-driven extension runtime, generated permission/API catalog, SDK and developer preview | P1 | XL / HIGH | Sequential work packages in plan | IMPLEMENTED; NORMAL COMMIT GATE |
+| [001](001-unified-extension-runtime.md) | One capability-driven extension runtime, generated permission/API catalog, SDK and developer preview | P1 | XL / HIGH | Sequential work packages in plan | IMPLEMENTED; VERIFIED SOURCE |
 
 Implementation authorized 2026-10-31. Isolated worktree: `C:\Users\chiev\Documents\Bunzai-extension-runtime`, branch `feature/unified-extension-runtime`. The owner's original worktree remains separate. The full source suite and all individual verification checks pass; the aggregate wrapper's test-path correction and exact results are recorded in the ledger. Root approves a scoped normal-hook commit. No push is authorized. Native GUI file-picker acceptance and an external developer's tutorial trial remain manual checks; this is not a stable-API or universal isolation certification.
 

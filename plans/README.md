@@ -1,4 +1,4 @@
-# Implementation plans
+﻿# Implementation plans
 
 Generated using the improve skill on 2026-10-31 against `fea0b2cb79293745526dec295ae9ddcbf3c6b50b`.
 
@@ -7,8 +7,13 @@ These plans record intended implementation. Current implementation and verificat
 | Plan | Title | Priority | Effort/risk | Dependencies | Status |
 | --- | --- | --- | --- | --- | --- |
 | [001](001-unified-extension-runtime.md) | One capability-driven extension runtime, generated permission/API catalog, SDK and developer preview | P1 | XL / HIGH | Sequential work packages in plan | IMPLEMENTED; VERIFIED SOURCE |
+| [002](002-rp-core-extension-integration.md) | Connect extension hooks, execution and persistence to existing RP-Core scenes | P1 | XL / HIGH | 001 merged | VERIFIED SOURCE; DELIVERY PENDING |
+| [003](003-public-docs-and-illustrated-installation.md) | Publish bundled Docs and a real screenshot installation guide | P1 | L / MED | Reconcile after 002; independent site lane | VERIFIED SOURCE; DELIVERY PENDING |
+| [004](004-hoplight-helper-and-product-launch-identity.md) | Restore helper availability and isolate Hoplight/Bunzai launches | P1 | L / HIGH | Independent remote lane; reconcile with 002/003 | IN PROGRESS |
 
-Implementation authorized 2026-10-31. The feature branch is being merged into Mainstage in `C:\Users\chiev\Documents\Bunzai-extension-merge-20261031`, branch `deliver/extensions-merge-20261031`, preserving the owner's original worktrees. The user authorized this merge and push. Historical feature-branch full-suite evidence is separate from current merge evidence: focused migration, broker, catalog and Core protection checks, TypeScript, independent review and the built Browser extension smoke pass. The current merge has not run the full suite or refreshed native executable proofs. Core-linked scenes still do not run extension prompt/event hooks; unsupported operations fail explicitly. Native GUI file-picker acceptance and an external developer's tutorial trial remain manual checks. This is not a stable-API or universal isolation certification. See the execution ledger for exact evidence and limitations.
+Implementation authorized 2026-10-31. Plan001 is published on Mainstage at 7588d4b. Plan002 source is independently reviewed and committed at 708e8d5; its RP-Core fork branch is published and fresh-clone verified at 9cce055. Plan003 source is reviewed and committed at 0a7cfdd. Plan004 source is independently reviewed; the exact rebuilt Hoplight artifact and Bunzai helper are approved for backed-up local repair. Their final combined Bunzai Mainstage delivery remains pending.
+
+Verification distinguishes source, automated integration, Browser build, and native packaging. The complete test suite was explicitly skipped at the owner's request; focused checks and TypeScript passed in their reviewed branches. Core operations now use the existing external RP-Core owner with fenced journal writes, prompt/event hooks and bounded preview; delete/fork and unsupported Core setting selectors remain explicitly refused. The Hoplight isolated native-window creation failed, and its rebuilt executable's truthful browser fallback was verified at the packaged HTTP boundary. The owner explicitly accepted finishing without the blocked live visual check. No new Tailscale account sign-in or real-device network journey was performed. These results are not universal isolation or stable-API certification. Exact evidence lives alongside each execution plan.
 
 ## Execution order
 
@@ -33,3 +38,5 @@ The [independent cold-review record](001-unified-extension-runtime-review.md) li
 ## Deferred owner request
 
 After this runtime cohort, review the test harness with a target of roughly 65% fewer tests. The owner explicitly deferred that work on 2026-10-31; no harness reduction, test deletion or CI redesign belongs to the current runtime implementation.
+
+

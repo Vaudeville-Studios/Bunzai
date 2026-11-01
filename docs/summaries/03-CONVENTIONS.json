@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "03-CONVENTIONS",
   "sourcePath": "docs/03-CONVENTIONS.md",
-  "sourceHash": "sha256:d0bc0aeafb180e52b88bde4563ad5b929acf546dae177da3a784bfa3b4d82839",
+  "sourceHash": "sha256:6926c168391d6190648f338727a1b8de5ebdc2acb3e81fc4849a7a31ace6e4d6",
   "summary": "This page states Bunzai's binding current implementation rules. Code requires strict TypeScript boundary narrowing, exact per-kind runtime decoders for handwritten canonical interfaces, explicitly declared open escrow bags, UI-independent core logic, typed errors, consistent naming, and the scoped TS/TSX pictograph gate. defineExhaustiveShape<T>() rejects missing and extra keys, narrowed unions, coercion, any at any nesting depth, and never during typecheck. Tests use Bun across authored src and scripts, begin bug fixes at a failing public boundary, prove semantic same-format round trips, remain deterministic, and do not treat synchronization warnings as clean proof. CLI defines the unfinished automation target for convert, inspect, validate, label, formats, and version. Repository requires useful release-history subjects and behavioral evidence while forbidding gate bypasses. Documentation separates built reference behavior from labeled plans and moves with source. Working method requires inspecting the owning system and Git state, fixing the real owner, reporting verification limits, and obtaining independent review without self-approval. The runtime pin and shared virtualization boundary are explicit repository conventions.",
   "topics": [
     "strict TypeScript boundaries",
@@ -67,8 +67,8 @@
       "slug": "repository",
       "title": "Repository",
       "level": 2,
-      "sourceHash": "sha256:043d6199743ff18f457f6047b59b7441629107260f13f81373f8cffcc0b53e32",
-      "summary": "Development requires Bun 1.3.14 or later; CI reads the exact .bun-version. Commit subjects describe the change and skip release is the only machine-read marker. Changes carry proof and never bypass hooks. Virtualization goes through the shared virtual-list module: VirtualRows for flat lists, VirtualShelf for card grids. Host code never keys on a theme id. Every data-part is a dotted id-keyed name on every scenes wing, tab and pop-out (scan:virtualizers, scan:theme-keys, scan:parts).",
+      "sourceHash": "sha256:6f0b32240c09940ef8ae110f26e19a1e3b040ab80bb547aa9d24afd6227c571c",
+      "summary": "Development requires Bun 1.4.2 or later; CI reads the exact .bun-version. Commit subjects describe the change and skip release is the only machine-read marker. Changes carry proof and never bypass hooks. Virtualization goes through the shared virtual-list module: VirtualRows for flat lists, VirtualShelf for card grids. Host code never keys on a theme id. Every data-part is a dotted id-keyed name on every scenes wing, tab and pop-out (scan:virtualizers, scan:theme-keys, scan:parts).",
       "topics": [
         "release-history commits",
         "optional Conventional Commits",

@@ -5,7 +5,7 @@
 uses. Optional remote listeners are separately enabled and gated. One engine, two shells - no format
 logic exists in the UI layer.
 
-Native desktop builds use host-specific output names and Windows-only executable flags. On Linux, the desktop host detaches the launcher environment before window startup and names its GTK process `bunzai`. A private, owned `XDG_RUNTIME_DIR` can hold a content-checked copy of the bundled native library, published through the shared atomic writer with private permissions; invalid caches fall back to normal loading. Pinned Bun 1.3.14 tests cover launcher-variable removal and cache integrity. A compiled extraction probe passes with an unusable `TMPDIR`; actual GTK4 window launch and close are unverified because the test host lacks GTK4. Linux desktop release artifacts are not currently published.
+Native desktop builds use host-specific output names and Windows-only executable flags. On Linux, the desktop host detaches the launcher environment before window startup and names its GTK process `bunzai`. A private, owned `XDG_RUNTIME_DIR` can hold a content-checked copy of the bundled native library, published through the shared atomic writer with private permissions; invalid caches fall back to normal loading. Historical tests run under Bun 1.3.14 cover launcher-variable removal and cache integrity; they are not evidence for the current Bun 1.4.2 pin. A compiled extraction probe passes with an unusable `TMPDIR`; actual GTK4 window launch and close are unverified because the test host lacks GTK4. Linux desktop release artifacts are not currently published.
 
 ## Velvet premiere landing
 

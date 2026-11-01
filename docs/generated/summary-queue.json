@@ -2,11 +2,11 @@
   "generated": "2026-11-01",
   "targetChars": 90000,
   "totalPages": 141,
-  "totalSourceChars": 1713065,
+  "totalSourceChars": 1713176,
   "batches": [
     {
       "id": "batch-001",
-      "sourceChars": 84398,
+      "sourceChars": 84397,
       "pages": [
         {
           "docId": "01-VISION",
@@ -29,7 +29,7 @@
           "sourcePath": "docs/03-CONVENTIONS.md",
           "sidecarPath": "docs/summaries/03-CONVENTIONS.json",
           "sectionCount": 6,
-          "sourceChars": 5090,
+          "sourceChars": 5089,
           "status": "APPROVED"
         },
         {
@@ -188,7 +188,7 @@
     },
     {
       "id": "batch-002",
-      "sourceChars": 89249,
+      "sourceChars": 89294,
       "pages": [
         {
           "docId": "guide/faq",
@@ -203,7 +203,7 @@
           "sourcePath": "docs/guide/getting-started.md",
           "sidecarPath": "docs/summaries/guide/getting-started.json",
           "sectionCount": 5,
-          "sourceChars": 7025,
+          "sourceChars": 7023,
           "status": "APPROVED"
         },
         {
@@ -219,7 +219,7 @@
           "sourcePath": "docs/guide/installation.md",
           "sidecarPath": "docs/summaries/guide/installation.json",
           "sectionCount": 7,
-          "sourceChars": 6291,
+          "sourceChars": 6338,
           "status": "APPROVED"
         },
         {
@@ -1220,14 +1220,14 @@
     },
     {
       "id": "batch-018",
-      "sourceChars": 296644,
+      "sourceChars": 296711,
       "pages": [
         {
           "docId": "reference/ui",
           "sourcePath": "docs/reference/ui.md",
           "sidecarPath": "docs/summaries/reference/ui.json",
           "sectionCount": 34,
-          "sourceChars": 296644,
+          "sourceChars": 296711,
           "status": "APPROVED"
         }
       ]

@@ -449,3 +449,93 @@ Run the unchanged two-file RED sequence GREEN, standalone suite and adjacent lor
 fixtures with the same verified isolated Bun 1.4.2. Obtain independent scoped
 review and root verification before normal-hook commit; do not call this a full
 replay pass or silently change the release pin.
+
+### Replace the Chrome startup guess with bounded owned readiness
+
+Manual run 41295707733 preserved the public startup failure and measured a
+separate owned Chrome: DevTools at 2.391s, nonce-matched CDP readiness at 4.423s,
+clean shutdown. The identical flag list differs only by recorded fresh profile,
+port and isolated profile paths. This proves a 2.5s fixed sleep is shorter than an
+observed startup window; it does not identify a DBus warning as a fatal cause.
+Other unchanged public runs pass, so retain the intermittent evidence honestly.
+
+Authorize scripts/theme-measure/driver.ts's launch owner to wait for actual owned
+Chrome readiness within a fixed startup deadline (20s), rather than sleep2500.
+Preserve existing caller port semantics and all test assertions. Use a fresh
+owned profile beneath work and consume bounded stderr (64KiB tail) to obtain the
+complete DevTools websocket endpoint/nonce from THIS spawned child. Validate
+loopback, requested port (or the actual assigned port if requested0), browser path,
+and absence of credentials/query/fragment. Attach only that owned endpoint; no
+fallback that could attach another process at a guessed port. Bound the CDP
+handshake by remaining startup time; if needed retry only within that deadline
+while the same owned process is alive. Detect spawn/early-exit errors promptly.
+On every startup failure clean up this child and any partial browser connection;
+retain safe bounded diagnostics and actionable error. Preserve Windows manual
+launch support, Browser interface and all existing caller behavior.
+
+Do not add a separate competing launcher or new dependency. If helper extraction
+is necessary it must have one authoritative owner and keep authored files under
+500 lines. Send exact source/test proposal before editing. Use the existing
+public protected-browser suite as the real RED/GREEN boundary: old exact source
+has the recorded startup refusal, final exact source must pass in isolated
+Windows and on the standard Linux diagnostic runner. Include deterministic
+coverage of delayed readiness, early child failure, nonce validation and cleanup
+using existing testing patterns; do not merely mock a final successful result.
+Obtain independent review and root verification before commit/push. The full
+normal release gate remains required after this focused repair.
+
+### Align the release toolchain with the verified Bun runtime
+
+The official SHA-verified Bun 1.4.2 comparison passes the formerly crashing frame
+suite on Windows and Linux (55 tests/291 assertions each), and the corrected
+217-file replay with committed fixture repair passes all 1,785 tests/6,834 asserts.
+The replay is not the full release gate. Bun 1.3.14 panics on old and new source;
+there is no basis to weaken tests or attribute the native panic to a repaired
+feature. The official 1.4.2 notes mention JIT/GC fixes, but matching a specific
+upstream fix to this crash is an unproven hypothesis.
+
+Authorize .bun-version to pin 1.4.2 and package.json's existing engines.bun floor
+to become >=1.4.2. Existing CI/Pages/release workflows already derive their exact
+runtime from .bun-version; keep that one build-pin owner. Do not add overrides or
+change @types/bun, dependency versions, vendor gitlink, test flags or gates.
+
+Update current development/install claims in docs/03-CONVENTIONS.md,
+docs/guide/getting-started.md and docs/guide/installation.md to match. Preserve
+historical evidence under plans/evidence. docs/reference/ui.md's earlier 1.3.14
+native-cache proof must remain clearly historical, never be relabeled as 1.4.2
+proof without running it. Use existing summary sidecar, receipt and docs-index
+commands for changed docs; never hand-edit generated catalogs. Keep unrelated
+installation/publication claims unchanged until a real release exists.
+
+Before commit, prove a fresh isolated Linux candidate can install the SAME frozen
+root/vendor lockfiles under the verified 1.4.2 toolchain without resolving new
+dependencies or mutating the prior snapshots/shared node_modules. Run typecheck
+and the existing SQLite runtime probe against this candidate. A necessary lock
+format/dependency change is a stop-and-report condition, not permission to update
+the dependency graph. Reuse the already measured frame and217 results rather than
+rerunning unchanged groups needlessly. Obtain independent config/docs review and
+root verification; commit with normal hooks, preserve concurrent launcher work.
+After both repairs pass focused checks, the exact new release must pass the full
+unchanged verify:ci (apart from approved fail-fast), packaged S21 and build matrix.
+This runtime change does not authorize bypassing any release verification.
+
+### Validate the reviewed combined commit before Mainstage delivery
+
+The local Linux fixture has no Chrome; a skip cannot establish real-browser
+success. The new source must exist on a remote ref for the existing manual
+standard-runner diagnostic to execute it. Resolve that dependency by pushing the
+independently reviewed, normal-hook combined runtime/startup commit to the precise
+validation branch validate/release-startup-20261101, then dispatch only the manual
+browser diagnostic against that exact branch SHA. Do not overwrite an existing
+branch without verifying its ownership/ancestry; use a uniquely named task branch
+if occupied. No force push, release, tag, publish or paid runner. Keep skip-ci and
+skip-release markers so this does not launch an unrelated full matrix.
+
+This reversible validation push is within the user's source-delivery authority;
+it does not claim success before the run. Root and independent source review,
+unit/Windows public checks, and combined typecheck precede the commit/push. The
+Linux public suite and owned probe must report their actual results on that same
+SHA. Once GREEN, fast-forward Mainstage to the exact validated commit (or revalidate
+if its source changes), then start the one normal release gate. No pre-push hook
+bypass beyond the owner's already authorized source-push exception; normal commit
+hooks and all release checks remain required.

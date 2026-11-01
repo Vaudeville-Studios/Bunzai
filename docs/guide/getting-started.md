@@ -14,7 +14,7 @@ Getting started is four things: install Bunzai, run the first-run wizard once, l
 ## The short version
 
 1. **Install Bunzai.** There is no published release yet. To use the currently available source checkout,
-   install Bun 1.3.14 and use:
+   install Bun 1.4.2 and use:
    ```bash
    git clone --recurse-submodules https://github.com/Vaudeville-Studios/Bunzai.git
    cd Bunzai
@@ -84,7 +84,7 @@ opens it in the Workbench. Use the import door when you already have a supported
 ## Tips
 
 - When a release is published, its platform assets will appear on [GitHub Releases](https://github.com/Vaudeville-Studios/Bunzai/releases). Until then, the source checkout is the available local installation path.
-- Bun 1.3.14 is the version pinned by this checkout.
+- Bun 1.4.2 is the version pinned by this checkout.
 - The wizard's Skip all is not a lesser path. It fills the defaults; the retained setup choices remain editable in Settings.
 - The first kind selected under "What do you want to make?" chooses the initial Library deck. After that, the Library remembers the deck you last opened.
 - A lorebook that arrives attached to a character comes in as one bundle under one receipt row; that row's entry count is the lorebook's.

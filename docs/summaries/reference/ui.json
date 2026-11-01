@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:e62397ba9c98eab1f92664ed55cd4d718e1fea8f9fc4d50fca9882cb4a9cc573",
+  "sourceHash": "sha256:7b329116b8dbfcb4a762f0380c8e1d89a940fb8f77c9a3d22b19405b1010ec07",
   "summary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close.",
   "topics": [
     "Kit conversational terminal",

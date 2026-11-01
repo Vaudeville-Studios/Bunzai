@@ -17,7 +17,7 @@ The release workflow defines a Windows desktop app (`Bunzai.exe`), command-line 
 
 ## Run from source
 
-Use the Bun version pinned by this checkout: **1.3.14**. Bun's [official installation instructions](https://bun.com/docs/installation) cover Windows, macOS, and Linux. After installing, open a new terminal and check `bun --version`.
+Use the Bun version pinned by this checkout: **1.4.2**. Bun's [official installation instructions](https://bun.com/docs/installation) cover Windows, macOS, and Linux. After installing, open a new terminal and check `bun --version`.
 
 In the terminal, run:
 
@@ -71,7 +71,7 @@ The update commands do not delete your studio folder, though a newer program may
 
 ## If something does not open
 
-- **Bun is missing or too old:** run `bun --version`; this checkout pins 1.3.14. Follow Bun's official install or upgrade steps, open a fresh terminal, and check again.
+- **Bun is missing or too old:** run `bun --version`; this checkout pins 1.4.2. Follow Bun's official install or upgrade steps, open a fresh terminal, and check again.
 - **RP-Core or another package is missing:** from the checkout, run `git submodule update --init --recursive`, then `bun install --frozen-lockfile`.
 - **The address differs from 8321:** Bunzai prints the address it actually bound. Open that address, not a guessed port.
 - **A future Windows desktop build starts without a window:** Windows desktop builds use WebView2. Microsoft's [distribution guide](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution) explains the runtime requirement; the [WebView2 download page](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) provides Microsoft's installer options.

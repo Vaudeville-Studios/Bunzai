@@ -261,7 +261,7 @@
           "text": "Repository",
           "slug": "repository",
           "level": 2,
-          "summary": "Development requires Bun 1.3.14 or later; CI reads the exact .bun-version. Commit subjects describe the change and skip release is the only machine-read marker. Changes carry proof and never bypass hooks. Virtualization goes through the shared virtual-list module: VirtualRows for flat lists, VirtualShelf for card grids. Host code never keys on a theme id. Every data-part is a dotted id-keyed name on every scenes wing, tab and pop-out (scan:virtualizers, scan:theme-keys, scan:parts).",
+          "summary": "Development requires Bun 1.4.2 or later; CI reads the exact .bun-version. Commit subjects describe the change and skip release is the only machine-read marker. Changes carry proof and never bypass hooks. Virtualization goes through the shared virtual-list module: VirtualRows for flat lists, VirtualShelf for card grids. Host code never keys on a theme id. Every data-part is a dotted id-keyed name on every scenes wing, tab and pop-out (scan:virtualizers, scan:theme-keys, scan:parts).",
           "topics": [
             "release-history commits",
             "optional Conventional Commits",
@@ -2123,10 +2123,10 @@
           "text": "The short version",
           "slug": "the-short-version",
           "level": 2,
-          "summary": "There is no published Bunzai release yet. The available path is a source checkout using Bun 1.3.14: clone with recursive submodules, install the lockfile dependencies, and run the local Studio with bun run dev. The server prints its loopback address, normally 127.0.0.1:8321. A new studio opens the first-run wizard and then the Library, where you can import a supported file or create a blank character. See the illustrated installation guide for platform-specific Bun instructions, backups, updates, and troubleshooting.",
+          "summary": "There is no published Bunzai release yet. The available path is a source checkout using Bun 1.4.2: clone with recursive submodules, install the lockfile dependencies, and run the local Studio with bun run dev. The server prints its loopback address, normally 127.0.0.1:8321. A new studio opens the first-run wizard and then the Library, where you can import a supported file or create a blank character. See the illustrated installation guide for platform-specific Bun instructions, backups, updates, and troubleshooting.",
           "topics": [
             "no public release",
-            "Bun 1.3.14",
+            "Bun 1.4.2",
             "recursive clone",
             "bun run dev"
           ],
@@ -2319,9 +2319,9 @@
           "text": "Run from source",
           "slug": "run-from-source",
           "level": 2,
-          "summary": "This checkout pins Bun 1.3.14. Install Bun using its official platform instructions, open a new terminal, and confirm the version with bun --version. Clone the repository with --recurse-submodules so the pinned RP-Core dependency is present, then run bun install --frozen-lockfile and bun run dev. The server normally binds to 127.0.0.1:8321 and prints the address it actually uses. If that port is occupied, it checks nearby local ports. Leave the terminal open while using the Studio and press Ctrl+C when finished.",
+          "summary": "This checkout pins Bun 1.4.2. Install Bun using its official platform instructions, open a new terminal, and confirm the version with bun --version. Clone the repository with --recurse-submodules so the pinned RP-Core dependency is present, then run bun install --frozen-lockfile and bun run dev. The server normally binds to 127.0.0.1:8321 and prints the address it actually uses. If that port is occupied, it checks nearby local ports. Leave the terminal open while using the Studio and press Ctrl+C when finished.",
           "topics": [
-            "Bun 1.3.14",
+            "Bun 1.4.2",
             "recursive submodule clone",
             "local loopback Studio"
           ],
@@ -2367,7 +2367,7 @@
           "text": "If something does not open",
           "slug": "if-something-does-not-open",
           "level": 2,
-          "summary": "If Bun is missing or the version is wrong, check bun --version against the checkout's 1.3.14 pin and follow Bun's official installation or upgrade instructions. If RP-Core or another package is missing, initialize recursive submodules and reinstall from the lockfile. When the server prints a port other than 8321, open that exact address. A future Windows desktop build will use WebView2; consult Microsoft's distribution and download pages for its runtime. If a release binary is published, confirm that its platform and architecture match and verify the checksum shown with that release. Unpublished workflow names are not valid download links.",
+          "summary": "If Bun is missing or the version is wrong, check bun --version against the checkout's 1.4.2 pin and follow Bun's official installation or upgrade instructions. If RP-Core or another package is missing, initialize recursive submodules and reinstall from the lockfile. When the server prints a port other than 8321, open that exact address. A future Windows desktop build will use WebView2; consult Microsoft's distribution and download pages for its runtime. If a release binary is published, confirm that its platform and architecture match and verify the checksum shown with that release. Unpublished workflow names are not valid download links.",
           "topics": [
             "Bun version",
             "missing submodule",

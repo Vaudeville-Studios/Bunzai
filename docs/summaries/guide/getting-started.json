@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "guide/getting-started",
   "sourcePath": "docs/guide/getting-started.md",
-  "sourceHash": "sha256:5880287d9ececa4849c92f538333773e1d246a91ca5fd46faa45ed8ba68c5b51",
+  "sourceHash": "sha256:1745d2513cffb5420e76d71944c1f3ab0ae8b46b6c9d5c27acb5ab37a1d05ac7",
   "summary": "Get started with the source checkout that is available today, choose a theme preset or skip the first-run choices, learn the Studio rooms, and bring a file into the Library. Bunzai does not currently have a published release, so this walkthrough points to the pinned Bun version and recursive submodule setup. The wizard can be revisited through Settings only for the choices the Studio retains; it does not limit what you can create. The Library receipt lets you choose which parsed pieces to keep before import writes them. Its separate Start fresh door creates a blank character. A provider is only needed when you submit a scene turn, not for local import, editing, or conversion.",
   "topics": [
     "source installation",
@@ -16,11 +16,11 @@
       "slug": "the-short-version",
       "title": "The short version",
       "level": 2,
-      "sourceHash": "sha256:31a99ee4694bcaf4e7ad825ba7671c79affe9af03fd8542cec05391d6279ce90",
-      "summary": "There is no published Bunzai release yet. The available path is a source checkout using Bun 1.3.14: clone with recursive submodules, install the lockfile dependencies, and run the local Studio with bun run dev. The server prints its loopback address, normally 127.0.0.1:8321. A new studio opens the first-run wizard and then the Library, where you can import a supported file or create a blank character. See the illustrated installation guide for platform-specific Bun instructions, backups, updates, and troubleshooting.",
+      "sourceHash": "sha256:6391fff36d23b42093db235282eefd700809713b72836a37ebdb26388e8561be",
+      "summary": "There is no published Bunzai release yet. The available path is a source checkout using Bun 1.4.2: clone with recursive submodules, install the lockfile dependencies, and run the local Studio with bun run dev. The server prints its loopback address, normally 127.0.0.1:8321. A new studio opens the first-run wizard and then the Library, where you can import a supported file or create a blank character. See the illustrated installation guide for platform-specific Bun instructions, backups, updates, and troubleshooting.",
       "topics": [
         "no public release",
-        "Bun 1.3.14",
+        "Bun 1.4.2",
         "recursive clone",
         "bun run dev"
       ],
@@ -72,7 +72,7 @@
       "slug": "tips",
       "title": "Tips",
       "level": 2,
-      "sourceHash": "sha256:e4a686472f48795c6adc419de4ced75d08271b463ade181b1afd3d25e67f06f9",
+      "sourceHash": "sha256:dcb1b3bbf1b33c0865ab9d205a79bafd8688ec24c37e6f5c2518a60ae0a552a8",
       "summary": "No release is published yet, so use the pinned source installation. Skip all fills the wizard defaults; retained choices remain editable. The first selected kind sets the initial Library deck. If an import receipt says a file could not be read, it may be unsupported, malformed, or damaged. The formats command lists available adapters, and the CLI UI command accepts a custom studio folder.",
       "topics": [
         "source checkout",

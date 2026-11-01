@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:192a2b2d36f26dac9c71410875900c04cc3bb0bb3101d23ca7c1aba809c4e481",
-  "semanticSummaryHash": "sha256:37975fb39100ffdb5ba57ce71de98a28dc9b666ac2d118d5e0c3470f50ecb750",
+  "sourceHash": "sha256:2b2d75c96199d1c4aaa957e44621b2af924bd4f9ec1e3ed22d896f7db017cea6",
+  "semanticSummaryHash": "sha256:fe283e23814888ca2592fd29c1fd39e36fd92ddc566aecde090253ccfee9c2e4",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root independently reviewed exact installation source and summary hashes against the release workflow: Kit remains source-only development, all four Kit downloads and the Kit-only ARM job are removed, Linux ARM CLI/helper cross-builds and release gates remain. No new binaries or publication claimed.",
-  "reviewedAt": "2026-11-01T05:09:16.607Z"
+  "notes": "Independent review confirms the current install and troubleshooting instructions use Bun 1.4.2 without changing unpublished release claims.",
+  "reviewedAt": "2026-11-01T10:14:16.527Z"
 }

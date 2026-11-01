@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:192a2b2d36f26dac9c71410875900c04cc3bb0bb3101d23ca7c1aba809c4e481",
+  "sourceHash": "sha256:2b2d75c96199d1c4aaa957e44621b2af924bd4f9ec1e3ed22d896f7db017cea6",
   "summary": "Bunzai currently has no published release, so this guide installs the available source checkout. It covers the pinned Bun version, recursive RP-Core submodule, local Studio launch, first-run choices, Library import, provider setup for scene replies, encrypted library backups, source updates, and common startup issues. The browser preview is temporary and is not a replacement for the installed local Studio. Planned desktop and CLI artifacts are described only as workflow targets. They are not downloadable until a release is published. Use the printed local address and keep recovery material separate from the computer.",
   "topics": [
     "source install and pinned Bun",
@@ -30,10 +30,10 @@
       "slug": "run-from-source",
       "title": "Run from source",
       "level": 2,
-      "sourceHash": "sha256:80f081dbc1c13e86f693831efa8a80b4d4c88ada74bc869bbd9261a8b612f649",
-      "summary": "This checkout pins Bun 1.3.14. Install Bun using its official platform instructions, open a new terminal, and confirm the version with bun --version. Clone the repository with --recurse-submodules so the pinned RP-Core dependency is present, then run bun install --frozen-lockfile and bun run dev. The server normally binds to 127.0.0.1:8321 and prints the address it actually uses. If that port is occupied, it checks nearby local ports. Leave the terminal open while using the Studio and press Ctrl+C when finished.",
+      "sourceHash": "sha256:c328a3f7aa4d3d674a4123618e3c8ba5953fcda832d9d311e1f8937ddc835cab",
+      "summary": "This checkout pins Bun 1.4.2. Install Bun using its official platform instructions, open a new terminal, and confirm the version with bun --version. Clone the repository with --recurse-submodules so the pinned RP-Core dependency is present, then run bun install --frozen-lockfile and bun run dev. The server normally binds to 127.0.0.1:8321 and prints the address it actually uses. If that port is occupied, it checks nearby local ports. Leave the terminal open while using the Studio and press Ctrl+C when finished.",
       "topics": [
-        "Bun 1.3.14",
+        "Bun 1.4.2",
         "recursive submodule clone",
         "local loopback Studio"
       ],
@@ -82,8 +82,8 @@
       "slug": "if-something-does-not-open",
       "title": "If something does not open",
       "level": 2,
-      "sourceHash": "sha256:1677977eba2086d7d3e3c1712e0164527857d78c6e4f47a098cc323eb6413582",
-      "summary": "If Bun is missing or the version is wrong, check bun --version against the checkout's 1.3.14 pin and follow Bun's official installation or upgrade instructions. If RP-Core or another package is missing, initialize recursive submodules and reinstall from the lockfile. When the server prints a port other than 8321, open that exact address. A future Windows desktop build will use WebView2; consult Microsoft's distribution and download pages for its runtime. If a release binary is published, confirm that its platform and architecture match and verify the checksum shown with that release. Unpublished workflow names are not valid download links.",
+      "sourceHash": "sha256:637afae1a9287775cd430232899ff857625f723714d111700cfca8b4cf036599",
+      "summary": "If Bun is missing or the version is wrong, check bun --version against the checkout's 1.4.2 pin and follow Bun's official installation or upgrade instructions. If RP-Core or another package is missing, initialize recursive submodules and reinstall from the lockfile. When the server prints a port other than 8321, open that exact address. A future Windows desktop build will use WebView2; consult Microsoft's distribution and download pages for its runtime. If a release binary is published, confirm that its platform and architecture match and verify the checksum shown with that release. Unpublished workflow names are not valid download links.",
       "topics": [
         "Bun version",
         "missing submodule",

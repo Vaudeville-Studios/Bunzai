@@ -112,7 +112,7 @@
     "rp-core:init": "git submodule update --init --recursive vendor/rp-core && bun install"
   },
   "engines": {
-    "bun": ">=1.3.14"
+    "bun": ">=1.4.2"
   },
   "devDependencies": {
     "@iconify-json/lucide": "1.2.102",

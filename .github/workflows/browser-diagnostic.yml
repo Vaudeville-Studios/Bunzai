@@ -130,6 +130,12 @@ jobs:
                                   endpoint = match[1].decode()
                           remaining = limit - size
                           handle.write(chunk[:remaining])
+                          if name == "chrome" and target.suffix == ".stderr":
+                              try:
+                                  sys.stderr.buffer.write(chunk[:remaining])
+                                  sys.stderr.buffer.flush()
+                              except BrokenPipeError:
+                                  stop("parent-pipe-closed")
                           key.data[1] += min(len(chunk), remaining)
                           if len(chunk) > remaining:
                               (evidence / f"{name}.limit").write_text(str(target))
@@ -158,7 +164,7 @@ jobs:
                       handle.close()
                   poll.close()
               cleanup = not live_group() if group else child.poll() is not None
-              effective = 124 if reason in ("time-limit", "output-limit") else 1 if failure or forced or not cleanup or (group and reason) else code
+              effective = 124 if reason in ("time-limit", "output-limit") else 1 if failure or forced or not cleanup or reason == "parent-pipe-closed" or (group and reason) else code
               if reason == "readiness-observed" and not failure and not forced and cleanup:
                   effective = 0
               elif readiness and effective == 0:

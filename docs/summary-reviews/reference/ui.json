@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:e62397ba9c98eab1f92664ed55cd4d718e1fea8f9fc4d50fca9882cb4a9cc573",
-  "semanticSummaryHash": "sha256:d587f58ee92352f11083c4d5f0b5ee49c4a5741b64e3593ca0e6a71dae1436e3",
+  "sourceHash": "sha256:7b329116b8dbfcb4a762f0380c8e1d89a940fb8f77c9a3d22b19405b1010ec07",
+  "semanticSummaryHash": "sha256:7de3ca295c1afd6280ed25e064865bc194517607a4a34d0b43aaf00dd9197959",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root independently reviewed product and instance ownership, helper explicit Enable, native fallback and verification limits against source and isolated regressions. Visual checking was explicitly waived.",
-  "reviewedAt": "2026-11-01T03:11:43.434Z"
+  "notes": "Independent review labels the prior Bun 1.3.14 native-cache tests as historical and makes no 1.4.2 proof claim.",
+  "reviewedAt": "2026-11-01T10:14:16.671Z"
 }

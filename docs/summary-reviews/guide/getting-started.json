@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/getting-started",
   "sourcePath": "docs/guide/getting-started.md",
-  "sourceHash": "sha256:5880287d9ececa4849c92f538333773e1d246a91ca5fd46faa45ed8ba68c5b51",
-  "semanticSummaryHash": "sha256:c44917679e345620e8de4c51318bcbde8183c9a6221cd8920dfc45dcf1b49736",
+  "sourceHash": "sha256:1745d2513cffb5420e76d71944c1f3ab0ae8b46b6c9d5c27acb5ab37a1d05ac7",
+  "semanticSummaryHash": "sha256:aa9920c9737fdad0397cdf410032f27e428a44a586fdd8e4cd25d4ee7a15da0c",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Independent review against the source-first installation path, actual RoleCall/Theater/Paper/GirliePop wizard choices, provider setup note, and current Library import flow.",
-  "reviewedAt": "2026-11-01T02:18:01.271Z"
+  "notes": "Independent review confirms the source checkout instructions use Bun 1.4.2 and the current setup flow remains accurate.",
+  "reviewedAt": "2026-11-01T10:14:16.388Z"
 }

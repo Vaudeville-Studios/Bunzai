@@ -28,7 +28,7 @@ function authority(overrides: Partial<{ current: OperationPrincipal; confirm: (e
     confirm: overrides.confirm ?? (async () => true), reserveBudget: async (reservation: ExtensionBudgetReservation, _limits: ExtensionBudget) => { reservations.push(reservation); return overrides.budgetAllowed ?? true; },
     settleBudget: async (_packageId: string, id: string, bytes: number) => reservations.some((reservation) => reservation.id === id && bytes <= reservation.bytes),
     record: async (receipt: EffectReceipt) => { records.push(receipt); }, readReceipts: overrides.readReceipts ?? (async () => [...records]), now: () => 123, id: () => `receipt-${records.length}`,
-    commitContext: (current: OperationPrincipal, operation: string, access: ResolvedOperationAccess) => ({ owner: "00000000-0000-4000-8000-000000000001", epoch: 1, packageId: current.packageId, packageDigest: current.packageDigest, policyFingerprint: current.policyFingerprint, grantRevision: current.grantRevision, operation, access, now: () => 123 }) };
+    commitContext: (current: OperationPrincipal, operation: string, access: ResolvedOperationAccess, invocationId: string) => ({ owner: "00000000-0000-4000-8000-000000000001", epoch: 1, invocationId, packageId: current.packageId, packageDigest: current.packageDigest, policyFingerprint: current.policyFingerprint, grantRevision: current.grantRevision, operation, access, now: () => 123 }) };
 }
 
 describe("extension operation broker", () => {
@@ -50,6 +50,19 @@ describe("extension operation broker", () => {
     expect(auth.records[0]!.id).toBe(auth.records[1]!.id);
     await expect(invoke({ v: 1, type: "request", id: 2, operation: "content.read", args: { id: "char-2" } })).rejects.toMatchObject({ code: "denied" });
     await expect(invoke({ v: 1, type: "request", id: 3, operation: "content.read", args: { id: "char-1", fetch: true } })).rejects.toMatchObject({ code: "invalid-request" });
+  });
+  test("uses the broker receipt identity as the invocation commit identity", async () => {
+    let invocationId: string | undefined;
+    const inspectCommit = { ...operation, execute: async (_args: { id: string }, context: Parameters<typeof operation.execute>[1]) => {
+      invocationId = context.commit.invocationId;
+      return { name: "ok" };
+    } };
+    const auth = authority();
+    await createExtensionBroker([inspectCommit], auth)({ v: 1, type: "request", id: 1, operation: operation.id, args: { id: "char-1" } });
+    const receiptId = auth.records[0]?.id;
+    expect(invocationId).toBe(receiptId);
+    if (!receiptId) throw new Error("broker did not record its admitted receipt");
+    expect(auth.records.map(({ id }) => id)).toEqual([receiptId, receiptId]);
   });
   test("requires host confirmation for effects and refuses stale access revisions", async () => {
     let confirmed = false; let review: JsonValue | undefined; const records: EffectReceipt[] = [];

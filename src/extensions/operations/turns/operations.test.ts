@@ -21,7 +21,7 @@ function harness(resources: { kind: string; id: string }[], fields: string[], wr
     review: async (_scene, _kind, _version, scope, followOn) => {
       reviewed = { scope, followOn };
       if (followOn.lorebookIds.some((id) => !writableBooks.includes(id))) return null;
-      return { connectionId, model: "model-1", configFingerprint: "c".repeat(64), branchVersion: 3 };
+      return { connectionId, model: "model-1", configFingerprint: "c".repeat(64), branchVersion: 3, core: null };
     },
     run: async (_principal, _scene, _connection, _model, _fingerprint, _kind, _version, _scope, commit) => {
       executedAccess = commit.access;

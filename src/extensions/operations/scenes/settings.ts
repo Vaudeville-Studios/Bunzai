@@ -1,7 +1,7 @@
 /** Reviewed, revision-bound scene settings reads and writes through the canonical ChatStore door. */
 import { z } from "zod";
 import { SHA256_HEX_PATTERN } from "../../../core/sha256";
-import { bindExtensionDefinitions, CORE_LINKED_SCENE_HOST_NOTES, EXTENSION_HOSTS, type ExtensionOperationDefinition, type ExtensionOperationMetadata, type ResourceRef } from "../../contracts/operation";
+import { bindExtensionDefinitions, CORE_SCENE_SETTING_HOST_NOTES, EXTENSION_HOSTS, type ExtensionOperationDefinition, type ExtensionOperationMetadata, type ResourceRef } from "../../contracts/operation";
 import { decodeJsonValue, MAX_VALUE_BYTES } from "../../contracts/value";
 import { SCENE_SETTING_GROUPS, sceneSettingChangeSchema, sceneSettingSelectorSchema, type SceneSettingChange, type SceneSettingSelector } from "../../../stage/contracts/scene-settings";
 import { TRACKER_MODULES } from "../../../stage/contracts/chat-tracker-types";
@@ -30,7 +30,7 @@ function checkedPreview(value: unknown): z.infer<typeof previewOutput> { return 
 
 const common = {
   version: 1, inputVersion: 1, outputVersion: 1, projectionVersion: 1,
-  effect: "read" as const, sensitivity: "private" as const, hosts: EXTENSION_HOSTS, hostNotes: CORE_LINKED_SCENE_HOST_NOTES,
+  effect: "read" as const, sensitivity: "private" as const, hosts: EXTENSION_HOSTS, hostNotes: CORE_SCENE_SETTING_HOST_NOTES,
   policy: { resources: ["scene"], fields: selectorFields, methods: [], destinationMode: "none" as const, destinations: [], budget: "read-small" as const, confirmation: "none" as const },
   estimateBudget: () => ({ bytes: MAX_VALUE_BYTES, tokens: 0 }), measureTokens: () => 0,
 };

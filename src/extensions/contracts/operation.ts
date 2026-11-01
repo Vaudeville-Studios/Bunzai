@@ -19,8 +19,16 @@ export const BROWSER_EXTENSION_HOSTS: readonly HostFeature[] = ["desktop", "brow
 export const DESKTOP_TERMINAL_EXTENSION_HOSTS: readonly HostFeature[] = ["desktop", "terminal"];
 export const EXTENSION_COMMAND_HOSTS: readonly HostFeature[] = ["desktop", "browser", "terminal"];
 export const CORE_LINKED_SCENE_HOST_NOTES: Readonly<Partial<Record<HostFeature, string>>> = {
-  desktop: "Legacy scenes only; Core-linked scene targets are refused.",
-  terminal: "Legacy scenes only; Core-linked scene targets are refused.",
+  desktop: "Core-linked scenes support append and exact mapped edit; delete and fork remain unavailable.",
+  terminal: "Core-linked scenes support append and exact mapped edit; delete and fork remain unavailable.",
+};
+export const CORE_LINKED_TURN_HOST_NOTES: Readonly<Partial<Record<HostFeature, string>>> = {
+  desktop: "Core-linked turns use the Core prompt and event pipeline; summary and Compendium follow-on jobs are refused.",
+  terminal: "Core-linked turns use the Core prompt and event pipeline; summary and Compendium follow-on jobs are refused.",
+};
+export const CORE_SCENE_SETTING_HOST_NOTES: Readonly<Partial<Record<HostFeature, string>>> = {
+  desktop: "Core-linked scenes support only connection and backdrop setting selectors; legacy-only selectors are refused.",
+  terminal: "Core-linked scenes support only connection and backdrop setting selectors; legacy-only selectors are refused.",
 };
 export type EffectClass = "read" | "write" | "external" | "control";
 export type DataSensitivity = "public" | "private" | "secret";

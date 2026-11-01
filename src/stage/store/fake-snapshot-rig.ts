@@ -82,6 +82,7 @@ export function asBeforeHealthCheck(file: string): void {
   const db = new Database(file);
   try {
     for (const t of db.query("SELECT name FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'fp_%'").all() as { name: string }[]) db.run(`DROP TRIGGER ${t.name}`);
+    for (const table of ["core_pending_extension_state", "core_message_links", "core_operation_projections", "core_scene_creation_bindings"]) db.run(`DROP TABLE ${table}`);
     for (const table of ["row_fingerprints", "fp_dirty", "set_aside", "extension_logs"]) db.run(`DROP TABLE ${table}`);
     db.run("DROP TABLE compendium_receipts");
     db.run("DROP TABLE compendium_trees");

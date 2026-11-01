@@ -2,9 +2,14 @@
 
 Generated from `src/extensions/operations/`. Descriptors are the source of truth.
 
-The table lists host-level adapters. rp-core remains the owner of linked-scene turns, so those turns do not run extension prompt or scene-event hooks and Desktop/Terminal local prompt previews are unavailable for linked scenes.
+The table lists host-level adapters. rp-core owns linked-scene turns and runs the required extension prompt and scene-event hooks. Desktop and Terminal provide a bounded local preview for linked scenes; Browser/Pocket has no rp-core owner and uses its legacy scene path. Per-operation notes identify narrower compatibility limits.
 
-* Legacy scenes only; Core-linked scene targets are refused.
+* Core-linked scenes support append and exact mapped edit; delete and fork remain unavailable.
+* Creates a blank scene in the host ChatStore.
+* Creates and links an rp-core scene using the approved frozen cast; UI loadout defaults and follow-on jobs are not run.
+* Core-linked scenes support only connection and backdrop setting selectors; legacy-only selectors are refused.
+* Core writes bind an exact mapped swipe. Pending state accepts only with this package's successful reply or regenerate commit.
+* Core-linked turns use the Core prompt and event pipeline; summary and Compendium follow-on jobs are refused.
 
 | Operation | Name | Effect | Hosts | Budget | Confirmation |
 | --- | --- | --- | --- | --- | --- |
@@ -110,7 +115,7 @@ The table lists host-level adapters. rp-core remains the owner of linked-scene t
 | `prompts.inspect` | Inspect the active prompt | read | desktop, browser, terminal | read-large | none |
 | `prompts.transform` | Transform this hook's prompt candidate | control | desktop, browser, terminal | metadata | none |
 | `regex.preview` | Preview regex rules | read | desktop, browser, terminal | read-small | none |
-| `scenes.create` | Create scene | write | browser | write | effect |
+| `scenes.create` | Create scene | write | desktop*, browser*, terminal* | write | effect |
 | `scenes.list` | List scenes | read | desktop, browser, terminal | read-small | none |
 | `scenes.read` | Read scene details | read | desktop, browser, terminal | read-small | none |
 | `scenes.settings.apply` | Apply scene setting | write | desktop*, browser, terminal* | write | effect |

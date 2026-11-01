@@ -20,6 +20,8 @@ export const JOURNAL_TABLE = "piece_changes";
 export const CONTENT_TABLES = [
   "blob_refs", "blobs", "branch_base", "branch_state", "branch_variables", "branches", "chats", "compendium_receipts", "compendium_trees", "core_entries", "core_scene_links", "core_sessions", "director_states", "document_graves", "document_summaries", "document_versions",
   "extension_budget_reservations", "extension_budget_usage", "extension_controls", "extension_data", "extension_logs", "extension_packages", "extension_receipts",
+  "core_scene_creation_bindings", "core_operation_projections", "core_message_links",
+  "core_pending_extension_state",
   "documents", "dramaturg_threads", "grave_summaries", "grave_versions", "kit_sessions", "legacy_document_graves_v17", "legacy_document_summaries_v17",
   "legacy_document_versions_v17", "legacy_documents_v17", "legacy_grave_summaries_v17", "legacy_grave_versions_v17", "message_deltas", "messages",
   "persona_stats",

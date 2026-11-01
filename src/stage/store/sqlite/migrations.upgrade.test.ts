@@ -35,7 +35,7 @@ test("the list is numbered 1 to n and holds the real health check at 24, never a
   expect(MIGRATIONS.some((m) => /reserved|placeholder/i.test(m.name))).toBe(false);
   expect(MIGRATIONS[24]!.id).toBe(25);
   expect(MIGRATIONS[25]!.id).toBe(26);
-  expect(MIGRATIONS.at(-1)!.id).toBe(51);
+  expect(MIGRATIONS.at(-1)!.id).toBe(52);
 });
 
 test("a database from before migration 24 upgrades cleanly through 24, 25 and 26", () => {
@@ -334,7 +334,7 @@ test("migrations 48-51 add extension tables, revisioned state, logs, and checkpo
   const before = reopen(path, 46);
   before.close(); open.pop();
   const d = reopen(path);
-  expect(names(d).slice(-4).map(({ id, name }) => ({ id, name }))).toEqual([
+  expect(names(d).filter(({ id }) => id >= 48 && id <= 51).map(({ id, name }) => ({ id, name }))).toEqual([
     { id: 48, name: "executable extensions" },
     { id: 49, name: "revisioned state documents" },
     { id: 50, name: "extension operational logs" },

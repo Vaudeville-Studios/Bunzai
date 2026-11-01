@@ -10,6 +10,7 @@ import { resolveGrantedAccess } from "../permissions/matching";
 type Message = { role: "system" | "user" | "assistant" | "tool"; content: string };
 type Activate = (id: string, kind: "command" | "event", contributionId: string, input: ReturnType<typeof decodeJsonValue>, invocation?: ExtensionPromptInvocation, signal?: AbortSignal) => Promise<unknown>;
 type Hook = { packageId: string; packageDigest: string; grantRevision: number; id: string; priority: number; stage: "system.append"; required: boolean };
+export type PromptHookRunner = ((sceneId: string, messages: readonly Message[], signal: AbortSignal) => Promise<readonly string[]>) & { hasHooks(sceneId: string): Promise<boolean> };
 const compareText = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0;
 
 async function recordOutcome(store: ExtensionStore, requireFence: () => Promise<ExtensionRuntimeFence>, hook: Hook, succeeded: boolean): Promise<boolean> {
@@ -41,8 +42,8 @@ async function stillAuthorized(store: ExtensionStore, hook: Hook): Promise<boole
     && current.grantRevision === hook.grantRevision && !current.suspendedPromptIds.includes(hook.id);
 }
 
-export function createPromptHookRunner(store: ExtensionStore, operations: readonly ExtensionOperationDescriptor[], requireFence: () => Promise<ExtensionRuntimeFence>, activate: Activate) {
-  return async (sceneId: string, messages: readonly Message[], signal: AbortSignal): Promise<readonly string[]> => {
+export function createPromptHookRunner(store: ExtensionStore, operations: readonly ExtensionOperationDescriptor[], requireFence: () => Promise<ExtensionRuntimeFence>, activate: Activate): PromptHookRunner {
+  const hooksFor = async (sceneId: string): Promise<Hook[]> => {
     await requireFence();
     const candidates: Hook[] = [];
     const controls = [...await store.listControls()].sort((a, b) => compareText(a.id, b.id));
@@ -67,6 +68,10 @@ export function createPromptHookRunner(store: ExtensionStore, operations: readon
     if (required.length > MAX_EXTENSION_PROMPT_HOOKS) throw new Error("Required prompt hooks exceed the host hook limit.");
     const selected = [...required, ...candidates.filter((hook) => !hook.required).slice(0, MAX_EXTENSION_PROMPT_HOOKS - required.length)]
       .sort((a, b) => a.priority - b.priority || compareText(a.packageId, b.packageId) || compareText(a.id, b.id));
+    return selected;
+  };
+  const run = async (sceneId: string, messages: readonly Message[], signal: AbortSignal): Promise<readonly string[]> => {
+    const selected = await hooksFor(sceneId);
 
     const output: string[] = [];
     let totalBytes = 0;
@@ -110,4 +115,5 @@ export function createPromptHookRunner(store: ExtensionStore, operations: readon
     }
     return output;
   };
+  return Object.assign(run, { async hasHooks(sceneId: string) { return (await hooksFor(sceneId)).length > 0; } });
 }

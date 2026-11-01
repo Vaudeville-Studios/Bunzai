@@ -61,6 +61,7 @@ export interface ExtensionServiceOptions {
   fileActions?: HostFileActionPort;
   hostActions?: HostActionPort;
   previewPrompts?(sceneId: string, draft: string, signal: AbortSignal): Promise<ExtensionPromptPreview>;
+  previewCorePrompts?(sceneId: string, draft: string, signal: AbortSignal, apply: (sceneId: string, messages: readonly { role: "system" | "user" | "assistant" | "tool"; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasHooks: (sceneId: string) => Promise<boolean>): Promise<ExtensionPromptPreview | null>;
   promptScenes?(): Promise<readonly ExtensionPromptScene[]>;
   closeHost?(): Promise<void>;
 }
@@ -167,8 +168,10 @@ export function createExtensionService(options: ExtensionServiceOptions) {
   const promptManagerApi = createExtensionPromptManagerApi({
     requireFence,
     preview: options.previewPrompts,
+    previewCore: options.previewCorePrompts,
     scenes: options.promptScenes,
     apply: (sceneId, messages, signal) => promptHookRunner(sceneId, messages, signal),
+    hasHooks: (sceneId) => promptHookRunner.hasHooks(sceneId),
   });
   const service = {
     async start() {
@@ -411,10 +414,10 @@ export function createExtensionService(options: ExtensionServiceOptions) {
         record: (receipt: import("../contracts/grants").EffectReceipt) => options.store.appendReceipt(receipt, fence!), now: options.now, id: options.id,
         readReceipts: (packageId: string, limit: number) => options.store.listReceipts(packageId, null, limit),
         promptInvocation: () => promptInvocation,
-        commitContext: (principal: OperationPrincipal, operation: string, access: ResolvedOperationAccess): ExtensionCommitContext => {
+        commitContext: (principal: OperationPrincipal, operation: string, access: ResolvedOperationAccess, invocationId: string): ExtensionCommitContext => {
           const activeFence = fence;
           if (!activeFence) return serviceError("RUNTIME_UNAVAILABLE", "The extension runtime lease is unavailable.");
-          return { owner: activeFence.owner, epoch: activeFence.epoch, packageId: principal.packageId, packageDigest: principal.packageDigest,
+          return { owner: activeFence.owner, epoch: activeFence.epoch, invocationId, packageId: principal.packageId, packageDigest: principal.packageDigest,
             policyFingerprint: principal.policyFingerprint, grantRevision: principal.grantRevision, operation,
             access: { resources: access.resources.map((resource) => ({ ...resource })), fields: [...access.fields], methods: [...access.methods], destinations: [...access.destinations] },
             signal: controller.signal, now: options.now };
@@ -457,6 +460,7 @@ export function createExtensionService(options: ExtensionServiceOptions) {
       }
     },
     ...promptManagerApi,
+    async hasPromptContributors(sceneId: string): Promise<boolean> { return promptHookRunner.hasHooks(sceneId); },
     async notifySceneOpened(sceneId: string, navigationTicketId: string | null = null): Promise<boolean> { return sceneNavigation.notify(sceneId, navigationTicketId); },
     async dispatchSceneEvent(payloadInput: unknown, originPackageId?: string): Promise<void> { await eventDispatcher.dispatch(payloadInput, originPackageId); },
     grantSet(control: StoredExtensionControl): ExtensionGrantSet { return { packageId: control.id, packageDigest: control.packageDigest, policyFingerprint: control.policyFingerprint, revision: control.grantRevision, grants: [...control.grants] }; },

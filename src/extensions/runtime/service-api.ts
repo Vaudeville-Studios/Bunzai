@@ -25,12 +25,12 @@ export type ExtensionActivationResult = z.infer<typeof extensionActivationResult
 
 export interface ExtensionPromptPreview {
   sceneId: string;
-  label: "Local prompt preview; no model called; unshaped and unbudgeted.";
+  label: "Local prompt preview; no model called; unshaped and unbudgeted." | "RP-Core prompt preview; local only; canonical shaping and budget applied.";
   messages: readonly { role: ProviderRole; content: string }[];
 }
 export const extensionPromptPreviewSchema = z.strictObject({
   sceneId: z.string().min(1).max(120),
-  label: z.literal("Local prompt preview; no model called; unshaped and unbudgeted."),
+  label: z.enum(["Local prompt preview; no model called; unshaped and unbudgeted.", "RP-Core prompt preview; local only; canonical shaping and budget applied."]),
   messages: z.array(z.strictObject({ role: z.enum(["system", "user", "assistant", "tool"]), content: z.string().max(MAX_VALUE_BYTES) })).max(256),
 });
 export const extensionPromptScenesSchema = z.array(z.strictObject({ id: z.string().min(1).max(120), title: z.string().max(256) })).max(500);

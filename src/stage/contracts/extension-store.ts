@@ -14,6 +14,8 @@ export interface ExtensionCommitAccess {
 }
 /** Trusted, host-created authority carried to a durable content mutation door. Never a guest DTO. */
 export interface ExtensionCommitContext extends ExtensionRuntimeFence {
+  /** The broker's existing receipt id, required by invocation-scoped Core writes. */
+  invocationId?: string;
   packageId: string;
   packageDigest: string;
   policyFingerprint: string;

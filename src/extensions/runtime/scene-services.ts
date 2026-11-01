@@ -1,5 +1,5 @@
 /** Scene/take/message DTOs filtered before any ChatStore read or bounded paging. */
-import type { Chat, ChatStore } from "../../stage/contracts/chat-store";
+import type { Chat, ChatStore, Message } from "../../stage/contracts/chat-store";
 import type { ExtensionCommitContext } from "../../stage/contracts/extension-store";
 import type { ResourceRef } from "../contracts/operation";
 import type { JsonValue } from "../contracts/value";
@@ -10,6 +10,7 @@ import { freezeCast } from "../../studio/scenes";
 import type { ContentStore } from "../../stage/contracts/content-store";
 import type { SceneSettingChange, SceneSettingSelector } from "../../stage/contracts/scene-settings";
 import { assertExtensionSceneCreateSupported, assertExtensionSceneNotCore, type ExtensionCoreSceneOwnership } from "./core-scene-guard";
+import { ExtensionServiceError } from "./service-errors";
 
 const libraryScope = (scope: readonly ResourceRef[]): boolean => scope.some(({ kind, id }) => kind === "library" && id === "library");
 const selected = (scope: readonly ResourceRef[], kind: string, id: string): boolean => scope.some((item) => item.kind === kind && item.id === id);
@@ -33,7 +34,10 @@ const truncateUtf8 = (text: string, maxBytes: number): { text: string; truncated
 };
 const fitsWire = (value: unknown): boolean => new TextEncoder().encode(JSON.stringify(value)).byteLength <= MAX_VALUE_BYTES;
 
-export function createExtensionSceneServices(chats: ChatStore, content?: ContentStore, isCoreScene?: ExtensionCoreSceneOwnership): ExtensionSceneServices {
+export function createExtensionSceneServices(chats: ChatStore, content?: ContentStore, isCoreScene?: ExtensionCoreSceneOwnership,
+  createCoreScene?: (sceneId: string, takeId: string, commit: ExtensionCommitContext) => Promise<void>,
+  appendCoreMessage?: (input: { sceneId: string; takeId: string; content: string; expectedVersion: number; commit: ExtensionCommitContext }) => Promise<Message | null>,
+  editCoreMessage?: (input: { sceneId: string; takeId: string; seq: number; content: string; expectedVersion: number; commit: ExtensionCommitContext }) => Promise<Message | null>): ExtensionSceneServices {
   const studio: Pick<StudioStoreLike, "readVersioned"> | undefined = content ? { readVersioned: async (kind, id) => kind === "character" || kind === "persona" ? content.read(kind, id) : null } : undefined;
   async function preparedScene(input: { characterId: string; characterVersion: number; personaId?: string; personaVersion?: number }, scope: readonly ResourceRef[]) {
     if (!studio || !selected(scope, "character", input.characterId) || (input.personaId && !selected(scope, "persona", input.personaId))) throw new Error("scene source is outside the approved grant");
@@ -52,17 +56,29 @@ export function createExtensionSceneServices(chats: ChatStore, content?: Content
     if (!selectedScene(scope, sceneId)) throw new Error("scene scope is outside the approved grant");
     return chats.getChat(sceneId);
   };
+  const checkSettingHost = async (sceneId: string, selector: SceneSettingSelector): Promise<void> => {
+    if (isCoreScene === undefined) await assertExtensionSceneNotCore(isCoreScene, sceneId);
+    if (isCoreScene && await isCoreScene(sceneId) && selector.group !== "connection" && selector.group !== "backdrop") {
+      throw new ExtensionServiceError("UNSUPPORTED_HOST", "Core-linked scenes currently support only connection and backdrop setting selectors.");
+    }
+  };
   return {
     async previewCreateScene(input, scope) {
-      assertExtensionSceneCreateSupported(isCoreScene);
+      assertExtensionSceneCreateSupported(isCoreScene, createCoreScene !== undefined && chats.createCoreChat !== undefined);
       const frozen = await preparedScene(input, scope);
       return { action: "create scene", title: input.title ?? frozen.title, character: { id: input.characterId, name: frozen.cast.character.name ?? input.characterId, version: frozen.cast.character.version },
         ...(frozen.cast.persona ? { persona: { id: frozen.cast.persona.id, name: frozen.cast.persona.name ?? frozen.cast.persona.id, version: frozen.cast.persona.version } } : {}) };
     },
     async createScene(input, scope, commit) {
-      assertExtensionSceneCreateSupported(isCoreScene);
+      assertExtensionSceneCreateSupported(isCoreScene, createCoreScene !== undefined && chats.createCoreChat !== undefined);
       const frozen = await preparedScene(input, scope);
-      const created = await chats.createChat({ ...frozen, title: input.title ?? frozen.title }, commit);
+      const scene = { ...frozen, title: input.title ?? frozen.title };
+      const created = isCoreScene === null
+        ? await chats.createChat(scene, commit)
+        : chats.createCoreChat && createCoreScene
+          ? await chats.createCoreChat(scene, commit)
+          : (() => { throw new ExtensionServiceError("UNSUPPORTED_HOST", "Core scene creation is unavailable on this host."); })();
+      if (isCoreScene !== null && createCoreScene) await createCoreScene(created.id, created.activeBranchId, commit);
       return { id: created.id, title: created.title, characterId: created.cast.character.id, personaId: created.cast.persona?.id ?? null, activeTakeId: created.activeBranchId, createdAt: created.createdAt };
     },
     async list(scope, limit) {
@@ -124,18 +140,26 @@ export function createExtensionSceneServices(chats: ChatStore, content?: Content
       return { versions, nextIndex };
     },
     async sendMessage(sceneId, takeId, content, expectedVersion, scope, commit: ExtensionCommitContext) {
-      await assertExtensionSceneNotCore(isCoreScene, sceneId);
       const found = await branch(sceneId, takeId, scope); if (!found) return null;
+      if (isCoreScene && await isCoreScene(sceneId)) {
+        if (!appendCoreMessage) throw new ExtensionServiceError("UNSUPPORTED_HOST", "Core-linked message append is unavailable on this host.");
+        const saved = await appendCoreMessage({ sceneId, takeId, content, expectedVersion, commit });
+        return saved ? { id: saved.id, seq: saved.seq, role: saved.role, branchVersion: (await chats.listBranches(sceneId)).find((item) => item.id === takeId)?.version ?? null } : null;
+      }
       await assertExtensionSceneNotCore(isCoreScene, sceneId);
       const message = await chats.appendMessage(takeId, { role: "user", content }, { expectedVersion }, commit);
       return message ? { id: message.id, seq: message.seq, role: message.role, branchVersion: (await chats.listBranches(sceneId)).find((item) => item.id === takeId)?.version ?? null } : null;
     },
     async editMessage(sceneId, takeId, seq, content, expectedVersion, scope, commit: ExtensionCommitContext) {
-      await assertExtensionSceneNotCore(isCoreScene, sceneId);
       const found = await branch(sceneId, takeId, scope); if (!found) return null;
       const page = await chats.readMessages(takeId, { fromSeq: seq, limit: 1 });
       const message = page.messages.find((item) => item.seq === seq); const swipe = message?.swipes[message.current];
       if (!message || !swipe) return null;
+      if (isCoreScene && await isCoreScene(sceneId)) {
+        if (!editCoreMessage) throw new ExtensionServiceError("UNSUPPORTED_HOST", "Exact Core message editing is unavailable on this host.");
+        const saved = await editCoreMessage({ sceneId, takeId, seq, content, expectedVersion, commit });
+        return saved ? { id: saved.id, seq: saved.seq, role: saved.role, branchVersion: (await chats.listBranches(sceneId)).find((item) => item.id === takeId)?.version ?? null } : null;
+      }
       await assertExtensionSceneNotCore(isCoreScene, sceneId);
       const saved = await chats.editSwipe(message.id, swipe.id, content, { expectedVersion }, commit);
       return saved ? { id: saved.id, seq: saved.seq, role: saved.role, branchVersion: (await chats.listBranches(sceneId)).find((item) => item.id === takeId)?.version ?? null } : null;
@@ -157,14 +181,14 @@ export function createExtensionSceneServices(chats: ChatStore, content?: Content
       return forked ? { id: forked.id, sceneId, name: forked.name, parentId: forked.parentBranchId, version: forked.version, createdAt: forked.createdAt } : null;
     },
     async previewSceneSetting(sceneId, selector: SceneSettingSelector, change: SceneSettingChange, scope) {
-      await assertExtensionSceneNotCore(isCoreScene, sceneId);
+      await checkSettingHost(sceneId, selector);
       if (!selectedScene(scope, sceneId)) throw new Error("scene settings are outside the approved scope");
       return chats.previewSceneSetting(sceneId, selector, change);
     },
     async applySceneSetting(sceneId, selector: SceneSettingSelector, change: SceneSettingChange, expectedRevision, scope, commit) {
-      await assertExtensionSceneNotCore(isCoreScene, sceneId);
+      await checkSettingHost(sceneId, selector);
       if (!selectedScene(scope, sceneId)) throw new Error("scene settings are outside the approved scope");
-      await assertExtensionSceneNotCore(isCoreScene, sceneId);
+      await checkSettingHost(sceneId, selector);
       const result = await chats.applySceneSetting(sceneId, selector, change, expectedRevision, commit);
       if (!result) throw new Error("scene settings target is unavailable");
       return result;

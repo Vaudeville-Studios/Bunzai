@@ -53,3 +53,9 @@ export function projectSceneTurnEvent(sceneId: string, input: TurnInput, event: 
   if (!type) return null;
   return decodeJsonValue(extensionEventPayloadSchema.parse({ type, sceneId, kind: input.kind }));
 }
+
+/** RP-Core's event vocabulary projected through the same closed lifecycle payload contract. */
+export function projectCoreSceneTurnEvent(sceneId: string, kind: TurnInput["kind"], event: "start" | "done" | "failed" | "stopped"): JsonValue {
+  const type = event === "start" ? "scene.turn.started" : event === "done" ? "scene.turn.completed" : event === "failed" ? "scene.turn.failed" : "scene.turn.stopped";
+  return decodeJsonValue(extensionEventPayloadSchema.parse({ type, sceneId, kind }));
+}

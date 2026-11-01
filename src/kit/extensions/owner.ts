@@ -40,6 +40,7 @@ import type { FileActionAnswer, PendingExtensionFileAction } from "../../extensi
 import { projectContentStoreChange } from "../../extensions/contracts/events";
 import { createContentExtensionPromptPreviewer, listExtensionPromptScenes } from "../../studio/scene-forecast";
 import { createSceneCore } from "../../ui/server-scene-composition";
+import { createExtensionCoreSceneSession, INCOMPLETE_CORE_SCENE_MESSAGE, resolveCoreScene } from "../../studio/core-scene";
 import { presetReader } from "../../studio/scene-turn-load";
 import { lorebookReader } from "../../studio/scene-lore";
 import { connect as connectScene } from "../providers/scene-connect";
@@ -50,6 +51,7 @@ import type { ParsedCanonicalEntity } from "../../entities/runtime-schema";
 import { libraryFor } from "../../studio/library-content";
 import { assertExtensionSceneNotCore } from "../../extensions/runtime/core-scene-guard";
 import type { ExtensionCoreSceneLookup } from "../../extensions/runtime/core-scene-guard";
+import { ExtensionServiceError } from "../../extensions/runtime/service-errors";
 
 export type TerminalExtensionRuntime = Pick<ExtensionManagerApi, "list" | "preview" | "install" | "enable" | "activate" | "beginFileWrite" | "promptScenes" | "previewPrompts"> & {
   pendingEffects(): Promise<readonly PendingExtensionEffect[]>;
@@ -84,11 +86,15 @@ export async function createTerminalExtensionRuntime(input: {
   const id = input.id ?? (() => crypto.randomUUID());
   const fileActions = createTerminalFileActions({ now, id });
   const sceneConnect = input.connectScene ?? connectScene;
+  const coreLibrary = libraryFor(input.storeId);
   const isCoreScene = input.isCoreScene === undefined ? async (sceneId: string): Promise<boolean> => {
-    const stores = libraryFor(input.storeId);
+    const stores = coreLibrary;
     if (!stores?.core || stores.chats !== input.chats) throw new Error("Core scene ownership is unavailable.");
-    return (await stores.core.sceneFor(sceneId)) !== null;
+    const resolved = await resolveCoreScene(stores.core, sceneId);
+    if (resolved.incomplete) throw new ExtensionServiceError("UNSUPPORTED_HOST", INCOMPLETE_CORE_SCENE_MESSAGE);
+    return resolved.link !== null;
   } : input.isCoreScene;
+  const coreTurns = coreLibrary?.chats === input.chats ? coreLibrary.coreTurns : undefined;
   const previewPrompts = createContentExtensionPromptPreviewer(input.chats, input.stateStore, input.content);
   const turnLibrary = {
     async read(kind: string, pieceId: string): Promise<ParsedCanonicalEntity | null> {
@@ -127,8 +133,11 @@ export async function createTerminalExtensionRuntime(input: {
     formats: createExtensionFormatServices(),
     transfers: createExtensionTransferServices(input.content),
     collections: extensionCollectionStateServices(input.stateStore),
-    scenes: createExtensionSceneServices(input.chats, input.content, isCoreScene),
-    sceneState: createExtensionSceneStateServices(input.chats, isCoreScene),
+    scenes: createExtensionSceneServices(input.chats, input.content, isCoreScene,
+      coreLibrary?.core && coreLibrary.chats === input.chats ? (sceneId, takeId, commit) => createExtensionCoreSceneSession(input.chats, coreLibrary.core!, input.storeId, sceneId, takeId, commit) : undefined,
+      coreTurns ? (input) => coreTurns.appendUserMessage(input) : undefined,
+      coreTurns ? (input) => coreTurns.editMessage(input) : undefined),
+    sceneState: createExtensionSceneStateServices(input.chats, isCoreScene, coreTurns),
     settings: extensionSettingsServices(input.store),
     storage: createExtensionStorageServices(input.store),
     logs: createExtensionLogServices(input.store, { now: input.now ?? Date.now, id: input.id ?? (() => crypto.randomUUID()) }),
@@ -139,7 +148,10 @@ export async function createTerminalExtensionRuntime(input: {
     commands: extensionCommandServices(input.store),
     events: createExtensionEventServices(input.store),
     files: fileActions.port,
-    turns: createExtensionTurnServices(roleplay, input.chats, turnRegex, input.turnConnectionReader, isCoreScene),
+    turns: createExtensionTurnServices(roleplay, input.chats, turnRegex, input.turnConnectionReader, isCoreScene, coreTurns,
+      (payload, origin) => extensions.current?.dispatchSceneEvent(payload, origin) ?? Promise.resolve(),
+      (sceneId, messages, signal) => extensions.current?.applyPromptContributions(sceneId, messages, signal) ?? Promise.resolve([]),
+      (sceneId) => extensions.current?.hasPromptContributors(sceneId) ?? Promise.resolve(false)),
   });
   const operationMetadata = extensionOperationMetadata.map((row) => operationMetadataSchema.parse(row) as JsonValue);
   const confirmations = createExtensionConfirmations({ now, id });
@@ -151,6 +163,11 @@ export async function createTerminalExtensionRuntime(input: {
     previewPrompts: async (sceneId, draft) => {
       await assertExtensionSceneNotCore(isCoreScene, sceneId);
       return previewPrompts(sceneId, draft);
+    },
+    previewCorePrompts: async (sceneId, draft, signal, apply, hasHooks) => {
+      if (isCoreScene === null || !await isCoreScene(sceneId)) return null;
+      if (!coreTurns) throw new Error("UNSUPPORTED_HOST: RP-Core prompt preview is unavailable for this library.");
+      return coreTurns.preview(sceneId, draft, signal, apply, hasHooks);
     },
     promptScenes: () => listExtensionPromptScenes(input.chats),
   });

@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/extending/api",
   "sourcePath": "docs/reference/extending/api.md",
-  "sourceHash": "sha256:61d6c099d1f3b222d346ffa6e86afb2a0183050bcb75401f81e92777dd733b68",
-  "summary": "This generated API catalog derives operation IDs, names, effects, hosts, budgets, confirmations and host-specific compatibility notes from source-owned descriptors. It is a discovery index; strict input/output contracts and grants remain authoritative. The fixed required-family matrix passes for this snapshot, while descriptor availability is not proof of engine parity or release certification. Desktop and Terminal restrict extension writes, turns and prompt preview to legacy scenes and refuse extension scene creation; Browser/Pocket has no rp-core owner. rp-core-linked first-party turns do not yet invoke extension prompt or scene-event hooks.",
+  "sourceHash": "sha256:63522ff1a6029d00827651460828ed6a6977383f5eaf71631db1fbd6cfd39cd9",
+  "summary": "This generated API catalog derives operation IDs, names, effects, hosts, budgets, confirmations and host-specific compatibility notes from source-owned descriptors. It is a discovery index; strict input/output contracts and grants remain authoritative. The fixed required-family matrix passes for this snapshot, while descriptor availability is not proof of release certification. Desktop and Terminal create linked scenes through rp-core and run extension prompt and scene-event hooks on Core turns; Browser/Pocket has no rp-core owner and uses its in-memory legacy path. Core delete and take fork, non-connection/backdrop setting selectors, and summary/Compendium follow-on jobs remain unavailable for linked scenes.",
   "topics": [
     "operation catalog",
     "host declarations",

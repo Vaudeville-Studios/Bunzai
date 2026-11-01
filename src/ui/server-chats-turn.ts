@@ -15,7 +15,6 @@
  * or reordered.
  */
 import { toErrorMessage } from "../error-message";
-import { runOwnedTurn } from "../studio/scene-turn-runtime";
 import { createSceneCore } from "./server-scene-composition";
 import { sceneRuntimeFor } from "./server-scene-runtime";
 import { isRecord, str } from "../core/guards";
@@ -36,118 +35,73 @@ import type { SettingsStoreLike, StudioStoreLike } from "../studio/contracts";
 import type { CompendiumDeps } from "../studio/compendium-deps";
 import { BASE_SUPPORT } from "../stage/params/wire";
 import { libraryFor } from "../studio/library-content";
-import { checkCoreProjection, openCoreScene } from "../studio/core-scene";
-import type { AsyncSessionHandle } from "rp-core";
-import type { Event as CoreEvent, MessageView } from "rp-core";
+import type { CoreTurnOwner, CoreTurnFrame } from "../studio/core-turn-owner";
+import { INCOMPLETE_CORE_SCENE_MESSAGE, resolveCoreScene } from "../studio/core-scene";
+import { projectCoreSceneTurnEvent } from "../extensions/contracts/events";
 import { err, json } from "./server-security";
 
 type Body = Record<string, unknown>;
 
-type CoreRunning = Map<string, { session: AsyncSessionHandle; turnId: string; gateId?: string }>;
-const coreRuntimes = new WeakMap<ChatStore, CoreRunning>();
-function runningFor(chats: ChatStore): CoreRunning {
-  let running = coreRuntimes.get(chats);
-  if (!running) { running = new Map(); coreRuntimes.set(chats, running); }
-  return running;
-}
-const coreText = (message: MessageView): string => message.blocks.filter((block) => block.k === "text").map((block) => block.text).join("");
-
-/** Projects rp-core's committed answer into Bunzai's existing scene read model. */
-async function coreMessage(chats: ChatStore, chatId: string, kind: "reply" | "swipe" | "continue", answer: MessageView, expectedVersion: number) {
-  const chat = await chats.getChat(chatId);
-  if (!chat) throw new Error("the scene is gone");
-  const branch = (await chats.listBranches(chatId)).find((take) => take.id === chat.activeBranchId);
-  if (branch?.version !== expectedVersion) throw new Error("the scene changed during the rp-core turn; export it before continuing");
-  const content = coreText(answer);
-  const generation = { ...(answer.gen?.model ? { model: answer.gen.model } : {}), ...(answer.gen?.finish ? { finishReason: answer.gen.finish } : {}) };
-  if (kind === "reply") {
-    const message = await chats.appendMessage(chat.activeBranchId, { role: "assistant", content, generation });
-    if (!message) throw new Error("the scene is gone");
-    return message;
-  }
-  const page = await chats.readMessagesBefore(chat.activeBranchId, { limit: 100 });
-  const target = [...page.messages].reverse().find((message) => message.role === "assistant" && !message.cut);
-  if (!target) throw new Error("the reply to update is gone");
-  if (kind === "swipe") {
-    const message = await chats.addSwipe(target.id, { content, generation });
-    if (!message) throw new Error("the reply to update is gone");
-    return message;
-  }
-  const swipe = target.swipes[target.current];
-  if (!swipe) throw new Error("the reply to continue is gone");
-  const message = await chats.editSwipe(target.id, swipe.id, content);
-  if (!message) throw new Error("the reply to continue is gone");
-  return message;
-}
-
-async function coreStream(chats: ChatStore, records: NonNullable<ReturnType<typeof libraryFor>>["core"], home: string, sessionId: string, b: Body): Promise<Response> {
-  let ready!: (response: Response) => void;
-  let failed!: (reason: unknown) => void;
-  const response = new Promise<Response>((resolve, reject) => { ready = resolve; failed = reject; });
-  void runOwnedTurn(sceneRuntimeFor(chats), str(b["chatId"]), async (controller) => {
-    try { await ownedCoreStream(chats, records, home, sessionId, b, controller, ready); }
-    catch (error) { failed(error); throw error; }
-  }).catch(failed);
-  return response;
-}
-
-async function ownedCoreStream(chats: ChatStore, records: NonNullable<ReturnType<typeof libraryFor>>["core"], home: string, sessionId: string, b: Body, abortController: AbortController, ready: (response: Response) => void): Promise<void> {
-  if (!records) return ready(err("the core journal is unavailable", 503));
+async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: string, b: Body, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasPromptContributors?: (sceneId: string) => Promise<boolean>): Promise<Response> {
   const chatId = str(b["chatId"]);
   const kind = b["kind"] === "reply" || b["kind"] === "swipe" || b["kind"] === "continue" ? b["kind"] : null;
   const chat = await chats.getChat(chatId);
-  if (!chat || !kind || !chat.connection || typeof b["expectedVersion"] !== "number") return ready(err("choose a model and send a message first"));
+  if (!chat || !kind || !chat.connection || typeof b["expectedVersion"] !== "number") return err("choose a model and send a message first");
   const branch = (await chats.listBranches(chatId)).find((take) => take.id === chat.activeBranchId);
-  if (branch?.version !== b["expectedVersion"]) return ready(err("the scene changed; reload it and try again", 409));
-  const { engine, session } = await openCoreScene(records, home, sessionId, chat.connection);
-  let turn;
-  try {
-    await checkCoreProjection(chats, chatId, session);
-    abortController.signal.throwIfAborted();
-    turn = await session.runTurn({ kind, expectedVersion: await session.version(), ...(typeof b["guidance"] === "string" ? { guidance: b["guidance"] } : {}), ...(b["inspect"] === true ? { inspect: true } : {}), emptyReply: "keep" });
-  }
-  catch (error) { await engine.close(); throw error; }
-  runningFor(chats).set(chatId, { session, turnId: turn.turnId });
-  const stop = () => { void session.stop(turn.turnId).catch(() => undefined); };
-  abortController.signal.addEventListener("abort", stop, { once: true });
-  if (abortController.signal.aborted) stop();
-  let finished = Promise.resolve();
+  if (branch?.version !== b["expectedVersion"]) return err("the scene changed; reload it and try again", 409);
+  let started!: () => void;
+  let rejectStart!: (error: unknown) => void;
+  let didStart = false;
+  const firstEvent = new Promise<void>((resolve, reject) => { started = resolve; rejectStart = reject; });
+  const buffered: TurnEvent[] = [];
+  let send: (event: TurnEvent) => void = (event) => { buffered.push(event); };
+  const coalescer = coalesceTurnEvents((event) => send(event));
+  const hostHooks = applyExtensionPrompts ? {
+    appendSystemContributions: async ({ messages }: { messages: readonly import("rp-core").PromptMsg[] }, context: import("rp-core").HookCtx) => {
+      if (messages.some((message) => message.blocks.some((block) => block.k !== "text"))) {
+        if (!hasPromptContributors || !await hasPromptContributors(chatId)) return [];
+        throw new Error("The active extension prompt hooks cannot safely represent non-text Core messages.");
+      }
+      return applyExtensionPrompts(chatId, messages.map((message) => ({ role: message.role as ProviderRole, content: message.blocks.filter((block) => block.k === "text").map((block) => block.text).join("") })), context.signal);
+    },
+  } : undefined;
+  const work = owner.run({ sceneId: chatId, sessionId, kind, expectedBranchVersion: b["expectedVersion"], actor: { kind: "host" },
+    ...(hostHooks ? { hostHooks } : {}), ...(typeof b["guidance"] === "string" ? { guidance: b["guidance"] } : {}), ...(b["inspect"] === true ? { inspect: true } : {}),
+  }, async ({ event, projected }: CoreTurnFrame) => {
+    let output: TurnEvent | null = null;
+    if (event.type === "start") output = { type: "start", turnId: event.turnId, kind: event.kind, messageId: null };
+    else if (event.type === "text" || event.type === "reasoning") output = { type: event.type, delta: event.delta };
+    else if (event.type === "prefill") output = { type: "prefill", text: event.text };
+    else if (event.type === "gate" && event.kind === "review") {
+      const payload = event.payload as { messages?: Array<{ role: string; blocks: Array<{ k: string; text?: string }> }> };
+      const messages = (payload.messages ?? []).map((item) => ({ role: item.role as ProviderRole, content: item.blocks.filter((block) => block.k === "text").map((block) => block.text ?? "").join("") }));
+      output = { type: "review", turnId: event.turnId, messages, tokens: Math.ceil(messages.reduce((n, item) => n + item.content.length, 0) / 4) };
+    } else if (event.type === "failed") output = { type: "failed", category: event.category, code: event.code, message: event.message, draft: event.draft };
+    else if (event.type === "conflict") output = { type: "conflict", turnId: event.turnId, draft: event.draft };
+    else if (event.type === "done" && projected) output = { type: "done", message: projected };
+    else if (event.type === "stopped") output = { type: "stopped", message: projected };
+    if (event.type === "start" || event.type === "done" || event.type === "failed" || event.type === "stopped") {
+      const payload = projectCoreSceneTurnEvent(chatId, kind, event.type);
+      await dispatchExtensionEvent?.(payload).catch(() => undefined);
+    }
+    if (output) coalescer.push(output);
+    if (event.type === "start" && !didStart) { didStart = true; started(); }
+  });
+  void work.catch((error) => { if (!didStart) rejectStart(error); });
+  try { await firstEvent; }
+  catch (error) { return err(toErrorMessage(error, "the Core turn could not start"), error instanceof Error && error.name === "StudioConflictError" ? 409 : 400); }
   const encoder = new TextEncoder();
   let detached = false;
-  const body = new ReadableStream<Uint8Array>({
+  const response = new Response(new ReadableStream<Uint8Array>({
     start(controller) {
-      const coalescer = coalesceTurnEvents((event) => { if (!detached) controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`)); });
-      const send = coalescer.push;
-      finished = (async () => {
-        try {
-          for await (const event of turn.events) {
-            const e = event as CoreEvent;
-            if (e.type === "start") send({ type: "start", turnId: e.turnId, kind: e.kind, messageId: null });
-            else if (e.type === "text" || e.type === "reasoning") send({ type: e.type, delta: e.delta });
-            else if (e.type === "prefill") send({ type: "prefill", text: e.text });
-            else if (e.type === "gate" && e.kind === "review") {
-              const running = runningFor(chats).get(chatId);
-              if (running) running.gateId = e.gateId;
-              const payload = e.payload as { messages?: Array<{ role: string; blocks: Array<{ k: string; text?: string }> }> };
-              const messages = (payload.messages ?? []).map((item) => ({ role: item.role as "system" | "user" | "assistant", content: item.blocks.filter((block) => block.k === "text").map((block) => block.text ?? "").join("") }));
-              send({ type: "review", turnId: e.turnId, messages, tokens: Math.ceil(messages.reduce((n, item) => n + item.content.length, 0) / 4) });
-            }
-            else if (e.type === "failed") send({ type: "failed", category: e.category, code: e.code, message: e.message, draft: e.draft });
-            else if (e.type === "conflict") send({ type: "conflict", turnId: e.turnId, draft: e.draft });
-            else if (e.type === "done") send({ type: "done", message: await coreMessage(chats, chatId, kind, e.message, b["expectedVersion"] as number) });
-            else if (e.type === "stopped") send({ type: "stopped", message: e.message ? await coreMessage(chats, chatId, kind, e.message, b["expectedVersion"] as number) : null });
-          }
-          await turn.result;
-          coalescer.flush();
-          if (!detached) controller.close();
-        } catch (error) { if (!detached) controller.error(error); }
-        finally { abortController.signal.removeEventListener("abort", stop); runningFor(chats).delete(chatId); await engine.close(); }
-      })();
+      const write = (event: TurnEvent) => { if (!detached) controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`)); };
+      for (const event of buffered.splice(0)) write(event);
+      send = write;
+      void work.then(() => { coalescer.flush(); if (!detached) controller.close(); }, (error) => { if (!detached) controller.error(error); });
     },
-    cancel() { detached = true; },
-  });
-  ready(new Response(body, { headers: { "content-type": "text/event-stream", "cache-control": "no-store", "x-accel-buffering": "no" } }));
-  await finished;
+    cancel() { detached = true; coalescer.flush(); },
+  }), { headers: { "content-type": "text/event-stream", "cache-control": "no-store", "x-accel-buffering": "no" } });
+  return response;
 }
 
 const FLUSH_MS = 40;
@@ -328,7 +282,7 @@ function reviewDecision(b: Body): ReviewDecision | null {
 }
 
 /** The turn routes, or null when the path is not one of them. */
-export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, state: StateStore, readPreset: ReadPreset, readLorebook: ReadLorebook, b: Body | null, studio?: StudioStoreLike, compendium?: CompendiumDeps | null, settings?: SettingsStoreLike, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>): Promise<Response | null> {
+export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, state: StateStore, readPreset: ReadPreset, readLorebook: ReadLorebook, b: Body | null, studio?: StudioStoreLike, compendium?: CompendiumDeps | null, settings?: SettingsStoreLike, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasPromptContributors?: (sceneId: string) => Promise<boolean>): Promise<Response | null> {
   const p = url.pathname;
   if (req.method === "GET") {
     if (p === "/api/chats/connections") return connections();
@@ -338,19 +292,23 @@ export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, 
   if (!b) return null;
   if (p === "/api/chats/turn") {
     const home = studio?.studioPath();
-    const records = home ? libraryFor(home)?.core : undefined;
-    const core = records ? await records.sceneFor(str(b["chatId"])) : null;
+    const stores = home ? libraryFor(home) : null;
+    const records = stores?.core;
+    const resolvedCore = records ? await resolveCoreScene(records, str(b["chatId"])) : null;
+    if (resolvedCore?.incomplete) return err(INCOMPLETE_CORE_SCENE_MESSAGE, 409);
+    const core = resolvedCore?.link ?? null;
     if (core && (await chats.getChat(str(b["chatId"])))?.activeBranchId !== core.branchId) return err("this take is not connected to rp-core yet", 409);
-    return records && home && core ? coreStream(chats, records, home, core.sessionId, b) : stream(chats, state, readPreset, readLorebook, b, studio, compendium, settings, dispatchExtensionEvent, applyExtensionPrompts);
+    if (records && core) return stores?.coreTurns ? coreStream(chats, stores.coreTurns, core.sessionId, b, dispatchExtensionEvent, applyExtensionPrompts, hasPromptContributors) : err("the Core turn owner is unavailable", 503);
+    return stream(chats, state, readPreset, readLorebook, b, studio, compendium, settings, dispatchExtensionEvent, applyExtensionPrompts);
   }
   if (p === "/api/chats/review") {
     const decision = reviewDecision(b);
     if (!decision) return err('expected { chatId, turnId, kind: "send", edits?: { [index]: text } } or kind: "cancel"');
-    const running = runningFor(chats).get(str(b["chatId"]));
-    if (running && running.turnId === str(b["turnId"]) && running.gateId) {
-      const answered = await running.session.answerGate(running.turnId, running.gateId, decision.kind === "cancel" ? { action: "cancel" } : { action: "send", edits: Object.entries(decision.edits).map(([index, text]) => ({ index: Number(index), text })) });
-      if (answered) running.gateId = undefined;
-      return json({ answered });
+    const home = studio?.studioPath();
+    const owner = home ? libraryFor(home)?.coreTurns : undefined;
+    if (owner) {
+      const answered = await owner.answerReview(str(b["chatId"]), { kind: "host" }, str(b["turnId"]), decision.kind === "cancel" ? { action: "cancel" } : { action: "send", edits: Object.entries(decision.edits).map(([index, text]) => ({ index: Number(index), text })) });
+      if (answered) return json({ answered });
     }
     return json({ answered: answerReview(sceneRuntimeFor(chats), str(b["chatId"]), str(b["turnId"]), decision) });
 
@@ -360,8 +318,9 @@ export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, 
     return answer ? json({ answered: answerRegex(sceneRuntimeFor(chats), str(b["chatId"]), str(b["turnId"]), answer) }) : err('expected { chatId, turnId, kind: "done", texts: { [index]: text } }, kind: "failed", error, or kind: "cancel"');
   }
   if (p === "/api/chats/stop") {
-    const running = runningFor(chats).get(str(b["chatId"]));
-    if (running && running.turnId === str(b["turnId"])) { await running.session.stop(running.turnId); return json({ stopped: true }); }
+    const home = studio?.studioPath();
+    const owner = home ? libraryFor(home)?.coreTurns : undefined;
+    if (owner && await owner.stop(str(b["chatId"]))) return json({ stopped: true });
     return json({ stopped: stopTurn(sceneRuntimeFor(chats), str(b["chatId"]), str(b["turnId"])) });
   }
 

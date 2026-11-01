@@ -414,7 +414,8 @@ export function createHandler(
     }
     if (p.startsWith("/api/chats/")) return handleChatRoute(req, url, store, settings, isRemote ? "" : security.token,
       isRemote ? undefined : (payload) => extensionOwner.dispatchSceneEvent(payload),
-      isRemote ? undefined : (sceneId, messages, signal) => extensionOwner.applyPromptContributions(sceneId, messages, signal));
+      isRemote ? undefined : (sceneId, messages, signal) => extensionOwner.applyPromptContributions(sceneId, messages, signal),
+      isRemote ? undefined : (sceneId) => extensionOwner.hasPromptContributors(sceneId));
     const write = STUDIO_WRITES[p];
     if (write && req.method === "POST") return write(req, store, isRemote ? "" : security.token);
     if (lifecycle && p === "/api/shutdown" && req.method === "POST") return handleShutdown(lifecycle);

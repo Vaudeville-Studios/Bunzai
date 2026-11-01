@@ -42,3 +42,24 @@ test("scene setting applies only the exact reviewed revision and refuses a first
   expect((await chats.getChat(chat.id))?.prompting?.note?.text).toBe("person changed it");
   await extensions.releaseRuntimeFence(lease);
 });
+
+test("Core-linked settings expose only connection and backdrop selectors", async () => {
+  const chats = memoryChatStore(() => 2_000, () => crypto.randomUUID(), { authorizeExtensionCommit: () => undefined });
+  const chat = await chats.createChat({ title: "Core fixture", cast: { character: { id: "ada", version: 1 } }, snapshot: { character: {} } });
+  const services = createExtensionSceneServices(chats, undefined, async () => true);
+  const scope = [{ kind: "scene", id: chat.id }];
+  const connectionSelector = { group: "connection" } as const;
+  const connectionChange = { group: "connection", value: { id: "fixture-provider", model: "fixture" } } as const;
+  const preview = await services.previewSceneSetting(chat.id, connectionSelector, connectionChange, scope);
+  expect(preview).toMatchObject({ after: { id: "fixture-provider", model: "fixture" } });
+  if (!preview) throw new Error("connection preview was unavailable");
+  const commit = { access: { resources: scope, fields: ["scene.settings.connection"], methods: [], destinations: [] }, owner: "owner", epoch: 1,
+    packageId: "fixture.extension", packageDigest: "a".repeat(64), policyFingerprint: "b".repeat(64), grantRevision: 1, operation: "scenes.settings.apply", now: () => 2_000 } as const;
+  expect(await services.applySceneSetting(chat.id, connectionSelector, connectionChange, preview.revision, scope, commit)).toMatchObject({ status: "saved" });
+  expect((await chats.getChat(chat.id))?.connection).toEqual({ id: "fixture-provider", model: "fixture" });
+  const backdropSelector = { group: "backdrop" } as const;
+  const backdropChange = { group: "backdrop", value: null } as const;
+  expect(await services.previewSceneSetting(chat.id, backdropSelector, backdropChange, scope)).toMatchObject({ before: null, after: null });
+  await expect(services.previewSceneSetting(chat.id, { group: "preset" }, { group: "preset", value: null }, scope))
+    .rejects.toMatchObject({ code: "UNSUPPORTED_HOST" });
+});

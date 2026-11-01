@@ -1,11 +1,12 @@
 /** Package-owned scene slot reads and revision-checked message delta writes. */
 import { z } from "zod";
-import { bindExtensionOperation, CORE_LINKED_SCENE_HOST_NOTES, EXTENSION_HOSTS, PROMPT_SAFE_READ_ORIGINS, type ExtensionOperationDefinition, type ExtensionOperationMetadata, type ResourceRef } from "../../contracts/operation";
+import { bindExtensionOperation, EXTENSION_HOSTS, PROMPT_SAFE_READ_ORIGINS, type ExtensionOperationDefinition, type ExtensionOperationMetadata, type ResourceRef } from "../../contracts/operation";
 import { decodeJsonValue, operationJsonValueSchema } from "../../contracts/value";
 import type { Delta } from "../../../core/scene-state/types";
 import type { ExtensionOperationServices } from "../_services";
 
 const branch = z.string().min(1).max(120);
+const coreStateNote = "Core writes bind an exact mapped swipe. Pending state accepts only with this package's successful reply or regenerate commit.";
 const readInput = z.strictObject({ sceneId: branch, takeId: branch });
 const slotsOutput = z.strictObject({ slots: z.array(z.strictObject({ slot: z.string().min(1).max(180), value: operationJsonValueSchema })).max(64) });
 const delta = z.strictObject({ slot: z.string().min(1).max(180), path: z.array(z.string().min(1).max(80)).min(1).max(16), value: operationJsonValueSchema.optional(), removed: z.literal(true).optional(), at: z.number().int().nonnegative() }).superRefine((item, context) => {
@@ -40,7 +41,7 @@ const previewDefinition: ExtensionOperationDefinition<z.infer<typeof writeInput>
 };
 const applyDefinition: ExtensionOperationDefinition<z.infer<typeof writeInput>, z.infer<typeof applyOutput>, ExtensionOperationServices> = {
   metadata: { ...meta("state.write.apply", "Apply scene state write", "Apply package-namespaced deltas at an expected branch revision. Pending writes are supported only for this package's active reply or regenerate turn; first-party, other-package, and continue turns are rejected. After-commit writes use an exact committed-message revision.", writeInput, applyOutput, "effect", 128_000),
-    hostNotes: CORE_LINKED_SCENE_HOST_NOTES,
+    hostNotes: { desktop: coreStateNote, terminal: coreStateNote },
     receiptStatus: (value) => value.status === "applied" ? "committed" : value.status === "pending" ? "completed" : "conflicted" },
   review: async ({ sceneId, takeId, messageId, turnId, expectedVersion, deltas }, context) => decodeJsonValue({ sceneId, takeId, target: messageId ? { messageId } : { turnId }, expectedVersion, packageId: context.principal.packageId, slots: deltas.map(({ slot }) => slot), deltas }),
   execute: async ({ sceneId, takeId, messageId, turnId, expectedVersion, deltas }, context, services) => {

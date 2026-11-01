@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/extending/coverage",
   "sourcePath": "docs/reference/extending/coverage.md",
-  "sourceHash": "sha256:5062f77c6b261b5d982846917a710c15a2e9ecb6f1e40571db5c9a88130f3fdb",
-  "semanticSummaryHash": "sha256:f69f6f82e9d597fd7821fd6a38056e628e9ffd6206d5da0e3b1adf3572a15670",
+  "sourceHash": "sha256:923cbdaa5331708617c36e684ddb1b677990eb134679bc84102e3ced98e58a9d",
+  "semanticSummaryHash": "sha256:67a70420f89e6fec1a4ea32a14566ea2899c84aec78035712354ddd93145180b",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Independently reviewed current generated coverage and descriptors. Required-family matrix status is current and accurate; rp-core compatibility, Browser/Pocket ownership limits, descriptor notes, grants, and non-certification boundaries are accurately described.",
-  "reviewedAt": "2026-10-31T22:54:40.068Z"
+  "notes": "Independently reviewed the current generated coverage and source-owned host notes. The summary accurately describes Core and legacy host paths, current matrix status, Browser/Pocket ownership, and the exact Core delete/fork/settings/follow-on limits without claiming release certification.",
+  "reviewedAt": "2026-11-01T03:00:26.356Z"
 }

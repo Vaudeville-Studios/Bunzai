@@ -66,10 +66,12 @@ export async function freezeCast(studio: Pick<StudioStoreLike, "readVersioned">,
 /** A new scene with the saved starting defaults applied, and the plain sentences for any that could not be (the scene exists either way). */
 export const startScene = async (chats: ChatStore, studio: StudioStoreLike, settings: SettingsStoreLike, characterId: string): Promise<Chat> => (await startSceneWithNotes(chats, studio, settings, characterId)).chat;
 
-export async function startSceneWithNotes(chats: ChatStore, studio: StudioStoreLike, settings: SettingsStoreLike, characterId: string): Promise<{ chat: Chat; notes: string[] }> {
+export async function startSceneWithNotes(chats: ChatStore, studio: StudioStoreLike, settings: SettingsStoreLike, characterId: string, coreFirst = false): Promise<{ chat: Chat; notes: string[] }> {
   const prefs = await settings.read();
   const frozen = await freezeCast(studio, characterId, prefs[DEFAULT_PERSONA_PREF]);
-  const created = await chats.createChat(frozen);
+  const created = coreFirst
+    ? await chats.createCoreChat?.(frozen) ?? (() => { throw new StudioValidationError("this host cannot create an rp-core scene"); })()
+    : await chats.createChat(frozen);
   const defaults = summaryDefaultsOf(prefs[DEFAULT_SUMMARY_PREF]);
   // The scene exists whether or not its defaults apply; defaults that are not valid settings are left off rather than refusing to start it.
   const chat = defaults ? ((await chats.setSummarySettings(created.id, defaults)) ?? created) : created;
@@ -472,7 +474,7 @@ export async function frozenCharacter(chats: ChatStore, chatId: string): Promise
 export async function sendToScene(
   chats: ChatStore,
   studio: StudioStoreLike,
-  input: { chatId: string; content: string; greetingIndex: number; expectedVersion: number },
+  input: { chatId: string; content: string; greetingIndex: number; expectedVersion: number; coreGreeting?: string },
 ): Promise<OpenScene | null> {
   if (input.content.trim() === "") throw new StudioValidationError("a message needs some text");
   const chat = await chats.getChat(input.chatId);
@@ -487,7 +489,7 @@ export async function sendToScene(
   const chosen = empty && greetings.length > 0 ? greetings[input.greetingIndex] : undefined;
   if (empty && greetings.length > 0 && chosen === undefined) throw new StudioValidationError("that greeting does not exist");
   // The person's edit of this greeting (rule 34, RoleCall first_message_override) is the message when there is one.
-  const greeting = chosen === undefined ? undefined : current.opening?.edits.find((e) => e.index === input.greetingIndex)?.text ?? chosen;
+  const greeting = chosen === undefined ? undefined : input.coreGreeting ?? current.opening?.edits.find((e) => e.index === input.greetingIndex)?.text ?? chosen;
   const inputs = [...(greeting !== undefined ? [{ role: "assistant" as const, content: greeting }] : []), { role: "user" as const, content: input.content }];
   if (!(await chats.appendMessages(current.activeBranchId, inputs, { expectedVersion: input.expectedVersion }))) return null;
   return sceneOf(chats, studio, (await chats.getChat(current.id)) ?? current, snapshot, cast.hasPortrait);

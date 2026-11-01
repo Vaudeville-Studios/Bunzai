@@ -40,6 +40,7 @@ import { MIGRATION_48_EXTENSIONS } from "./migration-48-extensions";
 import { MIGRATION_49_STATE_REVISIONS } from "./migration-49-state-revisions";
 import { MIGRATION_50_EXTENSION_LOGS } from "./migration-50-extension-logs";
 import { MIGRATION_51_CHECKPOINT_EXTENSION_OWNER } from "./migration-51-checkpoint-extension-owner";
+import { MIGRATION_52_CORE_PROJECTIONS } from "./migration-52-core-projections";
 
 export const MIGRATIONS: readonly Migration[] = [
   {
@@ -491,4 +492,5 @@ export const MIGRATIONS: readonly Migration[] = [
   MIGRATION_49_STATE_REVISIONS,
   MIGRATION_50_EXTENSION_LOGS,
   MIGRATION_51_CHECKPOINT_EXTENSION_OWNER,
+  MIGRATION_52_CORE_PROJECTIONS,
 ];

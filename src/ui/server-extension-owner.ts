@@ -19,6 +19,7 @@ import { createExtensionFormatServices } from "../extensions/runtime/format-serv
 import { createExtensionTransferServices } from "../extensions/runtime/transfer-services";
 import { createExtensionAssetServices } from "../extensions/runtime/asset-services";
 import { createExtensionSceneServices } from "../extensions/runtime/scene-services";
+import { createExtensionCoreSceneSession, INCOMPLETE_CORE_SCENE_MESSAGE, resolveCoreScene } from "../studio/core-scene";
 import { createExtensionStorageServices } from "../extensions/runtime/storage-services";
 import { createExtensionSceneStateServices } from "../extensions/runtime/scene-state-services";
 import { createExtensionLogServices } from "../extensions/runtime/log-services";
@@ -34,12 +35,13 @@ import { readLegacyThemeMigrations } from "../extensions/legacy-theme-migrations
 import { isStudioEntityKind } from "../studio/path-policy";
 import { libraryFor } from "../studio/library-content";
 import { assertExtensionSceneNotCore } from "../extensions/runtime/core-scene-guard";
+import { ExtensionServiceError } from "../extensions/runtime/service-errors";
 import type { PackagedAssets } from "./assets";
 import type { ThemeReadService } from "./server-theme-extensions";
 import type { JsonValue } from "../extensions/contracts/value";
 import type { LibraryHandle, OpenedLibrary } from "./library-root";
 
-type RuntimeService = ExtensionManagerApi & { close(): Promise<void>; dispatchSceneEvent(payload: unknown, originPackageId?: string): Promise<void>; applyPromptContributions(sceneId: string, messages: readonly { role: "system" | "user" | "assistant" | "tool"; content: string }[], signal: AbortSignal): Promise<readonly string[]>; themeEffective: ThemeReadService["effective"]; themeAsset: ThemeReadService["asset"]; themeRevision: ThemeReadService["revisionStamp"]; themeMarkBroken: ThemeReadService["markBroken"]; themeConfirmHealthy: ThemeReadService["confirmHealthy"] };
+type RuntimeService = ExtensionManagerApi & { close(): Promise<void>; dispatchSceneEvent(payload: unknown, originPackageId?: string): Promise<void>; applyPromptContributions(sceneId: string, messages: readonly { role: "system" | "user" | "assistant" | "tool"; content: string }[], signal: AbortSignal): Promise<readonly string[]>; hasPromptContributors(sceneId: string): Promise<boolean>; themeEffective: ThemeReadService["effective"]; themeAsset: ThemeReadService["asset"]; themeRevision: ThemeReadService["revisionStamp"]; themeMarkBroken: ThemeReadService["markBroken"]; themeConfirmHealthy: ThemeReadService["confirmHealthy"] };
 
 export function createExtensionRouteOwner(library: LibraryHandle | undefined, sandboxOrigin: () => string, packaged?: PackagedAssets, previewPrompts?: (sceneId: string, draft: string, signal: AbortSignal) => Promise<import("../extensions/runtime/service-api").ExtensionPromptPreview>, promptScenes?: () => Promise<readonly import("../extensions/runtime/service-api").ExtensionPromptScene[]>) {
   const quickJsWasmBinary = packaged?.quickJsWasmB64 ? new Uint8Array(Buffer.from(packaged.quickJsWasmB64, "base64")) : undefined;
@@ -88,17 +90,26 @@ export function createExtensionRouteOwner(library: LibraryHandle | undefined, sa
         current = null;
         if (old) await old.close();
         if (ticket !== generation || closed || library.opened() !== activeOpened || activeOpened.state !== "unlocked") return null;
+        const coreLibrary = libraryFor(library.studioDir);
         const isCoreScene = async (sceneId: string): Promise<boolean> => {
-          const stores = libraryFor(library.studioDir);
+          const stores = coreLibrary;
           if (!stores?.core || stores.chats !== activeOpened.chats) throw new Error("Core scene ownership is unavailable.");
-          return (await stores.core.sceneFor(sceneId)) !== null;
+          const resolved = await resolveCoreScene(stores.core, sceneId);
+          if (resolved.incomplete) throw new ExtensionServiceError("UNSUPPORTED_HOST", INCOMPLETE_CORE_SCENE_MESSAGE);
+          return resolved.link !== null;
         };
+        const coreTurns = coreLibrary?.chats === activeOpened.chats ? coreLibrary.coreTurns : undefined;
         const guardedPreviewPrompts = previewPrompts ? async (sceneId: string, draft: string, signal: AbortSignal) => {
           await assertExtensionSceneNotCore(isCoreScene, sceneId);
           return previewPrompts(sceneId, draft, signal);
         } : undefined;
+        const previewCorePrompts = async (sceneId: string, draft: string, signal: AbortSignal, apply: (sceneId: string, messages: readonly { role: "system" | "user" | "assistant" | "tool"; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasHooks: (sceneId: string) => Promise<boolean>) => {
+          if (!await isCoreScene(sceneId)) return null;
+          if (!coreTurns) throw new Error("UNSUPPORTED_HOST: RP-Core prompt preview is unavailable for this library.");
+          return coreTurns.preview(sceneId, draft, signal, apply, hasHooks);
+        };
         const storage = createExtensionStorageServices(activeOpened.extensionStore);
-        const sceneState = createExtensionSceneStateServices(activeOpened.chats, isCoreScene);
+        const sceneState = createExtensionSceneStateServices(activeOpened.chats, isCoreScene, coreTurns);
         const events = createExtensionEventServices(activeOpened.extensionStore);
         const fileActions = createHostFileActionPort({ now: Date.now, id: () => crypto.randomUUID() });
         const hostActions = createHostActionPort({ now: Date.now, id: () => crypto.randomUUID() });
@@ -107,7 +118,11 @@ export function createExtensionRouteOwner(library: LibraryHandle | undefined, sa
         const roleplay = activeOpened.stateStore ? createSceneCore(activeOpened.chats, activeOpened.stateStore, presetReader(turnLibrary), lorebookReader(turnLibrary), turnLibrary,
           undefined, null, (payload) => current?.dispatchSceneEvent(payload) ?? Promise.resolve(),
           (sceneId, messages, signal) => current?.applyPromptContributions(sceneId, messages, signal) ?? Promise.resolve([])) : null;
-        const catalog = createExtensionOperations({ content: extensionContentServices(activeOpened.content), drafts, storage, settings: extensionSettingsServices(activeOpened.extensionStore), logs: createExtensionLogServices(activeOpened.extensionStore, { now: Date.now, id: () => crypto.randomUUID() }), models: createExtensionModelServices(), network: createVettedExtensionNetwork(), sceneState, events, files: fileActions, hostActions, collections: extensionCollectionServices(new CollectionsStore(library.studioDir)), formats: createExtensionFormatServices(), transfers: createExtensionTransferServices(activeOpened.content), assets: createExtensionAssetServices(activeOpened.content), scenes: createExtensionSceneServices(activeOpened.chats, activeOpened.content, isCoreScene), turns: roleplay ? createExtensionTurnServices(roleplay, activeOpened.chats, hostActions, undefined, isCoreScene) : unavailableExtensionTurnServices(), tools: await createExtensionKitTools("desktop"), commands: extensionCommandServices(activeOpened.extensionStore) });
+        const coreRecords = coreLibrary?.chats === activeOpened.chats ? coreLibrary.core : undefined;
+        const catalog = createExtensionOperations({ content: extensionContentServices(activeOpened.content), drafts, storage, settings: extensionSettingsServices(activeOpened.extensionStore), logs: createExtensionLogServices(activeOpened.extensionStore, { now: Date.now, id: () => crypto.randomUUID() }), models: createExtensionModelServices(), network: createVettedExtensionNetwork(), sceneState, events, files: fileActions, hostActions, collections: extensionCollectionServices(new CollectionsStore(library.studioDir)), formats: createExtensionFormatServices(), transfers: createExtensionTransferServices(activeOpened.content), assets: createExtensionAssetServices(activeOpened.content), scenes: createExtensionSceneServices(activeOpened.chats, activeOpened.content, isCoreScene,
+          coreRecords ? (sceneId, takeId, commit) => createExtensionCoreSceneSession(activeOpened.chats, coreRecords, library.studioDir, sceneId, takeId, commit) : undefined,
+          coreTurns ? (input) => coreTurns.appendUserMessage(input) : undefined,
+          coreTurns ? (input) => coreTurns.editMessage(input) : undefined), turns: roleplay ? createExtensionTurnServices(roleplay, activeOpened.chats, hostActions, undefined, isCoreScene, coreTurns, (payload, origin) => current?.dispatchSceneEvent(payload, origin) ?? Promise.resolve(), (sceneId, messages, signal) => current?.applyPromptContributions(sceneId, messages, signal) ?? Promise.resolve([]), (sceneId) => current?.hasPromptContributors(sceneId) ?? Promise.resolve(false)) : unavailableExtensionTurnServices(), tools: await createExtensionKitTools("desktop"), commands: extensionCommandServices(activeOpened.extensionStore) });
         const confirmations = createExtensionConfirmations({ now: Date.now, id: () => crypto.randomUUID() });
         const builtinPackages = await Promise.all((await themeInventory(packaged)).map(async (theme) => {
           const alias = String((theme.manifest as { id: string }).id);
@@ -128,6 +143,7 @@ export function createExtensionRouteOwner(library: LibraryHandle | undefined, sa
           confirmEffect: (packageId, packageName, effect, signal) => confirmations.request(packageId, packageName, effect, signal),
           pendingEffects: () => confirmations.list(), answerEffect: (id, approved) => confirmations.answer(id, approved),
           ...(guardedPreviewPrompts ? { previewPrompts: guardedPreviewPrompts } : {}),
+          previewCorePrompts,
           ...(promptScenes ? { promptScenes } : {}),
         });
         const acquired = await service.start();
@@ -151,6 +167,10 @@ export function createExtensionRouteOwner(library: LibraryHandle | undefined, sa
     async applyPromptContributions(sceneId: string, messages: readonly { role: "system" | "user" | "assistant" | "tool"; content: string }[], signal: AbortSignal): Promise<readonly string[]> {
       const service = await this.get();
       return service ? service.applyPromptContributions(sceneId, messages, signal) : [];
+    },
+    async hasPromptContributors(sceneId: string): Promise<boolean> {
+      const service = await this.get();
+      return service ? service.hasPromptContributors(sceneId) : false;
     },
     async close() { if (closed) return; closed = true; stopLock?.(); stopRestore?.(); await reset(); },
   };

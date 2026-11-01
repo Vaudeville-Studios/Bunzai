@@ -73,6 +73,9 @@ export const CELL_COLUMNS: Readonly<Record<string, readonly CellColumn[]>> = {
   extension_budget_usage: [{ column: "body_cell", json: true }],
   extension_budget_reservations: [{ column: "body_cell", json: true }],
   extension_runtime_lease: [{ column: "owner_cell" }],
+  core_scene_creation_bindings: [{ column: "body_cell", json: true }],
+  core_operation_projections: [{ column: "body_cell", json: true }],
+  core_pending_extension_state: [{ column: "body_cell", json: true }],
 };
 
 /** The full AAD of a plain cell column, as the stores seal it. */

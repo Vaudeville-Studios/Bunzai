@@ -215,6 +215,49 @@ exited 0. Independent review marked the scoped Unicode change shippable. No full
 repository suite was run for this repair. The bounded repeated-a timings above
 remain exploratory measurements, not release performance claims.
 
+### Reviewed fingerprint coverage and busy-test fixture
+
+The independent storage review reproduced the missing-column failure. Migration 52
+already defines `core_scene_creation_bindings.origin`; its FP_SPECS entry omits
+that plaintext field. The authenticated body remains the source of authorization
+origin; do not change that authority. Adding this field under fingerprint v1 would
+misclassify existing valid rows, so use the existing version/adoption mechanism.
+
+Executor may change:
+
+- `src/stage/store/sqlite/row-fingerprints.ts`: add origin to that ONE spec's plain
+  fields and bump that spec to v2. No other spec, schema, migration or birth-authority
+  change. Preserve all coverage/refusal assertions.
+- Add `src/stage/store/sqlite/row-fingerprints-core-origin.sqlite.test.ts` (or add
+  the same cases to the existing row-fingerprints test while staying below 500 lines):
+  create a real Core birth through existing fixture/store APIs; show current v2
+  seals origin, and raw origin tampering is detected. Model a valid legacy v1
+  fingerprint using the actual old v1 inputs and prove the real health scan calls
+  it old/adoptable rather than damaged, explicit adoption signs v2, and a subsequent
+  scan is clean. Reuse real health/store fixtures. Do not silently reseal corrupted
+  encrypted cells; run the existing adoption-refuses-damaged-row regression too.
+
+Root read the version contract in FpSpec and health-page.ts: stored.v < spec.v is
+old. Existing health adoption signs old clean rows. Preserve applied migration 52
+byte-for-byte and document that v1 could not authenticate the omitted plaintext
+column historically; do not claim a new retrospective integrity guarantee.
+
+The independent database wait test passed 20 focused reruns. Its current first
+retry precondition is only a 30 ms sleep. Permit a TEST-ONLY change in
+`src/stage/store/sqlite/database.test.ts` for that exact retrying-writer case:
+replace the guessed sleep with a barrier confirming an actual failed busy write
+attempt before starting exclusive(). Keep the real second SQLite connection,
+exclusive hold past the original budget, success and row-count assertions. Do
+not widen limits, fake success, alter patiently/database.ts, or suppress a real
+busy error. Record this as a timing-sensitive fixture repair, not a proven
+production database bug. Stop if the barrier uncovers a real contract defect.
+
+Run row-fingerprint coverage, the new version/adoption case, existing health repair
+and restore/adoption cases, Core birth authority and the unchanged busy refusal
+cases. Obtain independent review before committing. Core QuickJS full-run failure
+remains a lifecycle-corruption lead: its 28 focused checks pass. Do not change the
+sandbox-origin requirement; include that file in the same-process UI replay.
+
 ## Consolidation and normal release
 
 After approved repairs, run representative cross-file sequences, adjacent affected
@@ -242,6 +285,29 @@ unavailable platform proof, reviewer verdict, full workflow URL/result, asset
 inventory/checksum proof and actual packaged acceptance. Local tests are not a
 published release, and a cancelled job is not a passing verification.
 
+### Approved bounded cross-file failure replay
+
+After scoped commits, execute one pinned Bun 1.3.14 process using the task-local
+Windows-layout isolated runner. Select the 217 existing files from the cancelled
+run manifest: 181 failed UI files, 35 failed Kit files, and Core extension state.
+The protected-browser file is excluded only because it is a separately tracked,
+currently unresolved real-browser prerequisite; this subset cannot prove it.
+Retain the actual emitted discovery order. No isolate, parallel or test-name
+filter flags. Use the normal 120000ms per-test budget and diagnostic --bail=1.
+Limit the diagnostic process to 300000ms and each captured stream to 64MiB.
+On either limit stop only the verified owned runner PID tree; report stopped,
+never passed. This does not change package scripts or the release gate.
+
+Exact argument manifest: task-local codex-bunzai-actual-failure-replay-args.json;
+verify file count/existence and argument length before launching. Runner:
+codex-bunzai-repair-run-winlayout.ts with theme-measure-port-offset=14000.
+Both files live under C:/Users/chiev/AppData/Local/Temp. All HOME, USERPROFILE,
+APPDATA/LOCALAPPDATA, XDG and product profiles remain task-owned, with the Windows
+AppData directories nested under the isolated USERPROFILE as required by Chrome.
+No real user profile or credentials are inherited. Preserve exit, final summary,
+first failure and any bounded-stop reason. A passing subset is evidence for only
+that sequence, not the entire suite, Linux CI, or packaged release.
+
 ### Fail fast on a failing full CI suite
 
 The cancelled release continued for hours after its first known failure because
@@ -265,3 +331,47 @@ process inspection found no matching runner remaining. That attempt is not a gat
 result or proof. Independent review approved the scoped change. No full suite was
 run for this repair. A failed early run remains failed and skipped checks never
 count as success.
+
+### Bounded Linux browser diagnostic
+
+The original Linux release's Chrome startup cause is still unknown because the
+launcher discards stderr. The unchanged browser suite passes on an isolated
+Windows fixture; that does not establish Linux behavior. Existing ci.yml's manual
+entry invokes the full matrix, so it is not a bounded diagnostic substitute.
+
+Permit one manual-only .github/workflows/browser-diagnostic.yml, following the
+existing Actions versions. Single standard ubuntu-latest job, contents:read only,
+checkout recursive with persist-credentials:false, Bun from .bun-version, exact
+Node 22.23.4, frozen root/vendor dependencies. No publish, paid runner, secrets,
+production state, sandbox bypass flags, test weakening or release gate changes.
+Maximum job ten minutes and unchanged protected-browser test command three
+minutes. Give all HOME/XDG/product/cache/profile paths task-owned directories.
+Use runner's actual installed Chrome, failing clearly if absent. A task-local
+executable shim may capture its bounded stderr and exit status while invoking the exact
+original flags, with CHROME_PATH pointing only to that shim. The shim must preserve
+argument boundaries and return the owned child's status; it must not attach a
+foreign browser or alter sandbox flags/readiness behavior. Preserve runtime,
+source SHA, original Chrome path/version, actual test exit, final summary, and
+bounded logs as an always-uploaded diagnostic artifact. Limit each captured log
+to 64MiB; hitting a size/time cap is a failed or stopped diagnostic, never a pass.
+Clean up only owned child processes/profiles and do not include credentials.
+
+Independent review and root diff inspection are required before commit/push.
+Publish this workflow with skip-release and skip-ci commit markers to avoid an
+accidental full release during investigation, then dispatch only this workflow
+at the exact reviewed commit. Prior user authorization to push and deliver the
+binaries covers this necessary free-runner diagnostic. Do not launch the full
+release until its Linux result and broader replay have been assessed.
+
+The Windows 217-file replay crashed in Bun after 101 passing entries with no
+final summary. A root rerun of its last file reproduced the Windows crash in
+isolation; the same file on the older Linux baseline passed 55 tests/291 asserts.
+This is a runtime/platform contrast, not proof of the final Linux candidate.
+Permit the same 217-file diagnostic in a fresh exact-HEAD Linux fixture, with
+identical vendor gitlink/lockfiles verified and platform-correct frozen installed
+dependencies. Do not include retained diagnostic prototype files. Reuse only the
+verified pinned toolchain/download cache; isolate each run's profile and account
+environment. Keep the same 300s overall cap, 64MiB stream caps, --bail=1, normal
+120000ms per-test budget, single process and truthful stopped/failed result.
+Capture exact source/vendor identity and final exit/summary. Executor must send
+fixture preparation and exact command for root review before running it.

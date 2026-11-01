@@ -1,0 +1,36 @@
+2026-11-01T05:19:17.4635821Z ##[group]src/ui/shell/protected-browser.test.ts:
+2026-11-01T05:19:20.4977134Z node:internal/modules/run_main:123
+2026-11-01T05:19:20.4977887Z     triggerUncaughtException(
+2026-11-01T05:19:20.4978420Z     ^
+2026-11-01T05:19:20.4978590Z
+2026-11-01T05:19:20.4978909Z browserType.connectOverCDP: connect ECONNREFUSED 127.0.0.1:9591
+2026-11-01T05:19:20.4979367Z Call log:
+2026-11-01T05:19:20.4979759Z   - <ws preparing> retrieving websocket url from http://127.0.0.1:9591
+2026-11-01T05:19:20.4980115Z
+2026-11-01T05:19:20.4981081Z     at launch (/home/runner/work/Bunzai/Bunzai/scripts/theme-measure/driver.ts:28:34)
+2026-11-01T05:19:20.4981735Z     at async file:///home/runner/work/Bunzai/Bunzai/scripts/mod-top-layer/check.ts:51:17 {
+2026-11-01T05:19:20.4982535Z   log: [
+2026-11-01T05:19:20.4983657Z     '  - <ws preparing> retrieving websocket url from http://127.0.0.1:9591'
+2026-11-01T05:19:20.4984169Z   ],
+2026-11-01T05:19:20.4984379Z   name: 'Error'
+2026-11-01T05:19:20.4984584Z }
+2026-11-01T05:19:20.4984689Z
+2026-11-01T05:19:20.4984774Z Node.js v22.23.4
+2026-11-01T05:19:20.5152116Z  9 |   mkdirSync(work, { recursive: true });
+2026-11-01T05:19:20.5153353Z 10 |   const built = await Bun.build({ entrypoints: [resolve("scripts/mod-top-layer/entry.ts")], target: "browser", format: "iife", naming: "mod-iife.js", outdir: work });
+2026-11-01T05:19:20.5154643Z 11 |   if (!built.success) throw new Error("bundle failed: " + built.logs.join("\n"));
+2026-11-01T05:19:20.5156078Z 12 |   const child = Bun.spawn(["node", "scripts/mod-top-layer/check.ts", join(work, "mod-iife.js"), resolve("src/ui/theme/tokens.css"), work, String(port)], { stdout: "pipe", stderr: "inherit" });
+2026-11-01T05:19:20.5157368Z 13 |   const text = await new Response(child.stdout).text();
+2026-11-01T05:19:20.5158251Z 14 |   if ((await child.exited) !== 0) throw new Error("the browser half failed:\n" + text.slice(-800));
+2026-11-01T05:19:20.5159065Z                                                  ^
+2026-11-01T05:19:20.5159505Z error: the browser half failed:
+2026-11-01T05:19:20.5159764Z
+2026-11-01T05:19:20.5160393Z       at measure (/home/runner/work/Bunzai/Bunzai/scripts/mod-top-layer/run.ts:14:45)
+2026-11-01T05:19:20.5161348Z       at async <anonymous> (/home/runner/work/Bunzai/Bunzai/src/ui/shell/protected-browser.test.ts:15:53)
+2026-11-01T05:19:20.5161881Z
+2026-11-01T05:19:20.5165986Z ##[error]:
+      at measure (/home/runner/work/Bunzai/Bunzai/scripts/mod-top-layer/run.ts:14:45)
+      at async <anonymous> (/home/runner/work/Bunzai/Bunzai/src/ui/shell/protected-browser.test.ts:15:53)
+2026-11-01T05:19:20.5167549Z (fail) (unnamed) [3031.92ms]
+2026-11-01T05:19:20.5167713Z
+2026-11-01T05:19:20.5167978Z ##[endgroup]

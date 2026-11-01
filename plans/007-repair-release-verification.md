@@ -564,3 +564,31 @@ reruns docs-search before normal-hook scoped commit/push with skip-ci/skip-relea
 After that, dispatch exactly one new normal release (next available tag, never
 retag v0.1.44). Its full gates remain required. No need to revalidate unchanged
 Chrome/toolchain through another diagnostic branch for this test/copy-only fix.
+
+### Acknowledge the reviewed fingerprint change in the storage tripwire
+
+Normal v0.1.45 run41298785367 reached6176tests/655files before the storage-shape
+tripwire failed; docs-search and all9 actual protected-browser cases passed.
+No build/publish occurred. Root and an independent reviewer each recomputed the
+unchanged88-file manifest against708e8d5: baselinef1706f2b902d1e801429927ee4b7af908e70977950bca036a3e4338aded9ee06,
+currentdd80128451656e177f9fc720b6abbfd927ab061fd37fabb7c332ac67c36cb347.
+The ONLY changed pinned owner is row-fingerprints.ts's previously reviewed single
+Core-birth spec line: existing origin coverage plus own fingerprint version2.
+Entity/cell shapes, applied migrations, manifest, health readers and switch policy
+are unchanged. Existing v1-old/adoption, v2tamper and damaged-cell refusal tests
+exercise the version mechanism. Independent review approves this compatible
+acknowledgment; no SQL schema bump or applied-migration edit is warranted.
+
+Authorize ONLY src/ui/switch/storage-shape-tripwire.test.ts: change the expected
+hash to the reviewed current digest and add one concise dated compatibility note
+(maximum two lines, staying within the actual500-line guard). Preserve every
+manifest entry, runtime-schema count assertion, normalization and hash assertion.
+Do not delete unrelated history or weaken detection. This is deliberate approval
+of the already reviewed FPv2 delta, never a blind acceptance of CI's received hash.
+
+Fast-forward the clean task branch to4d335825's two-file0.1.45 bump first; preserve
+v0.1.45 immutable. Run the real tripwire, existing row-fingerprint coverage and
+new Core-origin version/adoption/refusal tests with verified isolated1.4.2. Check
+actual authored line count and normal hooks. Root reviews diff/reruns the tripwire
+before scoped normal-hook commit/push and exactly one next normal release. Its
+full gates still apply; no extra unchanged browser diagnostic is required.

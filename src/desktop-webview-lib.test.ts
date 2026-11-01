@@ -100,13 +100,16 @@ test.if(process.platform === "linux")("shared runtime folders and symlinked nati
 });
 
 test.if(process.platform === "linux")("concurrent first launches publish whole private native libraries", async () => {
-  const privateDir = mkdtempSync(join(runtime, "concurrent-"));
-  const results = await Promise.all([webviewWorkerEnv({ XDG_RUNTIME_DIR: privateDir }, "linux", "x64"), webviewWorkerEnv({ XDG_RUNTIME_DIR: privateDir }, "linux", "x64")]);
-  const target = results[0]!["WEBVIEW_PATH"]!;
-  expect(results[1]?.["WEBVIEW_PATH"]).toBe(target);
-  expect(readFileSync(target).equals(shipped("x64"))).toBe(true);
-  expect(statSync(target).mode & 0o777).toBe(0o600);
-  expect(readdirSync(privateDir)).toHaveLength(1);
+  for (const callers of [...Array<number>(40).fill(2), 16]) {
+    const privateDir = mkdtempSync(join(runtime, "concurrent-"));
+    const results = await Promise.all(Array.from({ length: callers }, () => webviewWorkerEnv({ XDG_RUNTIME_DIR: privateDir }, "linux", "x64")));
+    expect(results[0]).not.toBeNull();
+    const target = results[0]!["WEBVIEW_PATH"]!;
+    for (const result of results) expect(result?.["WEBVIEW_PATH"]).toBe(target);
+    expect(readFileSync(target).equals(shipped("x64"))).toBe(true);
+    expect(statSync(target).mode & 0o777).toBe(0o600);
+    expect(readdirSync(privateDir)).toHaveLength(1);
+  }
 });
 
 test.if(process.platform === "linux")("cached libraries with broad permissions or hard links are refused", async () => {

@@ -14,12 +14,18 @@ import x64 from "webview-bun/build/libwebview-x64.so" with { type: "file" };
 import windowsX64 from "webview-bun/build/libwebview.dll" with { type: "file" };
 
 const missing = (error: unknown): boolean => isRecord(error) && error["code"] === "ENOENT";
+const VERIFY_ATTEMPTS = 6;
 
 async function verifiedLibrary(target: string, bytes: Uint8Array, safe: (stat: Stats) => boolean): Promise<string | null> {
   const digest = sha256HexBytes(bytes);
   const verify = async (): Promise<boolean> => {
     try {
-      const stat = await lstat(target);
+      let stat = await lstat(target);
+      // Atomic replacement can leave lstat observing a stale, unlinked inode.
+      for (let remaining = VERIFY_ATTEMPTS - 1; stat.nlink === 0 && remaining > 0; remaining--) {
+        await Bun.sleep(1);
+        stat = await lstat(target);
+      }
       if (!safe(stat) || stat.size !== bytes.length) return false;
       const actual = await Bun.file(target).slice(0, bytes.length + 1).bytes();
       return actual.length === bytes.length && sha256HexBytes(actual) === digest;

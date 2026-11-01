@@ -13,7 +13,7 @@ related: [guide/getting-started, guide/troubleshooting, reference/ui]
 
 There is no published Bunzai release yet. The supported, usable path today is to run the source checkout with Bun. The [GitHub Releases page](https://github.com/Vaudeville-Studios/Bunzai/releases) is where packaged files will appear if a release is published; do not download an old or guessed asset URL.
 
-The release workflow defines a Windows desktop app (`Bunzai.exe`), command-line builds for Windows x64, macOS Intel and Apple Silicon, and Linux x64 and arm64. Optional Kit builds are separate terminal tools. These are planned release artifacts, not files you can download today. The browser-only [Studio preview](https://vaudeville-studios.github.io/Bunzai/studio/) is useful for trying import, editing, and export, but its data is held in the tab and disappears when the page is reloaded. Playing scenes requires the installed app.
+The release workflow defines a Windows desktop app (`Bunzai.exe`), command-line builds for Windows x64, macOS Intel and Apple Silicon, and Linux x64 and arm64. Kit is available from a source checkout for development and is not included in release downloads. These are planned release artifacts, not files you can download today. The browser-only [Studio preview](https://vaudeville-studios.github.io/Bunzai/studio/) is useful for trying import, editing, and export, but its data is held in the tab and disappears when the page is reloaded. Playing scenes requires the installed app.
 
 ## Run from source
 

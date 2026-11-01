@@ -2307,7 +2307,7 @@
           "text": "What is available today",
           "slug": "what-is-available-today",
           "level": 2,
-          "summary": "No public release is available at present. The source checkout is the current usable local installation path, while the browser-only preview keeps its data in the tab and loses it on reload. The release workflow names possible future Windows desktop, cross-platform CLI, and optional Kit files; those names do not mean files have been published. Check the GitHub Releases page for an actual release before downloading anything. Playing scenes requires the installed application, while the browser preview can be used to explore temporary import, editing, and export flows.",
+          "summary": "No public release is available at present. The source checkout is the current usable local installation path, while the browser-only preview keeps its data in the tab and loses it on reload. The release workflow names possible future Windows desktop and cross-platform CLI files; those names do not mean files have been published. Kit remains available from source for development and is excluded from release downloads. Check the GitHub Releases page for an actual release before downloading anything. Playing scenes requires the installed application, while the browser preview can be used to explore temporary import, editing, and export flows.",
           "topics": [
             "no published release",
             "source checkout",

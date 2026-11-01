@@ -3,7 +3,7 @@ name: release
 # Builds and publishes a GitHub Release for one tag. Two doors, same room:
 #  - push a tag like v0.1.0 by hand, or
 #  - get called by auto-release.yml (workflow_call with the tag it just cut).
-# Builds the desktop exe (Windows), the CLI binaries for five targets, Kit for four (the same bake, so
+# Builds the desktop exe (Windows), the CLI binaries for five targets (the same bake, so
 # `bunzai ui` serves the packaged studio anywhere), checksums everything, and publishes with the
 # install guide (.github/RELEASE-NOTES-INSTALL.md) at the top of the notes. The tag must match
 # package.json's version.
@@ -68,8 +68,8 @@ jobs:
       # `bun scripts/pin-sidecar.ts <tag>` and commit the result.
       - name: Build the remote-access helper
         run: bun sidecar/build.ts --target=windows-x64
-      - name: Build Bunzai.exe + Windows CLI + Kit
-        run: bun run scripts/build-desktop.ts --cli-targets=bun-windows-x64 --kit
+      - name: Build Bunzai.exe + Windows CLI
+        run: bun run scripts/build-desktop.ts --cli-targets=bun-windows-x64
       - name: Install the isolated CDP browser
         run: bunx playwright install chromium
       - name: Produce low-end S21 release evidence against these exact binaries
@@ -91,7 +91,6 @@ jobs:
           path: |
             dist/Bunzai.exe
             dist/bunzai-cli-windows-x64.exe
-            dist/bunzai-kit-windows-x64.exe
             dist/sidecar-windows-x64.exe
           if-no-files-found: error
 
@@ -111,16 +110,13 @@ jobs:
         with:
           bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
-      # Both Linux helpers here, arm64 by cross-compile: the helper is pure Go with CGO off, so unlike
-      # Kit it does not need a runner of the target architecture.
+      # Both Linux helpers cross-compile here: the helper is pure Go with CGO off.
       - name: Build the remote-access helpers (x64 + arm64)
         run: |
           bun sidecar/build.ts --target=linux-x64
           bun sidecar/build.ts --target=linux-arm64
-      - name: Build Linux CLIs (x64 + arm64) + Kit (x64)
-        # Kit is x64 only here: this runner is x64 and Kit cannot cross-compile (native opentui).
-        # The arm64 Kit is built by build-linux-arm64 below, on a runner of that architecture.
-        run: bun run scripts/build-desktop.ts --no-desktop --cli-targets=bun-linux-x64,bun-linux-arm64 --kit
+      - name: Build Linux CLIs (x64 + arm64)
+        run: bun run scripts/build-desktop.ts --no-desktop --cli-targets=bun-linux-x64,bun-linux-arm64
       - name: Stage the helpers as release assets
         run: cp sidecar/sidecar-linux-x64 sidecar/sidecar-linux-arm64 dist/
       - uses: actions/upload-artifact@v4
@@ -129,33 +125,8 @@ jobs:
           path: |
             dist/bunzai-cli-linux-x64
             dist/bunzai-cli-linux-arm64
-            dist/bunzai-kit-linux-x64
             dist/sidecar-linux-x64
             dist/sidecar-linux-arm64
-          if-no-files-found: error
-
-  build-linux-arm64:
-    needs: verify
-    # Kit only. The CLIs for this architecture cross-compile fine on the x64 runner above; Kit
-    # cannot, because its terminal renderer is a native library published per platform. The label
-    # was confirmed against a real run before being trusted here: an unavailable runner does not
-    # fail, it queues forever, which would stall the release rather than break it visibly.
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          ref: ${{ inputs.tag || github.ref_name }}
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .bun-version
-      - run: bun install --frozen-lockfile
-      - name: Build Kit (arm64)
-        run: bun run scripts/build-desktop.ts --no-desktop --kit
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-arm64
-          path: dist/bunzai-kit-linux-arm64
           if-no-files-found: error
 
   build-macos:
@@ -178,9 +149,8 @@ jobs:
         run: |
           bun sidecar/build.ts --target=darwin-arm64
           bun sidecar/build.ts --target=darwin-x64
-      - name: Build macOS CLIs (arm64 + x64) + Kit (arm64)
-        # Kit is arm64 only here: macos-14 is Apple Silicon and Kit cannot cross-compile.
-        run: bun run scripts/build-desktop.ts --no-desktop --cli-targets=bun-darwin-arm64,bun-darwin-x64 --kit
+      - name: Build macOS CLIs (arm64 + x64)
+        run: bun run scripts/build-desktop.ts --no-desktop --cli-targets=bun-darwin-arm64,bun-darwin-x64
       - name: Stage the helpers as release assets
         run: cp sidecar/sidecar-darwin-arm64 sidecar/sidecar-darwin-x64 dist/
       - uses: actions/upload-artifact@v4
@@ -189,13 +159,12 @@ jobs:
           path: |
             dist/bunzai-cli-darwin-arm64
             dist/bunzai-cli-darwin-x64
-            dist/bunzai-kit-darwin-arm64
             dist/sidecar-darwin-arm64
             dist/sidecar-darwin-x64
           if-no-files-found: error
 
   publish:
-    needs: [build-windows, build-linux, build-linux-arm64, build-macos]
+    needs: [build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
@@ -215,7 +184,6 @@ jobs:
           sha256sum Bunzai.exe \
             bunzai-cli-windows-x64.exe bunzai-cli-linux-x64 bunzai-cli-linux-arm64 \
             bunzai-cli-darwin-arm64 bunzai-cli-darwin-x64 \
-            bunzai-kit-windows-x64.exe bunzai-kit-linux-x64 bunzai-kit-linux-arm64 bunzai-kit-darwin-arm64 \
             sidecar-windows-x64.exe sidecar-linux-x64 sidecar-linux-arm64 \
             sidecar-darwin-arm64 sidecar-darwin-x64 \
             > SHA256SUMS
@@ -255,10 +223,6 @@ jobs:
             dist/bunzai-cli-linux-arm64 \
             dist/bunzai-cli-darwin-arm64 \
             dist/bunzai-cli-darwin-x64 \
-            dist/bunzai-kit-windows-x64.exe \
-            dist/bunzai-kit-linux-x64 \
-            dist/bunzai-kit-linux-arm64 \
-            dist/bunzai-kit-darwin-arm64 \
             dist/sidecar-windows-x64.exe \
             dist/sidecar-linux-x64 \
             dist/sidecar-linux-arm64 \

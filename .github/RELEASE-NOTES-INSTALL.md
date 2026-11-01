@@ -11,7 +11,7 @@ Choose an asset attached to this release for your operating system and processor
 | Linux, x64 | `bunzai-cli-linux-x64` | In a terminal, run `chmod +x bunzai-cli-linux-x64`, then `./bunzai-cli-linux-x64 ui`. |
 | Linux, arm64 | `bunzai-cli-linux-arm64` | In a terminal, run `chmod +x bunzai-cli-linux-arm64`, then `./bunzai-cli-linux-arm64 ui`. |
 
-The CLI prints the local address to open in a browser. Kit is an optional terminal companion with its own `bunzai-kit-*` asset. Its operating-system and architecture are stated in each asset name. The `sidecar-*` files support the optional remote-access helper and are not opened directly.
+The CLI prints the local address to open in a browser. Kit is available from a source checkout for development and is not included in release downloads. The `sidecar-*` files support the optional remote-access helper and are not opened directly.
 
 This release includes `SHA256SUMS`. Compare the checksum for the exact asset you downloaded before opening it. A Windows reputation warning does not tell you whether a file is safe; verify the release source and checksum, or cancel if you cannot establish that you trust the file. Do not treat the warning itself as a reason to bypass Windows protections.
 

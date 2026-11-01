@@ -1,6 +1,6 @@
 {
-  "generated": "2026-10-31",
-  "count": 140,
+  "generated": "2026-11-01",
+  "count": 141,
   "docs": [
     {
       "id": "01-VISION",
@@ -2110,27 +2110,25 @@
         "guide/importing",
         "reference/ui"
       ],
-      "semanticSummary": "Getting started covers release or source installation, the one-time first-run wizard, everyday Dock rooms, specialist catalog apps, and the Library's import and blank-character paths. Release builds are the shortest install; source use requires Bun 1.3+, clone, install, and bun run dev for the primary loopback server at 127.0.0.1:8321. Optional remote listeners stay off until enabled. The studio folder defaults to Documents/Bunzai Studio or a custom bunzai ui path. Wizard asks theme, one or more kinds to make, publish targets, and a palette or custom accent; Skip all uses defaults. Settings retains theme, the first selected kind as the initial Library deck, publish targets, and accent rather than the complete ordered make selection. Dock rooms are Workbench, Library, and Press with Settings pinned below; Docs and CSS Workshop are catalog tools. Import receipts write only checked pieces, while Start fresh creates, saves, and opens a blank character.",
+      "semanticSummary": "Get started with the source checkout that is available today, choose a theme preset or skip the first-run choices, learn the Studio rooms, and bring a file into the Library. Bunzai does not currently have a published release, so this walkthrough points to the pinned Bun version and recursive submodule setup. The wizard can be revisited through Settings only for the choices the Studio retains; it does not limit what you can create. The Library receipt lets you choose which parsed pieces to keep before import writes them. Its separate Start fresh door creates a blank character. A provider is only needed when you submit a scene turn, not for local import, editing, or conversion.",
       "topics": [
-        "release or Bun source install",
-        "first-run wizard four questions",
-        "Dock Workbench Library Press",
-        "loopback 8321 studio folder",
-        "first import receipt",
-        "Skip all defaults Settings",
-        "Company not open yet"
+        "source installation",
+        "one-time first-run wizard",
+        "Dock rooms",
+        "Library import receipt",
+        "encrypted studio folder"
       ],
       "anchors": [
         {
           "text": "The short version",
           "slug": "the-short-version",
           "level": 2,
-          "summary": "Download a platform build from GitHub Releases, or install Bun 1.3+, clone Bunzai, and run bun install for source use. Open the app or use bun run dev for the primary loopback address at 127.0.0.1:8321. Studio JSON defaults under Documents/Bunzai Studio or a custom path. Complete or skip the wizard, then import through the Library door or create a blank character through Start fresh.",
+          "summary": "There is no published Bunzai release yet. The available path is a source checkout using Bun 1.3.14: clone with recursive submodules, install the lockfile dependencies, and run the local Studio with bun run dev. The server prints its loopback address, normally 127.0.0.1:8321. A new studio opens the first-run wizard and then the Library, where you can import a supported file or create a blank character. See the illustrated installation guide for platform-specific Bun instructions, backups, updates, and troubleshooting.",
           "topics": [
-            "release or Bun install",
-            "bun run dev",
-            "wizard or skip",
-            "Library first import"
+            "no public release",
+            "Bun 1.3.14",
+            "recursive clone",
+            "bun run dev"
           ],
           "children": []
         },
@@ -2138,13 +2136,12 @@
           "text": "The first-run wizard",
           "slug": "the-first-run-wizard",
           "level": 2,
-          "summary": "Wizard appears once when the Studio finds no completed setup; after finish or skip it never returns on its own. Four questions: light or dark, default Dark; one or more kinds to make, where the first pick controls the first Library deck and an empty choice falls back to Characters; publish targets as a multi-select populated from known formats, with Not sure as default; and a house-palette or custom accent, default Rose. Skip all fills remaining defaults and jumps to the You're set recap. Theme, the initial Library deck, publish targets, and accent remain editable afterward; the complete ordered kind selection is not a Settings field.",
+          "summary": "The first-run wizard appears when a studio has no completed setup. It asks which theme preset to use, which kinds of pieces you want to make, where you expect to publish, and which accent color to use. RoleCall is the default theme, with Theater, Paper, and GirliePop also available. The first selected kind controls the initial Library deck; Characters is the fallback. Publish targets come from the formats Bunzai knows, and Not sure keeps the defaults ready. Skip all fills remaining defaults and proceeds to the closing screen. Retained setup choices can be changed later in Settings.",
           "topics": [
-            "wizard once only",
-            "theme first deck",
-            "publish targets",
-            "accent Rose default",
-            "Skip all Settings later"
+            "first launch",
+            "four setup choices",
+            "Skip all",
+            "Settings"
           ],
           "children": []
         },
@@ -2152,14 +2149,12 @@
           "text": "The Dock",
           "slug": "the-dock",
           "level": 2,
-          "summary": "Dock is the side column of everyday app tiles. Workbench edits character lorebook persona regex preset or pack; Library browses every deck's cards in rows or a grid, with a rail of live counts that shows one deck alone with its views, and the import door; Press ships only a staged queue to one selected target. Settings is pinned in the foot. The app catalog exposes included specialist tools such as Docs and CSS Workshop plus future apps such as Company; catalog-only tools are not ordinary Dock tiles. The configured home app controls normal launch, while a reload restores the active room when possible.",
+          "summary": "The Dock gathers the everyday Studio rooms. In the RoleCall workspace shown in the guide, it runs along the bottom of the Studio. Workbench edits pieces, Library browses and imports them, and Press exports only items you stage to a selected target. Settings stays reachable from the Dock. Specialist tools such as Docs and CSS Workshop are available from the app catalog rather than appearing as everyday Dock tiles. The configured home app controls a normal launch, and the Studio tries to restore the active room after reload.",
           "topics": [
-            "configurable home app",
-            "Library six decks",
-            "Press staged export",
-            "CSS Workshop",
-            "catalog specialists and future apps",
-            "reload restores active room"
+            "Workbench",
+            "Library",
+            "Press",
+            "catalog tools"
           ],
           "children": []
         },
@@ -2167,13 +2162,11 @@
           "text": "Bringing in your first file",
           "slug": "bringing-in-your-first-file",
           "level": 2,
-          "summary": "Empty studio primary door accepts drop or click file picker; after pieces exist drop anywhere on Library for the same flow. Files are read before write. Headings are Pick what to keep when all clean or Here is what we read when some fail. Readable files show receipt with name, kind, and default-checked checkbox; unreadable files show a plain reason without a checkbox. Add more files appends the batch, Import N writes only checked pieces, and Not now writes nothing. The second empty-studio door creates and saves a blank character, then opens it in the Workbench.",
+          "summary": "When the Library is empty, use its import door to drop a supported file or choose one from the file picker. The Studio reads files before it writes anything and presents a receipt showing parsed pieces. Readable pieces are selected by default; uncheck anything you do not want to keep. Import writes only the pieces still checked. Add more files appends another batch, while Not now closes without importing. The empty Library has a separate Start fresh door that creates and saves a blank character, then opens it in Workbench. Use that path when you want a clean starting point rather than importing a file.",
           "topics": [
-            "empty studio door",
-            "receipt before write",
-            "Import N checked",
-            "Add more files",
-            "start fresh blank character"
+            "import receipt",
+            "checked pieces only",
+            "blank character"
           ],
           "children": []
         },
@@ -2181,13 +2174,11 @@
           "text": "Tips",
           "slug": "tips",
           "level": 2,
-          "summary": "Release builds are the shortest installation path; Bun 1.3+ is required only for a source checkout. Skip all fills defaults, and retained setup choices remain editable. The first selected make kind chooses the initial Library deck; later the Library remembers the last open deck. Attached character lorebooks arrive in one bundle receipt. An unreadable receipt means safe parsing failed because the file may be unsupported, malformed, or damaged; bunzai formats lists adapters. bunzai ui port path selects another studio folder.",
+          "summary": "No release is published yet, so use the pinned source installation. Skip all fills the wizard defaults; retained choices remain editable. The first selected kind sets the initial Library deck. If an import receipt says a file could not be read, it may be unsupported, malformed, or damaged. The formats command lists available adapters, and the CLI UI command accepts a custom studio folder.",
           "topics": [
-            "release build or Bun source",
-            "Skip all fine",
-            "remember last deck",
-            "bunzai formats",
-            "custom studio path"
+            "source checkout",
+            "skip wizard",
+            "custom studio folder"
           ],
           "children": []
         }
@@ -2277,6 +2268,124 @@
             "uncheck skip",
             "receipt extras",
             "Workbench update path"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "guide/installation",
+      "path": "docs/guide/installation.md",
+      "title": "Install Bunzai",
+      "audience": "user",
+      "summary": "Choose the available install path, launch a local Studio, and protect your library when you update or move it.",
+      "tags": [
+        "install",
+        "source",
+        "Bun",
+        "Windows",
+        "macOS",
+        "Linux",
+        "library"
+      ],
+      "related": [
+        "guide/getting-started",
+        "guide/troubleshooting",
+        "reference/ui"
+      ],
+      "semanticSummary": "Bunzai currently has no published release, so this guide installs the available source checkout. It covers the pinned Bun version, recursive RP-Core submodule, local Studio launch, first-run choices, Library import, provider setup for scene replies, encrypted library backups, source updates, and common startup issues. The browser preview is temporary and is not a replacement for the installed local Studio. Planned desktop and CLI artifacts are described only as workflow targets. They are not downloadable until a release is published. Use the printed local address and keep recovery material separate from the computer.",
+      "topics": [
+        "source install and pinned Bun",
+        "recursive RP-Core submodule",
+        "first launch and clean Studio",
+        "encrypted library and backups",
+        "update source checkout",
+        "troubleshoot missing runtime or package"
+      ],
+      "anchors": [
+        {
+          "text": "What is available today",
+          "slug": "what-is-available-today",
+          "level": 2,
+          "summary": "No public release is available at present. The source checkout is the current usable local installation path, while the browser-only preview keeps its data in the tab and loses it on reload. The release workflow names possible future Windows desktop, cross-platform CLI, and optional Kit files; those names do not mean files have been published. Check the GitHub Releases page for an actual release before downloading anything. Playing scenes requires the installed application, while the browser preview can be used to explore temporary import, editing, and export flows.",
+          "topics": [
+            "no published release",
+            "source checkout",
+            "temporary browser preview"
+          ],
+          "children": []
+        },
+        {
+          "text": "Run from source",
+          "slug": "run-from-source",
+          "level": 2,
+          "summary": "This checkout pins Bun 1.3.14. Install Bun using its official platform instructions, open a new terminal, and confirm the version with bun --version. Clone the repository with --recurse-submodules so the pinned RP-Core dependency is present, then run bun install --frozen-lockfile and bun run dev. The server normally binds to 127.0.0.1:8321 and prints the address it actually uses. If that port is occupied, it checks nearby local ports. Leave the terminal open while using the Studio and press Ctrl+C when finished.",
+          "topics": [
+            "Bun 1.3.14",
+            "recursive submodule clone",
+            "local loopback Studio"
+          ],
+          "children": []
+        },
+        {
+          "text": "First launch",
+          "slug": "first-launch",
+          "level": 2,
+          "summary": "A new studio folder opens the first-run wizard, which asks about appearance, the kinds of pieces you use, publish targets, and accent color. You can skip it; the choices can be changed later in Settings. After setup, use the Library to import a supported file or start a blank character. Importing, editing, and converting local files do not require a provider connection. To generate a scene reply, configure a provider connection and select an available model. A submitted turn sends its assembled request to that provider, and any account or usage charges come from the provider.",
+          "topics": [
+            "first-run wizard",
+            "local file workflows",
+            "provider-backed scene turns"
+          ],
+          "children": []
+        },
+        {
+          "text": "Your library and recovery",
+          "slug": "your-library-and-recovery",
+          "level": 2,
+          "summary": "The installed Studio keeps an encrypted SQLite library named library.db inside its studio folder. Unless you choose another folder, it is Documents/Bunzai Studio in your user profile; the server prints the full path at startup. Before moving the folder or updating source, create a protected backup through Settings > Backups. A folder copy contains the database and snapshots, but opening it may also require the password or recovery words and the computer's local key material. Keep recovery words somewhere separate. The checkout and studio folder are separate; removing the checkout does not remove library data.",
+          "topics": [
+            "encrypted library.db",
+            "backup before moving",
+            "recovery material"
+          ],
+          "children": []
+        },
+        {
+          "text": "Update a source checkout",
+          "slug": "update-a-source-checkout",
+          "level": 2,
+          "summary": "Stop the running server with Ctrl+C before updating. From the checkout, use git pull --ff-only, git submodule update --init --recursive, bun install --frozen-lockfile, and bun run dev. This keeps the pinned submodule and lockfile dependencies in step with the updated source. Back up the library first if it matters to you; updating the checkout does not itself change the studio folder. If Git reports local changes or cannot fast-forward, review them before proceeding. Do not force a reset over work you have not inspected.",
+          "topics": [
+            "fast-forward update",
+            "refresh submodules",
+            "preserve local changes"
+          ],
+          "children": []
+        },
+        {
+          "text": "If something does not open",
+          "slug": "if-something-does-not-open",
+          "level": 2,
+          "summary": "If Bun is missing or the version is wrong, check bun --version against the checkout's 1.3.14 pin and follow Bun's official installation or upgrade instructions. If RP-Core or another package is missing, initialize recursive submodules and reinstall from the lockfile. When the server prints a port other than 8321, open that exact address. A future Windows desktop build will use WebView2; consult Microsoft's distribution and download pages for its runtime. If a release binary is published, confirm that its platform and architecture match and verify the checksum shown with that release. Unpublished workflow names are not valid download links.",
+          "topics": [
+            "Bun version",
+            "missing submodule",
+            "actual bound port",
+            "WebView2 future build",
+            "asset checksum"
+          ],
+          "children": []
+        },
+        {
+          "text": "Related guides",
+          "slug": "related-guides",
+          "level": 2,
+          "summary": "For a shorter first-run walkthrough, continue to Get started. Troubleshooting covers common local problems and the Studio reference describes the local application and API. The links use the same bundled Docs pages so you can navigate between them without leaving the site. If you are deciding whether to use the source checkout or a future packaged version, check the availability statement at the top of this page first.",
+          "topics": [
+            "getting started",
+            "troubleshooting",
+            "Studio reference"
           ],
           "children": []
         }

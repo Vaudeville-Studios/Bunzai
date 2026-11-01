@@ -1,6 +1,6 @@
 {
-  "generated": "2026-10-31",
-  "count": 140,
+  "generated": "2026-11-01",
+  "count": 141,
   "pages": [
     {
       "docId": "01-VISION",
@@ -190,9 +190,9 @@
       "docId": "guide/getting-started",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "/root/landing_review",
-      "sourceHash": "sha256:53a1982a574c9c313c6f0a42d27a309c4e199d0e3336a1e96ca98179c91a5696",
-      "semanticSummaryHash": "sha256:475272244f1f61708658e4fbf637a559b167ce15bdb6b34adaa816f5dcb7d105"
+      "reviewer": "root",
+      "sourceHash": "sha256:5880287d9ececa4849c92f538333773e1d246a91ca5fd46faa45ed8ba68c5b51",
+      "semanticSummaryHash": "sha256:c44917679e345620e8de4c51318bcbde8183c9a6221cd8920dfc45dcf1b49736"
     },
     {
       "docId": "guide/importing",
@@ -201,6 +201,14 @@
       "reviewer": "sonnet-docs-reviewer",
       "sourceHash": "sha256:a9a70c7652ff472c04774b1ddd4628b2e90b9fd28d00879d2567e64e3f7eeff9",
       "semanticSummaryHash": "sha256:bf9c4a988764f473ecb120cbbd2f3c07ee41e66432314909d32aa0c3118f589f"
+    },
+    {
+      "docId": "guide/installation",
+      "status": "APPROVED",
+      "verdict": "APPROVE",
+      "reviewer": "root",
+      "sourceHash": "sha256:2f1e9c5866a9af067b8dd4cf4bccd2a9cb379f77c8c7d29a3c1a8a2b877b1f83",
+      "semanticSummaryHash": "sha256:10769c568981f0d6909d84cfc4dd48023c7747d6bb6af09aa4a77a07a726817b"
     },
     {
       "docId": "guide/library",

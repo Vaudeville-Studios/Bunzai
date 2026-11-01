@@ -12,6 +12,7 @@ import { runCurtainIntro } from "./curtain";
 import { runPremiere } from './premiere';
 import { runSceneExamples } from './scene-example';
 import { runScreening } from './screening';
+import { runDocsSearch } from "./docs-search";
 
 const REPO = "https://github.com/Vaudeville-Studios/Bunzai";
 
@@ -51,12 +52,12 @@ function item(release: ReleaseInfo, full: boolean): HTMLLIElement {
   return li;
 }
 
-function offline(list: Element): void {
+function offline(list: Element, noPublishedReleases: boolean): void {
   const li = el("li");
   const body = el("div");
   const link = el("a", "See every release on GitHub", "more");
   link.href = `${REPO}/releases`;
-  body.append(el("p", "We could not reach GitHub just now."), link);
+  body.append(el("p", noPublishedReleases ? "No public releases are available yet." : "We could not reach GitHub just now."), link);
   li.append(el("div", undefined, "v"), body);
   list.replaceChildren(li);
 }
@@ -66,18 +67,20 @@ async function fillReleases(): Promise<void> {
   const versions = document.querySelectorAll<HTMLElement>("[data-version]");
   if (lists.length === 0 && versions.length === 0) return;
   let releases: ReleaseInfo[] = [];
+  let reachable = false;
   try {
     const res = await fetch("https://api.github.com/repos/Vaudeville-Studios/Bunzai/releases?per_page=20", {
       headers: { Accept: "application/vnd.github+json" },
     });
-    if (res.ok) releases = readReleasesList(await res.json());
+    if (res.ok) { releases = readReleasesList(await res.json()); reachable = true; }
   } catch {
     releases = [];
   }
   const latest = releases[0];
   if (latest) for (const v of versions) v.textContent = latest.version;
+  else for (const v of versions) v.textContent = "No release yet";
   for (const list of lists) {
-    if (!latest) { offline(list); continue; }
+    if (!latest) { offline(list, reachable); continue; }
     const full = list.dataset.news === "full";
     const limit = Number(list.dataset.limit) || releases.length;
     list.replaceChildren(...releases.slice(0, limit).map((r) => item(r, full)));
@@ -137,3 +140,4 @@ window.addEventListener('pagehide', () => { stopScreening(); stopPremiere(); cur
 runSceneExamples(document);
 document.querySelectorAll<HTMLElement>("[data-reel]").forEach(runReel);
 void fillReleases();
+runDocsSearch(document);

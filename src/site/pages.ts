@@ -3,11 +3,13 @@
  * Pure; scripts/build-site.ts writes the result into dist/pages. Copy must match the shipped app.
  * Links are relative (`up` climbs out of a subfolder) because Pages serves the site under /Bunzai/.
  */
-import type { Guide } from "./guides";
+import type { GuideRedirect } from "./guides";
 import { infoBody } from "./info";
 import { auditoriumBody, curtainIntroMarkup } from './auditorium';
 import { CAST, tourBody } from "./tour";
 import { icSvg } from '../ui/_shared/ic-svg';
+import { docRoute, type DocumentationPage } from "./documentation";
+import { escapeHtml } from "../ui/_shared/render-policy";
 
 export interface Page {
   readonly path: string;
@@ -16,9 +18,7 @@ export interface Page {
 
 const REPO = "https://github.com/Vaudeville-Studios/Bunzai";
 const SITE = 'https://vaudeville-studios.github.io/Bunzai/';
-const LATEST = `${REPO}/releases/latest/download/`;
-
-type Section = "home" | "info" | "tour" | "guides" | "news" | "download" | "none";
+type Section = "home" | "info" | "tour" | "docs" | "news" | "download" | "none";
 
 interface Frame {
   readonly title: string;
@@ -36,10 +36,10 @@ function frame({ title, description, up, section, body }: Frame): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title}</title>
-<meta name="description" content="${description}">
-<meta property="og:title" content="${title}">
-<meta property="og:description" content="${description}">
+<title>${escapeHtml(title)}</title>
+<meta name="description" content="${escapeHtml(description)}">
+<meta property="og:title" content="${escapeHtml(title)}">
+<meta property="og:description" content="${escapeHtml(description)}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bunzai">
 <meta property="og:image" content="${SITE}media/bunzai-preview.png">
@@ -53,6 +53,7 @@ function frame({ title, description, up, section, body }: Frame): string {
 <link rel="stylesheet" href="${up}site.css">
 ${section === "home" ? `<link rel="stylesheet" href="${up}home.css">` : ""}
 ${section === 'info' ? `<link rel="stylesheet" href="${up}info.css">` : ''}
+${section === "docs" ? `<link rel="stylesheet" href="${up}docs.css">` : ""}
 </head>
 <body data-page="${section}">
 ${section === "home" ? curtainIntroMarkup() : ""}
@@ -61,14 +62,14 @@ ${section === "home" ? curtainIntroMarkup() : ""}
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header"><div class="wrap"><nav class="nav" aria-label="Main">
 <a class="brand" href="${up}index.html"><span class="brand-symbol"><img src="${up}media/bunzai-mark.png" width="64" height="64" alt=""></span>Bunzai<span class="brand-stop">.</span></a>
-${section === 'home' ? `<a class="link repo-star" href="${REPO}" target="_blank" rel="noopener" aria-label="Star Bunzai on GitHub" title="Open GitHub to star Bunzai"><span aria-hidden="true">${icSvg('lucide:star')}</span>Star repo</a><a class="link" href="${REPO}" target="_blank" rel="noopener">Open repo</a>` : `${link('info', `${up}info.html`, 'Info')}${link("tour", `${up}tour/scenes.html`, "Tour")}${link("guides", `${up}guides/index.html`, "Guides")}${link("news", `${up}news.html`, "What's new")}<a class="link" href="${up}studio/">Try it</a>`}
+${section === 'home' ? `<a class="link repo-star" href="${REPO}" target="_blank" rel="noopener" aria-label="Star Bunzai on GitHub" title="Open GitHub to star Bunzai"><span aria-hidden="true">${icSvg('lucide:star')}</span>Star repo</a><a class="link" href="${REPO}" target="_blank" rel="noopener">Open repo</a><a class="link" href="${up}docs/index.html">Docs</a>` : `${link('info', `${up}info.html`, 'Info')}${link("tour", `${up}tour/scenes.html`, "Tour")}${link("docs", `${up}docs/index.html`, "Docs")}${link("news", `${up}news.html`, "What's new")}<a class="link" href="${up}studio/">Try it</a>`}
 <a class="btn" href="${up}download.html">Download</a>
 </nav></div></header>
 <main id="main">
 ${body}
 </main>
 <div class="wrap"><footer><span>bunzai &middot; free and open source &middot; a Coneja-Chibi production</span>
-<span class="links"><a href="${up}guides/index.html">Guides</a><a href="${up}studio/">Browser Studio</a><a href="${REPO}">GitHub</a><a href="${REPO}/issues">Report a problem</a></span></footer></div>
+<span class="links"><a href="${up}docs/index.html">Docs</a><a href="${up}studio/">Browser Studio</a><a href="${REPO}">GitHub</a><a href="${REPO}/issues">Report a problem</a></span></footer></div>
 <script type="module" src="${up}site.js"></script>
 </body>
 </html>
@@ -78,10 +79,10 @@ ${body}
 const ticket = (up: string): string => `<div class="ticket">
 <div class="adm">ADMIT ONE &middot; ANY NIGHT</div>
 <h3>Bunzai</h3>
-<p>Free, open source, and yours to keep. No account needed.</p>
+<p>Free and open source. No account needed.</p>
 <div class="tear"></div>
-<div class="os"><a href="${LATEST}Bunzai.exe">Windows</a><a href="${up}download.html#mac">Mac</a><a href="${up}download.html#linux">Linux</a></div>
-<small><span data-version>latest</span> &middot; Mac and Linux run from the terminal</small>
+<p class="ticket-status">No public release is available yet. The source checkout is ready to use.</p>
+<a class="btn" href="${up}docs/guide/installation.html">Read the installation guide</a>
 </div>`;
 
 function home(): Page {
@@ -93,31 +94,22 @@ function info(): Page {
 }
 
 function download(): Page {
-  const os = (id: string, name: string, steps: string, extra = ""): string =>
-    `<section class="os-block" id="${id}" data-os="${id}"><h2>${name}</h2><ol class="steps">${steps}</ol>${extra}</section>`;
   const body = `<div class="wrap page">
 <div class="act"><b>Act IV</b> &middot; your ticket</div>
-<h1>Get Bunzai.</h1>
-<p class="lede">Free and open source. Every download comes from the latest release on GitHub, <span data-version>latest</span>.</p>
-<div class="pair" style="margin-top:36px">
-<div>
-${os("windows", "Windows", `<li>Download <a class="more" href="${LATEST}Bunzai.exe">Bunzai.exe</a>.</li><li>Before opening it, check the release page for verification details. If it publishes a checksum for this exact release file, compare the downloaded file with it. If no checksum is published, you can build from source using the steps below.</li><li>This build is unsigned, so Windows may show a reputation warning. The warning does not establish whether a file is safe. Continue only if you trust the source and have verified the download; otherwise cancel.</li>`, `<p class="note">App starts but no window? Install Microsoft's <a class="more" href="https://developer.microsoft.com/microsoft-edge/webview2/">WebView2 runtime</a> and open it again. Windows 11 already has it.</p>`)}
-${os("mac", "Mac", `<li>Download the one for your Mac: <a class="more" href="${LATEST}bunzai-cli-darwin-arm64">Apple Silicon</a> or <a class="more" href="${LATEST}bunzai-cli-darwin-x64">Intel</a>.</li><li>In Terminal, make it runnable: <code>chmod +x bunzai-cli-darwin-arm64</code></li><li>Start it: <code>./bunzai-cli-darwin-arm64 ui</code></li><li>Open the address it prints in your browser.</li>`)}
-${os("linux", "Linux", `<li>Download the one for your machine: <a class="more" href="${LATEST}bunzai-cli-linux-x64">Intel or AMD</a> or <a class="more" href="${LATEST}bunzai-cli-linux-arm64">ARM, like a Raspberry Pi</a>.</li><li>Make it runnable: <code>chmod +x bunzai-cli-linux-x64</code></li><li>Start it: <code>./bunzai-cli-linux-x64 ui</code></li><li>Open the address it prints in your browser.</li>`)}
-</div>
-<div>${ticket("")}
-<p class="note" style="--c:var(--mint)">Your pieces are stored in <code>Documents/Bunzai Studio</code> on your computer and encrypted at rest. Key protection depends on your setup; some fallback configurations store a key file beside the library. AI requests send selected content to your chosen provider, and connected services receive the data needed for their features. Opening Bunzai again while it is running just opens another window onto the same studio.</p>
-<p class="note" style="--c:var(--lilac)"><b>Kit</b>, the optional terminal companion, is a separate download on the <a class="more" href="${REPO}/releases/latest">release page</a>. <a class="more" href="tour/kit.html">What is Kit?</a></p>
-<p class="note" style="--c:var(--sky)">Want to check your download? Check the release page for a checksum published for that exact file and release. If no checksum is listed, build Bunzai from source using the instructions below.</p>
-</div></div>
-<section class="s tight" style="padding-top:56px"><h2>Or run it from source</h2>
-<p class="lede">You need <a class="more" href="https://bun.sh">Bun</a> 1.3 or newer.</p>
-<pre class="source"><code>git clone ${REPO}
-cd Bunzai
-bun install
-bun run dev</code></pre></section>
+<h1>Run Bunzai from source.</h1>
+<p class="lede">There are no published release assets at the moment. The source checkout is the available installation path; the guide explains the exact steps and what to expect on each platform.</p>
+${ticket("")}
+<section class="s tight"><h2>Source install</h2>
+<p class="lede">Install <a class="more" href="https://bun.sh">Bun</a> 1.3.14, then clone Bunzai with its rp-core submodule:</p>
+<pre class="source"><code>git clone --recurse-submodules ${REPO}.git
+cd Bunzai</code></pre>
+<pre class="source"><code>bun install --frozen-lockfile
+bun run dev</code></pre>
+<p>The server prints the loopback address to open in your browser. If port 8321 is busy, Bunzai selects another free port and prints that address.</p>
+<p><a class="more" href="docs/guide/installation.html">Full illustrated installation guide</a></p></section>
+<section class="s tight"><h2>What each build is for</h2><p>The release workflow defines a Windows desktop executable, cross-platform CLI builds, and optional Kit builds. Those files are not downloadable until a GitHub release is published. The <a class="more" href="${REPO}/releases">release page</a> is the source of truth for current files; do not use an old or guessed download link.</p><p>The <a href="studio/">Browser Studio</a> is a temporary browser session for trying import, editing, and export. Its data does not persist after reload, and playing scenes requires the installed application.</p></section>
 </div>`;
-  return { path: "download.html", html: frame({ title: "Download Bunzai", description: "Get Bunzai for Windows, Mac, or Linux. Free and open source.", up: "", section: "download", body }) };
+  return { path: "download.html", html: frame({ title: "Install Bunzai", description: "Install Bunzai from source and choose the right platform build when releases are available.", up: "", section: "download", body }) };
 }
 
 function news(): Page {
@@ -138,47 +130,33 @@ function notFound(): Page {
   return { path: "404.html", html: frame({ title: "Not found: Bunzai", description: "This page wandered off stage.", up: "/Bunzai/", section: "none", body }) };
 }
 
-const GROUPS: readonly (readonly [string, readonly string[]])[] = [
-  ["Start here", ["getting-started", "importing", "library"]],
-  ["Make things", ["editing", "lorebooks", "personas", "regex"]],
-  ["Send things out", ["exporting", "converting"]],
-  ["When you need help", ["faq", "troubleshooting", "security"]],
-];
-
-/** Guides grouped for the index and the sidebar; platform notes and anything unlisted go last. */
-function grouped(guides: readonly Guide[]): [string, Guide[]][] {
-  const bySlug = new Map(guides.map((g) => [g.slug, g]));
-  const listed = new Set(GROUPS.flatMap(([, slugs]) => slugs));
-  const groups: [string, Guide[]][] = GROUPS.map(([name, slugs]) => [name, slugs.flatMap((s) => bySlug.get(s) ?? [])]);
-  groups.push(["Other apps", guides.filter((g) => g.slug.startsWith("platforms"))]);
-  groups.push(["More", guides.filter((g) => !listed.has(g.slug) && !g.slug.startsWith("platforms") && g.slug !== "index")]);
-  return groups.filter(([, list]) => list.length > 0);
+function guidePages(guides: readonly GuideRedirect[]): Page[] {
+  return guides.filter((guide) => guide.slug !== "index").map((guide) => {
+    const target = docRoute(guide.id);
+    const body = `<div class="wrap page"><div class="act"><b>Documentation moved</b></div><h1>${escapeHtml(guide.title)}</h1><p class="lede">This guide now lives in the complete documentation library.</p><p><a class="btn" href="${target}">Open ${escapeHtml(guide.title)}</a></p><script>location.replace(${JSON.stringify(target)}+location.hash)</script></div>`;
+    return { path: `guides/${guide.slug}.html`, html: frame({ title: `${guide.title}: Bunzai`, description: guide.summary, up: "../", section: "docs", body }) };
+  });
 }
 
-function guidePages(guides: readonly Guide[]): Page[] {
-  const groups = grouped(guides);
-  const side = (current: string): string => `<ul class="side">${groups.map(([name, list]) =>
-    `<li class="small">${name}</li>${list.map((g) => `<li><a href="${g.slug}.html"${g.slug === current ? ' aria-current="page"' : ""}>${g.title}</a></li>`).join("")}`).join("")}</ul>`;
-  const index = `<div class="wrap page"><div class="act"><b>Act V</b> &middot; guides</div>
-<h1>Guides, written for people.</h1><p class="lede">Short, plain how-tos for everything Bunzai does.</p>
-${groups.map(([name, list]) => `<div class="act" style="margin-top:44px">${name}</div><div class="grid-links" style="margin-top:0">${list.map((g) => `<a href="${g.slug}.html"><div><h3>${g.title}</h3><p>${g.summary}</p></div><span>&rarr;</span></a>`).join("")}</div>`).join("")}
-</div>`;
-  const pages: Page[] = [{ path: "guides/index.html", html: frame({ title: "Guides: Bunzai", description: "Short, plain how-tos for everything Bunzai does.", up: "../", section: "guides", body: index }) }];
-  for (const g of guides) {
-    if (g.slug === "index") continue;
-    const body = `<div class="wrap page"><a class="crumb" href="index.html">&larr; All guides</a><div class="guide-wrap">${side(g.slug)}<article class="doc">${g.html}</article></div></div>`;
-    pages.push({ path: `guides/${g.slug}.html`, html: frame({ title: `${g.title}: Bunzai`, description: g.summary, up: "../", section: "guides", body }) });
-  }
-  return pages;
+function guideIndexRedirect(): Page {
+  const target = docRoute("guide/README");
+  const body = `<div class="wrap page"><div class="act"><b>Documentation moved</b></div><h1>All guides are in Docs.</h1><p class="lede">The complete user and developer documentation now has one searchable source.</p><p><a class="btn" href="${target}">Open user documentation</a> <a class="btn ghost" href="/Bunzai/docs/index.html">Browse all Docs</a></p><script>location.replace(${JSON.stringify(target)}+location.hash)</script></div>`;
+  return { path: "guides/index.html", html: frame({ title: "Guides moved: Bunzai", description: "Open the complete Bunzai Docs library.", up: "../", section: "docs", body }) };
 }
 
 /** Every page of the site, given the rendered guides. */
-export function sitePages(guides: readonly Guide[]): Page[] {
+export function sitePages(guides: readonly GuideRedirect[], documentation: readonly DocumentationPage[] = []): Page[] {
   const tour = CAST.map((m) => ({
     path: `tour/${m.id}.html`,
     html: frame({ title: `${m.name}: Bunzai`, description: m.card, up: "../", section: "tour", body: tourBody(m) }),
   }));
-  return [home(), info(), download(), news(), notFound(), ...tour, ...guidePages(guides)].map(page => {
+  const docs = documentation.map((doc) => {
+    const depth = doc.id ? doc.id.split("/").length : 1;
+    const up = "../".repeat(depth);
+    return { path: doc.path, html: frame({ title: `${doc.title}: Bunzai`, description: doc.summary, up, section: "docs", body: doc.body }) };
+  });
+  const aliases = guidePages(guides);
+  return [home(), info(), download(), news(), notFound(), ...tour, ...docs, guideIndexRedirect(), ...aliases].map(page => {
     const canonical = new URL(page.path === 'index.html' ? '' : page.path, SITE).href;
     return { ...page, html: page.html.replace('</head>', `<link rel="canonical" href="${canonical}">\n<meta property="og:url" content="${canonical}">\n</head>`) };
   });

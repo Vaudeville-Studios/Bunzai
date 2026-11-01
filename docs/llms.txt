@@ -28,6 +28,7 @@
 - [Frequently asked questions](docs/guide/faq.md): Straight answers on where your files live, what a convert actually keeps or drops, which apps Bunzai reads and writes, and whether converting or editing a card can damage it.
 - [Get started](docs/guide/getting-started.md): Install Bunzai, get through the four-question setup wizard, learn the rooms the Dock puts in front of you, and bring your first file into the Library.
 - [Import a file](docs/guide/importing.md): Bring a card, lorebook, persona, or regex set into the Library by dropping it on the shelves or clicking Import, and see exactly what the receipt keeps before anything is written.
+- [Install Bunzai](docs/guide/installation.md): Choose the available install path, launch a local Studio, and protect your library when you update or move it.
 - [Browse the Library](docs/guide/library.md): Browse every deck's cards in rows or a grid, switch any deck's section to another view, use each card's own tools, and stage one piece or many for a single send to the Workbench.
 - [Build a lorebook](docs/guide/lorebooks.md): Add entries to a lorebook, give each one the keywords that trigger it, and decide where it lands in the assembled prompt.
 - [Create and manage personas](docs/guide/personas.md): Build a persona on the Workbench from identity and sections or flat text, set where it injects and what it links to, and know the few places it behaves differently from a character.

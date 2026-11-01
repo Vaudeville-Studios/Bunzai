@@ -394,3 +394,33 @@ Reuse the existing capture/cleanup owner rather than adding a parallel superviso
 Independent review and root diff inspection precede commit/push/one manual dispatch.
 The top commit must retain skip-ci/skip-release markers. This diagnostic remains
 manual-only, standard free runner, read-only, bounded and logs-only.
+
+### Reset and unmount the Compendium test fixture
+
+The controlled Bun 1.4.2 replay reached 1,211 tests/155 files without a runtime
+panic, then failed the Compendium read-only assertion. That run used the pre-fix
+snapshot copy of compendium-wing.test.tsx (SHA256
+f7c1e6a52d94767016f25ccb218b373a04fe77fa65f36d2ce1384ffe3201137c), not the
+canonical edited fixture. The pre-fix standalone file passed 18/80; the pre-fix
+writer→consumer sequence scene-lore-entries.test.tsx then compendium-wing.test.tsx
+failed on the writer's legitimate disabled-storm patch because the consumer did
+not reset the shared rig. Its read-only API proxy rejects writes, so this was
+fixture leakage rather than a product write.
+
+The canonical fixture after repair is SHA256
+5a48012bce62906aecb84cd3c6623ef9054c230c4b0e967d4a0a0c63917915c7. A temporary
+one-file overlay verified that hash, ran the writer→consumer sequence on the same
+Bun 1.4.2+744846f84 environment, then restored and reverified the original snapshot
+hash. The corrected pair passed 37 tests/142 assertions; the corrected standalone
+passed 18/80; the corrected immediate-predecessor pair passed 33/154. All three
+exited 0. These are focused fixture checks, not a rerun of the 217-file set.
+
+Authorize ONLY src/ui/apps/scenes/compendium/compendium-wing.test.tsx: import and
+reuse existing resetLore() in beforeEach, then reset local calls; use existing
+unmount(flushSync) in afterEach for each mounted root, before DOM teardown. Preserve
+all existing assertions, three-read API contract and expected empty recorders.
+No production behavior, shared-rig contract, test selection or timeout changes.
+Run the unchanged two-file RED sequence GREEN, standalone suite and adjacent lore
+fixtures with the same verified isolated Bun 1.4.2. Obtain independent scoped
+review and root verification before normal-hook commit; do not call this a full
+replay pass or silently change the release pin.

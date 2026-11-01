@@ -241,3 +241,27 @@ Record exact source SHA, tool versions, RED/GREEN commands and counts, skipped o
 unavailable platform proof, reviewer verdict, full workflow URL/result, asset
 inventory/checksum proof and actual packaged acceptance. Local tests are not a
 published release, and a cancelled job is not a passing verification.
+
+### Fail fast on a failing full CI suite
+
+The cancelled release continued for hours after its first known failure because
+verify:ci invokes the full test script without Bun's supported bail option. Make
+the CI invocation stop after its first failing test, while preserving the entire
+test selection and every subsequent gate on a successful run. Scope: only the
+verify:ci script value in package.json, replacing `bun run test &&` with
+`bun run test --bail=1 &&`. Do not alter the test script, timeouts, assertions,
+release jobs, successful-run coverage, or gate ordering. No new script owner.
+
+Pinned Bun 1.3.14 task-local package fixture confirmed forwarding: the emitted
+test command included `--bail=1`. The passing `verify:ci` fixture exited 0 and
+logged both test cases plus its post-test command. The deliberate-failure fixture
+exited 1 after logging only the failing test; the next test and post-test command
+did not run. The fixture lives in TEMP and adds no artificial failure to product
+tests. The package diff retains all later verify:ci commands verbatim and in order.
+
+One initial fixture invocation incorrectly passed `--cwd` as a Bun argument and
+started the repository verify command at typecheck. It was immediately interrupted;
+process inspection found no matching runner remaining. That attempt is not a gate
+result or proof. Independent review approved the scoped change. No full suite was
+run for this repair. A failed early run remains failed and skipped checks never
+count as success.

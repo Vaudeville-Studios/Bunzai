@@ -22,7 +22,7 @@
 import { createBudgetedLru } from "../../caches/budgeted-lru";
 import { escapeRegex } from "../../regex/escape";
 import { vetPattern } from "../../regex/validate";
-import { WORD_LOOKAHEAD, WORD_LOOKBEHIND } from "./key-word-boundary";
+import { WORD_LOOKAHEAD, WORD_PREFIX } from "./key-word-boundary";
 import type { LorebookBody, LorebookEntry, Trigger } from "../../../entities/lorebook/schema";
 
 export interface KeywordMatchOptions {
@@ -140,7 +140,7 @@ function compileWholeWord(keyword: string, caseSensitive: boolean): RegExp {
   const cacheKey = `${keyword}\0${flags}`;
   const cached = wholeWordRegexCache.get(cacheKey);
   if (cached) return cached;
-  const compiled = new RegExp(`${WORD_LOOKBEHIND}${escapeRegex(keyword)}${WORD_LOOKAHEAD}`, flags);
+  const compiled = new RegExp(`${WORD_PREFIX}${escapeRegex(keyword)}${WORD_LOOKAHEAD}`, flags);
   wholeWordCompiles++;
   wholeWordRegexCache.set(cacheKey, compiled);
   return compiled;

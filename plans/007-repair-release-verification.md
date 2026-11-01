@@ -175,6 +175,46 @@ and must not be included in test discovery or published assets. Cleanup was
 policy-blocked; do not retry destructive commands through another shell. Use
 explicit test paths or a fresh clean snapshot instead.
 
+### Reviewed Unicode keyword repair
+
+The unchanged key-word-boundary parity suite reproduces an ordinary matcher
+accepting an ASCII key glued after U+10400 while the trie correctly rejects it.
+Pinned Bun's negative lookbehind is inconsistent; codePointBefore/isWordCodePoint
+are correct. Preserve the word-character contract and trie offsets.
+
+Two exploratory candidates are rejected: a negative-assertion-plus-any-character
+prefix remained RED, and a global literal loop introduced quadratic rescanning
+of long repeated keys. Neither candidate is approved for commit.
+
+The bounded TEMP prototype instead consumes a direct complementary character class:
+`(?:^|[^BASE_WORD_CLASS]|[SPACELESS])`, followed by the escaped literal and the
+existing right-boundary lookahead. Non-word means outside the base word categories
+OR a spaceless-script character. Its 815 assertions include Unicode/trie parity,
+ASCII differential cases and an astral keyword in both case modes. Repeated-a
+measurements at 40k/80k/160k were 5.50/8.25/19.57 ms versus the rejected loop's
+25/84/324 ms. These are spike measurements, not final canonical verification.
+
+The final implementation factors base word categories into `BASE_WORD_CLASS`
+and exports `WORD_PREFIX`, the complementary class
+`(?:^|[^BASE_WORD_CLASS]|[SPACELESS])`. `triggers-keyword.ts` retains its
+non-global cached `u`/`iu` regex, right-boundary lookahead, and single `.test()`
+call. No trie implementation change was needed; the task's candidate `key-index.ts`
+delta was restored to HEAD.
+
+Regression coverage preserves the original parity expectations and adds astral
+neighbors, an overlapping later occurrence, cache-repeat checks, and astral-key
+glued-then-valid cases in both case modes. Potentially hanging astral-key and
+repeated-candidate checks run in a 10-second child. Its parsed output verifies
+the astral results and that the warmed matcher uses between one and eight
+`RegExp.exec` calls, without pinning an exact internal count.
+
+Pinned Bun 1.3.14 verification: the focused parity file passed 59 tests / 1,564
+assertions. Core Lore plus `src/stage/crypto/keyring-heap-canary.test.ts` passed
+422 tests / 21,114 assertions across 38 files. Root's pinned-runner typecheck
+exited 0. Independent review marked the scoped Unicode change shippable. No full
+repository suite was run for this repair. The bounded repeated-a timings above
+remain exploratory measurements, not release performance claims.
+
 ## Consolidation and normal release
 
 After approved repairs, run representative cross-file sequences, adjacent affected

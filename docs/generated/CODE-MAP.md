@@ -449,7 +449,7 @@ Tests are left out. For what a project word means, see [the glossary](../referen
 - `groups.ts`: Inclusion groups: when several triggered entries share a `groupName`, only one injects, picked by weighted random draw (`groupWeight`).
 - `index.ts`: Public surface of the lore engine.
 - `key-index.ts`: M3, compiled lore matcher: a multi-pattern matcher over a book's plain (non-regex, non-special) trigger keys, so one pass over an entry's scan text finds every plain key hit, instead of triggers-keyword.ts's matchKeyw...
-- `key-word-boundary.ts`: The one definition of a "word character" for whole-word lore key matching, shared by triggers-keyword.ts (regex lookarounds) and key-index.ts (per-character check) so the two paths can never disagree.
+- `key-word-boundary.ts`: The one definition of a "word character" for whole-word lore key matching, shared by triggers-keyword.ts (literal regex) and key-index.ts (trie hit check) so both paths use the same word-character categories.
 - `outlet.ts`: {{lorebook:EntryName}} outlet expansion.
 - `recursion.ts`: Recursive trigger matching: an entry's own content can trigger other entries.
 - `scan.ts`: Build an entry's scan text and evaluate its triggers.

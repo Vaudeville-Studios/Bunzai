@@ -1,0 +1,6 @@
+Command: bun run verify:ci
+Status: interrupted by task owner per release-gate decision
+Observed process exit: 1 after Ctrl+C
+CI verdict: incomplete; not a test failure or green result
+Log: plans/extension-runtime-evidence/verify-ci-second.log
+Reason: packaged Windows WebView2 DLL discovery regression requires source repair before a valid second wall.

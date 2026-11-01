@@ -55,6 +55,12 @@ export type BuiltinStudioTheme = (typeof STUDIO_THEMES)[number];
 export type StudioTheme = BuiltinStudioTheme | `bunzai.theme.${string}`;
 export const isStudioTheme = (value: unknown): value is StudioTheme =>
   (STUDIO_THEMES as readonly unknown[]).includes(value) || isThemePackageId(value);
+/** Resolves a saved appearance choice to its canonical package identity, including host-owned built-ins. */
+export const studioThemePackageId = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  if ((STUDIO_THEMES as readonly string[]).includes(value)) return `bunzai.host.theme.${value}`;
+  return isThemePackageId(value) ? value : null;
+};
 export const nextStudioTheme = (theme: StudioTheme): StudioTheme =>
   STUDIO_THEMES[(STUDIO_THEMES.indexOf(theme as BuiltinStudioTheme) + 1) % STUDIO_THEMES.length]!;
 

@@ -22,6 +22,8 @@ Bunzai is AGPL-3.0-or-later (see [LICENSE](LICENSE)). This file lists what ships
 | @ai-sdk/openai-compatible | 3.0.14 | Apache-2.0 | https://github.com/vercel/ai |
 | @ai-sdk/provider | 4.0.3 | Apache-2.0 | https://github.com/vercel/ai |
 | @ai-sdk/provider-utils | 5.0.12 | Apache-2.0 | https://github.com/vercel/ai |
+| @jitl/quickjs-ffi-types | 0.32.0 | MIT | https://github.com/justjake/quickjs-emscripten |
+| @jitl/quickjs-wasmfile-release-sync | 0.32.0 | MIT | https://github.com/justjake/quickjs-emscripten |
 | @noble/hashes | 2.4.0 | MIT | https://github.com/paulmillr/noble-hashes |
 | @openrouter/ai-sdk-provider | 3.0.0 | Apache-2.0 | https://github.com/OpenRouterTeam/ai-sdk-provider |
 | @opentui/core | 0.5.1 | MIT | https://github.com/anomalyco/opentui |
@@ -60,6 +62,7 @@ Bunzai is AGPL-3.0-or-later (see [LICENSE](LICENSE)). This file lists what ships
 | png-chunk-text | 1.0.0 | MIT | https://github.com/hughsk/png-chunk-text |
 | png-chunks-encode | 1.0.0 | MIT | https://github.com/hughsk/png-chunks-encode |
 | png-chunks-extract | 1.0.0 | MIT | https://github.com/hughsk/png-chunks-extract |
+| quickjs-emscripten-core | 0.32.0 | MIT | https://github.com/justjake/quickjs-emscripten |
 | react | 19.2.7 | MIT | https://github.com/facebook/react |
 | react-dom | 19.2.7 | MIT | https://github.com/facebook/react |
 | react-reconciler | 0.33.0 | MIT | https://github.com/facebook/react |

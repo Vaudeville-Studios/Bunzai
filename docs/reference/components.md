@@ -285,6 +285,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | EditorLeftCard | src/ui/apps/workbench/presenters/editor-left.tsx | ({ artUrl, draft, piece, vary, styles, setField, mediaCaps, spriteCount, namedCount, setSpritesOpen, setSpritesFocusL... |  |  |
 | EditorModeSwitch | src/ui/apps/workbench/presenters/editor-modebar.tsx | ({ mode, setMode }: ModeProps) |  |  |
 | EditorPage | src/ui/apps/scenes/messenger/settings/scene/finalcut-editor.tsx | ({ env }: { env: SceneEnv }) |  |  |
+| EffectReview | src/ui/extensions/effect-review.tsx | ({ value }: { value: unknown }) |  | .review .group .value |
 | EmojiPicker | src/ui/apps/scenes/cast/emoji-picker.tsx | ({ anchor, onPick, onClose }: { anchor: HTMLElement \| null; onPick(emoji: string): void; onClose(): void }) | RoleCall's emoji picker, portaled under its button and loaded when first opened. |  |
 | Empty | src/ui/apps/scenes/compendium/cells/cell.tsx | ({ children }: { children: ReactNode }) |  |  |
 | Empty | src/ui/apps/scenes/compendium/storyboards/dossier-parts.tsx | ({ children }: { children: ReactNode }) |  |  |
@@ -310,6 +311,9 @@ The answer for the common needs, before searching the table below. For buttons, 
 | ExpressionGroups | src/ui/components/expression-map/groups.tsx | ({ value, onChange }: ExpressionGroupsProps) |  | .wrap .group .head .name .add |
 | ExpressionMap | src/ui/components/expression-map/index.tsx | ({ value, onChange, hideEnabled }: ExpressionMapProps) |  | .wrap .note .row .k .lbl .sel .gtitle |
 | ExpressionStage | src/ui/components/expression-stage/index.tsx | ({ pack, profile }: ExpressionStageProps) |  | .wrap .seal .row .face .moods .ta .hit |
+| ExtensionManager | src/ui/apps/settings/sections/extensions.tsx | ({ ctx }: { ctx: AppContext }) |  | .manager .module .css .review .import .requirement .catalog .title ... |
+| ExtensionRenderer | src/ui/extensions/renderer.tsx | ({ packageId, packageName, descriptor, declaredCommands, assets = {}, disabled = false, onCommand }: ExtensionRendere... | Renders only the shared bounded descriptor language, with package commands checked at the host boundary. | .root .stack .row .text .control .list .image |
+| ExtensionSettingsEditor | src/ui/extensions/settings-editor.tsx | ({ id, packageName, enabled, recoveryRequired, canWrite, api }: { id: string; packageName: string; enabled: boolean; ... |  |  |
 | FailCard | src/ui/apps/scenes/scene-turn-parts.tsx | ({ code, message, draft, onDismiss, onRetry }: { code: string; message: string; draft: string; onDismiss(): void; onR... | RoleCall's failure card: the draft shows, and is not saved. Retry asks again for the same message. |  |
 | FailureModeSelect | src/ui/apps/scenes/final-cut/fc-pass-chrome.tsx | ({ value, onChange }: { value: FailureMode; onChange(next: FailureMode): void }) |  |  |
 | FailureRow | src/ui/apps/scenes/messenger/settings/scene/finalcut-kit.tsx | ({ value, onChange }: { value: FinalCutPass["failureMode"]; onChange(next: FinalCutPass["failureMode"]): void }) |  |  |
@@ -390,6 +394,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | HistorianSection | src/ui/apps/scenes/compendium/tabs/settings/historian.tsx | ({ compendium, set }: SectionProps) |  |  |
 | HistoryList | src/ui/apps/scenes/scene-history.tsx | ({ history, onRestore }: { history: HistoryView; onRestore(index: number): void }) | The Edit history popover: the text now, then each earlier text newest first with Restore. |  |
 | HorizonBadge | src/ui/apps/scenes/props/story-director/director-parts.tsx | ({ horizon }: { horizon: DirectorHorizon }) |  |  |
+| HostCommandMenu | src/ui/extensions/host-command-menu.tsx | ({ api, resources, onActivate }: HostCommandMenuProps) |  | .commandScroll .commandRows |
 | HtmlDocEditor | src/ui/apps/workbench/htmldoc-editor.tsx | ({ entity, revision, ctx, piece, topRight }: HtmlDocEditorProps) |  | .room .head .name .summary .split .grip .pane .paneHead ... |
 | HtmlView | src/ui/apps/html-view/index.tsx | ({ ctx }: { ctx: AppContext }) |  | .room .body .quiet .frame .big .expand |
 | Ic | src/ui/_shared/ic.tsx | ({ name, size = 16, fill = false, className }: { name: IconName; size?: number; fill?: boolean; className?: string }) | `fill` draws a lucide glyph solid, as RoleCall does for the Booth bolt and the stop square; mdi glyphs are always solid. |  |
@@ -433,6 +438,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | LensRail | src/ui/components/lens-rail/index.tsx | ({ platforms, selected, onToggle, onClear, offTarget, onOffTarget }: LensRailProps) | One-line sideways-scrolling lens chips; Bunzai (full card) first, off-target mode at the tail. | .rail .scroll .offt .fade |
 | LibraryCard | src/ui/apps/scenes/messenger/panels/trackers/library-draw.tsx | ({ tracker, onOpen }: { tracker: SceneTracker; onOpen(): void }) | The card of one linked tracker: its name, the Library tag, the reply that last changed it, and its fields or items. Clicking the head opens it. |  |
 | LibraryDetail | src/ui/apps/scenes/messenger/panels/trackers/library-detail.tsx | ({ ctx, data, tracker, edit, running, onBack }: { ctx: AppContext; data: SceneTrackers; tracker: SceneTracker; edit: ... |  |  |
+| LibraryExtensionCommandMenu | src/ui/apps/library/extension-command-menu.tsx | ({ ctx, pieces }: { ctx: AppContext; pieces: readonly StudioEntitySummary[] }) |  |  |
 | LibraryGate | src/ui/shell/library-gate.tsx | ({ children, pieces: injectedPieces }: { children: ReactNode; pieces?: PieceStore }) |  | .stage .inner .row .rowText .rowLabel .rowHint .proof .count ... |
 | LibraryPick | src/ui/apps/scenes/messenger/panels/trackers/library-pick.tsx | ({ ctx, chat, linked, bodies, builtIn, builtInOn, onChat, onBack }: { ctx: AppContext; chat: Chat; linked: readonly s... |  |  |
 | LibraryPicker | src/ui/apps/scenes/scene-lore-books.tsx | ({ library, inScene, onPick }: { library: StudioEntitySummary[] \| null; inScene: ReadonlySet<string>; onPick(id: stri... | My Library, searchable. A book the scene already reads is listed but cannot be added twice. |  |
@@ -726,7 +732,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | SceneHero | src/ui/apps/scenes/scenes-hero.tsx | ({ ctx, scene, picked, onOpen }: { ctx: AppContext; scene: SceneSummary; picked?: boolean; onOpen(): void }) |  |  |
 | SceneHud | src/ui/apps/scenes/scene-hud.tsx | ({ take, messages, model }: { take: string; messages: number; model: string }) |  |  |
 | SceneNoteWing | src/ui/apps/scenes/scene-note-wing.tsx | ({ saved, onSave }: { saved: ChatNote \| undefined; onSave(note: ChatNote): Promise<void> }) |  |  |
-| ScenePage | src/ui/apps/scenes/scene-page.tsx | ({ ctx, chatId, onBack, onTree }: { ctx: AppContext; chatId: string; onBack(): void; onTree?(chatId: string): void }) |  |  |
+| ScenePage | src/ui/apps/scenes/scene-page.tsx | ({ ctx, chatId, navigationTicketId = null, loadId = null, onBack, onTree }: { ctx: AppContext; chatId: string; naviga... |  |  |
 | SceneRegexWing | src/ui/apps/scenes/scene-regex-wing.tsx | ({ ctx, picks }: { ctx: AppContext; picks: SceneRegexPicks }) |  |  |
 | ScenesList | src/ui/apps/scenes/scenes-list.tsx | ({ ctx, onOpen }: { ctx: AppContext; onOpen(id: string): void }) |  | .room .lib .rc .lrail .lrail-head .ttl .tile .lsec ... |
 | ScenesSide | src/ui/apps/scenes/scenes-side.tsx | ({ ctx, scenes, cut, folders, rail, onSelect, onOpen, onRestore, onNewFolder, drawerOpen }: { ctx: AppContext; scenes... |  |  |
@@ -846,7 +852,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | TextAreaRow | src/ui/apps/scenes/messenger/frames/settings-rows.tsx | ({ label, description, value, rows = 4, onChange }: RowCopy & { value: string; rows?: number; onChange(value: string)... |  |  |
 | TextBody | src/ui/_shared/field-bodies.tsx | ({ field, update }: { field: BodyField; update: Update }) |  | .toc .module .css .title .rows .add .page .pager ... |
 | TheKey | src/ui/apps/settings/sections/security-flows.tsx | ({ hasWords, hasPassword, onWriteLines, onDone, onCancel, }: { hasWords: boolean; hasPassword: boolean; onWriteLines:... | Act II, the key: the password, typed twice, and when the door asks for it. Lines come first. | .wrap .module .css .card .cardTitle .cardBody .subtle .actions ... |
-| ThemeManager | src/ui/apps/settings/sections/theme-manager.tsx | ({ ctx }: { ctx: AppContext }) |  | .manager .file .hint .state .review .catalog .strip .neutral ... |
+| ThemeManager | src/ui/apps/settings/sections/theme-manager.tsx | ({ ctx }: { ctx: AppContext }) |  | .manager .module .css .catalog .strip .name |
 | ThemeRows | src/ui/apps/scenes/messenger/settings/user/appearance.tsx | ({ env }: { env: RowEnv }) | The requested studio theme (the same preference the Settings app writes) and a drill to the package manager. |  |
 | ThemeSlot | src/ui/_shared/theme-slot.tsx | ({ id }: { id: SlotId }) |  |  |
 | ThemeSwatches | src/ui/apps/scenes/cast/cast-palette.tsx | ({ value, onChange, max = 3 }: { value: readonly string[]; onChange(next: string[]): void; max?: number }) |  |  |

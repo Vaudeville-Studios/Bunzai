@@ -10,7 +10,10 @@ import { readDramaturgStream, refusalOf } from "./apps/scenes/props/dramaturg/dr
 import { isCanonicalMediaReference } from "../entities/_shared/media-reference";
 import type { PiecePatch } from "../stage/contracts/content-store";
 import { isRecord } from "../core/guards";
+import { isSha256Hex } from "../core/sha256";
 import { whileBusy } from "./_shared/while-busy";
+import { readThemeAssetResponse } from "./shell/theme-asset-urls";
+import { createExtensionManagerClient } from "./extensions/api-client";
 
 export { ApiHttpError as ApiError } from "./_shared/api-fetch";
 
@@ -82,6 +85,12 @@ function kindFromQuery(id: string): string {
 }
 
 export const api: AppContext["api"] = {
+  readExtensionThemeAsset: async (packageId, assetId, themeDigest, assetDigest, mediaType, signal) => {
+    if (!/^[a-z0-9.-]{1,120}$/u.test(packageId) || !/^[a-z0-9-]{1,48}$/u.test(assetId) || !isSha256Hex(themeDigest) || !isSha256Hex(assetDigest)) throw new Error("Invalid extension theme asset reference.");
+    const response = await apiFetch(`/api/themes/assets/${encodeURIComponent(packageId)}/${encodeURIComponent(assetId)}?digest=${encodeURIComponent(themeDigest)}`, { signal });
+    return readThemeAssetResponse(response, { digest: assetDigest, mediaType }, signal);
+  },
+  extensions: createExtensionManagerClient(apiFetch),
   search: (input, signal) => apiFetchJson("/api/search", {
     method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input), signal,
   }),

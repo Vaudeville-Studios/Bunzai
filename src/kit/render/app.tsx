@@ -41,6 +41,10 @@ import { createSessionStore, newSessionId, type SessionStore } from "../sessions
 import type { SessionActions, SessionCommandContext } from "../sessions/session-actions";
 import { useCopyNotice } from "./use-copy-notice";
 import { GatePrompt } from "./primitives/safety/gate-prompt";
+import { ExtensionEffectPrompt } from "./primitives/safety/extension-effect-prompt";
+import { ExtensionFilePrompt } from "./primitives/safety/extension-file-prompt";
+import type { PendingExtensionFileAction } from "../../extensions/contracts/file-actions";
+import { fileWriteTicketId, useExtensionActions } from "./use-extension-actions";
 import { useGateController } from "./safety/use-gate";
 import { useRailSession } from "./rail/use-rail-session";
 import { RailPane } from "./rail/rail-pane";
@@ -67,7 +71,6 @@ const emptyTurn = (): TurnView =>
 /** Notify defaults: all channels on. Bell/desktop are focus-gated in plan.ts, so they only fire when you
  * looked away; a future /gates command will persist per-channel toggles. */
 const NOTIFY_SETTINGS: NotifySettings = { title: true, bell: true, desktop: true };
-
 /** The window shell: session state plus composed widgets. */
 export function App({
   studioName,
@@ -90,6 +93,7 @@ export function App({
   // The editor card insets itself from the real terminal, so it needs the real size.
   const { width: termWidth, height: termHeight } = useTerminalDimensions();
   const [busy, setBusy] = useState(false);
+  const { effect: extensionEffect, files: extensionFileActions, running: runningFileActions, clearEffect } = useExtensionActions(session.extensions);
   /**
    * Has this conversation already been greeted? True for a resumed session, whose turns are proof
    * that somebody was welcomed the first time round.
@@ -130,7 +134,7 @@ export function App({
     screen: view !== "session",
     searching,
     rewinding,
-    gate: gate.prompt !== null,
+    gate: gate.prompt !== null || extensionEffect !== null || extensionFileActions.some((action) => action.action === "pick"),
     menu: rail.blockEditor.target !== null || rail.editor.target !== null,
     rail: rail.open && rail.focused,
   });
@@ -301,6 +305,7 @@ export function App({
         gates: { mode: () => gate.mode, set: (mode) => gate.setMode(mode) },
         art: artCommands(session, add),
         sessions: sessionActions,
+        extensions: session.extensions,
         pieces: async (kind: string) =>
           shelf.pieces.filter((p) => p.kind === kind).map((p) => ({ id: p.id, name: p.name })),
       };
@@ -445,6 +450,22 @@ export function App({
           mode={gate.mode}
           onChoice={gate.choose}
         />
+      ) : extensionEffect ? (
+        <ExtensionEffectPrompt ticket={extensionEffect.ticket} grant={extensionEffect.grant} writeAction={extensionFileActions.some((action) => action.action === "write" && action.id === fileWriteTicketId(extensionEffect.ticket))} onAnswer={(approved) => {
+          const extensions = session.extensions;
+          if (!extensions) return;
+          const writeId = fileWriteTicketId(extensionEffect.ticket);
+          if (approved && writeId && extensionFileActions.some((action) => action.id === writeId && action.action === "write")) {
+            if (!runningFileActions.current.has(writeId)) {
+              runningFileActions.current.add(writeId);
+              void extensions.processFileAction(writeId).finally(() => runningFileActions.current.delete(writeId));
+            }
+          } else void extensions.answerEffect(extensionEffect.ticket.id, approved).catch(clearEffect);
+        }} />
+      ) : extensionFileActions.some((action) => action.action === "pick") ? (
+        <ExtensionFilePrompt ticket={extensionFileActions.find((action): action is Extract<PendingExtensionFileAction, { action: "pick" }> => action.action === "pick")!}
+          onChoose={(path) => { const ticket = extensionFileActions.find((action) => action.action === "pick"); if (ticket && session.extensions) void session.extensions.processFileAction(ticket.id, path); }}
+          onCancel={() => { const ticket = extensionFileActions.find((action) => action.action === "pick"); if (ticket && session.extensions) void session.extensions.answerFileAction(ticket.id, { status: "cancelled" }); }} />
       ) : null}
       <Composer
         active={turn.live.phase === "waiting" || turn.live.phase === "thinking" || turn.tools != null}

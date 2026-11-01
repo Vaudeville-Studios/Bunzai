@@ -26,7 +26,7 @@ const WRITES: Record<string, string> = {
   // Exports and outputs the person asked for.
   "src/cli-io.ts": "CLI output to a path the person chose",
   // No library content.
-  "src/desktop-webview-lib.ts": "bundled native-library bytes only, atomically cached with mode 0600 in an owned private runtime directory; existing entries require matching bytes and metadata",
+  "src/desktop-webview-lib.ts": "bundled native-library bytes only, atomically cached in a verified per-user platform directory; existing entries require exact bytes and metadata, and contain no library content",
   "src/desktop-boot-report.ts": "reports of a failed start: the error's kind, message, and stack; never a file's text",
   "src/kit/providers/vault.ts": "provider secrets, sealed by the key vault",
   "src/kit/keystore/backends/identity-write.ts": "exclusive key-vault identity file creation and partial-write cleanup",

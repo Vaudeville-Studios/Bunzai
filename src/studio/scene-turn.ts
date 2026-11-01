@@ -9,7 +9,10 @@
  * as plain HTTP errors. From the checkpoint on, every outcome is an event.
  */
 import { toErrorMessage } from "../error-message";
-import { runOwnedTurn, type TurnRuntime } from "./scene-turn-runtime";
+import type { TurnEvent } from "./scene-turn-events";
+export type { TurnEvent } from "./scene-turn-events";
+import type { TurnRuntime } from "./scene-turn-runtime";
+import { enterTurn } from "./scene-turn-entry";
 import { registerTurn } from "./scene-turn-running";
 export { stopTurn } from "./scene-turn-running";
 export { commitAnyway, discardWaiting, resumeScene } from "./scene-turn-resume";
@@ -23,64 +26,44 @@ import { tagThinkingState } from "../core/reasoning-tags";
 import { recoverThinkingEnd } from "./scene-turn-recover";
 import { thinkingSignature } from "./scene-turn-reasoning";
 import { modelTakesPrefill } from "../core/assembly/request";
-import { countPrompt, estimateFor, modelKey } from "../core/tokens";
+import { modelKey } from "../core/tokens";
 import type { Chat, ChatConnection, ChatStore, Generation, JsonObject, Message } from "../stage/contracts/chat-store";
 import { ProviderError, type Provider, type ProviderEvent, type ProviderRole } from "../stage/contracts/provider";
 import type { StateStore } from "../stage/contracts/state-store";
-import { StudioConflictError, StudioNotFoundError, StudioValidationError } from "./errors";
+import { NoConnectionError, StudioConflictError, StudioNotFoundError, StudioValidationError } from "./errors";
+export { NoConnectionError } from "./errors";
 
 import { assembleRequest, openedWith, overflowMessage, prepareRequest, shapeRequest } from "./scene-turn-build";
 import { tickDeltas } from "./scene-turn-ticks";
 import { loadTurn, type LoadedTurn, type ReadPreset, type TurnKind } from "./scene-turn-load";
 import { isFallbackWorthy } from "./scene-turn-fallback";
 import { learnReply } from "./scene-turn-meter";
-import { applyEdits, awaitReview } from "./scene-turn-review";
-import { promptRegex, recounted, type RegexItem } from "./scene-turn-regex";
+import { awaitReview } from "./scene-turn-review";
+import { promptRegex, recounted } from "./scene-turn-regex";
+import { appendExtensionPrompts, measurePromptRequest, rejectOversizedPrompt } from "./scene-turn-prompts";
 import { finalCutStage } from "./scene-turn-final-cut";
-import type { RegexRule, RegexSetBody } from "../entities/regex/schema";
+import type { RegexSetBody } from "../entities/regex/schema";
 import type { ReadLorebook } from "./scene-lore";
 import { recallSection, runRecall } from "./compendium-recall";
 import { directorOn } from "../core/director/settings";
-import type { DirectorActivity } from "../stage/contracts/director-types";
+import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
 import { summaryOf } from "../core/director/tracker-round";
 import { cancelTrackerRound, startTrackerRound } from "./scene-director-trackers";
 import { commitDirector, runDirector, type DirectorDeps, type DirectorRun } from "./scene-director";
 import { turnWrites } from "./scene-turn-writes";
 import { sendReply, sentTools, toolsRefusal, toolTurn, withToolCalls, type NarratorToolsFor } from "./scene-turn-tools";
 import { skillDelta } from "../core/skill";
-import { failedAttempt, requestParams, routeOf, splitEntryKey, traceOf, traceOptions, type RequestParams, type RouteAttempt } from "./scene-turn-trace";
+import { failedAttempt, requestParams, routeOf, splitEntryKey, traceOf, traceOptions, type RouteAttempt } from "./scene-turn-trace";
 import { BookCancelledError, bookTrace, prepareBookReply, runBookPhases, type PhaseRun } from "./book-phase";
 import { replyPhase } from "../core/promptbook";
 
 export { splitEntryKey };
 
-export type TurnEvent =
-  | { type: "phase"; name: string; role: "private" | "reply" | "after" }
-  | { type: "start"; turnId: string; kind: TurnKind; messageId: string | null }
-  /** A piece of the reply: added to the end, or, when `full` is set, the whole text so far. */
-  | { type: "text"; delta: string; full?: true }
-  /** A piece of the model's native reasoning, shaped like a text piece: it is not part of the reply. */
-  | { type: "reasoning"; delta: string; full?: true }
-  /** The Prompt Inspector's pause: the exact request, held until the page answers (scene-turn-review.ts). */
-  | { type: "review"; turnId: string; messages: { role: ProviderRole; content: string }[]; tokens: number; /** The tool definitions this request will carry, when it carries any. */ tools?: { name: string; description: string; parameters: JsonObject }[]; /** The generation parameters this request sends and leaves out (scene-turn-trace.ts). */ params?: RequestParams }
-  /** The scene's prompt regex, held for the page's sandbox worker (scene-turn-regex.ts): the rules and the conversation messages to rewrite; the page answers with the changed texts. */
-  | { type: "regex"; turnId: string; rules: RegexRule[]; items: RegexItem[]; macros: { user: string; char: string }; /** "display" asks for the scene's text-rewriting display rules (Final Cut's input), else the prompt rules. */ phase?: "display" }
-  /** Final Cut's pass `index` of `of` has started, before the reply is saved (scene-turn-final-cut.ts); the page shows RoleCall's "Final Cut pass...". */
-  | { type: "finalcut"; pass: string; index: number; of: number }
-  | { type: "done"; message: Message }
-  | { type: "stopped"; message: Message | null }
-  | { type: "failed"; category: string; code: string; message: string; draft: string }
-  | { type: "conflict"; turnId: string; draft: string }
-  /** The Compendium's recall before the reply (only when it is on): the page may show it; the reply never waits on its outcome. */
-  /** The Start Reply With text the reply is being written after, sent as the assistant's own opening: the page may show it in front of the reply (Show Prefill in Chat). */
-  | { type: "prefill"; text: string }
-  /** The Story Director's planning before the reply (only when its Prop is on; never on Continue): the reply waits on it, and a failure only means no directive this turn. `entries` are its activity lines. */
-  | { type: "director"; status: "planning" | "planned" | "failed"; reason?: string; entries?: DirectorActivity[] }
-  | { type: "world"; status: "recalling" | "recalled" | "skipped" | "failed"; count?: number; reason?: string };
-
 /** A scene's connection, resolved: the provider to send through, and what it says about itself. */
 export interface Connected {
   provider: Provider;
+  /** Host-only digest of the exact saved provider config used to resolve this provider. */
+  providerConfigFingerprint?: string;
   /** The connection's kind (its Kit spoke), for the meter's key. */
   kind: string;
   /** The model's context window, when the connection states one. */
@@ -119,13 +102,8 @@ export interface TurnDeps {
   randomSeed(): number;
   /** The Story Director's pause, jitter and call limit, so a test need not wait; absent: the real ones (scene-director-call.ts). */
   director?: DirectorDeps["director"];
-}
-
-/** Thrown before a turn opens when the scene has no usable connection: the "no connection" capsule. */
-export class NoConnectionError extends StudioConflictError {
-  constructor(message = "this scene has no connection; pick one in the AI wing") {
-    super(message);
-  }
+  /** Applies only manifest-declared, grant-filtered named prompt appends before inspection and send. */
+  applyExtensionPrompts?(sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal): Promise<readonly string[]>;
 }
 
 /** Save the streamed text every 400 characters or every second, whichever comes first. */
@@ -137,14 +115,13 @@ const SAVE_EVERY_MS = 1_000;
  * to the scene's state that lands in between (a person's tracker edit) would be overwritten by the turn's own whole-row update. The early claim has its own key, so Stop (which finds a turn by
  * its id) and the resume sweep are unchanged, and it is released however the turn ends, a refusal before the checkpoint included.
  */
-export async function runTurn(deps: TurnDeps, input: Parameters<typeof runTurnBody>[1], emit: (event: TurnEvent) => void): Promise<void> {
-  return runOwnedTurn(deps.runtime, input.chatId, async (controller) => {
-    try { await runTurnBody(deps, input, emit, controller); }
-    catch (error) {
-      if (!controller.signal.aborted) throw error;
-      emit({ type: "stopped", message: null });
-    }
-  });
+export function runTurn(
+  deps: TurnDeps,
+  input: Parameters<typeof runTurnBody>[1],
+  emit: (event: TurnEvent) => void,
+  extensionCommit?: ExtensionCommitContext,
+): Promise<void> {
+  return enterTurn(deps.runtime, input.chatId, (controller) => runTurnBody(deps, input, emit, controller, extensionCommit), () => emit({ type: "stopped", message: null }));
 }
 
 async function runTurnBody(
@@ -153,6 +130,7 @@ async function runTurnBody(
   input: { chatId: string; kind: TurnKind; expectedVersion: number; fallback?: ChatConnection; guidance?: string; /** Prompt Inspector on: stop with the exact request before anything is written or sent. */ inspect?: boolean },
   emit: (event: TurnEvent) => void,
   controller: AbortController,
+  extensionCommit?: ExtensionCommitContext,
 ): Promise<void> {
   const { chats, state } = deps;
   const guidance = input.guidance?.trim() ?? "";
@@ -186,11 +164,14 @@ async function runTurnBody(
   let model = chat.connection.model;
   const stored = (streamed: string): string => (input.kind === "continue" ? continuationAddition(original, streamed, !modelTakesPrefill(model)) : streamed);
   const writes = turnWrites(deps.now);
-  let toolsTurn = await toolTurn(deps.narratorTools, input.kind, chat, loaded, deps.randomSeed(), writes, await deps.toolBudgetMs?.());
+  const narratorTools = extensionCommit ? undefined : deps.narratorTools;
+  let toolsTurn = await toolTurn(narratorTools, input.kind, chat, loaded, deps.randomSeed(), writes, await deps.toolBudgetMs?.());
   if (controller.signal.aborted) { emit({ type: "stopped", message: null }); return; }
-  const turn = await chats.beginTurn(loaded.branchId, target, { expectedVersion: input.expectedVersion });
+  const turn = await chats.beginTurn(loaded.branchId, target, { expectedVersion: input.expectedVersion }, extensionCommit);
   if (!turn) throw new StudioNotFoundError("that scene does not exist");
-  if (controller.signal.aborted) { await chats.dropTurn(turn.id); emit({ type: "stopped", message: null }); return; }
+  const dropTurn = () => chats.dropTurn(turn.id, extensionCommit);
+  const saveCheckpoint = (progress: Parameters<ChatStore["saveCheckpoint"]>[1]) => chats.saveCheckpoint(turn.id, progress, extensionCommit);
+  if (controller.signal.aborted) { await dropTurn(); emit({ type: "stopped", message: null }); return; }
 
   registerTurn(deps.runtime, turn.id, chat.id, controller);
   emit({ type: "start", turnId: turn.id, kind: input.kind, messageId: turn.messageId });
@@ -208,32 +189,32 @@ async function runTurnBody(
     const started = deps.now();
     if (loaded.promptbook) {
       ({ loaded, chat, connected, model } = await prepareBookReply({ deps, chat: bookChat, loaded: bookBase, connected, model, runs: bookRuns, writes, turnId: turn.id, kind: input.kind, inspect: input.inspect, signal: controller.signal, emit }));
-      toolsTurn = await toolTurn(deps.narratorTools, input.kind, chat, loaded, deps.randomSeed(), writes, await deps.toolBudgetMs?.());
+      toolsTurn = await toolTurn(narratorTools, input.kind, chat, loaded, deps.randomSeed(), writes, await deps.toolBudgetMs?.());
     }
     const prep = await prepareRequest(deps, chat, loaded, connected, model, started);
     const { window, options, presetName, reasoningFormat, meter, key, startGlobal } = prep;
     // Recall (compendium-recall.ts) runs once, here: the Inspector's pause, the fallback model and a draft never ask it again.
     // The Director plans beside the Compendium's recall; both finish before anything is assembled. A Director that fails never fails the reply.
     if (directorOn(chat) && input.kind !== "continue") emit({ type: "director", status: "planning" });
-    const planning = runDirector(deps, chat, loaded, { connected, model }, directorStop.signal, { kind: input.kind, format: reasoningFormat }).catch((error: unknown) => {
+    const planning = extensionCommit ? Promise.resolve(null) : runDirector(deps, chat, loaded, { connected, model }, directorStop.signal, { kind: input.kind, format: reasoningFormat }).catch((error: unknown) => {
       emit({ type: "director", status: "failed", reason: toErrorMessage(error, "the Story Director failed") });
       return null;
     });
     const recall = await runRecall(deps, chat, loaded, { connected, model }, controller.signal, () => emit({ type: "world", status: "recalling" }));
     director = await planning;
     if (controller.signal.aborted) {
-      await chats.dropTurn(turn.id);
+      await dropTurn();
       emit({ type: "stopped", message: null });
       return;
     }
     if (recall) emit({ type: "world", status: recall.status === "empty" ? "recalled" : recall.status, count: recall.entries.length, ...(recall.reason ? { reason: recall.reason } : {}) });
     if (director) emit({ type: "director", status: director.status, ...(director.reason ? { reason: director.reason } : {}), entries: director.entries });
     const built = await assembleRequest(deps, { chat, loaded, prep, started, kind: input.kind, original, guidance, recall, ...(director?.directive ? { director: director.directive } : {}), reserved: sentTools(toolsTurn, connected).map((t) => JSON.stringify(t)) });
-    const { result, asked, guided } = built;
+    const { result, guided } = built;
     const outOfTime = outOfTimeOf(result.macros);
     toolsTurn.macros.context = result.expansion.context;
     if (result.budget.overflow) {
-      await chats.dropTurn(turn.id);
+      await dropTurn();
       emit({ type: "failed", category: "invalid_request_error", code: "context_length_exceeded", message: overflowMessage(result), draft: "" });
       return;
     }
@@ -241,46 +222,58 @@ async function runTurnBody(
     const shape = (forModel: string) => shapeRequest({ chat, loaded, kind: input.kind, original, built, connected }, forModel, edits);
     let messages = shape(model);
     const regex = await promptRegex({ runtime: deps.runtime, setIds: chat.regex?.sets, readRegex: deps.readRegex, trace: result.trace, messages, expansion: result.expansion, turnId: turn.id, chatId: chat.id, signal: controller.signal, emit });
-    if (regex.stop) { await chats.dropTurn(turn.id); emit(regex.stop); return; }
+    if (regex.stop) { await dropTurn(); emit(regex.stop); return; }
     const regexEdits = regex.edits;
     edits = regexEdits;
-    messages = shape(model);
+    const prompted = await deps.applyExtensionPrompts?.(chat.id, shape(model), controller.signal) ?? [];
+    const withExtensions = (forModel: string, currentEdits: Readonly<Record<number, string>>) => appendExtensionPrompts(shape(forModel), recounted(result, currentEdits).trace, prompted);
+    let extensionRequest = withExtensions(model, regexEdits);
+    messages = extensionRequest.messages;
     const opened = (forModel: string): string | undefined => openedWith({ chat, kind: input.kind, built }, forModel);
     if (opened(model)) emit({ type: "prefill", text: opened(model)! });
-    const estimate = estimateFor(meter, key, countPrompt(messages.map((m) => m.content)), started);
+    let measured = measurePromptRequest(messages, meter, key, started, window);
+    let { estimate } = measured;
+    if (!measured.fits) { await rejectOversizedPrompt(chats, turn.id, emit, false, extensionCommit); return; }
     const recalled = recall ? recallSection(recall, result.recall) : undefined;
     let route: RouteAttempt[] = [{ connectionId: chat.connection!.id, kind: connected.kind, model }];
     // The turn's local variable changes, as scene-state deltas (rule 17), and its global ones, as operations in the shared `global` slot (core/scene-state/globals.ts): both wait on the checkpoint and reach the version only when the turn commits, so a turn that does not commit has written none, and a continue makes none of its own. Their size is bounded by their source (the macro engine's output cap), so nothing is refused here.
     // A picked skill whose close rule held this turn (core/skill.ts) is closed with them, as the reply's own write.
-    const deltas = input.kind === "continue" ? [] : [...writes.pending(), ...varsDeltas(result.local, started), ...globalDeltas(result.globalWrites, started, () => crypto.randomUUID()), ...(result.skills ?? []).filter((s) => s.close).map((s) => skillDelta(s.id, false, started))];
-    let trace = (traceOf(recounted(result, regexEdits), model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled));
+    const sharedGlobalDeltas = extensionCommit ? [] : globalDeltas(result.globalWrites, started, () => crypto.randomUUID());
+    const deltas = input.kind === "continue" ? [] : [...writes.pending(), ...varsDeltas(result.local, started), ...sharedGlobalDeltas, ...(result.skills ?? []).filter((s) => s.close).map((s) => skillDelta(s.id, false, started))];
+    let trace = (traceOf({ ...recounted(result, regexEdits), trace: extensionRequest.trace }, model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled));
     if (loaded.promptbook && input.kind !== "continue") trace["book"] = bookTrace(bookRuns, "running");
     if (input.inspect) {
       // F16: the one pause gate. Cancel and Stop drop the checkpoint, so nothing was written, saved or sent.
       emit({ type: "review", turnId: turn.id, messages: messages.map((m) => ({ role: m.role, content: m.content })), tokens: estimate.mid, params: requestParams(traceOptions(options, connected.provider.params, model)), ...(sentTools(toolsTurn, connected).length > 0 ? { tools: sentTools(toolsTurn, connected) } : {}) });
       const decision = await awaitReview(deps.runtime, turn.id, chat.id, controller.signal);
       if (decision.kind === "cancel") {
-        await chats.dropTurn(turn.id);
+        await dropTurn();
         emit({ type: "stopped", message: null });
         return;
       }
       edits = { ...regexEdits, ...decision.edits };
-      messages = shape(model);
+      extensionRequest = withExtensions(model, edits);
+      messages = extensionRequest.messages;
+      measured = measurePromptRequest(messages, meter, key, started, window);
+      ({ estimate } = measured);
+      if (!measured.fits) { await rejectOversizedPrompt(chats, turn.id, emit, true, extensionCommit); return; }
+      trace = traceOf({ ...recounted(result, edits), trace: extensionRequest.trace }, model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
+      if (loaded.promptbook && input.kind !== "continue") trace["book"] = bookTrace(bookRuns, "running");
     }
     // ChatStore rule 22: the take's latest request text, aligned with the stored trace's blocks
     // (result.messages and result.trace share the same order and length, section 9's own build).
-    const request = { texts: applyEdits(asked, edits).map((m) => m.content) };
+    const request = { texts: messages.map((m) => m.content) };
     let savedChars = 0;
     let savedAt = deps.now();
     // The save that carries the turn's deltas is awaited, not left to the best-effort chain: a lost one would commit the reply without the variables it wrote. A failure takes the catch below, as the old variable write did.
-    let saving: Promise<unknown> = deltas.length > 0 ? Promise.resolve(await chats.saveCheckpoint(turn.id, { content: "", trace, deltas })) : chats.saveCheckpoint(turn.id, { content: "", trace });
+    let saving: Promise<unknown> = deltas.length > 0 ? Promise.resolve(await saveCheckpoint({ content: "", trace, deltas })) : saveCheckpoint({ content: "", trace });
     // A tool's state writes join the same pending set and are saved with the reply's text so far, awaited: the model is told if one could not be kept.
-    writes.open(deltas, (all) => chats.saveCheckpoint(turn.id, { content: stored(text), deltas: all }));
+    writes.open(deltas, (all) => saveCheckpoint({ content: stored(text), deltas: all }));
     const save = () => {
       savedChars = text.length;
       savedAt = deps.now();
       // A save that finds the library busy is skipped: the next one supersedes it.
-      saving = saving.then(() => chats.saveCheckpoint(turn.id, { content: stored(text) })).catch(() => undefined);
+      saving = saving.then(() => saveCheckpoint({ content: stored(text) })).catch(() => undefined);
     };
     // The clock for "Reasoned for" (first reasoning token to first reply token) and "Thought for" (the reply's own opening tag to its closing one).
     let reasoningFrom: number | undefined;
@@ -327,8 +320,12 @@ async function runTurnBody(
         route = [failedAttempt(route[0]!, first), { connectionId: fb.id, kind: next.kind, model: fb.model }];
         connected = next;
         model = fb.model;
-        messages = shape(model);
-        trace = traceOf(recounted(result, regexEdits), model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
+        extensionRequest = withExtensions(model, regexEdits);
+        messages = extensionRequest.messages;
+        measured = measurePromptRequest(messages, meter, key, started, window);
+        ({ estimate } = measured);
+        if (!measured.fits) { await rejectOversizedPrompt(chats, turn.id, emit, false, extensionCommit); return; }
+        trace = traceOf({ ...recounted(result, regexEdits), trace: extensionRequest.trace }, model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
         if (loaded.promptbook && input.kind !== "continue") trace["book"] = bookTrace(bookRuns, "running");
         try {
           completion = await sendReply(connected, { model, messages, options }, { signal: controller.signal, onEvent }, toolsTurn, deps.now);
@@ -343,19 +340,19 @@ async function runTurnBody(
       if (controller.signal.aborted) {
         // Stop keeps what arrived; with nothing (or, for a continue, nothing but an echo), nothing is stored.
         if (!stored(text)) {
-          await chats.dropTurn(turn.id);
+          await dropTurn();
           emit({ type: "stopped", message: null });
           return;
         }
         answered = true;
         if (loaded.promptbook) {
           trace["book"] = bookTrace(bookRuns, "stopped"); completedBookTrace = trace;
-          await chats.saveCheckpoint(turn.id, { content: stored(text), trace, deltas: [...writes.pending()] });
+          await saveCheckpoint({ content: stored(text), trace, deltas: [...writes.pending()] });
         }
         await commit({ content: stored(text), generation: { model, finishReason: "stopped", presetName, generationMs: deps.now() - started, ...(guidance ? { guidance } : {}), ...(outOfTime ? { outOfTime } : {}) }, ...(input.kind === "continue" ? {} : withToolCalls(toolsTurn, { ...trace, route: routeOf(route, "stopped") }, request)) }, "stopped");
         return;
       }
-      await chats.dropTurn(turn.id);
+      await dropTurn();
       const failure = error instanceof ProviderError ? error : null;
       emit({
         type: "failed",
@@ -376,7 +373,7 @@ async function runTurnBody(
     const thoughtOnly = input.kind !== "continue" && !text && Boolean(completion.reasoning?.trim());
     if (!stored(text) && !thoughtOnly) {
       // A continue the model answered with nothing new: nothing to store, and the person is told.
-      await chats.dropTurn(turn.id);
+      await dropTurn();
       emit({ type: "failed", category: "invalid_request_error", code: "nothing_to_add", message: "The model had nothing to add to this reply.", draft: "" });
       return;
     }
@@ -407,7 +404,7 @@ async function runTurnBody(
     // Through JSON, so the stored trace is JSON exactly (the store refuses anything else).
     const usage = completion.usage ? (JSON.parse(JSON.stringify(completion.usage)) as JsonObject) : undefined;
     const cut = input.kind === "continue" ? null : await finalCutStage({ deps, chat, text, history: [...loaded.history, loaded.current], format: reasoningFormat, signal: controller.signal, emit, turnId: turn.id, ...(deps.finalCutBanks ? { userBanks: deps.finalCutBanks } : {}) });
-    if (cut && "stop" in cut) { await chats.dropTurn(turn.id); emit(cut.stop); return; }
+    if (cut && "stop" in cut) { await dropTurn(); emit(cut.stop); return; }
     if (cut) text = cut.text;
     if (loaded.promptbook && input.kind !== "continue") {
       const phase = replyPhase(loaded.promptbook);
@@ -418,29 +415,29 @@ async function runTurnBody(
       trace["book"] = bookTrace(bookRuns);
     }
     const answer: Parameters<typeof commit>[0] = { content: stored(text), generation: { ...generation, ...(cut ? { finalCut: cut.summary } : {}) }, ...(input.kind === "continue" ? {} : withToolCalls(toolsTurn, { ...trace, route: routeOf(route, "answered", completion.model), ...(usage ? { usage } : {}), ...(cut ? { finalCut: cut.trace } : {}) }, request)) };
-    if (loaded.promptbook) { bookComplete = true; completedBookTrace = answer.trace; await chats.saveCheckpoint(turn.id, { content: answer.content, ...(answer.trace ? { trace: answer.trace } : {}), deltas: [...writes.pending()] }); }
+    if (loaded.promptbook) { bookComplete = true; completedBookTrace = answer.trace; await saveCheckpoint({ content: answer.content, ...(answer.trace ? { trace: answer.trace } : {}), deltas: [...writes.pending()] }); }
     const committed = await commit(answer, "done");
     // Step 7, best-effort: a lost calibration sample is harmless.
     // Not after tool rounds: their usage covers more than the request the meter would be taught it against.
-    if (committed && toolsTurn.rounds === 0) {
+    if (committed && toolsTurn.rounds === 0 && !extensionCommit) {
       await learnReply(state, modelKey(connected.kind, model, completion.model), messages.map((m) => m.content), completion.usage, deps.now()).catch(() => undefined);
     }
   } catch (error) {
     if (error instanceof BookCancelledError || (bookAfter && controller.signal.aborted)) {
-      await chats.dropTurn(turn.id).catch(() => undefined);
+      await dropTurn().catch(() => undefined);
       emit({ type: "stopped", message: null });
     } else if (bookBase.promptbook && !bookComplete && !controller.signal.aborted) {
-      await chats.dropTurn(turn.id).catch(() => undefined);
+      await dropTurn().catch(() => undefined);
       emit({ type: "failed", category: "api_error", code: "promptbook_failed", message: toErrorMessage(error, "The Promptbook could not finish. Nothing from this turn was committed."), draft: text });
     } else if (controller.signal.aborted && !text && !answered) {
-      await chats.dropTurn(turn.id).catch(() => undefined);
+      await dropTurn().catch(() => undefined);
       emit({ type: "stopped", message: null });
     } else if (answered) {
       // Best-effort: the checkpoint then holds the whole reply, not just the last periodic save.
-      await chats.saveCheckpoint(turn.id, { content: stored(text), ...(completedBookTrace ? { trace: completedBookTrace } : {}) }).catch(() => undefined);
+      await saveCheckpoint({ content: stored(text), ...(completedBookTrace ? { trace: completedBookTrace } : {}) }).catch(() => undefined);
       emit({ type: "failed", category: "api_error", code: "backend_error", message: "The reply arrived but could not be saved yet. It is kept, and comes back when the scene reopens.", draft: stored(text) });
     } else {
-      await chats.dropTurn(turn.id).catch(() => undefined);
+      await dropTurn().catch(() => undefined);
       // A preset block the assembler cannot place fails the same way every time: not worth a Retry.
       const plan = error instanceof PresetPlanError;
       emit({ type: "failed", category: plan ? "invalid_request_error" : "api_error", code: plan ? "invalid_preset" : "backend_error", message: toErrorMessage(error, "the reply failed"), draft: text });
@@ -460,9 +457,9 @@ async function runTurnBody(
         const failed = await writes.tick(tickDeltas(loadedTurn, deps.now()));
         if (failed) throw new Error(failed);
       }
-      const message = await chats.commitTurn(turn!.id, result, { expectedVersion: turn!.baseVersion });
+      const message = await chats.commitTurn(turn!.id, result, { expectedVersion: turn!.baseVersion }, extensionCommit);
       if (!message) {
-        await chats.dropTurn(turn!.id);
+        await dropTurn();
         emit({ type: "failed", category: "invalid_request_error", code: "invalid_parameter", message: "the message this was a new version of is gone", draft: result.content });
         return false;
       }
@@ -480,7 +477,7 @@ async function runTurnBody(
       return true;
     } catch (error) {
       if (!(error instanceof StudioConflictError)) throw error;
-      await chats.saveCheckpoint(turn!.id, { content: result.content, ...(result.trace ? { trace: result.trace } : {}) });
+      await saveCheckpoint({ content: result.content, ...(result.trace ? { trace: result.trace } : {}) });
       emit({ type: "conflict", turnId: turn!.id, draft: result.content });
       return false;
     }

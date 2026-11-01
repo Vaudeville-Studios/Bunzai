@@ -70,13 +70,14 @@ function redirectedRequest(request: Request, url: URL, status: number): Request 
 }
 
 /** A fetch that validates the configured host before every network hop. */
-export function guardedFetch(host: string, fetchImpl: FetchLike = globalThis.fetch): FetchFunction {
+export function guardedFetch(host: string, fetchImpl: FetchLike = globalThis.fetch, assertCurrent?: () => Promise<void>): FetchFunction {
   const wrapped = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     let request = new Request(input, init);
     let previous: URL | undefined;
     for (let redirects = 0; ; redirects += 1) {
       const target = new URL(request.url);
       assertDestination(target, host, previous);
+      await assertCurrent?.();
       const response = await fetchImpl(request.clone(), { redirect: "manual" });
       if (!REDIRECTS.has(response.status)) return response;
       const location = response.headers.get("location");
@@ -123,15 +124,21 @@ export function vetUserUrl(raw: string): URL {
   return url;
 }
 
-/** One request to a vetted address: connect to `address`, keep `url`'s name for the Host header and the certificate check. */
-export interface VettedRequest { url: URL; address: string; headers: Record<string, string>; signal: AbortSignal }
+export const VETTED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+export type VettedMethod = (typeof VETTED_METHODS)[number];
+/** One request to a vetted address: connect to `address`, keep `url`'s name for the Host header and certificate check. */
+export interface VettedRequest { url: URL; address: string; headers: Record<string, string>; signal: AbortSignal; method?: VettedMethod; body?: Uint8Array }
 export interface VettedDeps {
   resolve(host: string): Promise<string[]>;
   send(req: VettedRequest): Promise<Response>;
 }
 export interface VettedOptions {
   signal?: AbortSignal;
+  /** Recheck the caller's live capability principal after DNS validation and before each socket request. */
+  assertCurrent?: () => Promise<void>;
   headers?: Record<string, string>;
+  method?: VettedMethod;
+  body?: Uint8Array;
   /** Extra check on the first URL and every redirect hop; throws EgressBlocked to refuse. */
   vetUrl?: (url: URL) => void;
   maxRedirects?: number;
@@ -140,14 +147,15 @@ export interface VettedOptions {
 }
 
 const NO_BODY = new Set([101, 204, 205, 304]);
+const MAX_VETTED_REQUEST_BYTES = 1_048_576;
 
 /** The real transport: node:https with the lookup pinned, so the connection cannot resolve the name a second time. */
-export const pinnedSender = (request: typeof httpsRequest = httpsRequest) => ({ url, address, headers, signal }: VettedRequest): Promise<Response> =>
+export const pinnedSender = (request: typeof httpsRequest = httpsRequest) => ({ url, address, headers, signal, method = "GET", body }: VettedRequest): Promise<Response> =>
   new Promise((resolve, reject) => {
     const family = isIP(address);
     const req = request(
       {
-        hostname: url.hostname, port: 443, path: url.pathname + url.search, method: "GET", signal,
+        hostname: url.hostname, port: 443, path: url.pathname + url.search, method, signal,
         headers: { ...headers, "accept-encoding": "identity" },
         lookup: (_host, options, done) => (options.all ? (done as (e: null, a: { address: string; family: number }[]) => void)(null, [{ address, family }]) : done(null, address, family)),
       },
@@ -159,7 +167,7 @@ export const pinnedSender = (request: typeof httpsRequest = httpsRequest) => ({ 
       },
     );
     req.on("error", reject);
-    req.end();
+    req.end(body);
   });
 
 const realVetted: VettedDeps = {
@@ -186,21 +194,30 @@ function capped(body: ReadableStream<Uint8Array>, maxBytes: number): ReadableStr
 export async function guardedFetchVetted(raw: string, opts: VettedOptions = {}, deps: VettedDeps = realVetted): Promise<{ response: Response; url: URL }> {
   const signal = AbortSignal.any([opts.signal ?? new AbortController().signal, AbortSignal.timeout(opts.timeoutMs ?? 30_000)]);
   const maxRedirects = opts.maxRedirects ?? 3;
+  const method = opts.method ?? "GET";
+  if (!VETTED_METHODS.includes(method)) throw new EgressBlocked("That request method is not supported.");
+  if (opts.body && method === "GET") throw new EgressBlocked("A GET request cannot include a body.");
+  if ((opts.body?.byteLength ?? 0) > MAX_VETTED_REQUEST_BYTES) throw new EgressBlocked("That request body is too large.");
   let url = vetUserUrl(raw);
   opts.vetUrl?.(url);
   for (let hop = 0; ; hop++) {
     const addresses = isIP(url.hostname) ? [url.hostname.replace(/^\[|\]$/g, "")] : await deps.resolve(url.hostname);
     if (addresses.length === 0 || addresses.some(isPrivateAddress)) throw new EgressBlocked("That link points at a private or local address, so it was not fetched.");
-    const response = await deps.send({ url, address: addresses[0]!, headers: opts.headers ?? {}, signal });
+    signal.throwIfAborted();
+    await opts.assertCurrent?.();
+    signal.throwIfAborted();
+    const response = await deps.send({ url, address: addresses[0]!, headers: opts.headers ?? {}, signal, method, body: opts.body });
     if (response.status >= 300 && response.status < 400) {
       const next = response.headers.get("location");
       await response.body?.cancel();
+      // Replaying a mutating request on a redirect can duplicate an irreversible remote effect.
+      if (method !== "GET") throw new EgressBlocked("That request was not redirected because replay could repeat its effect.");
       if (!next || hop >= maxRedirects) throw new EgressBlocked("That link redirected too many times.");
       url = vetUserUrl(new URL(next, url).href);
       opts.vetUrl?.(url);
       continue;
     }
-    const body = response.body && response.ok ? capped(response.body, opts.maxBytes ?? 256 * 1024 * 1024) : response.body;
-    return { response: new Response(body, response), url };
+    const responseBody = response.body ? capped(response.body, opts.maxBytes ?? 256 * 1024 * 1024) : null;
+    return { response: new Response(responseBody, response), url };
   }
 }

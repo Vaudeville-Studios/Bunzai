@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "03-CONVENTIONS",
   "sourcePath": "docs/03-CONVENTIONS.md",
-  "sourceHash": "sha256:d0bc0aeafb180e52b88bde4563ad5b929acf546dae177da3a784bfa3b4d82839",
-  "semanticSummaryHash": "sha256:f04f4b58d5b721f38b8f7f26841f03883bee08880166d8cdb595342081788db4",
+  "sourceHash": "sha256:6926c168391d6190648f338727a1b8de5ebdc2acb3e81fc4849a7a31ace6e4d6",
+  "semanticSummaryHash": "sha256:c3afc234214c40e3f38612ac04d82bced3f443ac174a3aab4b55dab2088db953",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "rename to Bunzai only",
-  "reviewedAt": "2026-10-29T20:48:41.942Z"
+  "reviewer": "root",
+  "notes": "Independent review confirms current development requires Bun 1.4.2 or later and CI/release builds use the exact .bun-version pin.",
+  "reviewedAt": "2026-11-01T10:14:16.256Z"
 }

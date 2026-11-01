@@ -89,6 +89,26 @@ export function reviewedHandleSinkProtocol(path: string, source: string): boolea
     && /await handle\.writeFile\(cipher\.final\(\)\);\s*await handle\.writeFile\(cipher\.getAuthTag\(\)\);\s*await handle\.sync\(\);\s*\} finally \{ await handle\.close\(\); \}/.test(afterSealing);
 }
 
+/** Terminal's user-selected path is a separate bounded native-file protocol, not app-data publication. */
+export function reviewedTerminalFileActionProtocol(path: string, source: string): boolean {
+  if (path !== "src/kit/extensions/file-actions.ts") return false;
+  const clean = stripComments(source);
+  if (!/^import \{ open, realpath, stat, type FileHandle \} from "node:fs\/promises";$/m.test(clean)
+    || [...clean.matchAll(/\bfrom\s*["']node:fs/g)].length !== 1
+    || /\bimport\s*\(|\brequire\s*\(/.test(clean)) return false;
+  if (![...clean.matchAll(/\bopen\(/g)].length || [...clean.matchAll(/\bopen\(/g)].length !== 3) return false;
+  for (const flags of ['"r"', '"wx+"', '"r+"']) if (!new RegExp(`\\bopen\\((?:canonical|handle\\.path), ${flags.replace(/[+]/g, "\\+")}\\)`).test(clean)) return false;
+  if (!/info\.size > MAX_SELECTED_FILE_BYTES/.test(clean) || !/new Uint8Array\(size \+ 1\)/.test(clean)
+    || !/await file\.read\(/.test(clean) || !/offset !== size/.test(clean)) return false;
+  if (!/result\.bytesWritten <= 0/.test(clean) || !/offset \+= result\.bytesWritten/.test(clean)
+    || !/await file\.truncate\(0\)/.test(clean) || !/await file\.truncate\(bytes\.byteLength\)/.test(clean)
+    || !/await file\.sync\(\)/.test(clean)) return false;
+  if (!/await realpath\(target\)/.test(clean) || !/sameIdentity\(handle\.identity, current\)/.test(clean)
+    || !/beginWriteThroughService\(id\)/.test(clean) || !/writeEffectStarted = true/.test(clean)
+    || !/status: "ambiguous"/.test(clean)) return false;
+  return true;
+}
+
 /** Identity repair moves one damaged file aside; all key publication remains in the atomic owner. */
 export function reviewedIdentityQuarantine(path: string, source: string): boolean {
   if (path !== "src/kit/keystore/backends/identity-file.ts") return false;

@@ -3,9 +3,11 @@
  * is a list of steps (screens.ts) run from a fresh page, then one 1400x900 screenshot. A screen whose `expect`
  * text is missing is reported as unreachable instead of being measured as a blank page.
  */
-import { chromium, type BrowserContext, type Page } from "playwright-core";
-import { spawn } from "node:child_process";
+import { chromium, type Browser as CdpBrowser, type BrowserContext, type Page } from "playwright-core";
+import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
+import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
+import { basename, dirname, isAbsolute, join } from "node:path";
 import { NEUTRALIZE } from "./neutralize.ts";
 import type { ControlName, ThemeName } from "./metric.ts";
 import type { Screen, Step } from "./screens.ts";
@@ -20,18 +22,130 @@ export const THEME_IDS: Record<ThemeName, string> = { theater: "theater", paper:
 
 export interface Browser { context: BrowserContext; page: Page; close: () => Promise<void> }
 
+const STARTUP_MS = 20_000;
+const STDERR_BYTES = 64 * 1024;
+const alive = (child: ChildProcess): boolean => !!child.pid && child.exitCode === null && child.signalCode === null;
+const settled = (promise: Promise<unknown>, ms: number): Promise<boolean> => new Promise((resolve) => {
+  const timer = setTimeout(() => resolve(false), ms);
+  void promise.then(() => { clearTimeout(timer); resolve(true); }, () => { clearTimeout(timer); resolve(true); });
+});
+
+function ownedEndpoint(raw: string, port: number): string {
+  const url = new URL(raw);
+  const actualPort = Number(url.port || 80);
+  if (/[\x00-\x20\x7f\\@?#]/.test(raw) || url.protocol !== "ws:" || !["127.0.0.1", "[::1]"].includes(url.hostname)
+    || url.username || url.password || url.search || url.hash || !/^\/devtools\/browser\/[A-Za-z0-9_-]+$/.test(url.pathname)
+    || actualPort < 1 || actualPort > 65535 || (port !== 0 && actualPort !== port)) {
+    throw new Error("Chrome reported an unexpected DevTools endpoint");
+  }
+  return raw;
+}
+
+/** Owns startup and cleanup; the connector seam keeps real-child protocol tests independent of Playwright's transport. */
+export async function connectOwnedChrome<T extends { close(): Promise<void> }>(
+  child: ChildProcess, port: number, connect: (endpoint: string, timeout: number) => Promise<T>,
+): Promise<{ connection: T; close(): Promise<void> }> {
+  const deadline = performance.now() + STARTUP_MS;
+  let tail: Buffer = Buffer.alloc(0);
+  let endpoint: string | undefined, failure: Error | undefined, connection: T | undefined;
+  let closing: Promise<void> | undefined;
+  const closed = new Promise<void>((resolve) => child.once("close", () => resolve()));
+  let failStartup!: (error: Error) => void;
+  const failed = new Promise<never>((_, reject) => { failStartup = reject; });
+  void failed.catch(() => {});
+  const onError = (error: Error) => { failure = error; failStartup(error); };
+  const onExit = (code: number | null, signal: NodeJS.Signals | null) => { onError(new Error(`Chrome exited during startup (code ${code}, signal ${signal})`)); };
+  const onData = (chunk: Buffer) => {
+    tail = Buffer.concat([tail, chunk]).subarray(-STDERR_BYTES);
+    if (endpoint || failure) return;
+    const match = /(?:^|\n)DevTools listening on ([^\r\n]+)\r?\n/.exec(tail.toString("utf8"));
+    if (match) {
+      try { endpoint = ownedEndpoint(match[1]!, port); }
+      catch { failure = new Error("Chrome reported an unexpected DevTools endpoint"); }
+    }
+  };
+  child.stderr?.on("data", onData);
+  child.on("error", onError);
+  child.once("exit", onExit);
+  const close = (): Promise<void> => closing ??= (async () => {
+    if (connection) await settled(Promise.resolve().then(() => connection!.close()), 1000);
+    if (alive(child)) child.kill();
+    if (alive(child) && !await settled(closed, 1000)) {
+      child.kill("SIGKILL");
+      await settled(closed, 1000);
+    }
+    if (alive(child)) throw new Error(`Owned Chrome process ${child.pid} did not stop`);
+    const drained = !child.pid || await settled(closed, 1000);
+    if (!drained) child.stderr?.destroy();
+    child.stderr?.off("data", onData);
+    child.off("error", onError);
+    child.off("exit", onExit);
+    if (!drained) throw new Error("Owned Chrome exited with an inherited stderr stream still open");
+  })();
+  try {
+    while (!endpoint && !failure && performance.now() < deadline) await sleep(25);
+    if (failure) throw failure;
+    if (!endpoint) throw new Error("Chrome did not announce DevTools within 20 seconds");
+    let lastError: unknown;
+    while (performance.now() < deadline) {
+      if (failure || !alive(child)) throw failure ?? new Error("Chrome stopped before connecting");
+      let expired = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const remaining = Math.max(1, deadline - performance.now());
+      const attempt = Promise.resolve().then(() => connect(endpoint!, Math.min(1000, remaining)));
+      void attempt.then((late) => { if (expired) void settled(Promise.resolve().then(() => late.close()), 1000); }, () => {});
+      try {
+        connection = await Promise.race([attempt, failed, new Promise<never>((_, reject) => {
+          timer = setTimeout(() => { expired = true; reject(new Error("Chrome connector exceeded its startup deadline")); }, remaining);
+        })]);
+      }
+      catch (error) { expired = true; lastError = error; await sleep(Math.min(50, Math.max(0, deadline - performance.now()))); continue; }
+      finally { clearTimeout(timer); }
+      if (failure) throw failure;
+      if (performance.now() >= deadline) throw new Error("Chrome connection exceeded its startup deadline");
+      return { connection, close };
+    }
+    throw new Error(`Chrome did not accept its owned CDP connection within 20 seconds: ${lastError instanceof Error ? lastError.message : "connection unavailable"}`);
+  } catch (error) {
+    let cleanup = "";
+    try { await close(); } catch (stopError) { cleanup = `; ${stopError instanceof Error ? stopError.message : "cleanup failed"}`; }
+    const diagnostics = tail.toString("utf8").replace(/DevTools listening on [^\r\n]+/g, "DevTools listening on [endpoint omitted]");
+    throw new Error(`${error instanceof Error ? error.message : "Chrome startup failed"}${cleanup}\n${diagnostics}`);
+  }
+}
+
 export async function launch(work: string, port = 9491 + Number(process.env.THEME_MEASURE_PORT_OFFSET ?? 0)): Promise<Browser> {
   if (!CHROME) throw new Error("theme:measure needs Chrome: install it or set CHROME_PATH");
+  if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error("Chrome CDP port must be 0 or a valid TCP port");
+  await mkdir(work, { recursive: true });
+  const root = await realpath(work);
+  const profile = await mkdtemp(join(root, "chrome-"));
+  const removeProfile = async () => {
+    if (!isAbsolute(profile) || dirname(profile) !== root || !basename(profile).startsWith("chrome-") || await realpath(profile) !== profile) {
+      throw new Error("Refusing to remove a Chrome profile outside its owned work directory");
+    }
+    await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  };
   // Chrome is started by hand and attached over CDP: Playwright's own pipe launch hangs under Bun on Windows.
-  const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${work}/chrome`, "--no-first-run", "--hide-scrollbars", "--window-size=1400,900", "about:blank"], { stdio: "ignore" });
-  await sleep(2500);
-  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
-  const context = browser.contexts()[0] ?? (await browser.newContext());
-  await context.addInitScript(`document.addEventListener("DOMContentLoaded",()=>{const s=document.createElement("style");s.textContent=${JSON.stringify(FREEZE)};document.head.append(s)})`);
-  const page = await context.newPage();
-  await page.setViewportSize({ width: 1400, height: 900 });
-  page.on("pageerror", (e) => console.log("pageerror", String(e).slice(0, 200)));
-  return { context, page, close: async () => { await browser.close().catch(() => {}); chrome.kill(); } };
+  let chrome: ChildProcess;
+  try { chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--window-size=1400,900", "about:blank"], { stdio: ["ignore", "ignore", "pipe"] }); }
+  catch (error) { await removeProfile(); throw error; }
+  let session: { connection: CdpBrowser; close(): Promise<void> } | undefined;
+  let closing: Promise<void> | undefined;
+  const close = (): Promise<void> => closing ??= (async () => { await session?.close(); if (!alive(chrome)) await removeProfile(); })();
+  try {
+    session = await connectOwnedChrome(chrome, port, (endpoint, timeout) => chromium.connectOverCDP(endpoint, { timeout }));
+    const context = session.connection.contexts()[0] ?? (await session.connection.newContext());
+    await context.addInitScript(`document.addEventListener("DOMContentLoaded",()=>{const s=document.createElement("style");s.textContent=${JSON.stringify(FREEZE)};document.head.append(s)})`);
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 1400, height: 900 });
+    page.on("pageerror", (e) => console.log("pageerror", String(e).slice(0, 200)));
+    return { context, page, close };
+  } catch (error) {
+    try { await close(); }
+    catch (cleanupError) { throw new Error(`${error instanceof Error ? error.message : "Chrome startup failed"}; ${cleanupError instanceof Error ? cleanupError.message : "profile cleanup failed"}`); }
+    throw error;
+  }
 }
 
 const api = (page: Page, method: string, path: string, body?: unknown) => page.evaluate(async ([method, path, body]) => {

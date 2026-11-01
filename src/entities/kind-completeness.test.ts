@@ -19,15 +19,10 @@ const NO_EDITOR: Record<string, string> = {
 };
 /** Kinds without Kit capabilities, and why. */
 const NO_CAPABILITIES: Record<string, string> = {
-  promptformat: "nothing reads prompt formats until text-completion connections exist",
   quickreply: "Kit makes quick-reply sets with its create tool; editing them is the Workbench's",
-  scriptsheet: "a sheet is one instruction, edited in the Prompting wing or the Workbench; Kit reads and writes it through its piece tools",
-  tool: "a tool is a short piece; Kit reads and writes it through its piece tools",
   dice: "a dice piece is a short piece; Kit reads and writes it through its piece tools",
   formula: "a formula is one macro expression; Kit reads and writes it through its piece tools",
   tracker: "a tracker is a short piece; Kit reads and writes it through its piece tools",
-  skill: "Kit uses generic piece operations; Skill authoring is owned by the Workbench editor",
-  promptbook: "Kit uses generic piece operations; workflow authoring is owned by the Workbench editor",
   agent: "Kit uses generic piece operations; Agent authoring is owned by the Workbench editor",
 };
 

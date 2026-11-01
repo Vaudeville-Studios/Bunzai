@@ -93,7 +93,7 @@ export interface ScenesApi extends DramaturgApi {
   /** The Prompt Inspector's answer to a turn paused with its request: Send (with the changed messages, by position) or Cancel. */
   answerSceneReview(chatId: string, turnId: string, answer: { kind: "send"; edits: Record<number, string> } | { kind: "cancel" }): Promise<{ answered: boolean }>;
   /** The page's answer to a turn holding its request for the scene's prompt regex (ChatStore rule 42): the changed texts by message index, or why the rules could not run. */
-  answerSceneRegex(chatId: string, turnId: string, answer: { kind: "done"; texts: Record<number, string> } | { kind: "failed"; error: string }): Promise<{ answered: boolean }>;
+  answerSceneRegex(chatId: string, turnId: string, answer: { kind: "done"; texts: Record<number, string> } | { kind: "failed"; error: string } | { kind: "cancel" }): Promise<{ answered: boolean }>;
   /** A reply held when the take changed while it was written: add it at the end, or discard it. */
   keepWaitingReply(chatId: string, turnId: string): Promise<Message>;
   discardWaitingReply(chatId: string, turnId: string): Promise<{ discarded: boolean }>;

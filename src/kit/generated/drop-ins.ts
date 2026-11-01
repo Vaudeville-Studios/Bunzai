@@ -12,87 +12,88 @@ import m0 from "../commands/art";
 import m1 from "../commands/context";
 import m2 from "../commands/decks";
 import m3 from "../commands/doctor";
-import m4 from "../commands/gallery";
-import m5 from "../commands/gates";
-import m6 from "../commands/help";
-import m7 from "../commands/image";
-import m8 from "../commands/model";
-import m9 from "../commands/privacy";
-import m10 from "../commands/quit";
-import m11 from "../commands/rail";
-import m12 from "../commands/share";
-import m13 from "../commands/test";
-import m14 from "../commands/tools";
-import m15 from "../commands/unshare";
-import m16 from "../commands/usage";
-import m17 from "../sessions/commands/export";
-import m18 from "../sessions/commands/resume";
-import m19 from "../sessions/commands/rewind";
-import m20 from "../sessions/commands/session";
-import m21 from "../tools/ask-choice";
-import m22 from "../tools/block-lookup";
-import m23 from "../tools/character-create";
-import m24 from "../tools/collections";
-import m25 from "../tools/delete";
-import m26 from "../tools/docs-query";
-import m27 from "../tools/duplicate";
-import m28 from "../tools/export";
-import m29 from "../tools/folder-import";
-import m30 from "../tools/folder-search";
-import m31 from "../tools/graveyard-bury";
-import m32 from "../tools/graveyard";
-import m33 from "../tools/html-will-draw";
-import m34 from "../tools/htmldoc-create";
-import m35 from "../tools/list";
-import m36 from "../tools/lorebook-create";
-import m37 from "../tools/macro-lookup";
-import m38 from "../tools/pack-create";
-import m39 from "../tools/persona-create";
-import m40 from "../tools/preset-create";
-import m41 from "../tools/preset-verify";
-import m42 from "../tools/quickreply-create";
-import m43 from "../tools/rail-open";
-import m44 from "../tools/read";
-import m45 from "../tools/regex-create";
-import m46 from "../tools/regex-from-drawing";
-import m47 from "../tools/regex-lab";
-import m48 from "../tools/result-query";
-import m49 from "../tools/search";
-import m50 from "../tools/studio-art";
-import m51 from "../tools/transfer";
-import m52 from "../doctor/checks/provider";
-import m53 from "../doctor/checks/studio";
-import m54 from "../doctor/checks/vault";
-import m55 from "../doctor/checks/version";
-import m56 from "../providers/spokes/anthropic";
-import m57 from "../providers/spokes/claude-sub";
-import m58 from "../providers/spokes/codex";
-import m59 from "../providers/spokes/custom";
-import m60 from "../providers/spokes/deepseek";
-import m61 from "../providers/spokes/google";
-import m62 from "../providers/spokes/groq";
-import m63 from "../providers/spokes/local";
-import m64 from "../providers/spokes/mistral";
-import m65 from "../providers/spokes/nanogpt";
-import m66 from "../providers/spokes/ollama";
-import m67 from "../providers/spokes/openai";
-import m68 from "../providers/spokes/openrouter";
-import m69 from "../render/notify/channels/bell";
-import m70 from "../render/notify/channels/desktop";
-import m71 from "../render/notify/channels/title";
+import m4 from "../commands/extensions";
+import m5 from "../commands/gallery";
+import m6 from "../commands/gates";
+import m7 from "../commands/help";
+import m8 from "../commands/image";
+import m9 from "../commands/model";
+import m10 from "../commands/privacy";
+import m11 from "../commands/quit";
+import m12 from "../commands/rail";
+import m13 from "../commands/share";
+import m14 from "../commands/test";
+import m15 from "../commands/tools";
+import m16 from "../commands/unshare";
+import m17 from "../commands/usage";
+import m18 from "../sessions/commands/export";
+import m19 from "../sessions/commands/resume";
+import m20 from "../sessions/commands/rewind";
+import m21 from "../sessions/commands/session";
+import m22 from "../tools/ask-choice";
+import m23 from "../tools/block-lookup";
+import m24 from "../tools/character-create";
+import m25 from "../tools/collections";
+import m26 from "../tools/delete";
+import m27 from "../tools/docs-query";
+import m28 from "../tools/duplicate";
+import m29 from "../tools/export";
+import m30 from "../tools/folder-import";
+import m31 from "../tools/folder-search";
+import m32 from "../tools/graveyard-bury";
+import m33 from "../tools/graveyard";
+import m34 from "../tools/html-will-draw";
+import m35 from "../tools/htmldoc-create";
+import m36 from "../tools/list";
+import m37 from "../tools/lorebook-create";
+import m38 from "../tools/macro-lookup";
+import m39 from "../tools/pack-create";
+import m40 from "../tools/persona-create";
+import m41 from "../tools/preset-create";
+import m42 from "../tools/preset-verify";
+import m43 from "../tools/quickreply-create";
+import m44 from "../tools/rail-open";
+import m45 from "../tools/read";
+import m46 from "../tools/regex-create";
+import m47 from "../tools/regex-from-drawing";
+import m48 from "../tools/regex-lab";
+import m49 from "../tools/result-query";
+import m50 from "../tools/search";
+import m51 from "../tools/studio-art";
+import m52 from "../tools/transfer";
+import m53 from "../doctor/checks/provider";
+import m54 from "../doctor/checks/studio";
+import m55 from "../doctor/checks/vault";
+import m56 from "../doctor/checks/version";
+import m57 from "../providers/spokes/anthropic";
+import m58 from "../providers/spokes/claude-sub";
+import m59 from "../providers/spokes/codex";
+import m60 from "../providers/spokes/custom";
+import m61 from "../providers/spokes/deepseek";
+import m62 from "../providers/spokes/google";
+import m63 from "../providers/spokes/groq";
+import m64 from "../providers/spokes/local";
+import m65 from "../providers/spokes/mistral";
+import m66 from "../providers/spokes/nanogpt";
+import m67 from "../providers/spokes/ollama";
+import m68 from "../providers/spokes/openai";
+import m69 from "../providers/spokes/openrouter";
+import m70 from "../render/notify/channels/bell";
+import m71 from "../render/notify/channels/desktop";
+import m72 from "../render/notify/channels/title";
 
 /** Every drop-in Kit ships, in the same order the folder walk would return them. */
 export const KIT_DROP_INS = {
-  /** 21 drop-in(s) from the commands folder(s). */
-  commands: [m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20] as unknown[],
+  /** 22 drop-in(s) from the commands folder(s). */
+  commands: [m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21] as unknown[],
   /** 31 drop-in(s) from the tools folder(s). */
-  tools: [m21, m22, m23, m24, m25, m26, m27, m28, m29, m30, m31, m32, m33, m34, m35, m36, m37, m38, m39, m40, m41, m42, m43, m44, m45, m46, m47, m48, m49, m50, m51] as unknown[],
+  tools: [m22, m23, m24, m25, m26, m27, m28, m29, m30, m31, m32, m33, m34, m35, m36, m37, m38, m39, m40, m41, m42, m43, m44, m45, m46, m47, m48, m49, m50, m51, m52] as unknown[],
   /** 4 drop-in(s) from the doctorChecks folder(s). */
-  doctorChecks: [m52, m53, m54, m55] as unknown[],
+  doctorChecks: [m53, m54, m55, m56] as unknown[],
   /** 13 drop-in(s) from the spokes folder(s). */
-  spokes: [m56, m57, m58, m59, m60, m61, m62, m63, m64, m65, m66, m67, m68] as unknown[],
+  spokes: [m57, m58, m59, m60, m61, m62, m63, m64, m65, m66, m67, m68, m69] as unknown[],
   /** 3 drop-in(s) from the notifyChannels folder(s). */
-  notifyChannels: [m69, m70, m71] as unknown[],
+  notifyChannels: [m70, m71, m72] as unknown[],
 } as const;
 
 export type KitDropIns = typeof KIT_DROP_INS;

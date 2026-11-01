@@ -101,6 +101,10 @@ const sandboxWorkerJs = await bundleBrowser(join(root, "src", "sandbox", "lua", 
   "module", "url", "fs", "path", "child_process", "crypto",
 ], PROD);
 const regexWorkerJs = await bundleBrowser(join(root, "src", "sandbox", "regex", "worker.ts"), undefined, PROD);
+const extensionWorkerJs = await bundleBrowser(join(root, "src", "sandbox", "javascript", "worker.ts"), [], PROD);
+const extensionFrameJs = await bundleBrowser(join(root, "src", "sandbox", "javascript", "extension-frame.ts"), [], PROD);
+const extensionFrameHtml = await Bun.file(join(root, "src", "sandbox", "javascript", "extension-frame.html")).text();
+const quickJsWasmB64 = Buffer.from(await Bun.file(join(root, "node_modules", "@jitl", "quickjs-wasmfile-release-sync", "dist", "emscripten-module.wasm")).arrayBuffer()).toString("base64");
 
 const docsIndexRaw = await Bun.file(join(root, "docs", "generated", "docs-index.json")).json();
 const docsIndex = parseDocsIndex(docsIndexRaw);
@@ -161,6 +165,10 @@ const assets = {
   tours,
   sandboxWorkerJs,
   regexWorkerJs,
+  extensionWorkerJs,
+  extensionFrameJs,
+  extensionFrameHtml,
+  quickJsWasmB64,
 };
 // The repo carries a null PLACEHOLDER at this path (a committed bake goes stale silently; null
 // cannot lie). The real bake exists only for the duration of the compile and is restored after.
@@ -290,6 +298,7 @@ console.log(`baked static format registry (${formatIds.length} families: ${forma
 // The Claude Agent SDK is proprietary and optional (see package.json optionalDependencies, license-audit.ts).
 // Kept external so no release binary inlines it; the provider reports a clear message when it is absent.
 const NO_PROPRIETARY_SDK = ["--external", "@anthropic-ai/claude-agent-sdk"];
+const javascriptWorker = join(root, "src", "sandbox", "javascript", "worker.ts");
 
 await mkdir(join(root, "dist"), { recursive: true });
 const desktopDefaultOut = process.platform === "win32" ? "dist/Bunzai.exe" : `dist/bunzai-${process.platform}-${process.arch}`;
@@ -302,6 +311,8 @@ try {
         // the window worker MUST ride as its own entrypoint; without it the exe compiles fine and
         // then boots headless (worker ModuleNotFound at runtime, console hidden, no window)
         join(root, "src", "desktop-window.ts"),
+        // QuickJS guest code runs in this terminable Bun worker in compiled desktop mode.
+        javascriptWorker,
         // the stage's background lane (src/stage/worker-lane.ts) starts these workers by the same
         // rule; lane-probe.ts is the packaged probe for both
         join(root, "src", "stage", "store", "sqlite", "maintenance-worker.ts"),
@@ -324,7 +335,7 @@ try {
     // cheapest place to say what this is.
     const out = join(root, "dist", `bunzai-cli-${short}${short.startsWith("windows") ? ".exe" : ""}`);
     const compile = Bun.spawnSync(
-      [process.execPath, "build", "--compile", ...NO_PROPRIETARY_SDK, `--target=${target}`, join(root, "src", "cli.ts"), "--outfile", out],
+      [process.execPath, "build", "--compile", ...NO_PROPRIETARY_SDK, `--target=${target}`, join(root, "src", "cli.ts"), javascriptWorker, "--outfile", out],
       { cwd: root, stdout: "inherit", stderr: "inherit" },
     );
     if (compile.exitCode !== 0) throw new Error(`cli compile failed for ${target}`);
@@ -337,7 +348,8 @@ try {
     const os = process.platform === "win32" ? "windows" : process.platform === "darwin" ? "darwin" : "linux";
     const out = join(root, "dist", `bunzai-kit-${os}-${arch}${os === "windows" ? ".exe" : ""}`);
     const compile = Bun.spawnSync(
-      [process.execPath, "build", "--compile", ...NO_PROPRIETARY_SDK, join(root, "src", "kit", "index.tsx"), "--outfile", out],
+      [process.execPath, "build", "--compile", ...NO_PROPRIETARY_SDK, join(root, "src", "kit", "index.tsx"),
+        javascriptWorker, join(root, "src", "sandbox", "regex", "worker.ts"), "--outfile", out],
       { cwd: root, stdout: "inherit", stderr: "inherit" },
     );
     // A cross-target opentui miss exits 0 while writing nothing, so the file is the real check.

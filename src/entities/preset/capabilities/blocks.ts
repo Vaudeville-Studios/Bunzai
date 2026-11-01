@@ -1,6 +1,7 @@
 /** Semantic capability for preset prompt-block lifecycle, order, state, and group membership. */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { CapabilityChange } from "../../capabilities";
 import { nonEmptyPatch, nullsToUndefined } from "../../_shared/capability-schemas";
 import type { CanonicalPreset } from "../schema";
@@ -95,6 +96,11 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalPrese
   action: "manage",
   summary: "Add, edit, remove, enable, reorder, or group typed preset prompt blocks.",
   aliases: ["prompt block", "marker slot", "reorder preset", "disable prompts"],
+  extensionExposure: {
+    operationId: "content.draft.preset.blocks.manage",
+    fields: [{ input: "operation", path: "body.prompts" }],
+    hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect",
+  },
   input,
   preview: (entity, { operation: action }) => {
     const body = apply(entity, action);

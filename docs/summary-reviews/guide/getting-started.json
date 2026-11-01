@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/getting-started",
   "sourcePath": "docs/guide/getting-started.md",
-  "sourceHash": "sha256:53a1982a574c9c313c6f0a42d27a309c4e199d0e3336a1e96ca98179c91a5696",
-  "semanticSummaryHash": "sha256:475272244f1f61708658e4fbf637a559b167ce15bdb6b34adaa816f5dcb7d105",
+  "sourceHash": "sha256:1745d2513cffb5420e76d71944c1f3ab0ae8b46b6c9d5c27acb5ab37a1d05ac7",
+  "semanticSummaryHash": "sha256:aa9920c9737fdad0397cdf410032f27e428a44a586fdd8e4cd25d4ee7a15da0c",
   "verdict": "APPROVE",
-  "reviewer": "/root/landing_review",
-  "notes": "Independently reviewed the complete staged repository-owner migration diff and these changed document sources against their existing semantic summaries and approved baseline. Live source, release APIs, helper pins, documentation links, README and Pages canonical/preview URLs now point to Vaudeville-Studios/Bunzai. The staged helper migration changes repository location only, preserving digests and download validation. Historical design prototypes retain old URLs and are outside published build inputs. Summary meaning remains unchanged and staged hashes validate. This receipt does not claim transfer authorization review, live deployment proof or a new audit of unchanged documentation.",
-  "reviewedAt": "2026-10-31T07:15:11.272Z"
+  "reviewer": "root",
+  "notes": "Independent review confirms the source checkout instructions use Bun 1.4.2 and the current setup flow remains accurate.",
+  "reviewedAt": "2026-11-01T10:14:16.388Z"
 }

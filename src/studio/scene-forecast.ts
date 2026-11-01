@@ -10,6 +10,9 @@ import { runFormulaReadOnly } from "../core/formula";
 import { countPrompt, countText, estimateFor } from "../core/tokens";
 import type { ProviderRole } from "../stage/contracts/provider";
 import type { StateStore } from "../stage/contracts/state-store";
+import type { ContentStore } from "../stage/contracts/content-store";
+import type { ChatStore } from "../stage/contracts/chat-store";
+import { assertStudioEntityKind } from "./path-policy";
 import { StudioConflictError, StudioNotFoundError } from "./errors";
 
 import { NoConnectionError, type TurnDeps } from "./scene-turn";
@@ -19,11 +22,19 @@ import { turnWrites } from "./scene-turn-writes";
 import { loadTurn, type LoadedTurn, type TurnReader } from "./scene-turn-load";
 import { composeBookPhase } from "./book-phase";
 import { replyPhase } from "../core/promptbook";
+import { MAX_EXTENSION_PROMPT_SCENES, MAX_VALUE_BYTES } from "../extensions/contracts/limits";
+import { presetReader } from "./scene-turn-load";
+import { lorebookReader } from "./scene-lore";
 
 export interface ForecastDeps extends Pick<TurnDeps, "connect" | "readPreset" | "readLorebook" | "readLibrary" | "choiceDefaults" | "promptBudgetMs" | "clock" | "narratorTools" | "toolBudgetMs" | "now" | "randomSeed"> {
   chats: TurnReader;
   state: Pick<StateStore, "read">;
 }
+
+export type ExtensionPromptPreviewDeps = Pick<ForecastDeps, "readPreset" | "readLorebook" | "readLibrary" | "choiceDefaults" | "promptBudgetMs" | "clock" | "now" | "randomSeed"> & {
+  chats: TurnReader;
+  state: Pick<StateStore, "read">;
+};
 
 export interface Forecast {
   /** The request as the provider would get it, each message with the assembler's own count. */
@@ -36,13 +47,53 @@ export interface Forecast {
   notes: string[];
 }
 
+export const EXTENSION_PROMPT_PREVIEW_MAX_BYTES = MAX_VALUE_BYTES;
+export const EXTENSION_PROMPT_PREVIEW_LABEL = "Local prompt preview; no model called; unshaped and unbudgeted.";
+
+export interface ExtensionPromptPreviewRequest {
+  sceneId: string;
+  messages: { role: ProviderRole; content: string }[];
+}
+export type ContentExtensionPromptPreview = ExtensionPromptPreviewRequest & { label: typeof EXTENSION_PROMPT_PREVIEW_LABEL };
+
+export async function listExtensionPromptScenes(chats: Pick<ChatStore, "listChats">): Promise<{ id: string; title: string }[]> {
+  const { chats: stored } = await chats.listChats();
+  return [...stored].sort((a, b) => b.updatedAt - a.updatedAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+    .slice(0, MAX_EXTENSION_PROMPT_SCENES).map(({ id, title }) => ({ id, title: title.slice(0, 256) }));
+}
+
 /** The scene read for a request build: the scene and its whole take as history, with nothing yet being answered. */
-async function readScene(deps: ForecastDeps, chatId: string) {
+async function readScene(deps: Pick<ExtensionPromptPreviewDeps, "chats" | "readPreset" | "readLorebook" | "readLibrary" | "choiceDefaults" | "now">, chatId: string) {
   const chat = await deps.chats.getChat(chatId);
   if (!chat) throw new StudioNotFoundError("that scene does not exist");
   const read = await loadTurn(deps.chats, chat.id, "draft", deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults);
   if (!read) throw new StudioNotFoundError("that scene does not exist");
   return { chat, read, started: deps.now() };
+}
+
+/** Builds a Browser/Terminal preview adapter from their canonical stores without requiring a provider owner. */
+export function createContentExtensionPromptPreviewer(chats: ChatStore, state: Pick<StateStore, "read">, content: Pick<ContentStore, "read">): (sceneId: string, draft: string) => Promise<ContentExtensionPromptPreview> {
+  const read = async (kind: string, id: string) => (await content.read(assertStudioEntityKind(kind), id))?.entity ?? null;
+  const reader = { read };
+  const deps: ExtensionPromptPreviewDeps = {
+    chats, state, readPreset: presetReader(reader), readLorebook: lorebookReader(reader), readLibrary: read,
+    now: Date.now, randomSeed: () => Math.floor(Math.random() * 2 ** 31),
+  };
+  return async (sceneId: string, draft: string): Promise<ContentExtensionPromptPreview> => ({
+    ...await assembleExtensionPromptPreview(deps, { chatId: sceneId, draft }), label: EXTENSION_PROMPT_PREVIEW_LABEL,
+  });
+}
+
+/** Builds the same assembled scene request as a send, with a local draft and no model/window/budget. */
+export async function assembleExtensionPromptPreview(deps: ExtensionPromptPreviewDeps, input: { chatId: string; draft: string }): Promise<ExtensionPromptPreviewRequest> {
+  if (new TextEncoder().encode(input.draft).byteLength > EXTENSION_PROMPT_PREVIEW_MAX_BYTES) throw new StudioConflictError("The local prompt preview draft exceeds its byte limit.");
+  const { chat, read, started } = await readScene(deps, input.chatId);
+  const loaded: LoadedTurn = { ...read, current: { ...read.current, role: "user", content: input.draft } };
+  const prep = await prepareRequest(deps, chat, loaded, undefined, "", started);
+  const built = await assembleRequest(deps, { chat, loaded, prep, started, kind: "reply", original: "", guidance: "", unbudgeted: true });
+  const messages = built.result.messages.map(({ role, content }) => ({ role, content }));
+  if (new TextEncoder().encode(JSON.stringify(messages)).byteLength > EXTENSION_PROMPT_PREVIEW_MAX_BYTES) throw new StudioConflictError("The assembled local prompt preview exceeds its byte limit.");
+  return { sceneId: chat.id, messages };
 }
 
 /** The turn a send of the draft would build, up to its assembled request: what the forecast reads, so it cannot drift from a send. */

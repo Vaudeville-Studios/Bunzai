@@ -52,7 +52,7 @@ export function runSceneExamples(doc: Document): void {
       turn = 0;
       input.disabled = submit.disabled = false;
       input.value = '';
-      submit.textContent = 'Continue example ↗';
+      submit.textContent = 'Continue example \u2197';
       log.scrollTop = 0;
       input.focus({ preventScroll: true });
     });

@@ -7,6 +7,7 @@ import { describe, expect, test } from "bun:test";
 import { createTurnRuntime } from "./scene-turn-runtime";
 import { ProviderError, type Provider, type ProviderCompletion, type ProviderEvent } from "../stage/contracts/provider";
 import type { ChatStore } from "../stage/contracts/chat-store";
+import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
 import { memoryChatStore } from "../stage/store/chat-store";
 import { memoryStateStore } from "../stage/store/memory/state-store";
 import { emptyLoreEntry, emptyLorebookBody } from "../core/lore";
@@ -45,15 +46,17 @@ function scripted(script: { pieces: string[]; end?: Partial<ProviderCompletion>;
   return { provider, sent };
 }
 
-async function scene(provider: Provider | null, opts: { connection?: boolean } = {}) {
+async function scene(provider: Provider | null, opts: { connection?: boolean; extensionCommit?: boolean; userMessage?: string } = {}) {
   let now = 1_000;
-  const chats = memoryChatStore(() => now);
+  const chats = opts.extensionCommit
+    ? memoryChatStore(() => now, () => crypto.randomUUID(), { authorizeExtensionCommit: () => undefined })
+    : memoryChatStore(() => now);
   const state = memoryStateStore();
   const chat = await chats.createChat({ title: "Night", cast: { character: { id: "vera", version: 1 } }, snapshot: { character: vera } });
   if (opts.connection !== false) await chats.setConnection(chat.id, { id: "conn", model: "vera-1" });
   const [greeting, hello] = (await chats.appendMessages(chat.activeBranchId, [
     { role: "assistant", content: "Evening." },
-    { role: "user", content: "{{setvar::asked::yes}}Any storms?" },
+    { role: "user", content: opts.userMessage ?? "{{setvar::asked::yes}}Any storms?" },
   ]))!;
   const deps = { runtime: createTurnRuntime(),
     chats,
@@ -66,8 +69,8 @@ async function scene(provider: Provider | null, opts: { connection?: boolean } =
   };
   const version = async () => (await chats.readMessages(chat.activeBranchId, { limit: 1 })).branchVersion!;
   const events: TurnEvent[] = [];
-  const turn = async (kind: "reply" | "swipe" = "reply", expectedVersion?: number) =>
-    runTurn(deps, { chatId: chat.id, kind, expectedVersion: expectedVersion ?? (await version()) }, (e) => events.push(e));
+  const turn = async (kind: "reply" | "swipe" = "reply", expectedVersion?: number, extensionCommit?: ExtensionCommitContext) =>
+    runTurn(deps, { chatId: chat.id, kind, expectedVersion: expectedVersion ?? (await version()) }, (e) => events.push(e), extensionCommit);
   const texts = async () => (await chats.readMessages(chat.activeBranchId, { limit: 50 })).messages.map((m) => m.swipes[m.current]!.content);
   return { chats, state, chat, greeting: greeting!, hello: hello!, deps, events, turn, texts, version };
 }
@@ -86,6 +89,26 @@ const turnIdOf = (events: TurnEvent[]) => (events.find((e) => e.type === "start"
 const lastOf = async (chats: ChatStore, branchId: string) => (await chats.readMessages(branchId, { limit: 50 })).messages.at(-1)!;
 
 describe("a reply", () => {
+  test("extension turns do not inherit narrator tools from the scene", async () => {
+    const { provider, sent } = scripted({ pieces: ["Reply."] });
+    const s = await scene(provider, { extensionCommit: true, userMessage: "{{setglobalvar::extensionLeak::yes}}Any storms?" });
+    let narratorToolsCalled = 0;
+    const extensionDeps = {
+      ...s.deps,
+      narratorTools: () => { narratorToolsCalled++; return []; },
+      connect: async (): Promise<Connected | null> => ({ provider, kind: "openrouter", context: 32_000, tools: true }),
+    };
+    const commit: ExtensionCommitContext = {
+      owner: "00000000-0000-4000-8000-000000000001", epoch: 1, packageId: "fixture.extension",
+      packageDigest: "a".repeat(64), policyFingerprint: "b".repeat(64), grantRevision: 1, operation: "turns.start",
+      access: { resources: [{ kind: "scene", id: s.chat.id }, { kind: "take", id: s.chat.activeBranchId }], fields: ["turn.run", "state"], methods: [], destinations: [] }, now: () => 1,
+    };
+    await runTurn(extensionDeps, { chatId: s.chat.id, kind: "reply", expectedVersion: await s.version() }, () => undefined, commit);
+    expect(narratorToolsCalled).toBe(0);
+    expect(sent).toHaveLength(1);
+    expect(await s.chats.sceneState(s.chat.activeBranchId)).not.toHaveProperty("global");
+  });
+
   test("streams, commits with its generation and trace, writes variables first, and teaches the meter", async () => {
     const { provider, sent } = scripted({ pieces: ["It ", "might."] });
     const s = await scene(provider);

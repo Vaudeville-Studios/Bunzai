@@ -11,6 +11,16 @@ import { appendSwipe, LIVE, setCurrentSwipe } from "./swipe-sql";
 export interface VersionSqlKit extends ChatSqlKit {
   insertSwipe(messageId: string, position: number, content: string, generation: Generation | undefined, createdAt: number): number;
 }
+export function addSwipeInTransaction(k: VersionSqlKit, messageId: string, input: { content: string; generation?: Generation }, guard?: Parameters<ChatStore["addSwipe"]>[2]) {
+  const content = checkText(input?.content, "content"), generation = checkGeneration(input?.generation), expected = checkGuard(guard);
+  const message = k.writableMessage(messageId);
+  if (!message) return null;
+  k.requireVersion(k.branchRow(message.branch_id)!, expected);
+  appendSwipe(k, messageId, content, generation, k.clock());
+  k.bump(message.branch_id);
+  k.state.refresh(message.branch_id, message.seq);
+  return k.messageById(messageId);
+}
 
 export function versionMethods(k: VersionSqlKit): Pick<ChatStore, "addSwipe" | "selectSwipe" | "selectTranscriptSwipe"> {
   /** The position of a message's `index`th live version (rule 32), or null when it has fewer. */
@@ -26,18 +36,7 @@ export function versionMethods(k: VersionSqlKit): Pick<ChatStore, "addSwipe" | "
 
   return {
     async addSwipe(messageId, input, guard) {
-      const content = checkText(input?.content, "content");
-      const generation = checkGeneration(input?.generation);
-      const expected = checkGuard(guard);
-      return k.write(() => {
-        const m = k.writableMessage(messageId);
-        if (!m) return null;
-        k.requireVersion(k.branchRow(m.branch_id)!, expected);
-        appendSwipe(k, messageId, content, generation, k.clock());
-        k.bump(m.branch_id);
-        k.state.refresh(m.branch_id, m.seq);
-        return k.messageById(messageId);
-      });
+      return k.write(() => addSwipeInTransaction(k, messageId, input, guard));
     },
 
     async selectSwipe(messageId, indexRaw, guard) {

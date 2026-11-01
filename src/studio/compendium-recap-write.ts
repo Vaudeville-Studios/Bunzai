@@ -29,7 +29,7 @@ export async function writeRecaps(deps: CompendiumDeps, bookId: string, parsed: 
     writes = [...staged.writes, ...arc.writes];
     notes = staged.rejected.map((r) => `item ${r.position}: ${r.reason}`);
     return arc.entries;
-  });
+  }, deps.extensionCommit);
   if (result.status === "conflict" || result.status === "missing") return { status: result.status, writes: [], notes: [] };
   return result.status === "saved" && writes.length > 0 ? { status: "saved", writes, notes } : { status: "unchanged", writes: [], notes };
 }

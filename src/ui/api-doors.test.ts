@@ -22,7 +22,6 @@ const ALLOWED_FILES: Record<string, string> = {
   "src/ui/apps/settings/sections/health-core.ts": "Settings section: the health report is host-only",
   "src/ui/apps/settings/sections/models.tsx": "Settings section: provider keys and models are host-only",
   "src/ui/apps/settings/sections/security-api.ts": "Settings section: lock and recovery routes are host-only",
-  "src/ui/apps/settings/sections/theme-manager.tsx": "Settings section: theme package routes are host-only",
   "src/ui/apps/settings/sections/library-export.ts": "Settings section: whole-library export is host-only",
   "src/ui/apps/settings/sections/models-api.ts": "Settings section: provider list and test are host-only (shared by models.tsx and the Messenger You scope)",
 };

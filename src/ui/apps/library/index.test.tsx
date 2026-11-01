@@ -91,8 +91,10 @@ beforeEach(() => { installed.reinstall(); FakeIntersectionObserver.instances = [
  * route this mount can reach (formats, collections' related lists, etc.) and inert for the rest. */
 function makeApi(over: Partial<Record<string, (...args: unknown[]) => unknown>>): AppContext["api"] {
   const fallback = new Map<string, (...args: unknown[]) => Promise<never[]>>();
+  const extensions = { list: async () => [] };
   return new Proxy({} as AppContext["api"], {
     get: (_t, prop: string) => {
+      if (prop === "extensions") return extensions;
       const listed = over[prop];
       if (listed) return listed;
       let read = fallback.get(prop);

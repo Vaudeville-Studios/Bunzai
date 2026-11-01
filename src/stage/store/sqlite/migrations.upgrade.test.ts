@@ -35,7 +35,7 @@ test("the list is numbered 1 to n and holds the real health check at 24, never a
   expect(MIGRATIONS.some((m) => /reserved|placeholder/i.test(m.name))).toBe(false);
   expect(MIGRATIONS[24]!.id).toBe(25);
   expect(MIGRATIONS[25]!.id).toBe(26);
-  expect(MIGRATIONS.at(-1)!.id).toBe(47);
+  expect(MIGRATIONS.at(-1)!.id).toBe(52);
 });
 
 test("a database from before migration 24 upgrades cleanly through 24, 25 and 26", () => {
@@ -302,15 +302,49 @@ test("migration 46 adds dramaturg_threads: existing scenes have none, and a purg
   expect(d.statement("SELECT count(*) AS n FROM dramaturg_threads").get()).toEqual({ n: 0 });
 });
 
-
 test("migration 47 adds external core journals without replacing migrations 44 to 46", () => {
   const path = file();
-  const old = reopen(path, 46);
+  const old = reopen(path, 47);
+  old.statement("INSERT INTO chats (id, title, character_id, cast_json, cast_snapshot_json, active_branch_id, created_at, updated_at) VALUES ('core-chat', 'Core scene', 'char', '{}', '{}', 'core-branch', 1, 1)").run();
+  old.statement("INSERT INTO branches (id, chat_id, name, created_at, version) VALUES ('core-branch', 'core-chat', 'Main', 1, 1)").run();
+  old.statement("INSERT INTO core_sessions (id, header_cell, title_cell, updated_at) VALUES ('core-session', 'sealed-core-header', 'sealed-title', '2026-10-31T12:00:00Z')").run();
+  old.statement("INSERT INTO core_entries (session_id, seq, entry_cell) VALUES ('core-session', 1, 'sealed-core-entry')").run();
+  old.statement("INSERT INTO core_scene_links (chat_id, session_id, branch_id) VALUES ('core-chat', 'core-session', 'core-branch')").run();
+  old.statement("INSERT INTO studio_state (key, body, updated_at) VALUES ('settings', 'sealed-studio-state', 2)").run();
+  const journalBefore = old.statement("SELECT id, header_cell, title_cell, updated_at FROM core_sessions").get();
+  const entriesBefore = old.statement("SELECT session_id, seq, entry_cell FROM core_entries").all();
+  const linksBefore = old.statement("SELECT chat_id, session_id, branch_id FROM core_scene_links").all();
+  const stateBefore = old.statement("SELECT key, body, updated_at FROM studio_state").get();
   const history = names(old);
   old.close(); open.pop();
   const upgraded = reopen(path);
-  expect(names(upgraded).slice(0, 46)).toEqual(history);
+  expect(names(upgraded).slice(0, 47)).toEqual(history);
   expect(columns(upgraded, "core_sessions")).toContain("header_cell");
   expect(columns(upgraded, "core_entries")).toContain("entry_cell");
   expect(columns(upgraded, "core_scene_links")).toContain("branch_id");
+  expect(upgraded.statement("SELECT id, header_cell, title_cell, updated_at FROM core_sessions").get()).toEqual(journalBefore);
+  expect(upgraded.statement("SELECT session_id, seq, entry_cell FROM core_entries").all()).toEqual(entriesBefore);
+  expect(upgraded.statement("SELECT chat_id, session_id, branch_id FROM core_scene_links").all()).toEqual(linksBefore);
+  expect(upgraded.statement("SELECT key, body, updated_at FROM studio_state").get()).toEqual(stateBefore);
+  expect(upgraded.statement("SELECT revision FROM studio_state WHERE key = 'settings'").get()).toEqual({ revision: 0 });
+});
+
+test("migrations 48-51 add extension tables, revisioned state, logs, and checkpoint ownership", () => {
+  const path = file();
+  const before = reopen(path, 46);
+  before.close(); open.pop();
+  const d = reopen(path);
+  expect(names(d).filter(({ id }) => id >= 48 && id <= 51).map(({ id, name }) => ({ id, name }))).toEqual([
+    { id: 48, name: "executable extensions" },
+    { id: 49, name: "revisioned state documents" },
+    { id: 50, name: "extension operational logs" },
+    { id: 51, name: "turn checkpoint extension owner" },
+  ]);
+  expect(columns(d, "extension_packages")).toEqual(["digest", "bytes", "body_cell"]);
+  expect(columns(d, "extension_controls")).toEqual(["id_hash", "revision", "body_cell"]);
+  expect(columns(d, "extension_data")).toEqual(["package_hash", "key_hash", "revision", "bytes", "body_cell"]);
+  expect(columns(d, "extension_runtime_lease")).toEqual(["singleton", "epoch", "owner_cell", "expires_at", "last_now"]);
+  expect(columns(d, "extension_logs")).toEqual(["seq", "package_hash", "log_hash", "body_cell"]);
+  expect(columns(d, "studio_state")).toEqual(["key", "body", "updated_at", "revision"]);
+  expect(columns(d, "turn_checkpoints")).toContain("extension_owner_json");
 });

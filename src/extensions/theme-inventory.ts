@@ -11,7 +11,7 @@ function packagedPackages(source: Record<string, ThemePackageInput> | undefined)
     return input;
   });
 }
-async function sourcePackages(url: URL): Promise<ThemePackageInput[]> {
+async function sourcePackages(url: URL, skipExtensionExamples = false): Promise<ThemePackageInput[]> {
   const root = fileURLToPath(url);
   const out: ThemePackageInput[] = [];
   let dirs;
@@ -29,6 +29,7 @@ async function sourcePackages(url: URL): Promise<ThemePackageInput[]> {
     };
     const manifest = JSON.parse(await readText("manifest.json", 512_000)) as { id?: unknown; assets?: { path?: string }[]; fonts?: { path?: string }[]; styles?: unknown };
     if (manifest.id !== dir.name) throw new Error("theme folder identity mismatch");
+    if (skipExtensionExamples && (manifest as { schemaVersion?: unknown }).schemaVersion === 1) continue;
     const assets: Record<string, string> = {};
     const readBinary = async (path: string, cap: number): Promise<string> => {
       const bytes = await readFile(base + path);
@@ -54,4 +55,4 @@ async function sourcePackages(url: URL): Promise<ThemePackageInput[]> {
 export const themeInventory = (packaged?: PackagedAssets): Promise<ThemePackageInput[]> =>
   packaged ? Promise.resolve(packagedPackages(packaged.themePackages)) : sourcePackages(new URL("./themes/", import.meta.url));
 export const exampleThemeInventory = (packaged?: PackagedAssets): Promise<ThemePackageInput[]> =>
-  packaged ? Promise.resolve(packagedPackages(packaged.exampleThemePackages)) : sourcePackages(new URL("./examples/", import.meta.url));
+  packaged ? Promise.resolve(packagedPackages(packaged.exampleThemePackages)) : sourcePackages(new URL("./examples/", import.meta.url), true);

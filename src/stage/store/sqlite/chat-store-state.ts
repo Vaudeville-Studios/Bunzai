@@ -12,13 +12,17 @@
  */
 import type { Delta, SceneState } from "../../../core/scene-state/types";
 import type { ChatStore } from "../../contracts/chat-store";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import { EXTENSION_BACKGROUND_FIELDS } from "../../../extensions/contracts/background-fields";
 import type { CellCipher } from "../../crypto/cell-cipher";
 import { DamagedDataError } from "../../damaged-data-error";
-import { GLOBAL_SLOT, baseState, changed, checkImportedDeltas, rebuildState, requireHeld, sliceShown } from "../scene-state-rules";
+import { GLOBAL_SLOT, baseState, changed, checkExtensionDeltas, checkImportedDeltas, rebuildState, requireHeld, sliceShown } from "../scene-state-rules";
 import { checkGuard } from "../chat-rules";
 import type { BranchSql, MessageSql } from "./chat-store-rows";
 import type { StageDatabase } from "./database";
 import { liveOf } from "./swipe-sql";
+import { requireExtensionCommit } from "./extension-commit-guard";
+import { requireCommitResource } from "../extension-commit-access";
 
 type Param = string | number | null;
 type Shown = { messageId: string; swipeId: string | null };
@@ -35,7 +39,7 @@ export interface StateSqlDeps {
 }
 
 export interface StateSql {
-  api: Pick<ChatStore, "sceneState" | "sceneStateBefore" | "sceneDeltas" | "recordMessageDeltas" | "recordDeltas" | "setBranchBase" | "globalOps">;
+  api: Pick<ChatStore, "sceneState" | "sceneStateBefore" | "sceneDeltas" | "recordMessageDeltas" | "recordExtensionMessageDeltas" | "recordExtensionSummaryDeltas" | "recordDeltas" | "setBranchBase" | "globalOps">;
   /** Rebuilds the branch's tip cache and rewrites its keyframes; the ones at or after message seq `fromSeq` are dropped first. Inside the caller's transaction. */
   refresh(branchId: string, fromSeq?: number): void;
   /** Gives a new take its own copy of another's base and builds its state. Inside the caller's transaction. */
@@ -44,6 +48,8 @@ export interface StateSql {
   drop(branchId: string): void;
   /** Keeps a turn's deltas with the version it stored; they follow the ones it already has. */
   stampSwipe(swipeId: string, deltas: readonly Delta[]): void;
+  /** The caller has already fenced or proven acceptance; this owner still validates namespace and exact swipe. */
+  applyExtensionOnSwipe(packageId: string, branchId: string, messageId: string, swipeId: string, raw: unknown): boolean;
 }
 
 interface DeltaSql { owner: string; swipe: string | null; slot: string; path_json: string; value_json: string | null; removed: number; at: number }
@@ -145,11 +151,11 @@ export function stateMethods(k: StateSqlDeps): StateSql {
       k.run("INSERT OR REPLACE INTO state_keyframes (branch_id, message_id, state_json) VALUES (?, ?, ?)", branchId, messageId, cipher.seal("state_keyframes.state_json", JSON.stringify(s)));
     }
     const tip = rows.at(-1);
-    k.run(
-      `INSERT INTO branch_state (branch_id, state_json, tip_message_id, tip_swipe_id) VALUES (?, ?, ?, ?)
-         ON CONFLICT (branch_id) DO UPDATE SET state_json = excluded.state_json, tip_message_id = excluded.tip_message_id, tip_swipe_id = excluded.tip_swipe_id`,
-      branchId, cipher.seal("branch_state.state_json", JSON.stringify(state)), tip?.message_id ?? null, tip?.swipe_id ?? null,
-    );
+    const cell = cipher.seal("branch_state.state_json", JSON.stringify(state));
+    // An UPSERT's conflict policy overrides the fingerprint trigger's OR IGNORE on a second refresh.
+    if (!k.run("UPDATE branch_state SET state_json = ?, tip_message_id = ?, tip_swipe_id = ? WHERE branch_id = ?", cell, tip?.message_id ?? null, tip?.swipe_id ?? null, branchId)) {
+      k.run("INSERT INTO branch_state (branch_id, state_json, tip_message_id, tip_swipe_id) VALUES (?, ?, ?, ?)", branchId, cell, tip?.message_id ?? null, tip?.swipe_id ?? null);
+    }
   };
 
   /** Adds deltas after the ones the owner has; a message's write that names a version carries its swipe id. */
@@ -166,6 +172,14 @@ export function stateMethods(k: StateSqlDeps): StateSql {
   };
 
   return {
+    applyExtensionOnSwipe(packageId, branchId, messageId, swipeId, raw) {
+      const deltas = checkExtensionDeltas(raw, packageId), message = k.writableMessage(messageId);
+      if (!message || message.branch_id !== branchId || !k.one(`SELECT 1 FROM swipes WHERE message_id = ? AND swipe_id = ? AND cut_at IS NULL`, messageId, swipeId)) return false;
+      const through = build(branchId, [], [...shown(shownPath(branchId, message.seq)), { messageId, swipeId }], message.seq).state;
+      const added = changed(through, deltas);
+      if (added.length) { stamp("message_deltas", "message_id", messageId, added, swipeId); refresh(branchId, message.seq); }
+      return true;
+    },
     refresh,
     stampSwipe: (swipeId, deltas) => stamp("swipe_deltas", "swipe_id", swipeId, deltas),
     copyBase: (fromBranchId, toBranchId) => {
@@ -261,6 +275,32 @@ export function stateMethods(k: StateSqlDeps): StateSql {
         });
       },
 
+      async recordExtensionSummaryDeltas(context: ExtensionCommitContext, branchId, swipeId, raw, guard) {
+        const deltas = checkImportedDeltas(raw, "background");
+        if (deltas.some((delta) => delta.slot !== "summary")) throw new Error("extension follow-on may write only the summary slot");
+        const expected = checkGuard(guard);
+        return k.write(() => {
+          const branch = k.writableBranch(branchId);
+          if (!branch) return false;
+          requireCommitResource(context, { kind: "scene", id: branch.chat_id }, [EXTENSION_BACKGROUND_FIELDS.summaryAutomatic]);
+          requireExtensionCommit(k.database, k.cipher, context);
+          const row = k.one<{ id: string }>(
+            `SELECT m.id FROM messages m JOIN swipes s ON s.message_id = m.id WHERE s.swipe_id = ? AND ${liveOf("s")} AND m.branch_id = ? AND m.cut_id IS NULL`, swipeId, branchId,
+          );
+          const m = row && k.writableMessage(row.id);
+          if (!m) return false;
+          k.requireVersion(branch, expected);
+          const through = build(branchId, [], [...shown(shownPath(branchId, m.seq)), { messageId: m.id, swipeId }], m.seq).state;
+          requireHeld(through, guard?.expect);
+          const added = changed(through, deltas);
+          if (added.length > 0) {
+            stamp("message_deltas", "message_id", m.id, added, swipeId);
+            refresh(branchId, m.seq);
+          }
+          return true;
+        });
+      },
+
       async recordMessageDeltas(branchId, messageId, raw, guard) {
         checkImportedDeltas(raw, "person");
         const expected = checkGuard(guard);
@@ -272,6 +312,26 @@ export function stateMethods(k: StateSqlDeps): StateSql {
           const shown = stateThrough(branchId, m);
           requireHeld(shown, guard?.expect);
           const added = changed(shown, checkImportedDeltas(raw, "person"));
+          if (added.length > 0) {
+            stamp("message_deltas", "message_id", messageId, added);
+            refresh(branchId, m.seq);
+          }
+          return true;
+        });
+      },
+
+      async recordExtensionMessageDeltas(context, branchId, messageId, raw, guard) {
+        const deltas = checkExtensionDeltas(raw, context.packageId);
+        const expected = checkGuard(guard);
+        return k.write(() => {
+          requireExtensionCommit(k.database, k.cipher, context);
+          const m = k.writableMessage(messageId);
+          if (!m || m.branch_id !== branchId) return false;
+          if (k.one("SELECT 1 FROM turn_checkpoints WHERE branch_id = ?", branchId)) throw new Error("extension scene state cannot be applied while a turn is active");
+          k.requireVersion(k.writableBranch(branchId)!, expected);
+          const shown = stateThrough(branchId, m);
+          requireHeld(shown, guard?.expect);
+          const added = changed(shown, deltas);
           if (added.length > 0) {
             stamp("message_deltas", "message_id", messageId, added);
             refresh(branchId, m.seq);

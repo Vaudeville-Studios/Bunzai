@@ -7,7 +7,10 @@
  */
 import type { Delta, SceneState } from "../../../core/scene-state/types";
 import type { ChatStore } from "../../contracts/chat-store";
-import { GLOBAL_SLOT, baseState, changed, checkImportedDeltas, rebuildState, requireHeld, sliceShown } from "../scene-state-rules";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import { EXTENSION_BACKGROUND_FIELDS } from "../../../extensions/contracts/background-fields";
+import { requireCommitResource } from "../extension-commit-access";
+import { GLOBAL_SLOT, baseState, changed, checkExtensionDeltas, checkImportedDeltas, rebuildState, requireHeld, sliceShown } from "../scene-state-rules";
 import { checkGuard } from "../chat-rules";
 import type { ChatRecord, MessageRecord } from "./chat-records";
 
@@ -16,10 +19,12 @@ export interface StateDeps {
   branchOrder: Map<string, string[]>;
   liveChatOfBranch(branchId: string): ChatRecord | null;
   requireVersion(branchId: string, expected: number | undefined): void;
+  authorizeExtensionCommit?(context: ExtensionCommitContext): void;
+  branchTurnOpen?(branchId: string): boolean;
 }
 
 export interface MemoryState {
-  api: Pick<ChatStore, "sceneState" | "sceneStateBefore" | "sceneDeltas" | "recordMessageDeltas" | "recordDeltas" | "setBranchBase" | "globalOps">;
+  api: Pick<ChatStore, "sceneState" | "sceneStateBefore" | "sceneDeltas" | "recordMessageDeltas" | "recordExtensionMessageDeltas" | "recordExtensionSummaryDeltas" | "recordDeltas" | "setBranchBase" | "globalOps">;
   /** Rebuilds the branch's tip cache; keyframes at or after `fromSeq` are dropped first. */
   refresh(branchId: string, fromSeq?: number): void;
   /** Forgets a branch's cache and keyframes. */
@@ -75,6 +80,29 @@ export function stateMethods(d: StateDeps): MemoryState {
     for (const [id, s] of fresh) kept.set(id, { seq: d.messages.get(id)!.seq, state: s });
     keyframes.set(branchId, kept);
     tips.set(branchId, state);
+  };
+  const writeDeltas = async (branchId: string, swipeId: string, raw: Delta[], guard?: Parameters<ChatStore["recordDeltas"]>[3], context?: ExtensionCommitContext): Promise<boolean> => {
+    if (context) {
+      const chat = d.liveChatOfBranch(branchId);
+      if (!chat || !d.authorizeExtensionCommit) throw new Error("extension commits are unsupported by this memory ChatStore");
+      requireCommitResource(context, { kind: "scene", id: chat.chat.id }, [EXTENSION_BACKGROUND_FIELDS.summaryAutomatic]);
+      d.authorizeExtensionCommit(context);
+      if (raw.some((delta) => delta.slot !== "summary")) throw new Error("extension follow-on may write only the summary slot");
+    }
+    const deltas = checkImportedDeltas(raw, "background");
+    const expected = checkGuard(guard);
+    if (!d.liveChatOfBranch(branchId)) return false;
+    const m = (d.branchOrder.get(branchId) ?? []).map((id) => d.messages.get(id)!).find((x) => !x.cut && x.swipes.some((s) => s.id === swipeId && s.cutAt === undefined));
+    if (!m) return false;
+    d.requireVersion(branchId, expected);
+    const through = build(branchId, [...shownPath(branchId, m.seq), { messageId: m.id, swipeId }]).state;
+    requireHeld(through, guard?.expect);
+    const added = changed(through, deltas);
+    if (added.length > 0) {
+      messageDeltas.set(m.id, [...(messageDeltas.get(m.id) ?? []), ...structuredClone(added).map((delta) => ({ delta, swipe: swipeId }))]);
+      refresh(branchId, m.seq);
+    }
+    return true;
   };
 
   return {
@@ -151,23 +179,8 @@ export function stateMethods(d: StateDeps): MemoryState {
         return true;
       },
 
-      async recordDeltas(branchId, swipeId, raw, guard) {
-        checkImportedDeltas(raw, "background");
-        const expected = checkGuard(guard);
-        if (!d.liveChatOfBranch(branchId)) return false;
-        const m = (d.branchOrder.get(branchId) ?? []).map((id) => d.messages.get(id)!).find((x) => !x.cut && x.swipes.some((s) => s.id === swipeId && s.cutAt === undefined));
-        if (!m) return false;
-        d.requireVersion(branchId, expected);
-        // Judged as if this version were the one shown, so a write of what it already holds adds nothing.
-        const through = build(branchId, [...shownPath(branchId, m.seq), { messageId: m.id, swipeId }]).state;
-        requireHeld(through, guard?.expect);
-        const added = changed(through, checkImportedDeltas(raw, "background"));
-        if (added.length > 0) {
-          messageDeltas.set(m.id, [...(messageDeltas.get(m.id) ?? []), ...structuredClone(added).map((delta) => ({ delta, swipe: swipeId }))]);
-          refresh(branchId, m.seq);
-        }
-        return true;
-      },
+      recordDeltas: (branchId, swipeId, raw, guard) => writeDeltas(branchId, swipeId, raw, guard),
+      recordExtensionSummaryDeltas: (context, branchId, swipeId, raw, guard) => writeDeltas(branchId, swipeId, raw, guard, context),
 
       async recordMessageDeltas(branchId, messageId, raw, guard) {
         checkImportedDeltas(raw, "person");
@@ -180,6 +193,26 @@ export function stateMethods(d: StateDeps): MemoryState {
         requireHeld(shown, guard?.expect);
         const added = changed(shown, checkImportedDeltas(raw, "person"));
         if (added.length > 0) {
+          messageDeltas.set(messageId, [...own, ...added.map((delta) => ({ delta, swipe: null }))]);
+          refresh(branchId, m.seq);
+        }
+        return true;
+      },
+
+      async recordExtensionMessageDeltas(context, branchId, messageId, raw, guard) {
+        if (!d.authorizeExtensionCommit) throw new Error("extension commits are unsupported by this memory ChatStore");
+        d.authorizeExtensionCommit(context);
+        const deltas = checkExtensionDeltas(raw, context.packageId);
+        const expected = checkGuard(guard);
+        const m = d.messages.get(messageId);
+        if (!m || m.branchId !== branchId || m.cut || !d.liveChatOfBranch(branchId)) return false;
+        if (d.branchTurnOpen?.(branchId)) throw new Error("extension scene state cannot be applied while a turn is active");
+        d.requireVersion(branchId, expected);
+        const shown = stateThrough(branchId, m);
+        requireHeld(shown, guard?.expect);
+        const added = changed(shown, deltas);
+        if (added.length > 0) {
+          const own = messageDeltas.get(messageId) ?? [];
           messageDeltas.set(messageId, [...own, ...added.map((delta) => ({ delta, swipe: null }))]);
           refresh(branchId, m.seq);
         }

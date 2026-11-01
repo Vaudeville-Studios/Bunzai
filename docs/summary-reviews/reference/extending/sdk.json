@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/sdk",
+  "sourcePath": "docs/reference/extending/sdk.md",
+  "sourceHash": "sha256:bbbb6ff03e5dfe1855bbd75007388e2a4511086c94dc7fc487d08cd917608468",
+  "semanticSummaryHash": "sha256:7f0a52c8f36bc304ab556427d9c5d4c729c1a0633e44bcd6f893c0baf1b23098",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Root independently approved documentation-summary accuracy for source SHA-256 bbbb6ff03e5dfe1855bbd75007388e2a4511086c94dc7fc487d08cd917608468. This approval covers documentation accuracy only, not security or release readiness.",
+  "reviewedAt": "2026-10-31T13:40:01.714Z"
+}

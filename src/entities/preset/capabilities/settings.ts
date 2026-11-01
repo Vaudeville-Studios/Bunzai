@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { deepEq } from "../../../core/guards";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { CapabilityChange } from "../../capabilities";
 import { nonEmptyPatch } from "../../_shared/capability-schemas";
 import type { CanonicalPreset, PresetSamplers } from "../schema";
@@ -28,6 +29,7 @@ const patchSchema = nonEmptyPatch({
 });
 const input = z.strictObject({ target: targetSchema, patch: patchSchema });
 const rootKeys = new Set(["name", "description", "enabled"]);
+const exposurePaths: Record<string, string> = Object.fromEntries(Object.keys(patchSchema.shape).map((key) => [key, rootKeys.has(key) ? `body.${key}` : `body.samplers.${key}`]));
 
 const capability = defineContentCapability<z.infer<typeof input>, CanonicalPreset>({
   id: "preset.settings.update",
@@ -36,6 +38,11 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalPrese
   action: "update",
   summary: "Change preset name, description, enabled state, or authored sampler values.",
   aliases: ["preset temperature", "context size", "max tokens", "preset samplers"],
+  extensionExposure: {
+    operationId: "content.draft.preset.settings.update",
+    fields: Object.entries(exposurePaths).map(([input, path]) => ({ input: `patch.${input}`, path })),
+    hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect",
+  },
   input,
   preview: (entity, { patch }) => {
     let body = entity.body;

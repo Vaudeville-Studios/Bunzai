@@ -5,7 +5,7 @@
  * Storyboards, and the two mount points. And the contract that matters most: opening and walking every tab calls the library
  * once to read the book and nothing else (no write, no chat setting).
  */
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import type { AppContext } from "../../../app-contract";
 import type { Chat } from "../../../../stage/contracts/chat-store";
@@ -13,7 +13,7 @@ import type { SceneLoreBook } from "../../../app-contract-scenes";
 import type { LorebookEntry } from "../../../../entities/lorebook/schema";
 import { fixtureBook, typedEntry } from "../../../../core/compendium/fixture-book";
 import { expectWindowed, teardownAllDoms } from "../../../_shared/test-dom";
-import { CHAT, bodyOf, installLoreDom, press, q, qa, rig, settle, text, typeInto, waitFor, type FlushSync } from "../fake-lore-rig";
+import { CHAT, bodyOf, installLoreDom, press, q, qa, resetLore, rig, settle, text, typeInto, unmount, waitFor, type FlushSync } from "../fake-lore-rig";
 import { CompendiumWing } from "./compendium-wing";
 
 const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", enabled: true, missing: false, entries: 213, tokens: 0 };
@@ -49,7 +49,8 @@ async function go(label: string): Promise<void> { await press(flushSync, tab(lab
 
 beforeAll(async () => { installLoreDom(); flushSync = (await import("react-dom")).flushSync; });
 afterAll(async () => { await teardownAllDoms(); });
-beforeEach(() => { rig.installed?.reinstall(); calls = []; });
+afterEach(() => { unmount(flushSync); });
+beforeEach(() => { resetLore(); calls = []; });
 
 describe("no book (rc-world-compendium.png)", () => {
   test("says there is no active lorebook, and reads nothing", async () => {

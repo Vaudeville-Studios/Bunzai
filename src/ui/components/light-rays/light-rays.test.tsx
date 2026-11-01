@@ -22,7 +22,7 @@ beforeAll(() => {
   installed = installDom("<!doctype html><html><body></body></html>", { url: "http://127.0.0.1:8327/", globals: { IS_REACT_ACT_ENVIRONMENT: true } });
   (window as unknown as { matchMedia: unknown }).matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
 });
-afterAll(() => { installed.teardown(); useShellStore.setState({ settings: settingsBefore }); mock.module("./renderer", () => ({ startLightRays: realStart })); });
+afterAll(async () => { await installed.teardown(); useShellStore.setState({ settings: settingsBefore }); mock.module("./renderer", () => ({ startLightRays: realStart })); });
 beforeEach(() => { calls.length = 0; });
 
 async function mount(settings: Record<string, unknown>): Promise<{ host: HTMLElement; unmount(): Promise<void> }> {

@@ -43,7 +43,7 @@ land, [the CLI reference](reference/cli.md) is the source of truth for current b
 
 ## Repository
 
-- Source development requires Bun 1.3.14 or later. CI and release builds read the exact version
+- Source development requires Bun 1.4.2 or later. CI and release builds read the exact version
   from `.bun-version` through setup-bun's version-file input.
 - Use a concise commit subject that names the change and affected area. Mainstage subjects must make
   sense in release history; avoid WIP, `misc`, or context-free `fix` messages.

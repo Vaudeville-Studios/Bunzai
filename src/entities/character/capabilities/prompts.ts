@@ -3,6 +3,7 @@
  */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { CanonicalCharacter } from "../schema";
 import { nonEmptyPatch, previewCharacterPatch, targetSchema } from "./shared";
 
@@ -39,6 +40,11 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalChara
   action: "update",
   summary: "Change portable character description, persona, scenario, system instructions, or examples.",
   aliases: ["edit character prompt", "change personality", "update scenario", "system prompt"],
+  extensionExposure: {
+    operationId: "content.draft.character.prompts.update",
+    fields: Object.entries(paths).map(([input, path]) => ({ input: `patch.${input}`, path: `body.${path}` })),
+    hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect",
+  },
   input,
   preview: (entity, { target, patch }) =>
     previewCharacterPatch(entity, patch, paths, target.variantId),

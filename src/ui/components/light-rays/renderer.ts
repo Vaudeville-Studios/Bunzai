@@ -44,6 +44,7 @@ export function startLightRays(canvas: HTMLCanvasElement, followMouse: boolean, 
       return new Mesh(gl, { geometry, program });
     };
     // Uniforms and ray shaders come from Vaudeville's LightRays component.
+    // theme-key-ok: visual rig chooses stage or house palettes, not a theme identifier
     const colors = rig === 'stage' ? ["--premiere-rose", "--premiere-violet"] : rig === 'house' ? ["--premiere-gold", "--premiere-gold"] : ["--premiere-text"];
     const rays = colors.map(token => make(FRAGMENT, {
       iTime: { value: 0 }, iResolution: { value: [1, 1] }, rayPos: { value: [0, 0] }, rayDir: { value: [0, 1] },

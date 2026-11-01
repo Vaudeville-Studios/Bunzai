@@ -2,7 +2,7 @@
  * The SQLite ChatStore's createChat (spec rules 10 and 29): the chat, its main branch, its frozen cast,
  * and, for a scene born with its history, every message and swipe, all in one transaction.
  */
-import type { Cast, Chat, ChatHistory, ChatStore, Generation } from "../../contracts/chat-store";
+import type { Cast, CastSnapshot, Chat, ChatHistory, ChatStore, Generation } from "../../contracts/chat-store";
 import type { CellCipher } from "../../crypto/cell-cipher";
 import { ChatAlreadyImportedError } from "../../../studio/errors";
 import { checkCast, checkSnapshot, checkTitle } from "../chat-rules";
@@ -11,6 +11,9 @@ import { personaDaysOf } from "../persona-stats-rules";
 import type { ChatSqlKit } from "./chat-store-cuts";
 import { applyPartChange } from "./piece-parts-sql";
 import type { SqlStatsCounters } from "./chat-store-stats";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import { requireExtensionCommit } from "./extension-commit-guard";
+import { requireCommitResource } from "../extension-commit-access";
 
 export interface HistoryKit {
   cipher: CellCipher;
@@ -33,20 +36,21 @@ function seedHistory(k: HistoryKit, chatId: string, branchId: string, history: C
 
 export function createChatMethod(
   k: ChatSqlKit & { insertSwipe: HistoryKit["insertSwipe"]; stats: SqlStatsCounters },
-): Pick<ChatStore, "createChat"> {
+): Pick<ChatStore, "createChat" | "createCoreChat"> {
   const { statement } = k.database;
-  return {
-    async createChat(input): Promise<Chat> {
+  const create = async (input: { title: string; cast: Cast; snapshot: CastSnapshot; history?: ChatHistory }, extensionCommit?: ExtensionCommitContext, hostCore = false): Promise<Chat> => {
       const title = checkTitle(input?.title);
       const cast = checkCast(input?.cast);
       const snapshot = checkSnapshot(input?.snapshot, cast);
       const snapshotParts = k.snapshotCodec.prepare(snapshot);
       const history = input.history === undefined ? undefined : checkHistory(input.history);
+      if (hostCore && extensionCommit && (extensionCommit.operation !== "scenes.create" || !extensionCommit.invocationId)) throw new Error("Core extension scene creation requires its approved invocation");
       const t = history?.createdAt ?? k.clock();
       const chatId = k.newId();
       const branchId = k.newId();
       const source = history?.source === undefined ? null : k.cipher.index(`chat-source\u0000${history.source}`);
       await k.write(() => {
+        if (extensionCommit) requireExtensionCommit(k.database, k.cipher, extensionCommit);
         if (source !== null) {
           const held = k.one<{ id: string }>("SELECT id FROM chats WHERE import_key = ? AND deleted_at IS NULL", source);
           if (held) throw new ChatAlreadyImportedError(held.id);
@@ -64,10 +68,27 @@ export function createChatMethod(
           "INSERT INTO branches (id, chat_id, name, parent_branch_id, fork_message_id, fork_swipe_id, created_at, version) VALUES (?, ?, ?, NULL, NULL, NULL, ?, 1)",
           branchId, chatId, k.cipher.seal("branches.name", "main"), t,
         );
+        if (hostCore && extensionCommit?.operation === "scenes.create" && extensionCommit.invocationId) {
+          requireCommitResource(extensionCommit, { kind: "character", id: cast.character.id }, ["scene.create"]);
+          if (cast.persona) requireCommitResource(extensionCommit, { kind: "persona", id: cast.persona.id });
+          if (history) throw new Error("Extension Core scene creation cannot seed imported history");
+          k.run("INSERT INTO core_scene_creation_bindings (chat_id, branch_id, operation_hash, origin, package_hash, body_cell) VALUES (?, ?, ?, 'extension', ?, ?)", chatId, branchId,
+            k.cipher.index(extensionCommit.invocationId), k.cipher.index(extensionCommit.packageId), k.cipher.seal("core_scene_creation_bindings.body_cell", JSON.stringify({
+              origin: "extension", invocationId: extensionCommit.invocationId, packageId: extensionCommit.packageId, cast,
+            })));
+        } else if (hostCore && !extensionCommit) {
+          if (history) throw new Error("Core-first host scenes cannot seed imported history");
+          const invocationId = `host:create:${chatId}`;
+          k.run("INSERT INTO core_scene_creation_bindings (chat_id, branch_id, operation_hash, origin, package_hash, body_cell) VALUES (?, ?, ?, 'host', NULL, ?)", chatId, branchId,
+            k.cipher.index(invocationId), k.cipher.seal("core_scene_creation_bindings.body_cell", JSON.stringify({ origin: "host", invocationId, cast })));
+        }
         k.stats.scenes(chatId, cast.persona?.id, 1);
         if (history) seedHistory(k, chatId, branchId, history, cast);
       });
       return k.toChat(k.chatRow(chatId)!);
-    },
+  };
+  return {
+    createChat(input, extensionCommit) { return create(input, extensionCommit); },
+    createCoreChat(input, extensionCommit) { return create(input, extensionCommit, true); },
   };
 }

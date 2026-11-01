@@ -1,6 +1,7 @@
 /** Semantic lifecycle for named multi-character pack groups. */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { CanonicalPack } from "../schema";
 import { addPackGroup, removePackGroup, renamePackGroup } from "../operations";
 import { preview, targetSchema } from "./shared";
@@ -32,6 +33,7 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalPack>
   action: "manage",
   summary: "Add, rename, or remove a named multi-character media-pack group.",
   aliases: ["pack group", "character sprite group", "rename media group"],
+  extensionExposure: { operationId: "content.draft.pack.groups.manage", fields: [{ input: "operation", path: "body.groups" }], hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect" },
   input,
   preview: (entity, { operation }) => {
     const body = operation.type === "add"

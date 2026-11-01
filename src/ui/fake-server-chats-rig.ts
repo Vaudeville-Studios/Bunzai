@@ -39,5 +39,5 @@ export async function chatRouteRig(options: { core?: boolean } = {}) {
   const handler = createHandler(store, settings, undefined, security, undefined, undefined, undefined, undefined, undefined, undefined, undefined, library);
   const post = async (path: string, body: unknown) =>
     handler(apiReq(path, { method: "POST", token: security.token, contentType: "application/json", body: JSON.stringify(body) }));
-  return { store, settings, handler, post, token: security.token };
+  return { store, settings, handler, post, token: security.token, library, close: () => library.close() };
 }

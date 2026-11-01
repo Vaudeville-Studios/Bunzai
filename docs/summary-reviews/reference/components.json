@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:cb9abe666c9a242b8269e4749c5ba12eaeacb718676e5d6e454b31aa4c9f0970",
-  "semanticSummaryHash": "sha256:0b766a24920da50718102202c13d0215c895b9e31de4bb9597230b589edb2beb",
+  "sourceHash": "sha256:132278d58e723d603de2251c9579ed34bc5de30da402553830abcb9066c49f35",
+  "semanticSummaryHash": "sha256:cfd43d5c0a27d64957e65bff5fd7c30034a9080727db6443b450dc139f23f5aa",
   "verdict": "APPROVE",
-  "reviewer": "node_placement_review",
-  "notes": "Re-reviewed latest catalog export rename to TurnStatus against component, caller and mutually exclusive phase/Final Cut event state; prior Promptbook editor entries remain accurate.",
-  "reviewedAt": "2026-10-30T13:06:40.283Z"
+  "reviewer": "root",
+  "notes": "Independently reviewed generated component inventory and current catalog source. The summary accurately names the extension manager, bounded renderer, settings/effect review, existing virtualized host-command menu, and navigation handoff; it distinguishes discovery metadata from behavior and release proof.",
+  "reviewedAt": "2026-10-31T22:54:39.238Z"
 }

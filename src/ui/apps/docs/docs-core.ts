@@ -9,6 +9,11 @@ export type DocSegment =
 export interface DocNavSection { id: string; label: string; docs: DocRecord[] }
 export interface DocNavGroup { id: "user" | "developer"; label: string; sections: DocNavSection[] }
 
+export interface DocLinkOptions {
+  docHref?: (id: string, anchor: string) => string;
+  localAnchorHref?: (anchor: string) => string;
+}
+
 const SECTION_ORDER = {
   user: ["start", "workflows", "content", "platforms", "safety"],
   developer: ["overview", "application", "architecture", "model", "formats", "security", "extending", "decisions"],
@@ -159,17 +164,21 @@ const resolveRelative = (href: string, currentPath: string): string | null => {
   return normalizeRepoPath(`${dirname(currentPath)}/${href}`);
 };
 
-function rewriteDocLinks(markdown: string, current: DocRecord, docs: DocRecord[]): string {
+function rewriteDocLinks(markdown: string, current: DocRecord, docs: DocRecord[], options: DocLinkOptions): string {
   const byPath = new Map(docs.map((doc) => [doc.path, doc]));
   return markdown.replace(/(?<!!)\[([^\]]+)\]\(([^)\s]+)([^)]*)\)/g, (whole, label: string, rawHref: string, tail: string) => {
-    if (/^(?:https?:|mailto:|#)/i.test(rawHref)) return whole;
+    if (/^(?:https?:|mailto:)/i.test(rawHref)) return whole;
+    if (rawHref.startsWith("#")) {
+      return options.localAnchorHref ? `[${label}](${options.localAnchorHref(rawHref.slice(1))}${tail})` : whole;
+    }
     const { path, anchor } = splitHref(rawHref);
     const resolved = resolveRelative(path, current.path);
     if (!resolved) return whole;
     const target = byPath.get(resolved);
     if (target) {
-      const hash = anchor ? `#${anchor}` : "";
-      return `[${label}](/docs/${encodeURIComponent(target.id)}${hash}${tail})`;
+      const href = options.docHref?.(target.id, anchor)
+        ?? `/docs/${encodeURIComponent(target.id)}${anchor ? `#${anchor}` : ""}`;
+      return `[${label}](${href}${tail})`;
     }
     const github = `https://github.com/Vaudeville-Studios/Bunzai/blob/Mainstage/${resolved}`;
     return `[${label}](${github}${anchor ? `#${anchor}` : ""}${tail})`;
@@ -183,10 +192,29 @@ const slugify = (text: string): string => text
   .trim()
   .replace(/\s+/g, "-");
 
-const markHeadings = (markdown: string): string => markdown.replace(
-  /^(#{2,3})\s+(.+?)\s*$/gm,
-  (whole, _hashes: string, title: string) => `<span id="doc-${slugify(title)}"></span>\n${whole}`,
-);
+const markHeadings = (markdown: string, current: DocRecord): string => {
+  const anchors = flattenAnchors(current.anchors);
+  const remaining = [...anchors];
+  const seen = new Map<string, number>();
+  let inFence = false;
+  return markdown.split("\n").map((line) => {
+    if (/^\s*```/.test(line)) { inFence = !inFence; return line; }
+    const heading = !inFence && /^(#{2,3})\s+(.+?)\s*$/.exec(line);
+    if (!heading) return line;
+    const level = heading[1]!.length;
+    const title = heading[2]!;
+    const anchorIndex = remaining.findIndex((candidate) => candidate.level === level
+      && (candidate.text === title || candidate.slug === slugify(title)));
+    const anchor = anchorIndex >= 0 ? remaining.splice(anchorIndex, 1)[0] : undefined;
+    const slug = anchor ? anchor.slug : (() => {
+      const base = slugify(title);
+      const prior = seen.get(base) ?? 0;
+      seen.set(base, prior + 1);
+      return prior ? `${base}-${prior}` : base;
+    })();
+    return `<span id="doc-${slug}"></span>\n${line}`;
+  }).join("\n");
+};
 
 const figureFor = (doc: DocRecord, id: string, figures: DocFigure[]): DocFigure | null => {
   const candidates = figures.filter((figure) => figure.figid === id);
@@ -209,16 +237,20 @@ export function prepareDocSegments(
   current: DocRecord,
   docs: DocRecord[],
   figures: DocFigure[],
+  options: DocLinkOptions = {},
 ): DocSegment[] {
   const segments: DocSegment[] = [];
   let markdown: string[] = [];
   const flush = (): void => {
     const body = markdown.join("\n").trim();
-    if (body) segments.push({ kind: "markdown", body: markHeadings(rewriteDocLinks(body, current, docs)) });
+    if (body) segments.push({ kind: "markdown", body: rewriteDocLinks(body, current, docs, options) });
     markdown = [];
   };
 
-  const friendlyBody = stripFrontmatter(raw).replace(/^#\s+.+$/m, `# ${displayDocTitle(current)}`);
+  const friendlyBody = markHeadings(
+    stripFrontmatter(raw).replace(/^#\s+.+$/m, `# ${displayDocTitle(current)}`),
+    current,
+  );
   for (const line of friendlyBody.split("\n")) {
     const marker = /^@fig\s+(\S+)\s*$/.exec(line);
     if (marker) {

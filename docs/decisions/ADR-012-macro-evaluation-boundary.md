@@ -56,10 +56,13 @@ security gain.
    and is promoted to an accepted decision: a codec that calls the evaluator during
    parse or serialize violates the Round-Trip Law. Macro text is opaque payload to every adapter.
    This ADR does not widen what codecs may do; it only permits a separate analysis surface.
-4. **The evaluator is reachable from exactly four callers** and no others without a new ADR: the
+4. **The evaluator is reachable from exactly five callers** and no others without a new ADR: the
    macro test bench (user-invoked), the transfer compatibility report, any future prompt assembly or
-   Test Stage work, and chat display (amended 2026-09-26, below). It is never reached by import, by
-   save, or by an adapter.
+   Test Stage work, chat display (amended 2026-09-26, below), and the bounded extension `macros.preview`
+   operation defined by accepted ADR-015. The extension operation requires an explicitly invoked
+   manifest-declared command and fresh host confirmation for every request; it supplies a strict
+   value-only context, forces read-only execution and disables author regex, then evaluates once.
+   Event, prompt-hook, background, scheduled, import, save, and codec paths remain excluded.
 5. **Macro handlers are data-only.** No handler may perform filesystem, network, process, timer, or
    dynamic-code operations. `eval`, `new Function`, and dynamic `import` of payload-derived paths are
    prohibited in the macro tree. This is enforced by a test over the handler registry, not by review

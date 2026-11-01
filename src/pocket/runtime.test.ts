@@ -7,7 +7,6 @@ import { gateScreen, type Status } from "../ui/shell/library-gate";
 import { installPocketRuntime } from "./runtime";
 import type { ThemePackageInput } from "../extensions/theme-contract";
 import { fixtureThemePackage } from "../extensions/theme-test-fixture";
-import { BROWSER_THEME_REVISION_EVENT } from "../browser-mode";
 
 class MemoryStorage implements Storage {
   private values = new Map<string, string>();
@@ -66,56 +65,63 @@ describe("temporary browser studio", () => {
     expect(gateScreen(status, { loadInSeen: false })).toBe("studio");
   });
 
-  test("theme routes keep examples unentitled until approval, then revoke the active appearance", async () => {
-    const revisions: number[] = [];
-    const onRevision = (event: Event): void => { revisions.push((event as CustomEvent<{ revision: number }>).detail.revision); };
-    window.addEventListener(BROWSER_THEME_REVISION_EVENT, onRevision);
-    const packages = await (await fetch("/api/themes/packages")).json() as { id: string; builtIn: boolean }[];
-    expect(packages).toEqual([expect.objectContaining({ id: "theater", builtIn: true })]);
-    expect(await (await fetch("/api/themes/examples")).json()).toEqual([
-      expect.objectContaining({ id: "bunzai.theme.encore", name: "Encore" }),
-    ]);
-    expect(await (await fetch("/api/themes/examples/bunzai.theme.encore/package")).json()).toMatchObject({
-      manifest: { id: "bunzai.theme.encore" }, licenseText: "Test fixture license",
-    });
+  test("theme appearance reads use the unified extension owner; old theme mutation routes are retired", async () => {
+    const before = await (await fetch("/api/extensions/revision")).json() as { revision: string };
+    const packages = await (await fetch("/api/extensions/list")).json() as { id: string; hostTrusted: boolean }[];
+    expect(packages).toContainEqual(expect.objectContaining({ id: "bunzai.host.theme.theater", hostTrusted: true }));
     await fetch("/api/settings", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ theme: "bunzai.theme.encore" }),
     });
     expect(await (await fetch("/api/themes/effective")).json()).toMatchObject({ themeId: null, appearance: null, fallbackReason: "not-installed" });
-
-    const inspect = async () => await (await fetch("/api/themes/examples/bunzai.theme.encore/inspect", {
-      method: "POST", headers: { "content-type": "application/json" }, body: "{}",
-    })).json() as { preview: { digest: string }; challenge: string };
-    const denied = await inspect();
-    expect(await (await fetch("/api/themes/deny", {
+    const previewResponse = await fetch("/api/extensions/preview", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ input: await themePackage("bunzai.theme.encore", "Encore") }) });
+    expect(previewResponse.status).toBe(200);
+    const preview = await previewResponse.json() as { challenge: string; expectedRevision: number; package: { manifest: { theme: { requests: string[] } } } };
+    const installed = await fetch("/api/extensions/install", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ challenge: denied.challenge, digest: denied.preview.digest }),
-    })).json()).toEqual({ denied: true });
-    expect((await (await fetch("/api/themes/packages")).json() as { id: string }[]).map(({ id }) => id)).toEqual(["theater"]);
-
-    const approved = await inspect();
-    const installed = await fetch("/api/themes/install", {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ challenge: approved.challenge, digest: approved.preview.digest, decision: "approve" }),
+      body: JSON.stringify({ challenge: preview.challenge, grants: [], themeScopes: preview.package.manifest.theme.requests, expectedRevision: preview.expectedRevision }),
     });
     expect(installed.status).toBe(200);
+    const installedControl = await installed.json() as { id: string; revision: number };
+    expect((await fetch("/api/extensions/enable", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: installedControl.id, expectedRevision: installedControl.revision }) })).status).toBe(200);
     expect(await (await fetch("/api/themes/effective")).json()).toMatchObject({ themeId: "bunzai.theme.encore", appearance: expect.objectContaining({ shape: expect.any(Object) }) });
-    expect(await (await fetch("/api/themes/revoke", {
-      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: "bunzai.theme.encore" }),
-    })).json()).toEqual({ ok: true });
+    const activeControl = (await (await fetch("/api/extensions/list")).json() as { id: string; revision: number }[]).find((item) => item.id === "bunzai.theme.encore")!;
+    expect((await fetch("/api/extensions/revoke", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: activeControl.id, expectedRevision: activeControl.revision }) })).status).toBe(200);
     expect(await (await fetch("/api/themes/effective")).json()).toMatchObject({ themeId: null, appearance: null, fallbackReason: "revoked" });
-    window.removeEventListener(BROWSER_THEME_REVISION_EVENT, onRevision);
-    expect(revisions).toEqual([1, 2]);
+    const after = await (await fetch("/api/extensions/revision")).json() as { revision: string };
+    expect(after.revision).not.toBe(before.revision);
   });
 
-  test("theme inspection enforces its request body byte limit", async () => {
-    const response = await fetch("/api/themes/inspect", {
-      method: "POST", headers: { "content-type": "application/json" }, body: " ".repeat(512 * 1024 + 1),
+  test("old standalone theme installation route is unavailable", async () => {
+    const response = await fetch("/api/themes/install", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ challenge: "old", digest: "a".repeat(64), decision: "approve" }),
     });
-    expect(response.status).toBe(413);
-    expect(await response.json()).toEqual({ error: "payload too large" });
+    expect(response.status).toBe(404);
+  });
+
+  test("Browser extensions use one volatile host and report only Browser-supported operations", async () => {
+    const revision = await (await fetch("/api/extensions/revision")).json() as { revision: string };
+    expect(revision.revision).toMatch(/^[a-f0-9]{64}$/);
+    const installed = await (await fetch("/api/extensions/list")).json() as { id: string; hostTrusted: boolean }[];
+    expect(installed).toContainEqual(expect.objectContaining({ id: "bunzai.host.theme.theater", hostTrusted: true }));
+
+    const manifest = await Bun.file("src/extensions/examples/bunzai.extension.inspector/manifest.json").json();
+    const main = await Bun.file("src/extensions/examples/bunzai.extension.inspector/main.js").text();
+    const previewResponse = await fetch("/api/extensions/preview", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ input: { manifest, files: { "main.js": main } } }),
+    });
+    expect(previewResponse.status).toBe(200);
+    const preview = await previewResponse.json() as { unsupported: string[] };
+    expect(preview.unsupported).toEqual([]);
+
+    const fileManifest = await Bun.file("src/extensions/examples/bunzai.extension.file-reader/manifest.json").json();
+    const fileMain = await Bun.file("src/extensions/examples/bunzai.extension.file-reader/main.js").text();
+    const unavailable = await fetch("/api/extensions/preview", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ input: { manifest: fileManifest, files: { "main.js": fileMain } } }),
+    });
+    expect(unavailable.status).toBe(400);
+    expect(await unavailable.json()).toMatchObject({ error: { code: "UNSUPPORTED_HOST" } });
   });
 
   test("rejects an oversized JSON stream before reading the rest of its body", async () => {

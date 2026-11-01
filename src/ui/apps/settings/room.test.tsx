@@ -26,7 +26,7 @@ let installed: InstalledDom;
 let tree: Root;
 let host: HTMLElement;
 beforeAll(() => { installed = installDom("<!doctype html><html><body></body></html>", { url: "http://127.0.0.1:8327/", extraGlobals: ["SVGElement"], globals: { IS_REACT_ACT_ENVIRONMENT: true } }); });
-afterAll(() => { installed.teardown(); mock.module("./sections/registry", () => ({ settingsSections: realSettingsSections })); });
+afterAll(async () => { await installed.teardown(); mock.module("./sections/registry", () => ({ settingsSections: realSettingsSections })); });
 beforeEach(() => { host = document.createElement("div"); document.body.append(host); tree = createRoot(host); });
 
 const published: unknown[] = [];
@@ -82,7 +82,7 @@ test("the data-parts and hooks themes and variants reach are still there", async
 
 test("the registry keeps every section id, opens on Appearance, and groups the tabs into the four acts", () => {
   const real = realSections;
-  expect(real.map((s) => s.id).sort()).toEqual(["about", "appearance", "backups", "connections", "memory", "models", "remote-access", "security", "spotify", "studio", "updates", "workbench"]);
+  expect(real.map((s) => s.id).sort()).toEqual(["about", "appearance", "backups", "connections", "extensions", "memory", "models", "remote-access", "security", "spotify", "studio", "updates", "workbench"]);
   expect(real[0]!.id).toBe("appearance");
-  expect(real.map((s) => s.act)).toEqual(["studio", "studio", "studio", "studio", "agent", "agent", "agent", "vault", "vault", "house", "house", "house"]);
+  expect(real.map((s) => s.act)).toEqual(["studio", "studio", "studio", "studio", "agent", "agent", "agent", "vault", "vault", "house", "house", "house", "house"]);
 });

@@ -19,6 +19,10 @@ test('the auditorium links to a separate info page with product details and exis
   expect(home).toContain('href="info.html"');
   expect(home).toContain('src="media/cinema-auditorium.png"');
   expect(home).toContain('data-screening');
+  expect(home).toContain('data-curtain-intro hidden');
+  expect(home).toContain('data-screen-preroll hidden');
+  expect(home).toContain('Bunzai | All the worlds: your stage');
+  expect(home).toContain('All the worlds: your stage');
   expect(home).toContain('data-screen-step="1"');
   expect(home).not.toContain('data-scene-example');
   for (const destination of ['download.html', 'studio/', 'guides/getting-started.html', 'guides/importing.html', 'news.html']) {
@@ -30,6 +34,7 @@ test('the auditorium links to a separate info page with product details and exis
   expect(home).not.toContain('journey.html');
   expect(home).toContain('aria-label="Star Bunzai on GitHub"');
   expect(home).toContain('>Open repo</a>');
+  expect(home).toContain('href="docs/index.html">Docs</a>');
   expect(home).not.toContain('>Info</a>');
   expect(home).not.toContain('>Pictures</a>');
   expect(home).toContain('media/shot-scene-chat.png');
@@ -40,4 +45,12 @@ test('the auditorium links to a separate info page with product details and exis
   expect(home).not.toContain('media/shot-theme-theater.png');
   expect(home).toContain('property="og:image" content="https://vaudeville-studios.github.io/Bunzai/media/bunzai-preview.png"');
   expect(home).toContain('property="og:url" content="https://vaudeville-studios.github.io/Bunzai/"');
+});
+
+test("installation page does not advertise assets when no release is available", () => {
+  const pages = sitePages([]);
+  const download = pages.find((page) => page.path === "download.html")!.html;
+  expect(download).toContain("There are no published release assets at the moment.");
+  expect(download).toContain("git clone --recurse-submodules");
+  expect(download).not.toContain("releases/latest/download");
 });

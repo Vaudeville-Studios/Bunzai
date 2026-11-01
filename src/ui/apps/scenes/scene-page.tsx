@@ -27,7 +27,6 @@ import { copyText } from "../../_shared/clipboard";
 import { useSurfaceVariant } from "../../_shared/surface-variant";
 import { useDismissHoldMenus } from "./use-dismiss-hold-menus";
 import { toErrorMessage } from "../../_shared/error-message";
-import { apiStatusIs } from "../../_shared/api-fetch";
 import { trashScene } from "./trash-scene";
 import { chatDisplay } from "../../../core/chat-display";
 import { bodyOf, isRecord, str } from "../../../core/guards";
@@ -86,6 +85,7 @@ import { pageRows, type Dialog, type LiveScenePage, type Row } from "./scene-pag
 import { currentIndex, selectedSwipe, swipeCount, useSceneSwipePreview } from "./use-scene-swipe-preview";
 import { SceneCompare } from "./scene-compare";
 import { useSceneFind } from "./use-scene-find";
+import { useScenePageLoad } from "./use-scene-page-load";
 import { chatLayoutOf } from "./chat-layout";
 import { AdditionalLayout } from "./layouts/additional-layout";
 import { Messenger } from "./messenger/messenger";
@@ -96,8 +96,9 @@ import { wingPanels } from "./messenger/wing-props";
 import { authorOf, useReplyNotes, useTranscriptDecor } from "./messenger/transcript/use-transcript-decor";
 import { Button, IconButton } from "../../components/button";
 const stale = (e: unknown): boolean => /\bversion\b|409/i.test(toErrorMessage(e));
-export function ScenePage({ ctx, chatId, onBack, onTree }: { ctx: AppContext; chatId: string; onBack(): void; /** Opens the Branching Tree (RoleCall's "View Full Branching Tree"). */ onTree?(chatId: string): void }): JSX.Element {
+export function ScenePage({ ctx, chatId, navigationTicketId = null, loadId = null, onBack, onTree }: { ctx: AppContext; chatId: string; navigationTicketId?: string | null; loadId?: string | null; onBack(): void; /** Opens the Branching Tree (RoleCall's "View Full Branching Tree"). */ onTree?(chatId: string): void }): JSX.Element {
   const { api, setStatus } = ctx;
+  const extensionApi = ctx.api.extensions;
   const [scene, setScene] = useState<OpenScene | null>(null);
   const [problem, setProblem] = useState<{ message: string; castGone: boolean } | null>(null);
   const [greeting, setGreeting] = useState(0);
@@ -124,29 +125,9 @@ export function ScenePage({ ctx, chatId, onBack, onTree }: { ctx: AppContext; ch
   /** Every Bubble action dispatcher reads this instead of closing over render-scoped state (see the
    * file header). Assigned every render, once all its fields are known, below. */
   const liveRef = useRef<LiveScenePage>(null as unknown as LiveScenePage);
-  const loadGeneration = useRef(0);
-  /** load() reads these without joining its deps: onBack is an inline arrow, so a new load would refetch. */
-  const leave = useRef({ onBack, setStatus }); leave.current = { onBack, setStatus };
   const [macroMessages, setMacroMessages] = useState<Map<number, { role: Message["role"]; content: string }>>(() => new Map());
-  const load = useCallback(() => {
-    const generation = ++loadGeneration.current;
-    setMacroMessages(new Map());
-    setProblem(null);
-    api.openScene(chatId).then((value) => {
-      if (generation === loadGeneration.current) {
-        loadGeneration.current++;
-        setMacroMessages(new Map());
-        following.current = true;
-        setScene(value);
-      }
-    }, (e: unknown) => {
-      if (generation !== loadGeneration.current) return;
-      if (apiStatusIs(e, 404)) {
-        leave.current.setStatus("That scene is not in this library.");
-        leave.current.onBack();
-      } else setProblem({ message: toErrorMessage(e), castGone: (e as { code?: unknown }).code === "cast_missing" });
-    });
-  }, [api, chatId]);
+  const following = useRef(true);
+  const { generation: loadGeneration, load } = useScenePageLoad({ api, chatId, navigationTicketId, loadId, notifySceneOpened: extensionApi?.notifySceneOpened, onBack, setStatus, setScene, setProblem, setMacroMessages, following });
   useEffect(load, [load]);
   const replyFrom = useRef<{ characterId: string; name: string } | null>(null);
   const turn = useSceneTurn(ctx, chatId, load, replyFrom);
@@ -155,7 +136,6 @@ export function ScenePage({ ctx, chatId, onBack, onTree }: { ctx: AppContext; ch
   usePublishSceneSignals(chatId, scene?.branchVersion, busy);
   /** A version looked at while one is being written, or after it landed: local, never saved. */
   const scroller = useRef<HTMLDivElement | null>(null);
-  const following = useRef(true);
   const liveText = turn.live?.text;
   const messageCount = scene?.messageCount ?? 0;
   const displayContext = useDisplayContext(scene);

@@ -1,0 +1,821 @@
+{
+  "source": "9f8e8571929e32fc8e65ad721a13b653c1aa787f",
+  "sourceDelta": "scripts/build-desktop.ts shared JavaScript worker entry added to CLI compile",
+  "productionArtifact": "C:\\Users\\chiev\\Documents\\Bunzai-binary-release-20261101/dist/bunzai-cli-windows-x64.exe",
+  "artifactSha256": "f2a69c0ababa97b5d51b55d1cdee863bc125a611005d7eda2e3884aa4eb55d64",
+  "version": {
+    "status": 200,
+    "body": {
+      "version": "0.1.42",
+      "product": "bunzai",
+      "instanceId": "0d2f7fbf-a2f9-4f13-9e00-22e0078def52",
+      "studioDir": "C:/Users/chiev/AppData/Local/Temp/codex-bunzai-binary-smoke-20261101/studio-48256",
+      "mode": "packaged"
+    }
+  },
+  "library": {
+    "status": 200,
+    "body": {
+      "phase": "unlocked",
+      "hasPassword": false,
+      "hasWords": false,
+      "cleanupPending": null,
+      "lockPolicy": null,
+      "wordsWrittenAt": null,
+      "wordsRehearsedAt": null,
+      "copied": null
+    }
+  },
+  "extensions": {
+    "status": 200,
+    "body": [
+      {
+        "id": "bunzai.host.theme.greenroom",
+        "hostTrusted": true,
+        "revision": 0,
+        "digest": "c67f16343c59583c473683ba0553c0d96cb02d6bacb0c2c722ed3a739213909a",
+        "name": "RoleCall",
+        "version": "1.0.0",
+        "description": "",
+        "enabled": true,
+        "recoveryRequired": false,
+        "grants": [],
+        "requirements": [],
+        "contributions": [],
+        "theme": {
+          "id": "bunzai.host.theme.greenroom",
+          "name": "RoleCall",
+          "version": "1.0.0",
+          "requestedScopes": [
+            "appearance.accent",
+            "appearance.palette",
+            "appearance.shape",
+            "appearance.surfaces",
+            "appearance.type"
+          ],
+          "derivedScopes": [
+            "appearance.accent",
+            "appearance.palette",
+            "appearance.shape",
+            "appearance.surfaces",
+            "appearance.type"
+          ],
+          "appearance": {
+            "surfaces": {},
+            "palette": {
+              "surface": {
+                "well": "#050506",
+                "base": "#0a0a0b",
+                "sunken": "#09090b",
+                "field": "#141318",
+                "panel": "#1c1a22",
+                "raised": "#26232d",
+                "ink": "#000000"
+              },
+              "line": {
+                "strong": "#9f9fa9",
+                "line": "#27272a",
+                "track": "#27272a",
+                "control": "#71717b",
+                "focus": "#e11d48"
+              },
+              "text": {
+                "text": "#f4f4f5",
+                "soft": "#e4e4e7",
+                "dim": "#9f9fa9",
+                "faint": "#8a8a91",
+                "onTint": "#000000",
+                "onDeep": "#ffffff"
+              },
+              "roles": {
+                "brand": {
+                  "fill": "#e32e56",
+                  "text": "#fb7185",
+                  "deep": "#e11d48"
+                },
+                "action": {
+                  "fill": "#a78bfa",
+                  "text": "#a78bfa",
+                  "deep": "#7c3aed"
+                },
+                "select": {
+                  "fill": "#f472b6",
+                  "text": "#f9a8d4",
+                  "deep": "#be185d"
+                },
+                "ok": {
+                  "fill": "#10b981",
+                  "text": "#6ee7b7",
+                  "deep": "#047857"
+                },
+                "warn": {
+                  "fill": "#f59e0b",
+                  "text": "#fbbf24",
+                  "deep": "#b45309"
+                },
+                "danger": {
+                  "fill": "#ef4444",
+                  "text": "#fca5a5",
+                  "deep": "#dc2626"
+                },
+                "info": {
+                  "fill": "#22d3ee",
+                  "text": "#67e8f9",
+                  "deep": "#0e7490"
+                }
+              }
+            },
+            "type": {
+              "display": "cinzel",
+              "ui": "system-ui",
+              "body": "system-ui",
+              "mono": "system-mono",
+              "scale": 0
+            },
+            "shape": {
+              "frame": "stamp",
+              "frameWidth": 3,
+              "density": "comfortable",
+              "motion": "calm",
+              "chrome": "rolecall"
+            },
+            "accent": {
+              "follows": "user"
+            },
+            "marks": {}
+          },
+          "assets": [],
+          "fonts": [],
+          "styles": null,
+          "slots": {},
+          "digest": "6786987cf1b31fcde06286c56a17f73e7f4139e1849bf3345229bbb6c485f392"
+        },
+        "themeScopes": [
+          "appearance.accent",
+          "appearance.palette",
+          "appearance.shape",
+          "appearance.surfaces",
+          "appearance.type"
+        ],
+        "eventSubscriptions": [],
+        "registeredCommands": [],
+        "promptFailures": [],
+        "suspendedPromptIds": [],
+        "dataKeys": [],
+        "dataBytes": 0,
+        "activity": []
+      },
+      {
+        "id": "bunzai.host.theme.theater",
+        "hostTrusted": true,
+        "revision": 0,
+        "digest": "30bb296dcb32f538bc551c8f04bb60ee724a4ba23f285b3ddc0529d891ffe58c",
+        "name": "Theater",
+        "version": "2.0.0",
+        "description": "",
+        "enabled": true,
+        "recoveryRequired": false,
+        "grants": [],
+        "requirements": [],
+        "contributions": [],
+        "theme": {
+          "id": "bunzai.host.theme.theater",
+          "name": "Theater",
+          "version": "2.0.0",
+          "requestedScopes": [
+            "appearance.accent",
+            "appearance.palette",
+            "appearance.shape",
+            "appearance.surfaces",
+            "appearance.type"
+          ],
+          "derivedScopes": [
+            "appearance.accent",
+            "appearance.palette",
+            "appearance.shape",
+            "appearance.surfaces",
+            "appearance.type"
+          ],
+          "appearance": {
+            "surfaces": {
+              "app.room": "ledger-rail",
+              "editor.fields": "labeled-rows",
+              "editor.frame": "two-pane",
+              "library.card": "playbill-cover",
+              "library.decks": "program-list",
+              "library.grid": "covers",
+              "scene.composer": "prompt-line",
+              "scene.hud": "quiet-line",
+              "scene.layout": "stage-column",
+              "scene.message": "prose",
+              "scene.reasoning": "program-note",
+              "scene.swipes": "arrows-count",
+              "scene.wings": "side-curtain",
+              "scenes.list": "marquee-hero",
+              "settings.shape": "program-sections",
+              "shell.nav": "playbill-rail",
+              "shell.overlay": "gilt-widgets",
+              "shell.status": "footer-line",
+              "shell.title": "proscenium",
+              "ui.controls": "quiet",
+              "ui.dialog": "curtain-card",
+              "ui.empty": "spotlight",
+              "ui.icons": "engraved",
+              "ui.label-type": "small-caps-serif",
+              "ui.meter": "thin-rule",
+              "ui.panel": "gilt-frame",
+              "ui.section-header": "engraved-title",
+              "ui.tabs": "rule-tabs",
+              "ui.toast": "program-slip",
+              "ui.toolbar": "playbill-bar"
+            },
+            "palette": {
+              "surface": {
+                "well": "#000000",
+                "base": "#0a0a0b",
+                "sunken": "#060607",
+                "field": "#0e0c0f",
+                "panel": "#141216",
+                "raised": "#1b181b",
+                "ink": "#000000"
+              },
+              "line": {
+                "strong": "#e3bd65",
+                "line": "#755c2c",
+                "track": "#5b4725",
+                "control": "#a9905d",
+                "focus": "#f0cb72"
+              },
+              "text": {
+                "text": "#fafaf9",
+                "soft": "#e0dcda",
+                "dim": "#c5c1c2",
+                "faint": "#aca5a8",
+                "onTint": "#0a0a0b",
+                "onDeep": "#ffffff"
+              },
+              "roles": {
+                "brand": {
+                  "fill": "#e3bd65",
+                  "text": "#e3bd65",
+                  "deep": "#755719"
+                },
+                "action": {
+                  "fill": "#4aa3e8",
+                  "text": "#a9d8ff",
+                  "deep": "#086eae"
+                },
+                "select": {
+                  "fill": "#b79bff",
+                  "text": "#d9c8ff",
+                  "deep": "#613da0"
+                },
+                "ok": {
+                  "fill": "#5fe3a1",
+                  "text": "#76e3a8",
+                  "deep": "#176b43"
+                },
+                "warn": {
+                  "fill": "#ffc65a",
+                  "text": "#ffe08a",
+                  "deep": "#805300"
+                },
+                "danger": {
+                  "fill": "#ff7a8c",
+                  "text": "#ffb4c2",
+                  "deep": "#9e203b"
+                },
+                "info": {
+                  "fill": "#2fd9cf",
+                  "text": "#5fe6dd",
+                  "deep": "#006963"
+                }
+              }
+            },
+            "type": {
+              "display": "cinzel",
+              "ui": "cinzel",
+              "body": "archivo",
+              "mono": "plex-mono",
+              "scale": 0
+            },
+            "shape": {
+              "frame": "double",
+              "frameWidth": 1,
+              "density": "roomy",
+              "motion": "calm",
+              "chrome": "bunzai"
+            },
+            "accent": {
+              "follows": "user"
+            },
+            "marks": {}
+          },
+          "assets": [],
+          "fonts": [],
+          "styles": null,
+          "slots": {},
+          "digest": "65d21739d640683b93884611a96d5df37bb13d33f01ced61e7223757d3521d3f"
+        },
+        "themeScopes": [
+          "appearance.accent",
+          "appearance.palette",
+          "appearance.shape",
+          "appearance.surfaces",
+          "appearance.type"
+        ],
+        "eventSubscriptions": [],
+        "registeredCommands": [],
+        "promptFailures": [],
+        "suspendedPromptIds": [],
+        "dataKeys": [],
+        "dataBytes": 0,
+        "activity": []
+      },
+      {
+        "id": "bunzai.host.theme.paper",
+        "hostTrusted": true,
+        "revision": 0,
+        "digest": "0f954eac22d748418ff95ebdbd25c4c54ec31accee9a7cee666b3428bddc335d",
+        "name": "Paper",
+        "version": "2.0.0",
+        "description": "",
+        "enabled": true,
+        "recoveryRequired": false,
+        "grants": [],
+        "requirements": [],
+        "contributions": [],
+        "theme": {
+          "id": "bunzai.host.theme.paper",
+          "name": "Paper",
+          "version": "2.0.0",
+          "requestedScopes": [
+            "appearance.accent",
+            "appearance.palette",
+            "appearance.shape",
+            "appearance.surfaces",
+            "appearance.type"
+          ],
+          "derivedScopes": [
+            "appearance.accent",
+            "appearance.palette",
+            "appearance.shape",
+            "appearance.surfaces",
+            "appearance.type"
+          ],
+          "appearance": {
+            "surfaces": {
+              "app.room": "manuscript-column",
+              "editor.fields": "form-on-paper",
+              "editor.frame": "long-form",
+              "library.card": "index-card",
+              "library.decks": "chapter-index",
+              "library.grid": "catalog-list",
+              "scene.composer": "typewriter-line",
+              "scene.hud": "footnotes",
+              "scene.layout": "manuscript",
+              "scene.message": "screenplay",
+              "scene.reasoning": "footnote",
+              "scene.swipes": "margin-numbers",
+              "scene.wings": "marginalia",
+              "scenes.list": "table-of-contents",
+              "settings.shape": "contents-page",
+              "shell.nav": "index-rail",
+              "shell.overlay": "ink-widgets",
+              "shell.status": "margin-note",
+              "shell.title": "title-page",
+              "ui.controls": "ink",
+              "ui.dialog": "margin-sheet",
+              "ui.empty": "blank-page",
+              "ui.icons": "line-ink",
+              "ui.label-type": "italic-serif",
+              "ui.meter": "ink-tally",
+              "ui.panel": "ruled-frame",
+              "ui.section-header": "chapter-heading",
+              "ui.tabs": "underline-ink",
+              "ui.toast": "footnote",
+              "ui.toolbar": "margin-ruler"
+            },
+            "palette": {
+              "surface": {
+                "well": "#ece4d3",
+                "base": "#f7f1e3",
+                "sunken": "#f0e8d6",
+                "field": "#fffdf7",
+                "panel": "#fffdf7",
+                "raised": "#f3ecdc",
+                "ink": "#efe6d2"
+              },
+              "line": {
+                "strong": "#6b5d48",
+                "line": "#d8ccb4",
+                "track": "#e2d8c2",
+                "control": "#766850",
+                "focus": "#5a3fa0"
+              },
+              "text": {
+                "text": "#231f1a",
+                "soft": "#433c33",
+                "dim": "#4a4238",
+                "faint": "#5a5145",
+                "onTint": "#231f1a",
+                "onDeep": "#ffffff"
+              },
+              "roles": {
+                "brand": {
+                  "fill": "#ffa7d1",
+                  "text": "#a61d5e",
+                  "deep": "#a61d5e"
+                },
+                "action": {
+                  "fill": "#aeceff",
+                  "text": "#2758a6",
+                  "deep": "#2758a6"
+                },
+                "select": {
+                  "fill": "#dac6ff",
+                  "text": "#6a4ca6",
+                  "deep": "#6a4ca6"
+                },
+                "ok": {
+                  "fill": "#9ff0c7",
+                  "text": "#036b39",
+                  "deep": "#036b39"
+                },
+                "warn": {
+                  "fill": "#ffdc9e",
+                  "text": "#7c4d00",
+                  "deep": "#7c4d00"
+                },
+                "danger": {
+                  "fill": "#ffadb3",
+                  "text": "#a62530",
+                  "deep": "#a62530"
+                },
+                "info": {
+                  "fill": "#97ece7",
+                  "text": "#006963",
+                  "deep": "#006963"
+                }
+              }
+            },
+            "type": {
+              "display": "fraunces",
+              "ui": "fraunces",
+              "body": "fraunces",
+              "mono": "courier-prime",
+              "scale": 0
+            },
+            "shape": {
+              "frame": "rule",
+              "frameWidth": 1,
+              "density": "airy",
+              "motion": "none",
+              "chrome": "bunzai"
+            },
+            "accent": {
+              "follows": "user"
+            },
+            "marks": {}
+          },
+          "assets": [],
+          "fonts": [],
+          "styles": null,
+          "slots": {},
+          "digest": "8ffab5d916518452266eb210a1f37400418e40112268717d25bc752e5ed2ee17"
+        },
+        "themeScopes": [
+          "appearance.accent",
+          "appearance.palette",
+          "appearance.shape",
+          "appearance.surfaces",
+          "appearance.type"
+        ],
+        "eventSubscriptions": [],
+        "registeredCommands": [],
+        "promptFailures": [],
+        "suspendedPromptIds": [],
+        "dataKeys": [],
+        "dataBytes": 0,
+        "activity": []
+      },
+      {
+        "id": "bunzai.host.theme.stage",
+        "hostTrusted": true,
+        "revision": 0,
+        "digest": "8bc4b98b97d053dc97cae43bc76633c92d4242e0caad1b68a77d7ce167cfaa74",
+        "name": "GirliePop",
+        "version": "2.0.0",
+        "description": "",
+        "enabled": true,
+        "recoveryRequired": false,
+        "grants": [],
+        "requirements": [],
+        "contributions": [],
+        "theme": {
+          "id": "bunzai.host.theme.stage",
+          "name": "GirliePop",
+          "version": "2.0.0",
+          "requestedScopes": [
+            "appearance.accent",
+            "appearance.assets",
+            "appearance.palette",
+            "appearance.shape",
+            "appearance.surfaces",
+            "appearance.type"
+          ],
+          "derivedScopes": [
+            "appearance.accent",
+            "appearance.assets",
+            "appearance.palette",
+            "appearance.shape",
+            "appearance.surfaces",
+            "appearance.type"
+          ],
+          "appearance": {
+            "surfaces": {
+              "app.room": "sticker-tray",
+              "editor.fields": "cards",
+              "editor.frame": "card-stack",
+              "library.card": "sticker-card",
+              "library.decks": "sticker-stack",
+              "library.grid": "sticker-wall",
+              "scene.composer": "chat-input",
+              "scene.hud": "chips",
+              "scene.layout": "chat-thread",
+              "scene.message": "bubble",
+              "scene.reasoning": "slab-note",
+              "scene.swipes": "dots",
+              "scene.wings": "drawer",
+              "scenes.list": "chat-list",
+              "settings.shape": "big-toggles",
+              "shell.nav": "tab-bar",
+              "shell.overlay": "sticker-widgets",
+              "shell.status": "chip",
+              "shell.title": "sticker-splash",
+              "ui.controls": "sticker",
+              "ui.dialog": "pop-card",
+              "ui.empty": "doodle",
+              "ui.icons": "filled-cute",
+              "ui.label-type": "rounded-sentence",
+              "ui.meter": "chunky-pill-bar",
+              "ui.panel": "slab-frame",
+              "ui.section-header": "banner-tag",
+              "ui.tabs": "pill-row",
+              "ui.toast": "bubble",
+              "ui.toolbar": "sticker-shelf"
+            },
+            "palette": {
+              "surface": {
+                "well": "#16121c",
+                "base": "#1a1620",
+                "sunken": "#1c1723",
+                "field": "#211c29",
+                "panel": "#26202f",
+                "raised": "#302839",
+                "ink": "#14111a"
+              },
+              "line": {
+                "strong": "#ffc9ae",
+                "line": "#4a3f55",
+                "track": "#3d3347",
+                "control": "#a898ab",
+                "focus": "#f4d387"
+              },
+              "text": {
+                "text": "#f5ecf0",
+                "soft": "#c2b5c4",
+                "dim": "#a898ab",
+                "faint": "#a3959f",
+                "onTint": "#1a1620",
+                "onDeep": "#ffffff"
+              },
+              "roles": {
+                "brand": {
+                  "fill": "#ffb3c7",
+                  "text": "#ffb3c7",
+                  "deep": "#7c4958"
+                },
+                "action": {
+                  "fill": "#bcd7ff",
+                  "text": "#bcd7ff",
+                  "deep": "#0876b5"
+                },
+                "select": {
+                  "fill": "#d9c8ff",
+                  "text": "#d9c8ff",
+                  "deep": "#7f52c4"
+                },
+                "ok": {
+                  "fill": "#bfead7",
+                  "text": "#8fe0b8",
+                  "deep": "#178356"
+                },
+                "warn": {
+                  "fill": "#ffeaa8",
+                  "text": "#ffe08a",
+                  "deep": "#9a6b12"
+                },
+                "danger": {
+                  "fill": "#ffb3c1",
+                  "text": "#ff9fb1",
+                  "deep": "#a52a43"
+                },
+                "info": {
+                  "fill": "#a6e2ff",
+                  "text": "#a6e2ff",
+                  "deep": "#0b5e85"
+                }
+              }
+            },
+            "type": {
+              "display": "fredoka",
+              "ui": "fredoka",
+              "body": "atkinson",
+              "mono": "plex-mono",
+              "scale": 1
+            },
+            "shape": {
+              "frame": "stamp",
+              "frameWidth": 3,
+              "density": "comfortable",
+              "motion": "bouncy",
+              "chrome": "bunzai"
+            },
+            "accent": {
+              "follows": "user"
+            },
+            "marks": {
+              "bookFrame": "game-frame"
+            }
+          },
+          "assets": [
+            {
+              "id": "game-frame",
+              "path": "assets/game-frame.svg",
+              "mediaType": "image/svg+xml",
+              "digest": "caa681bbdb7c15f196f26dff12bb2ddf9c0e11856b1046b0bb6b15df6fe443bf",
+              "text": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 150\"><path d=\"M8 8h84v134H8z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4\"/><path d=\"M14 14h72v122H14z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M38 5h24M38 145h24\" stroke=\"currentColor\" stroke-width=\"5\" stroke-linecap=\"round\"/><circle cx=\"8\" cy=\"8\" r=\"3\" fill=\"currentColor\"/><circle cx=\"92\" cy=\"8\" r=\"3\" fill=\"currentColor\"/><circle cx=\"8\" cy=\"142\" r=\"3\" fill=\"currentColor\"/><circle cx=\"92\" cy=\"142\" r=\"3\" fill=\"currentColor\"/></svg>\n"
+            }
+          ],
+          "fonts": [],
+          "styles": null,
+          "slots": {},
+          "licenseText": "GirliePop's game-frame SVG is original artwork dedicated to the public domain under CC0-1.0.\n",
+          "digest": "123a2da8972f6a553628eed36b781cbc5ce31f6d6c7f71ee0750e3fee2def150"
+        },
+        "themeScopes": [
+          "appearance.accent",
+          "appearance.assets",
+          "appearance.palette",
+          "appearance.shape",
+          "appearance.surfaces",
+          "appearance.type"
+        ],
+        "eventSubscriptions": [],
+        "registeredCommands": [],
+        "promptFailures": [],
+        "suspendedPromptIds": [],
+        "dataKeys": [],
+        "dataBytes": 0,
+        "activity": []
+      }
+    ]
+  },
+  "preview": {
+    "status": 200,
+    "body": {
+      "challenge": "7432e9cd-8273-4902-9f99-d8620129b2aa",
+      "expiresAt": 1793509309354,
+      "expectedRevision": -1,
+      "digest": "543f3ce74439de93289f946be61bfa594e05989b36ce45b03f653438923a7765",
+      "package": {
+        "manifest": {
+          "schemaVersion": 1,
+          "id": "example.binarysmoke",
+          "version": "1.0.0",
+          "name": "Binary smoke",
+          "description": "Offline fixture",
+          "author": "tests",
+          "api": {
+            "major": 1,
+            "minMinor": 0,
+            "maxMinor": 0
+          },
+          "entry": "main.js",
+          "requirements": [
+            {
+              "operation": "api.describe",
+              "resources": [],
+              "fields": [],
+              "methods": [],
+              "destinations": [],
+              "purpose": "Offline fixture",
+              "required": true
+            }
+          ],
+          "contributions": [
+            {
+              "type": "command",
+              "id": "run",
+              "label": "Run",
+              "operation": "api.describe"
+            }
+          ]
+        },
+        "files": {
+          "main.js": "bunzai.extension.define({commands:{run:()=>({sum:4,fetch:typeof fetch,process:typeof process})}});"
+        }
+      },
+      "requestedOperations": [
+        "api.describe"
+      ],
+      "unsupported": []
+    }
+  },
+  "install": {
+    "status": 200,
+    "body": {
+      "id": "example.binarysmoke",
+      "revision": 0,
+      "packageDigest": "543f3ce74439de93289f946be61bfa594e05989b36ce45b03f653438923a7765",
+      "policyFingerprint": "6313f8ead4bb87118f72462053525de5c0fb5dafb0f568fe0ea939f1b5d0d142",
+      "grantRevision": 0,
+      "grants": [
+        {
+          "operation": "api.describe",
+          "resources": [],
+          "fields": [],
+          "methods": [],
+          "destinations": [],
+          "duration": "persistent",
+          "budget": {
+            "requests": 100,
+            "bytes": 25600000,
+            "tokens": 0
+          }
+        }
+      ],
+      "themeScopes": [],
+      "eventSubscriptions": [],
+      "registeredCommands": [
+        "run"
+      ],
+      "promptFailures": [],
+      "suspendedPromptIds": [],
+      "hostTrusted": false,
+      "enabled": false,
+      "recoveryRequired": false,
+      "dataVersion": 0,
+      "legacyThemeImport": "pending"
+    }
+  },
+  "enable": {
+    "status": 200,
+    "body": {
+      "id": "example.binarysmoke",
+      "revision": 1,
+      "packageDigest": "543f3ce74439de93289f946be61bfa594e05989b36ce45b03f653438923a7765",
+      "policyFingerprint": "6313f8ead4bb87118f72462053525de5c0fb5dafb0f568fe0ea939f1b5d0d142",
+      "grantRevision": 1,
+      "grants": [
+        {
+          "operation": "api.describe",
+          "resources": [],
+          "fields": [],
+          "methods": [],
+          "destinations": [],
+          "duration": "persistent",
+          "budget": {
+            "requests": 100,
+            "bytes": 25600000,
+            "tokens": 0
+          }
+        }
+      ],
+      "themeScopes": [],
+      "eventSubscriptions": [],
+      "hostTrusted": false,
+      "registeredCommands": [
+        "run"
+      ],
+      "promptFailures": [],
+      "suspendedPromptIds": [],
+      "enabled": true,
+      "recoveryRequired": false,
+      "dataVersion": 0,
+      "legacyThemeImport": "pending"
+    }
+  },
+  "activate": {
+    "status": 200,
+    "body": {
+      "status": "completed",
+      "output": {
+        "sum": 4,
+        "fetch": "undefined",
+        "process": "undefined"
+      }
+    }
+  }
+}

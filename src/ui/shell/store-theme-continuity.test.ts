@@ -1,17 +1,13 @@
 /** Settings writes preserve the mounted, host-verified appearance unless selection or accent changes. */
 import { afterAll, afterEach, beforeAll, beforeEach, expect, test } from "bun:test";
 import { installDom, type InstalledDom } from "../_shared/test-dom";
-import { createThemeLifecycle } from "../../extensions/theme-lifecycle";
-import { modThemePackage } from "../../extensions/theme-mod-fixture";
-import { memoryStateStore } from "../../stage/store/memory/state-store";
+import { unifiedThemeService } from "../../extensions/theme-test-fixture";
 import { parseSettings } from "../../studio/settings-shape";
 import { useShellStore } from "./store";
 import { MOD_STYLE_ID, removeMod } from "./theme-mod";
 
-const themes = await createThemeLifecycle(memoryStateStore(), []);
-const review = await themes.inspect(await modThemePackage());
-await themes.install(review.challenge, review.preview.digest, "approve");
-const effective = await themes.effective(review.preview.id);
+const themes = await unifiedThemeService(true);
+const effective = await themes.themeEffective("theater");
 const original = useShellStore.getState(), originalFetch = globalThis.fetch;
 let installed: InstalledDom, writes = 0, reads = 0;
 beforeAll(() => { installed = installDom('<html><head><meta name="vaude-session" content="test"></head><body></body></html>', {
@@ -20,7 +16,7 @@ beforeAll(() => { installed = installDom('<html><head><meta name="vaude-session"
 }); });
 beforeEach(async () => {
   installed.reinstall();
-  useShellStore.setState({ settings: parseSettings({ theme: effective.themeId }), theme: "bunzai.theme.modtest" });
+  useShellStore.setState({ settings: parseSettings({ theme: "theater" }), theme: "theater" });
   globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
     if (init?.method === "PATCH" || init?.method === "POST") {
       writes++;
@@ -34,7 +30,7 @@ beforeEach(async () => {
   writes = reads = 0;
 });
 afterEach(() => { removeMod(); globalThis.fetch = originalFetch; useShellStore.setState(original); });
-afterAll(async () => { await installed.teardown(); });
+afterAll(async () => { await installed.teardown(); await themes.close(); });
 
 test("unrelated optimistic PATCH and its acknowledgement leave appearance DOM untouched", async () => {
   const style = document.getElementById(MOD_STYLE_ID);

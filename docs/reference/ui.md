@@ -5,7 +5,7 @@
 uses. Optional remote listeners are separately enabled and gated. One engine, two shells - no format
 logic exists in the UI layer.
 
-Native desktop builds use host-specific output names and Windows-only executable flags. On Linux, the desktop host detaches the launcher environment before window startup and names its GTK process `bunzai`. A private, owned `XDG_RUNTIME_DIR` can hold a content-checked copy of the bundled native library, published through the shared atomic writer with private permissions; invalid caches fall back to normal loading. Pinned Bun 1.3.14 tests cover launcher-variable removal and cache integrity. A compiled extraction probe passes with an unusable `TMPDIR`; actual GTK4 window launch and close are unverified because the test host lacks GTK4. Linux desktop release artifacts are not currently published.
+Native desktop builds use host-specific output names and Windows-only executable flags. On Linux, the desktop host detaches the launcher environment before window startup and names its GTK process `bunzai`. A private, owned `XDG_RUNTIME_DIR` can hold a content-checked copy of the bundled native library, published through the shared atomic writer with private permissions; invalid caches fall back to normal loading. Historical tests run under Bun 1.3.14 cover launcher-variable removal and cache integrity; they are not evidence for the current Bun 1.4.2 pin. A compiled extraction probe passes with an unusable `TMPDIR`; actual GTK4 window launch and close are unverified because the test host lacks GTK4. Linux desktop release artifacts are not currently published.
 
 ## Velvet premiere landing
 
@@ -87,6 +87,8 @@ contextual status line sits below the top chrome and disappears when empty. It r
 messages, library-read failures, the Browser Studio export-before-reload warning and approved
 `shell.status.end` slot content. No status or reload row stacks under the dock.
 
+Launchers identify this product using the explicit product field from `/api/version`; another app or a generic version server is not reused. A new bind is accepted only when its public per-server instance ID matches; this ID is independent of the private session bearer. Default launches search ports 8321-8330. Browser launchers open only the actual positively identified address within a shared twelve-second readiness deadline. The native desktop accepts `BUNZAI_PORT` as an isolated explicit port from 1024 to 65535; an occupied override fails rather than attaching to another session. Failed native creation is reported as a window failure, not a normal close; the owned Studio server remains available and opens its verified URL in the browser.
+
 ## Browser Studio
 
 The GitHub Pages build (`scripts/build-pages.ts`) publishes two things. At the root is the public
@@ -98,16 +100,29 @@ account and sends no Studio data to a Bunzai server. A browser runtime supplies 
 `/api/*` client contract from in-process stores and the shared inspect/export engine; it does not
 fork the canonical model or maintain a second set of format conversions.
 
-The public website opens on a static Bunzai title inside an illustrated movie auditorium
-(`src/site/auditorium.ts`). Its owner-requested cutout-style room artwork is
+The public website opens on a static Bunzai title, `All the worlds: your stage`, inside an
+illustrated movie auditorium (`src/site/auditorium.ts`). Its owner-requested cutout-style room artwork is
 `docs/media/cinema-auditorium.png`; the generation prompt and provenance sit beside it.
 The public repository belongs to Vaudeville-Studios; Pages publishes at
 `https://vaudeville-studios.github.io/Bunzai/`. Repository actions, release requests, downloads,
 documentation source links and canonical preview URLs use that organization-owned location.
-Clicking Begin the showing dims the room and pushes the camera toward the screen
-before revealing the first product screenshot. Reduced motion opens directly without the camera
-movement. The prototype curtain film remains available to the design studies, not the homepage.
-Native title content and pictures sit inside the artwork's empty screen. Each picture pairs with
+Clicking Begin the showing dims the room and pushes the camera toward the screen while the local
+curtain-opening film plays. The recovered Vaudeville title cards then run inside the screen: an
+independent-production credit, `VAUDEVILLE PRESENTS`, and a 32-phrase Shakespeare sequence.
+Each phrase pairs intact, unmasked text with one recognizable story prop, such as Oz's ruby slippers
+or Harry Potter's spectacles and lightning bolt. Props share a Persona- and Danganronpa-inspired
+layered-paper illustration style, independent of each story's native art style. Each prop appears
+in full color for up to 300ms during the opening phrases. Accelerated ending phrases skip the
+full-color hold and hard-cut directly to exactly two flat colors: each phrase's main color and a
+shadow color. A directional burst of straight paper shards starts at the same beat and clears
+when the next phrase begins. Every phrase has its own short, abrupt text entry; the complete words remain visible
+without masks. If the WebGL renderer is unavailable, the prop stays in full color. The last `YOURS`
+pairs with the existing Bunzai bunny mark in its original colors, with the burst behind it. The
+revision and prompt source are in `plans/preroll-paper-revision.md`; v2 asset sources and prompts are
+listed in `plans/preroll-paper-assets.json`. Skip and replay are available, and hidden tabs pause
+the sequence. Reduced motion skips the curtain and title animation and opens the first product
+picture directly. Native title content and
+pictures sit inside the artwork's empty screen. Each picture pairs with
 live text explaining the feature and the pictured view, plus a link to its tour page. Pictures
 crossfade and their descriptions slide into place; reduced motion removes these transitions.
 The picture inventory derives from the existing feature tour: Scenes, an opening scene, character,
@@ -161,6 +176,11 @@ require the installed app. Script source remains editable, but Run refuses becau
 cannot provide the separate sandbox origin required by ADR-009. Host-only API routes and the direct
 test-bench runners each return an explicit installed-app refusal. Ordinary supported files can still be
 imported, edited, organized, converted, and downloaded entirely inside the page.
+
+Browser Studio also includes the reviewed extension runtime in Settings > Extensions. Packages run
+through an isolated browser worker and receive only Browser-declared operations against that page's
+volatile in-memory store. Provider calls, native file access, and persisted rp-core scenes are not
+available to Browser extensions. This does not enable the standalone script test bench described above.
 
 ## Kit terminal shell
 
@@ -1619,14 +1639,14 @@ Settings is built from section modules: one file in `src/ui/apps/settings/sectio
 `sections/registry.ts` is the one stated seam. The rail derives from the registry (`src/ui/apps/settings/
 index.tsx`); every control is call-and-response against live settings (theme/accent repaint
 instantly). Appearance's house-accent palette labels its theme-aware first color **default**; its Chat layout row (`settings/sections/chat-layout-row.tsx`) is a grid of choice cards, each layout's title over its lead line, that reflows with the pane (Full Chat, Familiar, Basic, Desktop 98, Messenger, Immersive, Letters, Notebook and Storybook; unset shows Full Chat without saving it) is the studio-wide chat layout, the same key the first-open chooser saves. Shipped
-sections: Appearance (theme and house accent), Models (the provider vault),
+sections: Appearance (theme and house accent), Extensions (package review, access grants, activation and host-rendered contributions), Models (the provider vault),
 Connections (MCP in both directions), Spotify (the person's own Client ID and the sign-in), Studio (home app, Library first deck, publish targets, and
 the engine checkouts on this machine), Security (the library's lock, and its health check), Backups
 (spare copies of the library), Workbench (follow behavior), Memory & Summaries (the chat-summary settings a new scene starts with),
 Remote access (tunnel and LAN setup, devices, host controls, and the optional mesh-helper download),
 Updates (release checks and version switching), and About.
 
-The room is a `RoomHeader` over a rail and a page. The rail (a `Panel`) groups the tabs into four acts, in this order: Your studio (Appearance, Studio, Workbench, Memory & Summaries), The agent (Models, Connections, Spotify), The vault (Security, Backups) and The house (Remote access, Updates, About); a section declares its `act`, and its `order` sorts it inside the act. Each rail entry shows the tab name, a lock on a protected tab, and a one-line status where the section supplies one from non-secret prefs (Appearance: the active theme; Studio: the home app; Workbench: autosave; Memory & Summaries: summaries on or off; Remote access: on or off). The page beside it opens with the act's name, the tab's own title (Appearance is "How it looks", Security "The stage door", Backups "Spare copies") and a lede line. A tab whose form is host-protected then shows the protected lock line, "Protected." and what is protected, with a gold left edge and no frame. Sections are open blocks, separated by rules rather than boxes. In a pane under 56rem (a container query on the room) the rail becomes wrapped chips above the page and the act names are hidden.
+The room is a `RoomHeader` over a rail and a page. The rail (a `Panel`) groups the tabs into four acts, in this order: Your studio (Appearance, Studio, Workbench, Memory & Summaries), The agent (Models, Connections, Spotify), The vault (Security, Backups) and The house (Extensions, Remote access, Updates, About); a section declares its `act`, and its `order` sorts it inside the act. Each rail entry shows the tab name, a lock on a protected tab, and a one-line status where the section supplies one from non-secret prefs (Appearance: the active theme; Studio: the home app; Workbench: autosave; Memory & Summaries: summaries on or off; Remote access: on or off). The page beside it opens with the act's name, the tab's own title (Appearance is "How it looks", Security "The stage door", Backups "Spare copies") and a lede line. A tab whose form is host-protected then shows the protected lock line, "Protected." and what is protected, with a gold left edge and no frame. Sections are open blocks, separated by rules rather than boxes. In a pane under 56rem (a container query on the room) the rail becomes wrapped chips above the page and the act names are hidden.
 
 Models uses the shared provider vault. Ollama is a keyless native connection with an optional Base URL
 (default `http://localhost:11434`) and an 8K, 16K (default), 32K, 64K or 128K context choice. Its installed
@@ -1634,7 +1654,7 @@ models come from that endpoint; changing the address or context cancels the prev
 failures are visible, a successful retry clears them, and manual model IDs remain available. Saving or
 closing the form cancels its lookup. Scenes and Kit send through the same native provider implementation.
 
-Appearance also holds the Stage lights row (`sections/stage-lights-row.tsx`: Moving, Still or Off, pref `ui.stageLights`; see the title screen above), and Theme packages (`sections/theme-manager.tsx`): the lock line, then the requested appearance, the Inspect a theme package button (opens a file picker for a package JSON), with inspection feedback directly beneath it and repeat selection of the same file supported, and one card per bundled or installed package with a color strip of its palette, its grants, and a Request button (marked Requested on the chosen one). A request applies only when the host confirms the package's current permission.
+Appearance also holds the Stage lights row (`sections/stage-lights-row.tsx`: Moving, Still or Off, pref `ui.stageLights`; see the title screen above) and the installed-theme picker (`sections/theme-manager.tsx`), which reads unified extension metadata and saves only the requested appearance preference. Package review, install/update, operation and appearance grants, enable/disable/revoke, private-data usage and redacted receipt activity are managed in Extensions. Its approval UI shows the host catalog's operation title/effect, requested fields and destinations, concrete resource IDs, session or persistent duration, and budget ceilings derived from the single host preset table; it separates required and optional operations. Effect requests arrive as expiring host-owned tickets with operation-owned review details, targets, and explicit approve/deny actions. Guest contribution descriptors are decoded against the bounded shared contract and rendered with host controls; no extension HTML, CSS, handlers, or remote image URLs are rendered. The Extensions manager refreshes when the shared control revision changes, removing stale contribution actions after changes from another window. Theme selection remains in Appearance; theme package install and scope grants use the same Extensions manager.
 
 Security (`sections/security.tsx`, dialogs in `security-flows.tsx`) is the approved in-between
 wireframe 04: the design system's stat tiles under the page head, a mono proof block of what the encryption does

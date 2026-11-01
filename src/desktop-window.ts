@@ -7,7 +7,9 @@
  * "Bunzai (Dev)" vs "Bunzai." matches the Start Menu tile the user clicked.
  */
 import { Webview, SizeHint } from "webview-bun";
+import { runWindowSession } from "./desktop-window-session";
 import { nameProcessForDesktop } from "./desktop-app-id";
+import { setExecutableWindowIcon } from "./desktop-window-icon";
 
 declare const self: Worker;
 
@@ -19,8 +21,8 @@ self.onmessage = (event: MessageEvent<{ url: string; title?: string }>) => {
     height: 820,
     hint: SizeHint.NONE,
   });
-  wv.title = title;
-  wv.navigate(event.data.url);
-  wv.run(); // blocks THIS worker until the user closes the window
-  self.postMessage({ closed: true });
+  runWindowSession(wv, { url: event.data.url, title }, () => {
+    const releaseIcon = setExecutableWindowIcon(wv.unsafeWindowHandle);
+    try { wv.run(); } finally { releaseIcon(); }
+  }, () => self.postMessage({ closed: true }));
 };

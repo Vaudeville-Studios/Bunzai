@@ -61,18 +61,7 @@ const contentKindFrom = (args: CapabilityFindInput): {
 export function createCapabilityFindTool(
   runtime: CapabilityRuntime,
 ): HarnessTool<z.infer<typeof input>> {
-  return {
-    name: "capability_find",
-    description:
-      "Find the right typed operation. Pass query plus optional kind for search, domain/area/kind "
-      + "for browse, or id for describe; action is optional. Describe reveals one exact tool.",
-    exposure: "direct",
-    effect: "read",
-    activity: "discovering",
-    input,
-    concurrencyKey: ({ target, kind, domain }) =>
-      `capabilities/${domain ?? "all"}/${target?.kind ?? kind ?? "all"}/${target?.id ?? "none"}`,
-    async execute(args) {
+  const execute = async (args: z.infer<typeof input>) => {
       if (args.target && args.kind && args.target.kind !== args.kind) {
         return {
           summary: "capability_find: conflicting kind",
@@ -183,6 +172,19 @@ export function createCapabilityFindTool(
           },
         }),
       };
-    },
+  };
+  return {
+    name: "capability_find",
+    description:
+      "Find the right typed operation. Pass query plus optional kind for search, domain/area/kind "
+      + "for browse, or id for describe; action is optional. Describe reveals one exact tool.",
+    exposure: "direct",
+    effect: "read",
+    activity: "discovering",
+    input,
+    concurrencyKey: ({ target, kind, domain }) => `capabilities/${domain ?? "all"}/${target?.kind ?? kind ?? "all"}/${target?.id ?? "none"}`,
+    execute: (args) => execute(args),
+    extensionExposure: { hosts: ["desktop", "terminal"], resourceKind: "kit-tool", sensitivity: "public" },
+    executeExtension: (args) => execute(args),
   };
 }

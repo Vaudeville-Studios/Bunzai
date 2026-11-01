@@ -1,0 +1,234 @@
+name: browser-diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  protected-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Create disposable profiles
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, tempfile
+          root = pathlib.Path(tempfile.mkdtemp(prefix="bunzai-browser-diagnostic-", dir=os.environ["RUNNER_TEMP"]))
+          paths = {"HOME": "home", "USERPROFILE": "home", "APPDATA": "home/AppData/Roaming", "LOCALAPPDATA": "home/AppData/Local", "TMPDIR": "tmp", "TMP": "tmp", "TEMP": "tmp", "BUNZAI_HOME": "bunzai", "CODEX_HOME": "codex", "CLAUDE_CONFIG_DIR": "claude", "XDG_CONFIG_HOME": "xdg-config", "XDG_DATA_HOME": "xdg-data", "XDG_CACHE_HOME": "xdg-cache", "XDG_STATE_HOME": "xdg-state", "XDG_RUNTIME_DIR": "xdg-runtime", "BUN_INSTALL_CACHE_DIR": "bun-cache"}
+          (root / "profile-paths.json").write_text(json.dumps(paths))
+          with open(os.environ["GITHUB_ENV"], "a") as output:
+              output.write(f"DIAG_ROOT={root}\n")
+              for key, relative in paths.items():
+                  path = root / relative
+                  path.mkdir(parents=True, exist_ok=True, mode=0o700)
+                  output.write(f"{key}={path}\n")
+          PY
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.4"
+      - name: Install frozen dependencies
+        run: |
+          bun install --frozen-lockfile
+          bun install --frozen-lockfile --cwd vendor/rp-core
+      - name: Capture the unchanged browser prerequisite
+        run: |
+          mkdir -p "$DIAG_ROOT/evidence"
+          cat > "$DIAG_ROOT/diagnostic.py" <<'PY'
+          import http.client, json, os, pathlib, re, resource, selectors, shlex, signal, socket, subprocess, sys, tempfile, time
+          resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+          root = pathlib.Path(os.environ["DIAG_ROOT"])
+          evidence = root / "evidence"
+          evidence.mkdir(exist_ok=True)
+          limit = 64 * 1024 * 1024
+          allowed = ["PATH", "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TMPDIR", "TMP", "TEMP", "BUNZAI_HOME", "CODEX_HOME", "CLAUDE_CONFIG_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME", "XDG_RUNTIME_DIR", "BUN_INSTALL_CACHE_DIR", "DIAG_ROOT"]
+
+          def capture(command, name, env, group, readiness=False):
+              started = time.monotonic()
+              outputs = [(evidence / f"{name}.{label}").open("xb") for label in ("stdout", "stderr")]
+              child = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=group)
+              reason = None
+              stopped_at = None
+              failure = None
+              forced = False
+              devtools = None
+              cdp_ready = None
+              endpoint = None
+              last_cdp_error = None
+              stderr_tail = b""
+              def send(signum):
+                  try:
+                      os.killpg(child.pid, signum) if group else child.send_signal(signum)
+                  except ProcessLookupError:
+                      pass
+              def live_group():
+                  for path in pathlib.Path("/proc").glob("[0-9]*/stat"):
+                      try:
+                          fields = path.read_text().rsplit(")", 1)[1].split()
+                          if int(fields[2]) == child.pid and fields[0] != "Z":
+                              return True
+                      except (OSError, ValueError, IndexError):
+                          pass
+                  return False
+              def stop(why):
+                  nonlocal reason, stopped_at
+                  if reason is not None:
+                      return
+                  reason = why
+                  stopped_at = time.monotonic()
+                  send(signal.SIGTERM)
+              def cdp_deadline(*_):
+                  raise TimeoutError("The absolute CDP readiness deadline elapsed")
+              previous = signal.signal(signal.SIGTERM, lambda *_: stop("owner-termination"))
+              poll = selectors.DefaultSelector()
+              for label, stream, handle in zip(("stdout", "stderr"), (child.stdout, child.stderr), outputs):
+                  target = evidence / f"{name}.{label}"
+                  poll.register(stream, selectors.EVENT_READ, [handle, 0, target])
+              try:
+                  while poll.get_map() or child.poll() is None:
+                      elapsed = time.monotonic() - started
+                      if elapsed >= (15 if readiness else 180):
+                          stop("time-limit")
+                      if readiness and endpoint and reason is None:
+                          connection = http.client.HTTPConnection("127.0.0.1", 9592, timeout=min(0.1, 15 - elapsed))
+                          previous_alarm = signal.signal(signal.SIGALRM, cdp_deadline)
+                          signal.setitimer(signal.ITIMER_REAL, 15 - elapsed)
+                          try:
+                              connection.request("GET", "/json/version")
+                              response = connection.getresponse()
+                              body = response.read(65537)
+                              if time.monotonic() - started <= 15 and response.status == 200 and len(body) <= 65536 and json.loads(body).get("webSocketDebuggerUrl") == endpoint:
+                                  cdp_ready = time.monotonic() - started
+                                  stop("readiness-observed")
+                          except (OSError, ValueError, http.client.HTTPException) as error:
+                              last_cdp_error = str(error)[:240]
+                          finally:
+                              signal.setitimer(signal.ITIMER_REAL, 0)
+                              signal.signal(signal.SIGALRM, previous_alarm)
+                              connection.close()
+                      if stopped_at is not None and time.monotonic() - stopped_at >= 5:
+                          send(signal.SIGKILL)
+                      for key, _ in poll.select(0.1):
+                          chunk = os.read(key.fileobj.fileno(), 65536)
+                          if not chunk:
+                              poll.unregister(key.fileobj)
+                              continue
+                          handle, size, target = key.data
+                          if readiness and target.suffix == ".stderr" and devtools is None:
+                              stderr_tail = (stderr_tail + chunk)[-2048:]
+                              match = re.search(rb"DevTools listening on (ws://[^\r\n ]+)\r?\n", stderr_tail)
+                              if match:
+                                  devtools = time.monotonic() - started
+                                  endpoint = match[1].decode()
+                          remaining = limit - size
+                          handle.write(chunk[:remaining])
+                          if name == "chrome" and target.suffix == ".stderr":
+                              try:
+                                  sys.stderr.buffer.write(chunk[:remaining])
+                                  sys.stderr.buffer.flush()
+                              except BrokenPipeError:
+                                  stop("parent-pipe-closed")
+                          key.data[1] += min(len(chunk), remaining)
+                          if len(chunk) > remaining:
+                              (evidence / f"{name}.limit").write_text(str(target))
+                              stop("output-limit")
+                  code = child.wait()
+              except BaseException as error:
+                  failure = str(error)[:1000]
+                  stop("capture-error")
+              finally:
+                  signal.signal(signal.SIGTERM, signal.SIG_IGN)
+                  send(signal.SIGTERM)
+                  deadline = time.monotonic() + 5
+                  while (live_group() if group else child.poll() is None) and time.monotonic() < deadline:
+                      time.sleep(0.05)
+                  if (live_group() if group else child.poll() is None):
+                      forced = True
+                      send(signal.SIGKILL)
+                  try:
+                      code = child.wait(timeout=2)
+                  except subprocess.TimeoutExpired:
+                      code = child.poll()
+                  deadline = time.monotonic() + 2
+                  while group and live_group() and time.monotonic() < deadline:
+                      time.sleep(0.05)
+                  for handle in outputs:
+                      handle.close()
+                  poll.close()
+              cleanup = not live_group() if group else child.poll() is not None
+              effective = 124 if reason in ("time-limit", "output-limit") else 1 if failure or forced or not cleanup or reason == "parent-pipe-closed" or (group and reason) else code
+              if reason == "readiness-observed" and not failure and not forced and cleanup:
+                  effective = 0
+              elif readiness and effective == 0:
+                  effective = 1
+              result = {"command": command, "pid": child.pid, "childExitCode": code, "exitCode": effective, "stopReason": reason, "captureError": failure, "cleanupComplete": cleanup, "cleanupForced": forced, "elapsedSeconds": time.monotonic() - started, "firstDevToolsSeconds": devtools, "firstCdpReadySeconds": cdp_ready, "lastCdpError": last_cdp_error}
+              (evidence / f"{name}.json").write_text(json.dumps(result, indent=2))
+              signal.signal(signal.SIGTERM, previous)
+              return effective
+
+          if len(sys.argv) > 1 and sys.argv[1] == "chrome":
+              (evidence / "chrome-environment.json").write_text(json.dumps({key: os.environ.get(key) for key in [*allowed, "LANG", "CHROME_PATH"]}, indent=2))
+              code = capture(["/usr/bin/google-chrome", *sys.argv[2:]], "chrome", os.environ.copy(), False)
+              if code < 0:
+                  signal.signal(-code, signal.SIG_DFL)
+                  os.kill(os.getpid(), -code)
+              sys.exit(code)
+
+          env = {key: os.environ[key] for key in allowed}
+          env["LANG"] = "C.UTF-8"
+          chrome = pathlib.Path("/usr/bin/google-chrome")
+          metadata = {"sourceSha": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(), "coreGitlink": subprocess.check_output(["git", "rev-parse", "HEAD:vendor/rp-core"], text=True).strip(), "coreCheckout": subprocess.check_output(["git", "-C", "vendor/rp-core", "rev-parse", "HEAD"], text=True).strip(), "node": subprocess.check_output(["node", "--version"], env=env, text=True).strip(), "bun": subprocess.check_output(["bun", "--version"], env=env, text=True).strip(), "chromePath": str(chrome), "chromeRealPath": str(chrome.resolve())}
+          (evidence / "runtime.json").write_text(json.dumps(metadata, indent=2))
+          if metadata["coreGitlink"] != metadata["coreCheckout"] or metadata["bun"] != pathlib.Path(".bun-version").read_text().strip() or metadata["node"] != "v22.23.4":
+              raise RuntimeError("Diagnostic source or runtime identity does not match the requested pins")
+          if not chrome.is_file() or not os.access(chrome, os.X_OK):
+              raise RuntimeError("The standard runner has no executable /usr/bin/google-chrome; no browser test was proven")
+          metadata["chromeVersion"] = subprocess.check_output([str(chrome), "--version"], env=env, text=True, timeout=10).strip()
+          (evidence / "runtime.json").write_text(json.dumps(metadata, indent=2))
+          with socket.socket() as check:
+              check.bind(("127.0.0.1", 9591))
+          shim = root / "chrome-shim"
+          shim.write_text("#!/bin/sh\nexec /usr/bin/python3 " + shlex.quote(str(root / "diagnostic.py")) + ' chrome "$@"\n')
+          shim.chmod(0o700)
+          env["CHROME_PATH"] = str(shim)
+          code = capture(["bun", "test", "./src/ui/shell/protected-browser.test.ts", "--timeout", "120000"], "test", env, True)
+          print((evidence / "test.json").read_text())
+          print((evidence / "test.stderr").read_text(errors="replace")[-12000:])
+          probe_env = {key: value for key, value in env.items() if key != "CHROME_PATH"}
+          probe_root = pathlib.Path(tempfile.mkdtemp(prefix="bz-", dir="/tmp"))
+          for key, relative in json.loads((root / "profile-paths.json").read_text()).items():
+              directory = probe_root / relative
+              directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+              probe_env[key] = str(directory)
+          with socket.socket() as check:
+              check.bind(("127.0.0.1", 9592))
+          profile = probe_root / "chrome"
+          public_command = json.loads((evidence / "chrome.json").read_text())["command"]
+          if public_command[0] != str(chrome) or sum(arg.startswith("--remote-debugging-port=") for arg in public_command) != 1 or sum(arg.startswith("--user-data-dir=") for arg in public_command) != 1:
+              raise RuntimeError("The public Chrome command cannot be reproduced with only fixture port/profile replacements")
+          probe_command = ["--remote-debugging-port=9592" if arg.startswith("--remote-debugging-port=") else f"--user-data-dir={profile}" if arg.startswith("--user-data-dir=") else arg for arg in public_command]
+          (evidence / "readiness-environment.json").write_text(json.dumps(probe_env, indent=2))
+          (evidence / "readiness-differences.json").write_text(json.dumps({"publicEnvironmentFile": "chrome-environment.json", "probeEnvironmentFile": "readiness-environment.json", "fixtureChanges": ["fresh user-data-dir", "fresh short owned /tmp profile paths for Unix socket limits", "port 9591 becomes verified-unused 9592", "direct Chrome instead of stderr-capture shim"], "addedBrowserFlags": [], "publicTestExitCode": code}, indent=2))
+          probe_code = capture(probe_command, "readiness", probe_env, True, True)
+          print((evidence / "readiness.json").read_text())
+          if list(evidence.glob("*.limit")):
+              sys.exit(125)
+          code = code if code else probe_code
+          sys.exit(code if code >= 0 else 128 - code)
+          PY
+          python3 "$DIAG_ROOT/diagnostic.py"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-diagnostic-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ env.DIAG_ROOT }}/evidence/
+          if-no-files-found: error
+          retention-days: 7

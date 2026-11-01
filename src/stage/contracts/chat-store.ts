@@ -15,6 +15,11 @@ import type { ChatFinalCut, ChatFinalCutPatch } from "./chat-final-cut-types";
 import type { ChatTrackerPatch, ChatTrackers, TrackerModule } from "./chat-tracker-types";
 import type { ChatStoreSummaries, ChatSummary, SummarySettingsPatch, TakeSummary, TakeSummaryInput } from "./chat-summary-types";
 import type { Delta, SceneState } from "../../core/scene-state/types";
+import type { ExtensionCommitContext } from "./extension-store";
+import type { CoreMessageProjection } from "./core-record-store";
+import type { CoreStateMessageTarget, CoreStateTurnBinding } from "./core-extension-state";
+import type { ExtensionTurnOwner } from "./extension-turn-owner";
+export type { ExtensionTurnOwner } from "./extension-turn-owner";
 import type { PartText } from "./content-store";
 import type { MessageAtPage, MessageDeltaGuard, SceneDeltaRange, MessagePage, MessageSwipePage, MessageTailPage, TranscriptSearchPage, TranscriptSearchQuery, TranscriptSwipeSelection } from "./chat-store-pages";
 export type * from "./chat-store-pages";
@@ -157,6 +162,7 @@ export * from "./director-types";
 export * from "./dramaturg-types";
 import type { ChatStoreDirector, DirectorSettings } from "./director-types";
 import type { ChatStoreDramaturg } from "./dramaturg-types";
+import type { SceneSettingChange, SceneSettingSelector, SceneSettingValue } from "./scene-settings";
 
 export interface Branch {
   id: string;
@@ -199,6 +205,8 @@ export interface TurnCheckpoint {
   /** The prompt trace so far: opaque JSON whose shape prompt assembly owns (rule 15). */
   trace?: JsonObject;
   providerRequestId?: string;
+  /** Trusted admission identity; pending extension state is only valid for this same live authority. */
+  extensionOwner?: ExtensionTurnOwner;
   /** The scene-state changes this turn made, pending: `commitTurn` stamps them onto the version it stores, and a dropped turn takes them with it (rule 17). */
   deltas?: Delta[];
   /**
@@ -219,7 +227,9 @@ export interface TurnCheckpoint {
  * before staleness, so a write to a message that is gone is null, not a conflict.
  */
 export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatStoreDramaturg {
-  createChat(input: { title: string; cast: Cast; snapshot: CastSnapshot; history?: ChatHistory }): Promise<Chat>;
+  createChat(input: { title: string; cast: Cast; snapshot: CastSnapshot; history?: ChatHistory }, extensionCommit?: ExtensionCommitContext): Promise<Chat>;
+  /** Host-only creation path for libraries whose scene lifecycle requires an RP-Core session. */
+  createCoreChat?(input: { title: string; cast: Cast; snapshot: CastSnapshot; history?: ChatHistory }, extensionCommit?: ExtensionCommitContext): Promise<Chat>;
   getChat(id: string): Promise<Chat | null>;
   /** The chat's frozen cast; null when the chat is absent or deleted, like getChat. */
   castSnapshot(chatId: string): Promise<CastSnapshot | null>;
@@ -251,12 +261,21 @@ export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatSt
     branchId: string,
     atMessageId: string,
     opts?: { name?: string; swipeId?: string } & WriteGuard,
+    extensionCommit?: ExtensionCommitContext,
   ): Promise<Branch | null>;
 
+  /** SQLite-only repair of an already committed Core message, atomic with its identity mapping. */
+  projectCoreMessage?(input: CoreMessageProjection): Promise<string>;
+  stageCoreExtensionState?(commit: ExtensionCommitContext, target: CoreStateTurnBinding, deltas: readonly Delta[]): Promise<boolean>;
+  recordCoreExtensionState?(commit: ExtensionCommitContext, target: CoreStateMessageTarget, deltas: readonly Delta[]): Promise<boolean>;
+  applyCoreExtensionState?(sessionId: string, coreMessageId?: string): Promise<void>;
+  discardCorePendingState?(turnOperationId: string, turnId: string): Promise<void>;
+  projectCoreMessages?(inputs: readonly CoreMessageProjection[]): Promise<string[]>;
   appendMessage(
     branchId: string,
     input: { role: MessageRole; content: string; generation?: Generation },
     guard?: WriteGuard,
+    extensionCommit?: ExtensionCommitContext,
   ): Promise<Message | null>;
   /**
    * Appends several messages in order as one write: all of them or none (the first send's greeting
@@ -266,6 +285,7 @@ export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatSt
     branchId: string,
     inputs: readonly { role: MessageRole; content: string; generation?: Generation }[],
     guard?: WriteGuard,
+    extensionCommit?: ExtensionCommitContext,
   ): Promise<Message[] | null>;
   readMessages(branchId: string, page: { fromSeq?: number; limit: number }): Promise<MessagePage>;
   /** A bounded page from the branch tail; `beforeSeq` is exclusive and `nextSeq` is its next cursor. */
@@ -283,7 +303,7 @@ export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatSt
   addSwipe(messageId: string, input: { content: string; generation?: Generation }, guard?: WriteGuard): Promise<Message | null>;
   selectSwipe(messageId: string, index: number, guard?: WriteGuard): Promise<Message | null>;
   /** Replaces a swipe's text and keeps the text it replaced (D23). */
-  editSwipe(messageId: string, swipeId: string, content: string, guard?: WriteGuard): Promise<Message | null>;
+  editSwipe(messageId: string, swipeId: string, content: string, guard?: WriteGuard, extensionCommit?: ExtensionCommitContext): Promise<Message | null>;
   /** Every text a swipe has had before its current one, oldest first. */
   swipeHistory(messageId: string, swipeId: string): Promise<string[]>;
   setPinned(messageId: string, swipeId: string, pinned: boolean, guard?: WriteGuard): Promise<Message | null>;
@@ -297,7 +317,7 @@ export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatSt
   setHidden(messageId: string, hidden: boolean, guard?: WriteGuard): Promise<Message | null>;
 
   /** Cuts one message of the branch, or it and every live message after it, as one cut at one time (spec rule 11). */
-  cutMessages(branchId: string, messageId: string, scope: "one" | "from", guard?: WriteGuard): Promise<{ cutId: string; count: number } | null>;
+  cutMessages(branchId: string, messageId: string, scope: "one" | "from", guard?: WriteGuard, extensionCommit?: ExtensionCommitContext): Promise<{ cutId: string; count: number } | null>;
   /** Puts a cut back in place, or on a new take when a "from here" cut is no longer the end (rule 11). */
   restoreCut(branchId: string, cutId: string, guard?: WriteGuard): Promise<{ branchId: string; count: number } | null>;
 
@@ -328,15 +348,17 @@ export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatSt
    * Opens the branch's one checkpoint; a second while one is open is a conflict (rule 16). A swipe
    * or a continue targets an assistant message on this branch. The guard names the version the prompt was built from.
    */
-  beginTurn(branchId: string, target: TurnTarget, guard?: WriteGuard): Promise<TurnCheckpoint | null>;
+  beginTurn(branchId: string, target: TurnTarget, guard?: WriteGuard, extensionCommit?: ExtensionCommitContext): Promise<TurnCheckpoint | null>;
   /** Records progress. Bumps no version and moves no updatedAt. */
-  saveCheckpoint(turnId: string, progress: { content: string; trace?: JsonObject; providerRequestId?: string; deltas?: Delta[] }): Promise<TurnCheckpoint | null>;
+  saveCheckpoint(turnId: string, progress: { content: string; trace?: JsonObject; providerRequestId?: string; deltas?: Delta[] }, extensionCommit?: ExtensionCommitContext): Promise<TurnCheckpoint | null>;
+  /** Append package-namespaced state deltas to the live turn checkpoint; commitTurn applies them with that turn or dropTurn discards them. */
+  appendPendingExtensionDeltas(turnId: string, packageId: string, expectedVersion: number, deltas: readonly Delta[], extensionCommit: ExtensionCommitContext): Promise<boolean>;
   /**
    * Stores the reply or swipe with its trace and removes the checkpoint, as one transaction. A stale
    * guard throws StudioConflictError and leaves the checkpoint as it was.
    */
-  commitTurn(turnId: string, result: { content: string; generation?: Generation; trace?: JsonObject; request?: { texts: string[] } }, guard?: WriteGuard): Promise<Message | null>;
-  dropTurn(turnId: string): Promise<boolean>;
+  commitTurn(turnId: string, result: { content: string; generation?: Generation; trace?: JsonObject; request?: { texts: string[] } }, guard?: WriteGuard, extensionCommit?: ExtensionCommitContext): Promise<Message | null>;
+  dropTurn(turnId: string, extensionCommit?: ExtensionCommitContext): Promise<boolean>;
   /** Every open checkpoint on a live branch of a live chat, oldest first. */
   resumeIncomplete(): Promise<TurnCheckpoint[]>;
   /** The branch's latest committed reply's request text (rule 22); null when it is absent, or the
@@ -355,8 +377,12 @@ export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatSt
   setBranchBase(branchId: string, deltas: Delta[]): Promise<boolean>;
   /** Appends deltas to a live message of this take, what it carries whichever version shows (a person's edit on a reply). They fold after the version's own and win on that message, `sceneStateBefore` includes them, a fork copies them, and a write of what the message already shows (its version's deltas included) adds nothing. Refused whole when malformed or when one write is past the hostile-input ceiling (unusually large; there is no per-message cap); false when the branch or message is absent or cut. A guard naming the branch version the caller read, or the values it read (`expect`), refuses a stale one with StudioConflictError and writes nothing. */
   recordMessageDeltas(branchId: string, messageId: string, deltas: Delta[], guard?: MessageDeltaGuard): Promise<boolean>;
+  /** Package-namespaced state write. Context is created by the broker and checked inside the SQLite transaction. */
+  recordExtensionMessageDeltas(context: ExtensionCommitContext, branchId: string, messageId: string, deltas: Delta[], guard?: MessageDeltaGuard): Promise<boolean>;
   /** A write made after a commit that names the version of a reply it is about (the chat summary's generated pieces). The rows belong to THIS take: they are kept with its message, tied to that version, apply only while that version is shown there, and are copied with the message when the take is forked (a fork inherits the prefix's writes; its own later writes stay in the fork, and a write here never reaches another take). The version's own deltas, which every take that shows it shares, are never appended to. The version may be shown or not; a swipe that is cut, absent, or on a message that is not live in this take is false. The guard is `recordMessageDeltas`'s and is judged against the state as if this version were the one shown; a write of what that state already holds adds nothing. Refused whole when malformed, when a value does not fit its slot's shape, or past the hostile-input ceiling. */
   recordDeltas(branchId: string, swipeId: string, deltas: Delta[], guard?: MessageDeltaGuard): Promise<boolean>;
+  /** Host automatic summary row only, scoped to an explicitly reviewed extension turn. */
+  recordExtensionSummaryDeltas(context: ExtensionCommitContext, branchId: string, swipeId: string, deltas: Delta[], guard?: MessageDeltaGuard): Promise<boolean>;
 
   /** A persona's running counters (rule 28); zeros for a persona nothing has played. */
   personaStats(personaId: string): Promise<PersonaStats>;
@@ -407,10 +433,17 @@ export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatSt
   /** Changes one tracker module's SETTINGS (rule 43): `context` (AI Context), `auto` (the Story Director's choice), `subs` (the sub-feature switches) and, for a Storyboard, its profile as `data`; a key of the patch given replaces it, null clears it, a key left out stays. A module's state is not a setting: it is the scene-state slot `tracker.<module>` and is written with recordMessageDeltas or recordDeltas, so `data` on any other module is refused. Refused whole when malformed. Bumps no version and moves no updatedAt; null for an absent or deleted scene. */
   setTracker(chatId: string, module: TrackerModule, patch: ChatTrackerPatch): Promise<Chat | null>;
 
+  /** Reads one strict, redacted scene-settings projection and an opaque revision token. */
+  readSceneSetting(chatId: string, selector: SceneSettingSelector): Promise<{ value: SceneSettingValue; revision: string } | null>;
+  /** Computes the canonical before/after projection from the same validators used by ordinary setters. */
+  previewSceneSetting(chatId: string, selector: SceneSettingSelector, change: SceneSettingChange): Promise<{ before: SceneSettingValue; after: SceneSettingValue; revision: string } | null>;
+  /** Compares the selected group's full stored value and writes under the native transaction fence. */
+  applySceneSetting(chatId: string, selector: SceneSettingSelector, change: SceneSettingChange, expectedRevision: string, extensionCommit: ExtensionCommitContext): Promise<{ status: "saved"; revision: string } | { status: "stale" } | null>;
+
   /** Appends a Compendium receipt to a scene (rule 39); null for an absent or deleted scene. The store assigns id, at and settledAt. A running receipt never blocks another append. */
-  appendReceipt(chatId: string, input: ReceiptInput): Promise<CompendiumReceipt | null>;
+  appendReceipt(chatId: string, input: ReceiptInput, extensionCommit?: ExtensionCommitContext): Promise<CompendiumReceipt | null>;
   /** Moves a receipt to a new status (rule 39), only along the allowed transitions; null when it is gone. Undoing an already undone receipt returns it unchanged. */
-  settleReceipt(receiptId: string, settle: ReceiptSettle): Promise<CompendiumReceipt | null>;
+  settleReceipt(receiptId: string, settle: ReceiptSettle, extensionCommit?: ExtensionCommitContext): Promise<CompendiumReceipt | null>;
   /** One receipt by id (rule 39); null when it or its scene is gone. */
   receipt(receiptId: string): Promise<CompendiumReceipt | null>;
   /** A scene's receipts, newest first, optionally one take's or one message's (rule 39); `before` is a receipt id to page past. Empty for an absent or deleted scene. */

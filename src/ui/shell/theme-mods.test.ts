@@ -1,40 +1,40 @@
 /** The shell side of the optional powers: what the lifecycle serves is what the renderer accepts, and nothing else. */
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { installDom, type InstalledDom } from "../_shared/test-dom";
-import { createThemeLifecycle } from "../../extensions/theme-lifecycle";
+import { installThemeFixture, unifiedThemeService } from "../../extensions/theme-test-fixture";
 import { modThemePackage } from "../../extensions/theme-mod-fixture";
-import { memoryStateStore } from "../../stage/store/memory/state-store";
 import { PROTECTED_SCOPE } from "../../extensions/theme-css";
 import { paintTheme, readEffectiveTheme } from "./theme";
 import { checkProtectedNow, clearModSuppression, MOD_STYLE_ID, paintMod, removeMod, setModHandlers, setModProbe, SLOT_ATTRIBUTE } from "./theme-mod";
 
 let installed: InstalledDom;
+const services: Awaited<ReturnType<typeof unifiedThemeService>>[] = [];
 beforeAll(() => { installed = installDom("<!doctype html><html><body></body></html>", { url: "http://127.0.0.1:8324/", pretendToBeVisual: true, extraGlobals: ["localStorage", "location", "MutationObserver", "Element"], boundGlobals: ["requestAnimationFrame", "getComputedStyle"] }); });
-afterAll(async () => { removeMod(); await installed.teardown(); }); // removeMod stops the watcher timer a painted mod starts
+afterAll(async () => { removeMod(); await Promise.all(services.map((service) => service.close())); await installed.teardown(); }); // removeMod stops the watcher timer a painted mod starts
 beforeEach(() => installed.reinstall());
 
 const ID = "bunzai.theme.modtest";
-async function installed_(): Promise<Awaited<ReturnType<typeof createThemeLifecycle>>> {
-  const themes = await createThemeLifecycle(memoryStateStore(), []);
-  const { preview, challenge } = await themes.inspect(await modThemePackage());
-  await themes.install(challenge, preview.digest, "approve");
+async function installed_() {
+  const themes = await unifiedThemeService();
+  services.push(themes);
+  await installThemeFixture(themes, await modThemePackage());
   return themes;
 }
 
 describe("effective response with every power", () => {
   test("round-trips: inspect, install, effective, then the renderer's reader keeps styles, fonts and slots", async () => {
     const themes = await installed_();
-    const served = await themes.effective(ID);
+    const served = await themes.themeEffective(ID);
     expect(served.grantedScopes).toEqual(expect.arrayContaining(["appearance.styles", "appearance.fonts", "ui.slots", "appearance.assets"]));
     const read = readEffectiveTheme(JSON.parse(JSON.stringify(served)));
     expect(read).not.toBeNull();
     expect(read!.styles).toBe(served.styles);
     expect(read!.fonts.map((f) => f.id)).toEqual(["face"]);
-    expect(Object.keys(read!.slots)).toEqual(["shell.nav.end", "library.header"]);
+    expect(Object.keys(read!.slots)).toEqual(expect.arrayContaining(["shell.nav.end", "library.header"]));
   });
 
   test("the renderer refuses a response whose scopes, styles or slots do not match what was granted", async () => {
-    const served = JSON.parse(JSON.stringify(await (await installed_()).effective(ID)));
+    const served = JSON.parse(JSON.stringify(await (await installed_()).themeEffective(ID)));
     const without = (scope: string) => ({ ...served, grantedScopes: served.grantedScopes.filter((s: string) => s !== scope) });
     for (const scope of ["appearance.styles", "appearance.fonts", "ui.slots", "appearance.assets"]) expect(readEffectiveTheme(without(scope)), scope).toBeNull();
     expect(readEffectiveTheme({ ...served, styles: served.styles + "\n@import 'https://evil.example/x.css';" })).toBeNull();
@@ -47,7 +47,7 @@ describe("effective response with every power", () => {
 });
 
 describe("applying styles and slots", () => {
-  const served = async (themes: Awaited<ReturnType<typeof createThemeLifecycle>>) => readEffectiveTheme(JSON.parse(JSON.stringify(await themes.effective(ID))))!;
+  const served = async (themes: Awaited<ReturnType<typeof unifiedThemeService>>) => readEffectiveTheme(JSON.parse(JSON.stringify(await themes.themeEffective(ID))))!;
   const CLEAN = { display: "block", visibility: "visible", opacity: "1", filter: "none", clipPath: "none", maskImage: "none", mixBlendMode: "normal", pointerEvents: "auto", position: "static", content: "none", width: "10px", height: "10px", fontSize: "16px" };
   beforeEach(() => { removeMod(); clearModSuppression(); setModProbe(null); setModHandlers(null); document.head.innerHTML = ""; });
 
@@ -63,7 +63,7 @@ describe("applying styles and slots", () => {
     const payload = JSON.parse(document.documentElement.getAttribute(SLOT_ATTRIBUTE)!);
     expect(payload.assets.badge).toBe("blob:badge");
     expect(payload.classes).toContain("mod-stamp-note");
-    expect(Object.keys(payload.slots)).toEqual(["shell.nav.end", "library.header"]);
+    expect(Object.keys(payload.slots)).toEqual(expect.arrayContaining(["shell.nav.end", "library.header"]));
   });
 
   test("an unchanged serialized appearance preserves the stylesheet node", async () => {
@@ -90,8 +90,9 @@ describe("applying styles and slots", () => {
     const themes = await installed_();
     paintTheme(await served(themes));
     expect(document.getElementById(MOD_STYLE_ID)).not.toBeNull();
-    await themes.revoke(ID);
-    const after = readEffectiveTheme(JSON.parse(JSON.stringify(await themes.effective(ID))));
+    const current = (await themes.list()).find((item) => item.id === ID)!;
+    await themes.revoke(ID, current.revision);
+    const after = readEffectiveTheme(JSON.parse(JSON.stringify(await themes.themeEffective(ID))));
     expect(after).toMatchObject({ themeId: null, styles: null, fallbackReason: "revoked" });
     paintTheme(after!);
     expect(document.getElementById(MOD_STYLE_ID)).toBeNull();

@@ -13,6 +13,7 @@ import { hasErrorName, isRecord as record } from "../../core/guards";
 import type { DocumentBackend, DocumentRow, EntityKind, LightStoredEntity, StoredOriginalEntry, StoredRisuNamedAssets } from "../contracts/content-store";
 import type { StoredPortraitAsset, StoredPortraitContent } from "../contracts/content-store-asset";
 import { ASSET_MAX_BYTES } from "../../core/media/limits";
+import { utf8ByteLength } from "../../shared/utf8";
 
 type LiveRow = (kind: string, id: string) => Promise<DocumentRow | null>;
 
@@ -299,7 +300,7 @@ function namedAssetRows(rows: unknown[]): StoredRisuNamedAssets["items"] {
       : tuple ? extOf(shownName) : "";
     const mime = parseUploadedRef(shownRef)?.mime ?? mimeFromDataUri(shownRef) ?? mimeFromExt(shownExt);
     const item = { name: shownName, ref: shownRef, ext: shownExt, ...(mime ? { mime } : {}) };
-    responseBytes += Buffer.byteLength(JSON.stringify(item), "utf8") + 1;
+    responseBytes += utf8ByteLength(JSON.stringify(item)) + 1;
     if (items.length >= MAX_NAMED_ASSETS || responseBytes > MAX_NAMED_ASSET_RESPONSE_BYTES) {
       throw new StudioValidationError("native NamedAsset metadata exceeds the bounded projection; narrow or repair the imported asset list");
     }
@@ -333,7 +334,7 @@ export async function readRisuNamedAssets(
         if (rawPart.status === "too-large") throw new StudioValidationError("native Risu data exceeds the bounded NamedAsset projection limit");
         if (rawPart.status === "ok") raw = JSON.parse(rawPart.text);
       }
-      if (raw !== null && Buffer.byteLength(JSON.stringify(raw), "utf8") > MAX_RISU_RAW_BYTES) {
+      if (raw !== null && utf8ByteLength(JSON.stringify(raw)) > MAX_RISU_RAW_BYTES) {
         throw new StudioValidationError("native Risu data exceeds the bounded NamedAsset projection limit");
       }
       const items = namedAssetRows(risuRows(raw));

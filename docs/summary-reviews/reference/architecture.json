@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/architecture",
   "sourcePath": "docs/reference/architecture.md",
-  "sourceHash": "sha256:71efe7756fdaeae512f8611c8e50ecce6661f1bbdd2026696355bf851c011103",
-  "semanticSummaryHash": "sha256:c8b1ff2d39e09ca5e2118871f23aea88d51c5c9ce4562d6080658af7e844d175",
+  "sourceHash": "sha256:3af8f6331c7c0444a1897d5cbaa3c5bdc2386b408dd8e3c873b87bc605812c7c",
+  "semanticSummaryHash": "sha256:e1a9549fc4ac0d3daf20762338b19c85911776e5df24cb024ca928ee62f836bd",
   "verdict": "APPROVE",
-  "reviewer": "integration_review",
-  "notes": "Rechecked desktop composition rename to server-scene-composition.ts and sole production importer; reusable rp-core API and shutdown ownership remain unchanged. Approval covers documentation accuracy, not integration gate completion; storage shape tripwire currently requires deliberate compatible-extraction pin reconciliation.",
-  "reviewedAt": "2026-10-30T04:25:27.719Z"
+  "reviewer": "root",
+  "notes": "Root independently approved documentation-summary accuracy for source SHA-256 3af8f6331c7c0444a1897d5cbaa3c5bdc2386b408dd8e3c873b87bc605812c7c. This approval covers documentation accuracy only, not security or release readiness.",
+  "reviewedAt": "2026-10-31T13:40:01.544Z"
 }

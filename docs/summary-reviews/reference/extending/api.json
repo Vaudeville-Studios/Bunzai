@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/extending/api",
+  "sourcePath": "docs/reference/extending/api.md",
+  "sourceHash": "sha256:63522ff1a6029d00827651460828ed6a6977383f5eaf71631db1fbd6cfd39cd9",
+  "semanticSummaryHash": "sha256:e711f1ecb6dd382acccf067f28640d46eea49c77b1ce06195657ad2c138acc13",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Independently reviewed the current generated API catalog and source descriptors. The summary accurately describes Core-owned extension prompt and scene-event hooks, Core scene creation on Desktop/Terminal, Browser/Pocket legacy ownership, and the remaining Core operation limits without claiming release certification.",
+  "reviewedAt": "2026-11-01T03:00:26.175Z"
+}

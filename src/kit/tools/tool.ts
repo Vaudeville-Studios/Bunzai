@@ -70,6 +70,10 @@ export interface ToolContext {
   now?: () => number;
 }
 
+/** Exact non-ambient context available to tools reviewed for extension exposure. */
+export type ExtensionToolContext = Pick<ToolContext, "docs">;
+export interface ExtensionToolExposure { hosts: readonly ("desktop" | "terminal")[]; resourceKind: "kit-tool"; sensitivity: "public" }
+
 /** The rail as a tool may read it: what is open, how big it is, and what is unsaved. */
 export interface RailSnapshot {
   /** The studio id of the preset on the rail. */
@@ -201,4 +205,6 @@ export interface HarnessTool<Input = unknown> {
   concurrencyKey(args: Input): string;
   /** Run the tool over already-validated args. Read tools never mutate; write tools gate first. */
   execute(args: Input, ctx: ToolContext): Promise<ToolResult>;
+  extensionExposure?: ExtensionToolExposure;
+  executeExtension?(args: Input, ctx: ExtensionToolContext): Promise<ToolResult>;
 }

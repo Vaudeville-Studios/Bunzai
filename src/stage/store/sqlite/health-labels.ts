@@ -47,6 +47,7 @@ export const COLUMN_WORDS: Readonly<Record<string, string>> = {
   "turn_checkpoints.trace_json": "the record of a reply that was still being written",
   "turn_checkpoints.provider_request_id": "a reply that was still being written",
   "turn_checkpoints.deltas_json": "what a reply that was still being written changed in the scene",
+  "turn_checkpoints.extension_owner_json": "the extension authority that owns pending scene state",
   "swipe_deltas.path_json": "what this reply changed in the scene",
   "swipe_deltas.value_json": "what this reply changed in the scene",
   "message_deltas.path_json": "what this message carries into the scene",
@@ -56,10 +57,25 @@ export const COLUMN_WORDS: Readonly<Record<string, string>> = {
   "branch_base.state_json": "what this take starts with",
   "branch_variables.variables_json": "this take's variables",
   "scene_folders.name": "the name of this story folder",
+  "extension_packages.body_cell": "an installed extension package",
+  "extension_controls.body_cell": "an extension's approved grants and state",
+  "extension_data.body_cell": "an extension's private settings or data",
+  "extension_receipts.body_cell": "an extension operation receipt",
+  "extension_logs.body_cell": "an extension's private operational log",
+  "extension_budget_usage.body_cell": "an extension's usage limits",
+  "extension_budget_reservations.body_cell": "reserved extension operation budget",
+  "extension_runtime_lease.owner_cell": "the current extension runtime owner",
+  "core_scene_creation_bindings.body_cell": "the committed source of a Core scene",
+  "core_operation_projections.body_cell": "an authorized Core operation awaiting projection",
+  "core_pending_extension_state.body_cell": "package state staged for one Core reply",
 };
 
 const TABLE_WORDS: Readonly<Record<string, string>> = {
   documents: "a saved piece",
+  core_scene_creation_bindings: "a committed Core scene birth",
+  core_operation_projections: "a committed Core projection",
+  core_message_links: "a Core message and swipe identity",
+  core_pending_extension_state: "package state for one Core reply",
   document_versions: "a saved version of a piece",
   document_graves: "a deleted piece",
   grave_versions: "a version of a deleted piece",
@@ -83,6 +99,14 @@ const TABLE_WORDS: Readonly<Record<string, string>> = {
   branch_base: "what a take starts with",
   branch_variables: "a take's variables",
   scene_folders: "a story folder",
+  extension_packages: "an installed extension package",
+  extension_controls: "an installed extension's access record",
+  extension_data: "an extension's private data",
+  extension_receipts: "an extension operation receipt",
+  extension_logs: "an extension's private operational log",
+  extension_budget_usage: "an extension's usage budget",
+  extension_budget_reservations: "a reserved extension budget",
+  extension_runtime_lease: "the extension runtime owner",
 };
 export const tableWords = (table: string): string => TABLE_WORDS[table] ?? "a stored row";
 

@@ -44,6 +44,8 @@ describe("whole-word keys: non-ASCII letters are word characters", () => {
     ["underscore is a word char (as in ASCII)", "Ева", "Ева_два", false],
     ["multi-word Cyrillic key", "Ева Браун", "это Ева Браун.", true],
     ["supplementary-plane letter glued", "a", "\u{10400}a", false],
+    ["supplementary-plane letter after", "a", "a\u{10400}", false],
+    ["later occurrence after an astral letter", "a", "\u{10400}a a", true],
     ["emoji neighbor is a boundary", "Ева", "\u{1F409}Ева\u{1F409}", true],
   ];
   for (const [name, key, text, expected] of cases) {
@@ -53,6 +55,50 @@ describe("whole-word keys: non-ASCII letters are word characters", () => {
   test("case-sensitive Cyrillic still honors case", () => {
     expect(bothPaths("Ева", "ева пришла", true)).toBe(false);
     expect(bothPaths("Ева", "Ева пришла", true)).toBe(true);
+  });
+
+  test("a later whole-word occurrence can match after an earlier glued occurrence", () => {
+    expect(bothPaths("a a", "xa a a")).toBe(true);
+  });
+
+  test("the cached whole-word matcher resets its scan on every call", () => {
+    const trigger = { keyword: "a", isRegex: false };
+    const options = { caseSensitive: false, matchWholeWords: true };
+    for (let i = 0; i < 3; i++) expect(matchKeywordTrigger(trigger, "a", options)).toBe(true);
+  });
+
+  test("bounded child keeps repeated literal candidates out of the matcher loop", () => {
+    const matcherUrl = new URL("./triggers-keyword.ts", import.meta.url).href;
+    const child = `
+      import { matchKeywordTrigger } from ${JSON.stringify(matcherUrl)};
+      const trigger = { keyword: "a".repeat(4096), isRegex: false };
+      const options = { caseSensitive: true, matchWholeWords: true };
+      const text = "a".repeat(8192);
+      matchKeywordTrigger(trigger, text, options);
+      const astralKey = String.fromCodePoint(0x10400);
+      const astral = [true, false].map(caseSensitive => {
+        const astralOptions = { caseSensitive, matchWholeWords: true };
+        return [
+          matchKeywordTrigger({ keyword: astralKey, isRegex: false }, "x" + astralKey, astralOptions),
+          matchKeywordTrigger({ keyword: astralKey, isRegex: false }, "x" + astralKey + " " + astralKey, astralOptions),
+        ];
+      });
+      const originalExec = RegExp.prototype.exec;
+      let calls = 0;
+      RegExp.prototype.exec = function (input) { calls++; return originalExec.call(this, input); };
+      try {
+        const matched = matchKeywordTrigger(trigger, text, options);
+        console.log(JSON.stringify({ astral, matched, calls }));
+        if (matched || calls < 1 || calls > 8 || JSON.stringify(astral) !== "[[false,true],[false,true]]") process.exitCode = 1;
+      } finally { RegExp.prototype.exec = originalExec; }
+    `;
+    const result = Bun.spawnSync([process.execPath, "-e", child], { cwd: import.meta.dir, env: process.env, timeout: 10_000 });
+    expect(result.exitCode).toBe(0);
+    const output = JSON.parse(result.stdout.toString().trim());
+    expect(output.astral).toEqual([[false, true], [false, true]]);
+    expect(output.matched).toBe(false);
+    expect(output.calls).toBeGreaterThanOrEqual(1);
+    expect(output.calls).toBeLessThanOrEqual(8);
   });
 });
 

@@ -1,7 +1,7 @@
 /** Theme-cycle store contract: the UI toggle must request the next persisted theme. */
 import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
 import { installDom, type InstalledDom } from "../_shared/test-dom";
-import { DEFAULT_STUDIO_THEME, SETTING_KEYS, parseSettings, type StudioTheme } from "../../studio/settings-shape";
+import { DEFAULT_STUDIO_THEME, SETTING_KEYS, parseSettings, studioThemePackageId, type StudioTheme } from "../../studio/settings-shape";
 import { deriveThemeScopes } from "../../extensions/theme-appearance";
 import { inspectThemePackage } from "../../extensions/theme-contract";
 import { themeInventory } from "../../extensions/theme-inventory";
@@ -61,7 +61,7 @@ test("a concurrent refresh waits through superseding settings writes before veri
     }
     if (path === "/api/themes/effective") {
       effectiveReads++;
-      return new Response(JSON.stringify({ themeId: serverTheme, packageId: serverTheme, digest: "a".repeat(64), grantedScopes: deriveThemeScopes({ assets: 0, fonts: 0, styles: false, slots: 0 }), appearance: paper.appearance, assets: [], fonts: [], styles: null, slots: {} }));
+      return new Response(JSON.stringify({ themeId: serverTheme, packageId: studioThemePackageId(serverTheme), digest: "a".repeat(64), grantedScopes: deriveThemeScopes({ assets: 0, fonts: 0, styles: false, slots: 0 }), appearance: paper.appearance, assets: [], fonts: [], styles: null, slots: {} }));
     }
     throw new Error(`unexpected theme test request: ${path}`);
   }) as typeof fetch;

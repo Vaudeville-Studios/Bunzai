@@ -50,6 +50,7 @@ import { createResultStore } from "./results/store";
 import { createGrantBook, type GrantBook } from "./tools/_shared/grant-book";
 import { StudioExports } from "../studio/exports";
 import { GraveyardStore } from "../studio/graveyard";
+import type { TerminalExtensionRuntime } from "./extensions/owner";
 
 /** What the render sees as a turn unfolds, plus a clean error path (no provider, egress blocked, API
  * failure). begin fires once when the provider resolves (who is about to answer); delta streams live
@@ -66,6 +67,8 @@ export type RailStaged =
   | { ok: false; detail: string };
 
 export interface Session {
+  /** Installed packages from the same encrypted library; absent when the extension lease is unavailable. */
+  extensions?: TerminalExtensionRuntime;
   capabilities?(): readonly ContentCapability[];
   /**
    * The folders shared with Kit for reading, owned here because the dispatch context reads them.
@@ -191,6 +194,7 @@ export async function createSession(
    * see ToolContext.surface for why a tool must not name the wrong furniture.
    */
   surface?: string,
+  extensions?: TerminalExtensionRuntime,
 ): Promise<Session> {
   const [discovered, capabilities] = await Promise.all([
     discoverTools(),
@@ -253,6 +257,7 @@ export async function createSession(
   };
 
   return {
+    ...(extensions ? { extensions } : {}),
     capabilities: () => capabilities,
     folders,
     unlisted: (kind) => bridge.unlisted?.(kind) ?? Promise.resolve([]),

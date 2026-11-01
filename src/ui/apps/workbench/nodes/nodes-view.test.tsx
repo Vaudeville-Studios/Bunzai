@@ -47,6 +47,7 @@ function harness(refs: string[], open: StudioEntitySummary[] = [vera]): Harness 
   h.ctx = {
     pieces: store,
     api: {
+      extensions: { list: async () => [] },
       getEditableEntity: async () => ({ entity: character(refs), revision: "r1" }),
       patchEditedEntity: async (...args: unknown[]) => { h.patches.push(args); return { revision: "r2" }; },
     },

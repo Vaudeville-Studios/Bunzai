@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "guide/installation",
+  "sourcePath": "docs/guide/installation.md",
+  "sourceHash": "sha256:2b2d75c96199d1c4aaa957e44621b2af924bd4f9ec1e3ed22d896f7db017cea6",
+  "semanticSummaryHash": "sha256:fe283e23814888ca2592fd29c1fd39e36fd92ddc566aecde090253ccfee9c2e4",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Independent review confirms the current install and troubleshooting instructions use Bun 1.4.2 without changing unpublished release claims.",
+  "reviewedAt": "2026-11-01T10:14:16.527Z"
+}

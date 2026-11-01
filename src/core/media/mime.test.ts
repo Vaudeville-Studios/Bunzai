@@ -1,6 +1,6 @@
 /** MIME and extension helpers share one stable mapping across core and format adapters. */
 import { describe, expect, test } from "bun:test";
-import { extOf, extensionOf, extFromMime, IMAGE_EXTENSIONS, MIME_BY_EXT, mimeFromDataUri, mimeFromExt, mimeFromPath, mimeFromRef } from "./mime";
+import { extOf, extensionOf, extFromMime, IMAGE_EXTENSIONS, MIME_BY_EXT, mimeFromDataUri, mimeFromExt, mimeFromPath, mimeFromRef, rasterImageMimeFromBytes } from "./mime";
 
 describe("extOf", () => {
   test("lowercases the extension and ignores a query string", () => {
@@ -106,6 +106,14 @@ describe("mimeFromPath", () => {
 });
 
 describe("the one media table covers everything a picture, clip, sound or font upload can be", () => {
+  test("raster signature detection rejects MIME spoofing", () => {
+    expect(rasterImageMimeFromBytes(Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe("image/png");
+    expect(rasterImageMimeFromBytes(Uint8Array.from([0xff, 0xd8, 0xff]))).toBe("image/jpeg");
+    expect(rasterImageMimeFromBytes(new TextEncoder().encode("GIF89a"))).toBe("image/gif");
+    expect(rasterImageMimeFromBytes(new TextEncoder().encode("RIFF1234WEBP"))).toBe("image/webp");
+    expect(rasterImageMimeFromBytes(new TextEncoder().encode("<svg/>"))).toBeUndefined();
+  });
+
   test.each([
     ["m4a", "audio/mp4"], ["aac", "audio/aac"], ["flac", "audio/flac"], ["mov", "video/quicktime"], ["mkv", "video/x-matroska"],
     ["ttf", "font/ttf"], ["otf", "font/otf"], ["woff", "font/woff"], ["woff2", "font/woff2"], ["css", "text/css"],

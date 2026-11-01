@@ -5,12 +5,17 @@
  * the memory store.
  */
 import type { ChatStore, Message, TurnCheckpoint, WriteGuard } from "../../contracts/chat-store";
+import type { Delta } from "../../../core/scene-state/types";
 import { StudioConflictError } from "../../../studio/errors";
 import { checkGuard, checkProgress, checkTurnResult, checkTurnTarget } from "../chat-rules";
 import { continuedGeneration } from "../continue-rules";
 import { checkRerun, traceWithRerun } from "../final-cut-rules";
 import { publicMessage, type ChatRecord, type MessageRecord } from "./chat-records";
 import type { MemoryState } from "./chat-store-state";
+import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import { requireCommitResource } from "../extension-commit-access";
+import { checkExtensionDeltas } from "../scene-state-rules";
+import { extensionTurnOwnerOf, sameExtensionTurnOwner } from "../extension-turn-owner";
 
 export interface TurnDeps {
   clock: () => number;
@@ -23,14 +28,15 @@ export interface TurnDeps {
   bump: (branchId: string) => void;
   appendMany: (branchId: string, inputs: unknown, guard: WriteGuard | undefined) => Message[] | null;
   state: Pick<MemoryState, "stamp" | "refresh">;
+  authorizeExtensionCommit(context: ExtensionCommitContext): void;
 }
 
 type TurnMethods = Pick<
   ChatStore,
-  "swipeTrace" | "appendFinalCutRerun" | "beginTurn" | "saveCheckpoint" | "commitTurn" | "dropTurn" | "resumeIncomplete" | "lastRequest"
+  "swipeTrace" | "appendFinalCutRerun" | "beginTurn" | "saveCheckpoint" | "appendPendingExtensionDeltas" | "commitTurn" | "dropTurn" | "resumeIncomplete" | "lastRequest"
 >;
 
-export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: string): boolean } {
+export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: string): boolean; branchTurnOpen(branchId: string): boolean } {
   const checkpoints = new Map<string, TurnCheckpoint>();
   /** The branch's latest committed reply's request text (rule 22); replaced whole on each commit. */
   const lastRequestOf = new Map<string, { messageId: string; swipeId: string; texts: string[] }>();
@@ -39,10 +45,10 @@ export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: strin
     const c = checkpoints.get(turnId);
     return c && d.liveChatOfBranch(c.branchId) ? c : null;
   };
-
   return {
     /** Whether a live take of the chat has an open checkpoint (rule 26). */
     turnOpen: (chatId) => [...checkpoints.values()].some((c) => c.chatId === chatId && d.liveChatOfBranch(c.branchId) !== null),
+    branchTurnOpen: (branchId) => [...checkpoints.values()].some((c) => c.branchId === branchId && d.liveChatOfBranch(c.branchId) !== null),
 
     async appendFinalCutRerun(messageId, swipeId, entryRaw) {
       const entry = checkRerun(entryRaw);
@@ -59,7 +65,8 @@ export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: strin
       return trace ? structuredClone(trace) : null;
     },
 
-    async beginTurn(branchId, targetRaw, guard) {
+    async beginTurn(branchId, targetRaw, guard, extensionCommit) {
+      if (extensionCommit) d.authorizeExtensionCommit(extensionCommit);
       const target = checkTurnTarget(targetRaw);
       const expected = checkGuard(guard);
       const record = d.liveChatOfBranch(branchId);
@@ -80,6 +87,7 @@ export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: strin
         kind: target.kind,
         messageId: target.kind === "reply" ? null : target.messageId,
         content: "",
+        ...(extensionCommit ? { extensionOwner: extensionTurnOwnerOf(extensionCommit) } : {}),
         baseVersion: d.branchVersion(branchId),
         startedAt: t,
         savedAt: t,
@@ -88,7 +96,8 @@ export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: strin
       return structuredClone(turn);
     },
 
-    async saveCheckpoint(turnId, progressRaw) {
+    async saveCheckpoint(turnId, progressRaw, extensionCommit) {
+      if (extensionCommit) d.authorizeExtensionCommit(extensionCommit);
       const progress = checkProgress(progressRaw);
       const c = open(turnId);
       if (!c) return null;
@@ -98,18 +107,34 @@ export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: strin
         content: progress.content,
         ...(progress.trace ? { trace: progress.trace } : {}),
         ...(progress.providerRequestId === undefined ? {} : { providerRequestId: progress.providerRequestId }),
-        ...(progress.deltas ? { deltas: progress.deltas } : {}),
+        ...(progress.deltas ? { deltas: [...progress.deltas.filter(({ slot }) => !slot.startsWith("ext:")), ...(c.deltas ?? []).filter(({ slot }) => slot.startsWith("ext:"))] } : {}),
         savedAt: d.clock(),
       };
       checkpoints.set(turnId, next);
       return structuredClone(next);
     },
 
-    async commitTurn(turnId, resultRaw, guard) {
+    async appendPendingExtensionDeltas(turnId, packageId, expectedVersion, deltasRaw, extensionCommit) {
+      d.authorizeExtensionCommit(extensionCommit);
+      if (extensionCommit.operation !== "state.write.apply") throw new Error("extension checkpoint writes require state.write.apply");
+      const c = open(turnId);
+      if (!c || c.baseVersion !== expectedVersion || d.branchVersion(c.branchId) !== expectedVersion) return false;
+      if (c.kind === "continue" || packageId !== extensionCommit.packageId || !sameExtensionTurnOwner(c.extensionOwner, extensionCommit)) return false;
+      requireCommitResource(extensionCommit, { kind: "scene", id: c.chatId }, ["state"]);
+      requireCommitResource(extensionCommit, { kind: "take", id: c.branchId }, ["state"]);
+      const deltas = checkExtensionDeltas([...deltasRaw], packageId);
+      if (deltas.length === 0) throw new Error("pending extension state must include at least one delta");
+      checkpoints.set(turnId, { ...c, deltas: [...(c.deltas ?? []), ...deltas], savedAt: d.clock() });
+      return true;
+    },
+
+    async commitTurn(turnId, resultRaw, guard, extensionCommit) {
+      if (extensionCommit) d.authorizeExtensionCommit(extensionCommit);
       const { content, generation, trace, request } = checkTurnResult(resultRaw);
       const expected = checkGuard(guard);
       const c = open(turnId);
       if (!c) return null;
+      if ((c.deltas ?? []).some(({ slot }) => slot.startsWith("ext:")) && (!extensionCommit || !sameExtensionTurnOwner(c.extensionOwner, extensionCommit))) throw new StudioConflictError("the extension that owns pending state is no longer authorized to commit it");
       let message: MessageRecord;
       if (c.kind === "reply") {
         // appendMany checks the version before it changes anything, so a conflict leaves the checkpoint.
@@ -149,7 +174,8 @@ export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: strin
       return publicMessage(message);
     },
 
-    async dropTurn(turnId) {
+    async dropTurn(turnId, extensionCommit) {
+      if (extensionCommit) d.authorizeExtensionCommit(extensionCommit);
       return open(turnId) !== null && checkpoints.delete(turnId);
     },
 

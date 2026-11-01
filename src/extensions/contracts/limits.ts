@@ -1,0 +1,26 @@
+/** One owner for guest-boundary resource ceilings. */
+export const MAX_VALUE_DEPTH = 24;
+export const MAX_VALUE_BYTES = 256_000;
+export const MAX_VALUE_ITEMS = 20_000;
+export const MAX_KEY_CHARS = 256;
+export const MAX_EXTENSION_PACKAGE_BYTES = 8_000_000;
+export const MAX_SELECTED_FILE_BYTES = 8_000_000;
+export const MAX_EXTENSION_FILE_TRANSFER_BYTES = 180_000;
+export const MAX_EXTENSION_FILE_CHUNK_BYTES = 32_768;
+export const MAX_EXTENSION_FILE_HANDLES = 64;
+export const MAX_EXTENSION_CLIPBOARD_BYTES = 65_536;
+export const MAX_EXTENSION_COMPOSER_DRAFT_BYTES = 16_384;
+export const MAX_EXTENSION_LOG_MESSAGE_BYTES = 1_024;
+export const MAX_EXTENSION_REGEX_PREVIEW_BYTES = 16_384;
+export const MAX_EXTENSION_REGEX_PREVIEW_RULES = 8;
+export const MAX_EXTENSION_LOG_PAGE_SIZE = 50;
+/** Extension turns are capped before each provider send; accounting reserves one unit per UTF-8 request byte plus output token ceiling. */
+export const MAX_EXTENSION_TURN_PROMPT_BYTES = 40_000;
+export const MAX_EXTENSION_TURN_REQUESTS = 3;
+export const MAX_EXTENSION_TURN_OUTPUT_TOKENS = 2_048;
+export const MAX_EXTENSION_TURN_ACCOUNTING_UNITS = MAX_EXTENSION_TURN_PROMPT_BYTES + MAX_EXTENSION_TURN_REQUESTS * MAX_EXTENSION_TURN_OUTPUT_TOKENS;
+export const MAX_EXTENSION_PROMPT_CANDIDATE_BYTES = 4_000;
+export const MAX_EXTENSION_PROMPT_TOTAL_BYTES = 16_000;
+export const MAX_EXTENSION_PROMPT_HOOKS = 8;
+export const MAX_EXTENSION_PROMPT_SCENES = 500;
+export const EXTENSION_FILE_HANDLE_TTL_MS = 30 * 60_000;

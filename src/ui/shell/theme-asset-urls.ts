@@ -19,17 +19,20 @@ const defaults: ThemeAssetUrlDeps = {
   revokeUrl: (url) => URL.revokeObjectURL(url),
 };
 
-async function readFile(response: Response, { digest, mediaType }: ThemeFileRef & { mediaType: string }): Promise<Uint8Array> {
+export async function readThemeAssetResponse(response: Response, file: { digest: string; mediaType: string }, signal?: AbortSignal): Promise<Uint8Array> {
+  const { digest, mediaType } = file;
   const cap = mediaType === "image/svg+xml" ? MAX_SVG_BYTES : MAX_BYTES;
   if (!response.ok || (response.headers.get("content-type") ?? "").split(";")[0]!.trim().toLowerCase() !== mediaType) throw new Error("theme asset response refused");
   if (!response.body) throw new Error("theme asset body unavailable");
-  const read = await readStreamCapped(response.body, cap);
+  const read = await readStreamCapped(response.body, cap, { signal });
   if (!read.ok) throw read.reason === "too-large" ? new Error("theme asset exceeds its bound") : read.error;
   const bytes = read.bytes;
   if (mediaType === "image/svg+xml" && !isInertSvg(new TextDecoder("utf-8", { fatal: true }).decode(bytes))) throw new Error("theme asset is not inert SVG");
   if (!isSha256Hex(digest) || sha256HexBytes(bytes) !== digest) throw new Error("theme asset digest mismatch");
   return bytes;
 }
+
+const readFile = (response: Response, file: ThemeFileRef & { mediaType: string }): Promise<Uint8Array> => readThemeAssetResponse(response, file);
 
 export function createThemeAssetUrls(deps: Partial<ThemeAssetUrlDeps> = {}) {
   const io = { ...defaults, ...deps };

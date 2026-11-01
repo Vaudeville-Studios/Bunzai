@@ -1,99 +1,155 @@
 /** Theme HTTP reads, example export and revision-only cross-client polling. */
 import { describe, expect, test } from "bun:test";
 import { memoryStateStore } from "../stage/store/memory/state-store";
-import { createThemeLifecycle } from "../extensions/theme-lifecycle";
 import type { ThemePackageInput } from "../extensions/theme-contract";
-import { fixtureThemePackage } from "../extensions/theme-test-fixture";
-import { DEFAULT_STUDIO_THEME } from "../studio/settings-shape";
-import { createThemeRouteOwner, createThemeService, handleThemeReadRoutes, handleThemeRoutes } from "./server-theme-extensions";
+import { createThemeRouteOwner, handleThemeReadRoutes } from "./server-theme-extensions";
+import { memoryExtensionStore } from "../stage/store/memory/extension-store";
+import { createExtensionService } from "../extensions/runtime/service";
+import { adaptBundledThemePackage, adaptLegacyThemePackage } from "../extensions/contracts/package-validation";
+import { extensionPackageSchema } from "../extensions/contracts/package";
+import { themeInventory } from "../extensions/theme-inventory";
+import { digestJson } from "../extensions/contracts/value";
+import { THEME_BASE_SCOPES } from "../extensions/theme-appearance";
+import { err, json } from "./server-security";
 
-const pkg = (id: string): Promise<ThemePackageInput> => fixtureThemePackage(id, id, "CC0 test license");
 const settings = { read: async () => ({ theme: "theater" }) } as never;
 const request = (path: string): [Request, URL] => {
   const url = new URL(`http://127.0.0.1${path}`);
   return [new Request(url), url];
 };
+const readThemeRoute = (req: Request, url: URL, reader: Parameters<typeof handleThemeReadRoutes>[2], store: Parameters<typeof handleThemeReadRoutes>[3]) =>
+  handleThemeReadRoutes(req, url, reader, store, { json, error: err });
 
-describe("theme extension read routes", () => {
-  test("one opened StateStore shares one lifecycle between local writers and remote readers", async () => {
-    const state = memoryStateStore();
-    const packaged = { themePackages: {}, exampleThemePackages: {} } as never;
-    expect(createThemeService(state, packaged)).toBe(createThemeService(state, packaged));
-  });
-
-  test("example export returns a cloned, validated complete envelope", async () => {
-    const lifecycle = await createThemeLifecycle(memoryStateStore(), [], [await pkg("bunzai.theme.example")]);
-    const [req, url] = request("/api/themes/examples/bunzai.theme.example/package");
-    const first = await handleThemeRoutes(req, url, lifecycle, settings);
-    expect(first?.status).toBe(200);
-    const envelope = await first!.json() as ThemePackageInput;
-    expect(envelope.licenseText).toBe("CC0 test license");
-    (envelope.manifest as { name: string }).name = "Changed outside lifecycle";
-    const again = await handleThemeRoutes(req, url, lifecycle, settings);
-    expect(((await again!.json()) as ThemePackageInput).manifest).toMatchObject({ name: "bunzai.theme.example" });
-  });
-
-  test("effective theme: a fresh install paints the default, a saved theme is kept", async () => {
-    const lifecycle = await createThemeLifecycle(memoryStateStore(), [await pkg(DEFAULT_STUDIO_THEME), await pkg("theater")]);
-    const [req, url] = request("/api/themes/effective");
-    const themeId = async (saved: unknown): Promise<unknown> => ((await (await handleThemeReadRoutes(req, url, lifecycle, { read: async () => saved } as never))!.json()) as { themeId: string }).themeId;
-    expect(await themeId({})).toBe(DEFAULT_STUDIO_THEME);
-    expect(await themeId({ theme: "theater" })).toBe("theater");
-  });
-
-  test("revision polling exposes only a lifecycle epoch and committed revision", async () => {
-    const lifecycle = await createThemeLifecycle(memoryStateStore(), [await pkg("theater")], [await pkg("bunzai.theme.example")]);
-    const [req, url] = request("/api/themes/revision");
-    const firstResponse = await handleThemeReadRoutes(req, url, lifecycle, settings);
-    expect(firstResponse?.headers.get("cache-control")).toBe("no-store");
-    const first = await firstResponse!.json() as { epoch: string; revision: number };
-    expect(first.epoch).toMatch(/^[a-f0-9]{48}$/);
-    expect(first.revision).toBe(0);
-    expect(Object.keys(first).sort()).toEqual(["epoch", "revision"]);
-    const approval = await lifecycle.inspectExample("bunzai.theme.example");
-    await lifecycle.install(approval.challenge, approval.preview.digest, "approve");
-    const changedResponse = await handleThemeReadRoutes(req, url, lifecycle, settings);
-    const changed = await changedResponse!.json() as { epoch: string; revision: number };
-    expect(changed).toEqual({ epoch: first.epoch, revision: 1 });
-    await lifecycle.disable("bunzai.theme.example");
-    expect((await (await handleThemeReadRoutes(req, url, lifecycle, settings))!.json()).revision).toBe(2);
-    const restarted = await createThemeLifecycle(memoryStateStore(), [await pkg("theater")]);
-    const restartStamp = await (await handleThemeReadRoutes(req, url, restarted, settings))!.json() as { epoch: string; revision: number };
-    expect(restartStamp.revision).toBe(0);
-    expect(restartStamp.epoch).not.toBe(first.epoch);
-  });
-});
-
-describe("GET /api/themes/packages with bad stored state", () => {
+describe("theme route owner refuses the retired StateStore authority", () => {
   const packages = async (state: ReturnType<typeof memoryStateStore>): Promise<Response> => {
     const [req, url] = request("/api/themes/packages");
     return createThemeRouteOwner(undefined, settings)(req, url, state);
   };
 
-  test("a stored row the validator rejects never turns the catalog into a 500", async () => {
+  test("invalid legacy theme state cannot become a second reader or writer", async () => {
     const state = memoryStateStore();
-    const lifecycle = await createThemeService(state);
-    const review = await lifecycle.inspectExample((await lifecycle.examples())[0]!.id);
-    await lifecycle.install(review.challenge, review.preview.digest, "approve");
-    const doc = JSON.parse((await state.read("themeExtensions"))!);
-    const id = Object.keys(doc.entries)[0]!;
-    delete doc.entries[id].input.manifest.appearance.palette;
-    await state.write("themeExtensions", JSON.stringify(doc));
     const res = await packages(state);
-    expect(res.status).toBe(200);
-    const items = await res.json() as { id: string; builtIn: boolean; invalid?: string }[];
-    expect(items.some((i) => i.builtIn)).toBe(true);
-    expect(items.find((i) => i.id === id)?.invalid).toBeString();
+    expect(res.status).toBe(503);
+    expect(await state.read("themeExtensions")).toBeNull();
   });
 
-  test("an unreadable state document still lists the bundled themes with a state error", async () => {
+  test("unreadable legacy theme state stays untouched and is not served", async () => {
     const state = memoryStateStore();
     await state.write("themeExtensions", "{broken");
     const res = await packages(state);
-    expect(res.status).toBe(200);
-    const items = await res.json() as { builtIn: boolean; enabled: boolean; stateError?: string }[];
-    expect(items.length).toBeGreaterThan(0);
-    expect(items.every((i) => i.builtIn && !i.enabled && typeof i.stateError === "string")).toBe(true);
+    expect(res.status).toBe(503);
     expect(await state.read("themeExtensions")).toBe("{broken");
+  });
+
+  test("the route owner resolves the full bundled theme inventory beside executable extension examples", async () => {
+    const store = memoryExtensionStore(() => 1);
+    let sequence = 0;
+    const builtins = await Promise.all((await themeInventory()).map(async (theme) => adaptBundledThemePackage(theme, (theme.manifest as { id: string }).id)));
+    const service = createExtensionService({ store, storeId: "route-theme-fixture", host: "terminal", operations: [], builtinPackages: builtins,
+      now: () => 1, id: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, "0")}` });
+    await service.start();
+    const owner = createThemeRouteOwner(undefined, settings);
+    const [req, url] = request("/api/themes/effective");
+    const reader = { effective: service.themeEffective, asset: service.themeAsset, revisionStamp: service.themeRevision,
+      markBroken: service.themeMarkBroken, confirmHealthy: service.themeConfirmHealthy };
+    const response = await owner(req, url, undefined, reader);
+    expect(response.status).toBe(200);
+    const effective = await response.json() as { themeId: string | null; appearance: unknown };
+    expect(effective.themeId).toBe("theater");
+    expect(effective.appearance).not.toBeNull();
+    expect((await service.list()).filter((item) => item.hostTrusted)).toHaveLength(4);
+    await service.close();
+  });
+
+  test("unified reader mode refuses legacy theme lifecycle writers", async () => {
+    const state = memoryStateStore();
+    const reader = { effective: async () => ({ themeId: null, packageId: null, digest: null, grantedScopes: [], appearance: null, assets: [], fonts: [], styles: null, slots: {} }),
+      asset: async () => null, revisionStamp: () => ({ epoch: "a".repeat(48), revision: 0 }) } as never;
+    const owner = createThemeRouteOwner(undefined, settings);
+    const url = new URL("http://127.0.0.1/api/themes/install");
+    const req = new Request(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ challenge: "legacy" }) });
+    const response = await owner(req, url, state, reader);
+    expect(response.status).toBe(410);
+    expect(await state.read("themeExtensions")).toBeNull();
+  });
+
+  test("theme selection and its asset route resolve from the extension store after install", async () => {
+    const store = memoryExtensionStore(() => 1);
+    let sequence = 0;
+    let selected = "theater";
+    const builtins = await Promise.all((await themeInventory()).map(async (theme) =>
+      adaptBundledThemePackage(theme, (theme.manifest as { id: string }).id)));
+    const service = createExtensionService({ store, storeId: "theme-fixture", host: "terminal", operations: [], builtinPackages: builtins,
+      now: () => 1, id: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, "0")}` });
+    await service.start();
+    const builtin = await service.themeEffective(selected);
+    expect(builtin.packageId).toBe("bunzai.host.theme.theater");
+    expect(await service.list()).toContainEqual(expect.objectContaining({ id: "bunzai.host.theme.theater", hostTrusted: true, enabled: true }));
+
+    const stage = (await themeInventory()).find((theme) => (theme.manifest as { id: string }).id === "stage")!;
+    const legacy = JSON.parse(JSON.stringify(stage)) as ThemePackageInput;
+    (legacy.manifest as { id: string; name: string }).id = "bunzai.theme.encore";
+    (legacy.manifest as { name: string }).name = "Encore";
+    const legacyPackage = await adaptLegacyThemePackage(legacy);
+    const extensionPackage = extensionPackageSchema.parse({ ...legacyPackage,
+      manifest: { ...legacyPackage.manifest, id: "example.runtime-theme", entry: "main.js" },
+      files: { ...legacyPackage.files, "main.js": "bunzai.extension.define({commands:{run:()=>null}});" },
+    });
+    const artifact = { schemaVersion: 1, digest: await digestJson(extensionPackage), package: extensionPackage };
+    const review = await service.preview(artifact);
+    const scopes = extensionPackage.manifest.theme!.requests;
+    const installed = await service.install(review.challenge, [], scopes, review.expectedRevision);
+    await service.enable(installed.id, installed.revision);
+    selected = installed.id;
+
+    const reader = { effective: service.themeEffective, asset: service.themeAsset, revisionStamp: service.themeRevision, markBroken: service.themeMarkBroken, confirmHealthy: service.themeConfirmHealthy };
+    const [effectiveReq, effectiveUrl] = request("/api/themes/effective");
+    const effectiveResponse = await readThemeRoute(effectiveReq, effectiveUrl, reader, { read: async () => ({ theme: selected }) } as never);
+    const effective = await effectiveResponse!.json() as { packageId: string; assets: { id: string; url: string }[] };
+    expect(installed.id).toBe("example.runtime-theme");
+    expect(effective.packageId).toBe(installed.id);
+    expect(effective.assets.length).toBeGreaterThan(0);
+    const asset = effective.assets[0]!;
+    const [assetReq, assetUrl] = request(asset.url);
+    const assetResponse = await readThemeRoute(assetReq, assetUrl, reader, settings);
+    expect(assetResponse?.status).toBe(200);
+    expect(assetResponse?.headers.get("x-content-type-options")).toBe("nosniff");
+    const owner = createThemeRouteOwner(undefined, settings);
+    const brokenUrl = new URL("http://127.0.0.1/api/themes/broken");
+    const brokenRequest = new Request(brokenUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: selected, digest: effective.assets[0]!.url.split("digest=")[1] }) });
+    expect((await owner(brokenRequest, brokenUrl, undefined, reader)).status).toBe(200);
+    expect((await service.themeEffective(selected)).fallbackReason).toBe("disabled");
+    const healthyUrl = new URL("http://127.0.0.1/api/themes/healthy");
+    const healthyRequest = new Request(healthyUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) });
+    expect((await owner(healthyRequest, healthyUrl, undefined, reader)).status).toBe(200);
+    expect((await service.themeEffective(selected)).packageId).toBe(installed.id);
+    await service.close();
+  });
+
+  test("unapproved optional appearance scopes are absent from effective data and asset reads", async () => {
+    const store = memoryExtensionStore(() => 1);
+    let sequence = 0;
+    const stage = (await themeInventory()).find((theme) => (theme.manifest as { id: string }).id === "stage")!;
+    const legacy = JSON.parse(JSON.stringify(stage)) as ThemePackageInput;
+    (legacy.manifest as { id: string; name: string }).id = "bunzai.theme.partial";
+    (legacy.manifest as { name: string }).name = "Partial";
+    const adapted = await adaptLegacyThemePackage(legacy);
+    const input = extensionPackageSchema.parse({ ...adapted, manifest: { ...adapted.manifest, id: "example.partial-theme", entry: "main.js" },
+      files: { ...adapted.files, "main.js": "bunzai.extension.define({commands:{}});" } });
+    const service = createExtensionService({ store, storeId: "partial-theme-fixture", host: "terminal", operations: [],
+      now: () => 1, id: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, "0")}` });
+    await service.start();
+    const preview = await service.preview({ schemaVersion: 1, digest: await digestJson(input), package: input });
+    const installed = await service.install(preview.challenge, [], [...THEME_BASE_SCOPES], preview.expectedRevision);
+    await service.enable(installed.id, installed.revision);
+    const effective = await service.themeEffective(installed.id);
+    expect(effective.grantedScopes).toEqual([...THEME_BASE_SCOPES].sort());
+    expect(effective.assets).toEqual([]);
+    expect(effective.fonts).toEqual([]);
+    expect(effective.styles).toBeNull();
+    expect(effective.slots).toEqual({});
+    expect(effective.appearance?.marks).toEqual({});
+    expect(await service.themeAsset(installed.id, preview.package.manifest.theme!.assets[0]!.id, effective.digest!)).toBeNull();
+    await service.close();
   });
 });

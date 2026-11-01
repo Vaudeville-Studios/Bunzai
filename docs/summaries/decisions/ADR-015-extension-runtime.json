@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "docId": "decisions/ADR-015-extension-runtime",
+  "sourcePath": "docs/decisions/ADR-015-extension-runtime.md",
+  "sourceHash": "sha256:3ed11e9758fa7bb370e25ddf9fdaee2f5b1f3466841f9d5bb59d62330b9293e9",
+  "summary": "ADR-015 amends ADR-012 to permit one brokered macros.preview call from a user-invoked, manifest-declared command. Each request requires fresh host confirmation; the bounded sample and explicit value context are shown without evaluation, then the existing closed-world evaluator runs once with read-only state and regex disabled. The handler has no persistence, provider, nested broker or host-service access. Broker-path, static Pages Browser and real QuickJS/TUI Terminal evidence cover the narrow caller on those hosts; packaged WebView behavior and broader runtime or release readiness remain unverified.",
+  "topics": [
+    "macro preview",
+    "fresh host confirmation",
+    "bounded read-only context",
+    "three-host evidence",
+    "release limits"
+  ],
+  "sections": [
+    {
+      "slug": "amendment-to-adr-012-decision-4",
+      "title": "Amendment to ADR-012 Decision 4",
+      "level": 2,
+      "sourceHash": "sha256:8dad97094ba922f8bfe11eac678b333208968ed03f366d5e11e85b6a6b51c8cc",
+      "summary": "The amendment admits a fifth caller for the existing macro interpreter: an explicitly invoked manifest command calling macros.preview through the broker. The host reviews the bounded sample and supplied values before execution, and the handler evaluates only after approval, once, with read-only mode and regex disabled. It returns bounded rendered text and sanitized diagnostics without persisting state or invoking another capability.",
+      "topics": [
+        "command invocation",
+        "pre-execution review",
+        "one evaluator call",
+        "no persistence"
+      ],
+      "children": []
+    },
+    {
+      "slug": "acceptance-evidence-and-limits",
+      "title": "Acceptance evidence and limits",
+      "level": 2,
+      "sourceHash": "sha256:9a79a84baa8a0dcb152bd43808c2a4a64b647376a3d458f78a585a1373a043e8",
+      "summary": "Independent review accepted the narrow boundary. A broker-path test proves event activation is rejected, denial invokes the evaluator zero times, and approval invokes it once. The Desktop broker path, static Pages Browser probe and Terminal QuickJS/TUI path have been exercised. Those checks do not establish packaged WebView behavior, general host parity, package release readiness or completion of the extension runtime plan.",
+      "topics": [
+        "independent review",
+        "broker evidence",
+        "Pages Browser",
+        "Terminal TUI",
+        "unverified packaging"
+      ],
+      "children": []
+    }
+  ]
+}

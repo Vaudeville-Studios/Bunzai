@@ -14,6 +14,7 @@
 import type { StateKey, StateStore } from "../stage/contracts/state-store";
 import { libraryStateFor, requireState } from "./library-content";
 import { serializer } from "./serial";
+import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
 
 export interface StateDocument<T> {
   /** Runs `fn` through the one write queue for this document, so edits cannot interleave. */
@@ -21,8 +22,10 @@ export interface StateDocument<T> {
   /** The parsed document, `empty` when no file exists yet, or `onCorrupt()`'s result (or throw) when
    *  a present file failed to parse. Any OTHER failure (locked, damaged, busy) propagates as itself. */
   read(): Promise<T>;
+  readVersioned(): Promise<{ value: T; revision: number }>;
   /** Writes the document, pretty-printed, and returns it unchanged. */
   write(next: T): Promise<T>;
+  compareAndWrite(next: T, expectedRevision: number, context: ExtensionCommitContext): Promise<"saved" | "stale">;
 }
 
 /** One document under `key` in the library's state, opened lazily via `dir` on every call (none open
@@ -49,9 +52,23 @@ export function stateDocument<T>(
         return onCorrupt();
       }
     },
+    async readVersioned(): Promise<{ value: T; revision: number }> {
+      const source = state();
+      const result = source.readVersioned ? await source.readVersioned(key) : { text: await source.read(key), revision: 0 };
+      if (result.text === null) return { value: empty, revision: -1 };
+      try { return { value: parse(JSON.parse(result.text)), revision: result.revision }; }
+      catch { return { value: onCorrupt(), revision: result.revision }; }
+    },
     async write(next: T): Promise<T> {
       await state().write(key, JSON.stringify(next, null, 2));
       return next;
+    },
+    async compareAndWrite(next: T, expectedRevision: number, context: ExtensionCommitContext): Promise<"saved" | "stale"> {
+      const normalized = parse(next);
+      const source = state();
+      const compareAndWrite = source.compareAndWrite;
+      if (!compareAndWrite) throw new Error("revisioned extension state commits are unavailable");
+      return compareAndWrite.call(source, key, JSON.stringify(normalized, null, 2), expectedRevision, context);
     },
   };
 }

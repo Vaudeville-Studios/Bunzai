@@ -10,6 +10,7 @@ import { isSurfaceId, isSurfaceVariant, SURFACES, type SurfaceId, type SurfaceVa
 
 export const THEME_SCOPES = ["appearance.palette", "appearance.type", "appearance.shape", "appearance.surfaces", "appearance.accent", "appearance.assets", "appearance.styles", "appearance.fonts", "ui.slots"] as const;
 export type ThemeScope = (typeof THEME_SCOPES)[number];
+export const THEME_BASE_SCOPES = ["appearance.palette", "appearance.type", "appearance.shape", "appearance.surfaces", "appearance.accent"] as const satisfies readonly ThemeScope[];
 /** What a package ships beyond the descriptor; each optional power derives its own scope from the fields used. */
 export interface ThemeUse { assets: number; fonts: number; styles: boolean; slots: number }
 /** The descriptor's fields are all required, so its scopes are always derived; assets, fonts, styles and slots only when shipped. */

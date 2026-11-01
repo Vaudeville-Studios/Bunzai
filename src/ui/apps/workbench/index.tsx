@@ -37,6 +37,7 @@ import { icSvg } from "../../_shared/ic-svg";
 import { NodesView } from "./nodes/NodesView";
 import { ViewSwitch } from "./nodes/ViewSwitch";
 import { PREF_VIEW, parseView, type View } from "./nodes/canvas-state";
+import { HostCommandMenu } from "../../extensions/host-command-menu";
 
 const RECENTS_SHOWN = 14; // how many "bring one up" cards the rail offers at most
 const PREF_RAIL_OPEN = "workbench.recentsOpen"; // collapse survives sessions; only explicit false closes
@@ -336,6 +337,11 @@ function WorkbenchRoom({ ctx }: { ctx: AppContext }): JSX.Element {
           })}
         </div>
       </div>
+      <HostCommandMenu
+        api={ctx.api.extensions}
+        resources={active ? [{ kind: active.kind, id: active.id }] : []}
+        onActivate={(packageId, commandId, input, resources) => ctx.api.extensions.activate(packageId, "command", commandId, input, { resources: [...resources] })}
+      />
       {/* the rail is an empty-bench amenity: while a piece is open, even its folded label is a
           dead row - it vanishes entirely and returns when the bench clears */}
       {/* Nodes view keeps the rail: it is how more pieces come onto the canvas */}

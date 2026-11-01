@@ -10,6 +10,10 @@ import { CORE_THEME_APPEARANCE, initialTheme, paintTheme, readEffectiveTheme } f
 import { removeMod } from "./theme-mod";
 import { effectiveThemeLabel } from "./status-bar-label";
 import { DEFAULT_STUDIO_THEME } from "../../studio/settings-shape";
+import { STUDIO_THEMES, studioThemePackageId } from "../../studio/settings-shape";
+import { memoryExtensionStore } from "../../stage/store/memory/extension-store";
+import { createExtensionService } from "../../extensions/runtime/service";
+import { adaptBundledThemePackage } from "../../extensions/contracts/package-validation";
 import { THEME_PROPERTY_NAMES } from "./theme-tokens";
 
 let installed: InstalledDom;
@@ -22,12 +26,15 @@ const previews = Object.fromEntries(await Promise.all(inputs.map(async (i) => {
   const id = (i.manifest as { id: string }).id;
   return [id, await inspectThemePackage(i, id.startsWith("bunzai.") ? undefined : id)] as const;
 })));
-const active = (id = "paper") => ({
-  themeId: id, packageId: id, digest: "a".repeat(64), grantedScopes: deriveThemeScopes({ assets: previews[id]!.assets.length, fonts: 0, styles: false, slots: 0 }),
+const active = (id = "paper") => {
+  const packageId = studioThemePackageId(id) ?? id;
+  return {
+  themeId: id, packageId, digest: "a".repeat(64), grantedScopes: deriveThemeScopes({ assets: previews[id]!.assets.length, fonts: 0, styles: false, slots: 0 }),
   appearance: JSON.parse(JSON.stringify(previews[id]!.appearance)),
   fonts: [] as unknown[], styles: null, slots: {},
-  assets: previews[id]!.assets.map((a) => ({ id: a.id, digest: a.digest, mediaType: a.mediaType, url: `/api/themes/assets/${id}/${a.id}?digest=${"a".repeat(64)}` })) as unknown[],
-});
+  assets: previews[id]!.assets.map((a) => ({ id: a.id, digest: a.digest, mediaType: a.mediaType, url: `/api/themes/assets/${packageId}/${a.id}?digest=${"a".repeat(64)}` })) as unknown[],
+};
+};
 const rootEl = (): HTMLElement => document.documentElement;
 const prop = (name: string): string => rootEl().style.getPropertyValue(name);
 
@@ -37,6 +44,25 @@ test("no cache is read; absent or invalid settings take the default theme and a 
   for (const saved of ["theater", "paper", "stage"] as const) expect(initialTheme(saved)).toBe(saved);
   expect(initialTheme("invalid")).toBe(DEFAULT_STUDIO_THEME);
   expect(localStorage.getItem("vaude.theme")).toBeNull();
+});
+
+test("all bundled appearance aliases resolve to their trusted package IDs at the renderer boundary", async () => {
+  const inventory = await themeInventory();
+  const builtins = await Promise.all(inventory.map((theme) => adaptBundledThemePackage(theme, (theme.manifest as { id: string }).id)));
+  let sequence = 0;
+  const service = createExtensionService({ store: memoryExtensionStore(() => 1), storeId: "renderer-builtins", host: "terminal", operations: [], builtinPackages: builtins,
+    now: () => 1, id: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, "0")}` });
+  await service.start();
+  try {
+    for (const alias of STUDIO_THEMES) {
+      const effective = await service.themeEffective(alias);
+      const read = readEffectiveTheme(JSON.parse(JSON.stringify(effective)));
+      expect(read, alias).not.toBeNull();
+      expect(read!.themeId).toBe(alias);
+      expect(read!.packageId).toBe(studioThemePackageId(alias));
+      for (const asset of [...read!.assets, ...read!.fonts]) expect(new URL(asset.url, location.origin).pathname).toContain(encodeURIComponent(read!.packageId!));
+    }
+  } finally { await service.close(); }
 });
 
 test("the status label follows the verified appearance rather than the old setting shape", () => {
@@ -67,7 +93,7 @@ test("the renderer accepts bounded package IDs and refuses a tampered appearance
   expect(readEffectiveTheme(extra)).toBeNull();
   expect(readEffectiveTheme({ ...active(), assets: [{ id: "x", digest: "a".repeat(64), url: "https://elsewhere/x.svg" }] })).toBeNull();
   expect(readEffectiveTheme({ ...active(), assets: [{ id: "x", digest: "a".repeat(64), url: "/secret" }] })).toBeNull();
-  const asset = { id: "x", digest: "b".repeat(64), mediaType: "image/svg+xml", url: `/api/themes/assets/paper/x?digest=${"a".repeat(64)}` };
+  const asset = { id: "x", digest: "b".repeat(64), mediaType: "image/svg+xml", url: `/api/themes/assets/${studioThemePackageId("paper")}/x?digest=${"a".repeat(64)}` };
   const marked = active();
   marked.appearance.marks.dock = "x";
   expect(readEffectiveTheme({ ...marked, grantedScopes: deriveThemeScopes({ assets: 1, fonts: 0, styles: false, slots: 0 }), assets: [asset] })).not.toBeNull();

@@ -10,7 +10,7 @@ import type { PersonaBody } from "../entities/persona/schema";
 import type { Chat, ChatOpening, ChatProps, ChatStore, JsonObject } from "../stage/contracts/chat-store";
 import type { SettingsStoreLike, StudioStoreLike } from "../studio/contracts";
 import { libraryChatsFor, libraryFor, libraryStateFor } from "../studio/library-content";
-import { createCoreSceneSession, reconcileCoreScene, sendCoreScene } from "../studio/core-scene";
+import { INCOMPLETE_CORE_SCENE_MESSAGE, reconcileCoreScene, resolveCoreScene } from "../studio/core-scene";
 import { lorebookReader, resolveBooks, type ReadLorebook } from "../studio/scene-lore";
 import { presetReader } from "../studio/scene-turn-load";
 import { StudioLockedError } from "../studio/errors";
@@ -39,8 +39,6 @@ import {
   sceneSwipe,
   swipeHistoryOf,
   sceneTrash,
-  sendToScene,
-  startSceneWithNotes,
   switchTake,
   updateSceneCard,
   type OpenScene,
@@ -73,6 +71,7 @@ import { handleForecastRoute } from "./server-chats-forecast";
 import { handleLinkedRoute } from "./server-chats-links";
 import { handleTurnRoute } from "./server-chats-turn";
 import { handleCoreSettings, handleCoreRead } from "./server-chats-core-settings";
+import { handleCoreChatWrite } from "./server-chats-core-write";
 import { compendiumDepsFor, compendiumDepsOf, handleCompendiumRoute } from "./server-chats-compendium";
 import { filingsOfVersion, filingsUnderCut, undoWithCut } from "../studio/compendium-hooks";
 import { busy } from "../studio/compendium-queue";
@@ -252,35 +251,6 @@ const WRITES: Record<string, (chats: ChatStore, store: StudioStoreLike, b: Body,
     const take = await chats.restoreBranch(str(b["id"]));
     return take ? json(take) : err("the Trash no longer holds that take", 404);
   },
-  "/api/chats/start": async (chats, store, b, settings) => {
-    const { chat, notes } = await startSceneWithNotes(chats, store, settings, str(b["characterId"]));
-    const records = libraryFor(store.studioPath())?.core;
-    if (records) await createCoreSceneSession(chats, records, store.studioPath(), chat.id);
-    return json(notes.length ? { ...chat, startNotes: notes } : chat);
-  },
-
-  "/api/chats/send": async (chats, store, b) => {
-    const { greetingIndex, expectedVersion } = b;
-    if (typeof greetingIndex !== "number" || typeof expectedVersion !== "number" || typeof b["content"] !== "string") return err("expected { chatId, content, greetingIndex, expectedVersion }");
-    const chatId = str(b["chatId"]);
-    const records = libraryFor(store.studioPath())?.core;
-    const core = records ? await records.sceneFor(chatId) : null;
-    if (core) {
-      const chat = await chats.getChat(chatId);
-      if (!chat || chat.activeBranchId !== core.branchId) return err("this take is not connected to rp-core yet", 409);
-      const branch = (await chats.listBranches(chatId)).find((take) => take.id === core.branchId);
-      if (branch?.version !== expectedVersion) return err("the scene changed; reload it and try again", 409);
-      if (!str(b["content"]).trim()) return err("a message needs some text");
-      if (await chats.countMessages(core.branchId) === 0) {
-        const snapshot = await chats.castSnapshot(chatId);
-        const greetings = snapshot ? greetingsOf(snapshot.character) : [];
-        if (greetings.length > 0 && (!Number.isInteger(greetingIndex) || !greetings[greetingIndex])) return err("that greeting does not exist");
-      }
-    }
-    if (records && core) await sendCoreScene(chats, chatId, records, store.studioPath(), core.sessionId, str(b["content"]), greetingIndex);
-    const sent = await sendToScene(chats, store, { chatId, content: str(b["content"]), greetingIndex, expectedVersion });
-    return scene(sent && core ? { ...sent, core: true } : sent);
-  },
   "/api/chats/edit": async (chats, _store, b) => {
     const { content, expectedVersion } = b;
     if (typeof content !== "string" || content.trim() === "" || typeof expectedVersion !== "number") return err("expected { messageId, swipeId, content, expectedVersion } with some text");
@@ -325,7 +295,7 @@ const WRITES: Record<string, (chats: ChatStore, store: StudioStoreLike, b: Body,
   },
 };
 
-async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLike, settings: SettingsStoreLike, session = ""): Promise<Response> {
+async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLike, settings: SettingsStoreLike, session = "", dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: import("../stage/contracts/provider").ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasPromptContributors?: (sceneId: string) => Promise<boolean>): Promise<Response> {
   const p = url.pathname;
   try {
     const chats = requireChats(libraryChatsFor(store.studioPath()));
@@ -335,7 +305,7 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
     const readLorebook = lorebookReader(store);
     const filingDeps = compendiumDepsFor(chats, state, store);
     if (req.method === "GET") {
-      const turn = await handleTurnRoute(req, url, chats, state, readPreset, readLorebook, null);
+      const turn = await handleTurnRoute(req, url, chats, state, readPreset, readLorebook, null, store, filingDeps, settings, dispatchExtensionEvent, applyExtensionPrompts, hasPromptContributors);
       if (turn) return turn;
       const filing = await handleCompendiumRoute(req, url, chats, filingDeps, null);
       if (filing) return filing;
@@ -356,7 +326,9 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
       if (p === "/api/chats/open") {
         const id = url.searchParams.get("id") ?? "";
         const records = libraryFor(store.studioPath())?.core;
-        const core = records ? await records.sceneFor(id) : null;
+        const resolvedCore = records ? await resolveCoreScene(records, id) : null;
+        if (resolvedCore?.incomplete) return err(INCOMPLETE_CORE_SCENE_MESSAGE, 409);
+        const core = resolvedCore?.link ?? null;
         if (records && core) await reconcileCoreScene(chats, id, core.branchId, records, store.studioPath(), core.sessionId);
         else await resumeScene(sceneRuntimeFor(chats), chats, id);
 
@@ -451,10 +423,10 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
     const b = await body(req);
     if (b instanceof Response) return b;
     const records = libraryFor(store.studioPath())?.core;
-    if (p === "/api/chats/core-settings") return handleCoreSettings(b, chats, records, store.studioPath());
     const refusal = await coreWriteGuard(p, b, records);
     if (refusal) return refusal;
-    const turn = await handleTurnRoute(req, url, chats, state, readPreset, readLorebook, b, store, filingDeps, settings);
+    if (p === "/api/chats/core-settings") return handleCoreSettings(b, chats, records, store.studioPath());
+    const turn = await handleTurnRoute(req, url, chats, state, readPreset, readLorebook, b, store, filingDeps, settings, dispatchExtensionEvent, applyExtensionPrompts, hasPromptContributors);
     if (turn) return turn;
     const filing = await handleCompendiumRoute(req, url, chats, filingDeps, b);
     if (filing) return filing;
@@ -486,6 +458,8 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
     if (compendium) return compendium;
     const loadouts = await handleLoadoutRoute(req, url, chats, state, b);
     if (loadouts) return loadouts;
+    const coreWrite = await handleCoreChatWrite(p, chats, store, settings, b);
+    if (coreWrite) return coreWrite;
     const write = WRITES[p];
     if (!write) return err("not found", 404);
     return await write(chats, store, b, settings, session);
@@ -494,6 +468,6 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
   }
 }
 
-export function handleChatRoute(req: Request, url: URL, store: StudioStoreLike, settings: SettingsStoreLike, session = ""): Promise<Response> {
-  return ownChatRequest(store, () => handleChatRouteOwned(req, url, store, settings, session));
+export function handleChatRoute(req: Request, url: URL, store: StudioStoreLike, settings: SettingsStoreLike, session = "", dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: import("../stage/contracts/provider").ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasPromptContributors?: (sceneId: string) => Promise<boolean>): Promise<Response> {
+  return ownChatRequest(store, () => handleChatRouteOwned(req, url, store, settings, session, dispatchExtensionEvent, applyExtensionPrompts, hasPromptContributors));
 }

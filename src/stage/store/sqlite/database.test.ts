@@ -271,8 +271,12 @@ describe("writers during an exclusive job (a restore)", () => {
     const { Database } = await import("bun:sqlite");
     const other = new Database(path);
     other.run("BEGIN IMMEDIATE"); // the file is busy before any job starts
-    const write = d.patiently(() => d.statement("INSERT INTO t (x) VALUES (1)").run(), 100);
-    await Bun.sleep(30);
+    const firstAttempt = Promise.withResolvers<unknown>();
+    const write = d.patiently(() => {
+      try { return d.statement("INSERT INTO t (x) VALUES (1)").run(); }
+      catch (error) { firstAttempt.resolve(error); throw error; }
+    }, 100);
+    expect(await firstAttempt.promise).toMatchObject({ code: "SQLITE_BUSY" });
     const job = d.exclusive(async () => {
       await Bun.sleep(400);
       other.run("COMMIT");

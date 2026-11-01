@@ -35,10 +35,17 @@ async function shapeFiles(): Promise<string[]> {
     // What a stored reply's generation may hold (a swipe's cell): the one check every store applies.
     "src/stage/store/generation-rules.ts",
     "src/core/canonical.ts",
-    // Where the library lives: the database's migrations, and the pieces, the Studio's own documents,
-    // and Kit's transcripts inside it.
+    // Where the library lives: applied migration ids/names are immutable, and older builds refuse an unknown migration before writing; the pieces, Studio documents, and Kit transcripts live inside this database.
     "src/stage/store/sqlite/migrations.ts",
     "src/stage/store/sqlite/core-record-store.ts",
+    "src/stage/contracts/core-record-store.ts",
+    "src/stage/contracts/core-extension-state.ts",
+    "src/stage/store/sqlite/core-pending-state.ts",
+    "src/stage/store/sqlite/chat-store-core-state.ts",
+    "src/stage/store/sqlite/chat-store-state.ts",
+    "src/stage/store/sqlite/core-record-authority.ts",
+    "src/stage/store/sqlite/core-record-projection.ts",
+    "src/stage/store/sqlite/migration-52-core-projections.ts",
     "src/stage/store/sqlite/migration-18-parts.ts",
     "src/stage/store/sqlite/migration-19-blobs.ts",
     "src/stage/store/sqlite/migration-20-derived.ts",
@@ -79,6 +86,13 @@ async function shapeFiles(): Promise<string[]> {
     "src/stage/store/sqlite/migration-46-dramaturg.ts",
     "src/stage/contracts/dramaturg-types.ts",
     "src/stage/store/dramaturg-rules.ts",
+    // The extension's sealed tables and its turn-checkpoint owner column are persisted versioned shapes.
+    "src/stage/store/sqlite/migration-48-extensions.ts",
+    "src/stage/store/sqlite/migration-49-state-revisions.ts",
+    "src/stage/store/sqlite/migration-50-extension-logs.ts",
+    "src/stage/store/sqlite/migration-51-checkpoint-extension-owner.ts",
+    "src/stage/contracts/extension-turn-owner.ts",
+    "src/stage/store/extension-turn-owner.ts",
     "src/stage/store/settings-patch.ts",
     "src/stage/store/sqlite/document-backend.ts",
     "src/stage/store/sqlite/piece-parts-sql.ts",
@@ -469,11 +483,12 @@ async function shapeFiles(): Promise<string[]> {
 // Existing pieces remain readable. Older builds cannot read new kinds. Final Cut active saved Agents move
 // to canonical pieces with complete original escrow, verified exact identity and revision-guarded edits.
 // Downgrade remains one-way for those new pieces; the existing v0.1.42 storage-change fence covers this release.
-// 2026-10-31: migration 47 adds sealed external rp-core session/entry tables and links.
-// Migrations 1-46 retain their identities; existing scenes stay on the legacy engine.
-// An older build refuses a database at migration 47, as for every unknown migration.
-// The submodule commit and record-store representation pin the new journal format.
-const PINNED_SHAPE_HASH = "0017aaae7db9c9a673f31a83e7bd51c2270ef34885f7c739a60210f64b8c69cd";
+// 2026-10-31: migration 47 adds sealed rp-core journals; extension storage follows at 48-51.
+// Migration 52 adds sealed Core birth, operation, ordinal-state and projection shapes. Migrations
+// 1-51 remain unchanged; older hosts refuse the unknown schema before writing. Root and engine
+// reviewed and approved this exact additive shape.
+// 2026-11-01: COMPATIBLE Core birth fingerprint v2 adds origin coverage; valid v1 rows adopt explicitly, with no migration or stored-column change.
+const PINNED_SHAPE_HASH = "dd80128451656e177f9fc720b6abbfd927ab061fd37fabb7c332ac67c36cb347";
 
 test("storage-shape tripwire: an on-disk shape change must be a deliberate, version-aware act", async () => {
   const h = createHash("sha256");

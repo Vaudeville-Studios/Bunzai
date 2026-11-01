@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "decisions/ADR-015-extension-runtime",
+  "sourcePath": "docs/decisions/ADR-015-extension-runtime.md",
+  "sourceHash": "sha256:3ed11e9758fa7bb370e25ddf9fdaee2f5b1f3466841f9d5bb59d62330b9293e9",
+  "semanticSummaryHash": "sha256:e2f89675d60a75e89622bece84cd61b2f10fa4dadce1bc26faad0b145d1f7050",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Approved for the narrow macro-preview caller decision and source-summary accuracy. Evidence includes the broker fixture and reported static Pages Browser and Terminal QuickJS/TUI paths. This does not approve packaged WebView behavior, the broader runtime, or release readiness.",
+  "reviewedAt": "2026-10-31T12:56:36.107Z"
+}

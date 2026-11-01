@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { deepEq } from "../../../core/guards";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { CapabilityChange } from "../../capabilities";
 import { nonEmptyPatch, nullsToUndefined } from "../../_shared/capability-schemas";
 import type { CanonicalPreset } from "../schema";
@@ -38,6 +39,7 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalPrese
   action: "manage",
   summary: "Add, edit, or remove preset categories while cleaning block and child references.",
   aliases: ["preset category", "prompt group", "remove category"],
+  extensionExposure: { operationId: "content.draft.preset.groups.manage", fields: [{ input: "operation", path: "body.groups" }, { input: "operation", path: "body.prompts" }], hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect" },
   input,
   preview: (entity, { operation: action }) => {
     const body = action.type === "add"

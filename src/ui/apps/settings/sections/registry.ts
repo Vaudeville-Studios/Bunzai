@@ -8,6 +8,7 @@ import about from "./about";
 import appearance from "./appearance";
 import backups from "./backups";
 import connections from "./connections";
+import extensions from "./extensions";
 import memory from "./memory";
 import models from "./models";
 import remoteAccess from "./remote-access";
@@ -17,7 +18,7 @@ import studio from "./studio";
 import updates from "./updates";
 import workbench from "./workbench";
 
-const SECTIONS: SettingsSection[] = [appearance, models, connections, spotify, studio, security, backups, workbench, memory, remoteAccess, updates, about];
+const SECTIONS: SettingsSection[] = [appearance, extensions, models, connections, spotify, studio, security, backups, workbench, memory, remoteAccess, updates, about];
 
 const actIndex = (section: SettingsSection): number => SETTINGS_ACTS.findIndex((act) => act.id === section.act);
 

@@ -2,10 +2,11 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import {
-  appDataWriteOutsideHome, compiledBuildOutsideHome, isLuaResourceLimitErrorOutsideHome,
+  compiledBuildOutsideHome, isLuaResourceLimitErrorOutsideHome,
   openInBrowserOutsideHome, providerFetchHarnessCopyOutsideHome, readJsonCappedOutsideHome,
   sharedHomeDeclarationOutsideHome, testCipherOutsideHome, transportHelperOutsideHome,
 } from "./single-source-core";
+import { appDataWriteOutsideHome } from "./single-source-storage-rules";
 import { walk } from "./walk";
 import { callsNamed, functionBody } from "./single-source-syntax";
 

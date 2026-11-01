@@ -4,6 +4,7 @@ import type { CellCipher } from "../../crypto/cell-cipher";
 import { DamagedDataError } from "../../damaged-data-error";
 import type { StageDatabase } from "./database";
 import { appendPieceChange } from "./piece-change-journal";
+import { requireExtensionCommit } from "./extension-commit-guard";
 
 export function documentMoveMethods(
   database: StageDatabase,
@@ -13,9 +14,10 @@ export function documentMoveMethods(
 ): Pick<DocumentBackend, "bury" | "unbury"> {
   const { statement } = database;
   return {
-    async bury(kind, id, graveId, deletedAt, capture, expectedRevision) {
+    async bury(kind, id, graveId, deletedAt, capture, expectedRevision, extensionCommit) {
       const docKey = key(kind, id);
       return database.transaction(() => {
+        if (extensionCommit) requireExtensionCommit(database, cipher, extensionCommit);
         const live = statement("SELECT id_cell,revision,version,write_id FROM documents WHERE kind=? AND id=?").get(kind, docKey) as { id_cell: string; revision: string; version: number; write_id: number } | null;
         if (!live) return false;
         if (expectedRevision !== undefined && cipher.open("documents.revision", live.revision) !== expectedRevision) return false;
@@ -48,8 +50,9 @@ export function documentMoveMethods(
       });
     },
 
-    async unbury(graveId) {
+    async unbury(graveId, extensionCommit) {
       return database.transaction(() => {
+        if (extensionCommit) requireExtensionCommit(database, cipher, extensionCommit);
         const grave = statement("SELECT kind,id,id_cell,revision,version,write_id FROM document_graves WHERE grave_id = ?").get(graveId) as
           { kind: string; id: string; id_cell: string; revision: string; version: number; write_id: number } | null;
         if (!grave) return false;

@@ -3,6 +3,7 @@
  */
 import { z } from "zod";
 import { defineContentCapability } from "../../_shared/define-content-capability";
+import { CONTENT_DRAFT_HOSTS } from "../../capabilities/types";
 import type { CanonicalLorebook } from "../schema";
 import { updateLorebookSettings } from "./operations";
 import {
@@ -43,6 +44,11 @@ const capability = defineContentCapability<z.infer<typeof input>, CanonicalLoreb
   action: "update",
   summary: "Change portable lorebook settings such as its name, matching defaults, or budget.",
   aliases: ["edit lorebook", "change book settings", "rename lorebook"],
+  extensionExposure: {
+    operationId: "content.draft.lorebook.settings.update",
+    fields: Object.keys(settingsPatchSchema.shape).map((key) => ({ input: `patch.${key}`, path: `body.${key}` })),
+    hosts: CONTENT_DRAFT_HOSTS, budget: "write", confirmation: "effect",
+  },
   input,
   preview(entity, { patch }) {
     const before = lorebookBody(entity);

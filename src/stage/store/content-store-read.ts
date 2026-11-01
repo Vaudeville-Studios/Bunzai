@@ -7,6 +7,7 @@ import type { DocumentBackend, DocumentRow, EntityKind, PartText } from "../cont
 import type { PartRecord } from "../../entities/piece-parts";
 import { coldFillParts, ColdReadDamageError } from "./content-store-write";
 import { COLD_READ_LIMIT, coldReadCharge } from "./cold-read-budget";
+import { utf8ByteLength } from "../../shared/utf8";
 
 export type ColdFillResult =
   | { writeId: number; filled: { entity: ParsedCanonicalEntity; parts: PartRecord[] }; valid(): boolean; release(): void }
@@ -49,7 +50,7 @@ export async function readContentEntity(
     if (!snapshot.parts.length) return null;
     let filled: Awaited<ReturnType<typeof coldFillParts>>;
     // The snapshot is held while it decodes, so the decode gets what the budget has left after it, as the worker does.
-    const payloadBytes = (p: PartText) => Buffer.byteLength(p.text, "utf8") + p.blobs.reduce((n, b) => n + (b.payload.kind === "bytes" ? b.payload.bytes.byteLength : Buffer.byteLength(b.payload.text, "utf8")), 0);
+    const payloadBytes = (p: PartText) => utf8ByteLength(p.text) + p.blobs.reduce((n, b) => n + (b.payload.kind === "bytes" ? b.payload.bytes.byteLength : utf8ByteLength(b.payload.text)), 0);
     const snapshotCharge = coldReadCharge(snapshot.parts.reduce((n, p) => n + payloadBytes(p), 0), snapshot.parts.length, snapshot.parts.reduce((n, p) => n + p.blobs.length, 0));
     try { filled = await coldFillParts(snapshot.parts, { charge: COLD_READ_LIMIT - snapshotCharge }, { kind: row.kind, id: row.id }); }
     catch (error) {

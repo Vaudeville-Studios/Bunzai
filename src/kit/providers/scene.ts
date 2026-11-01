@@ -35,7 +35,7 @@ export async function sceneProvider(config: ProviderConfig, signal?: AbortSignal
 }
 
 /** Resolves native capabilities once, alongside the provider that will use them. */
-export async function resolveSceneProvider(config: ProviderConfig, signal?: AbortSignal): Promise<{ provider: Provider; traits?: ModelTraits }> {
+export async function resolveSceneProvider(config: ProviderConfig, signal?: AbortSignal, assertCurrent?: () => Promise<void>): Promise<{ provider: Provider; traits?: ModelTraits }> {
   signal?.throwIfAborted();
   const spoke = (await spokes()).get(config.kind);
   const refusal = sceneRefusal(spoke);
@@ -47,12 +47,12 @@ export async function resolveSceneProvider(config: ProviderConfig, signal?: Abor
   const host = allowedHost(config, spoke);
   if (new URL(baseUrl).host !== host) throw new EgressBlocked(`refused to reach ${new URL(baseUrl).host}; this connection only talks to ${host}.`);
   // A spoke with its own native transport (Ollama's /api/chat) builds it, through the same one-host gate.
-  if (spoke.scene.resolve) return spoke.scene.resolve(config, guardedFetch(host), config.name ?? spoke.label, signal);
+  if (spoke.scene.resolve) return spoke.scene.resolve(config, guardedFetch(host, globalThis.fetch, assertCurrent), config.name ?? spoke.label, signal);
   const customHeaders = config.headers && Object.keys(config.headers).length > 0 ? JSON.stringify(config.headers) : undefined;
   if (spoke.scene.native === "anthropic") {
     return { provider: createAnthropicProvider(
       { id: config.id ?? config.kind, ...(spoke.scene.params ? { params: spoke.scene.params } : {}), ...(config.baseURL ? { baseUrl: config.baseURL } : {}), ...(config.apiKey ? { apiKey: config.apiKey } : {}), ...(customHeaders ? { customHeaders } : {}) },
-      { fetch: guardedFetch(host), label: config.name ?? spoke.label },
+      { fetch: guardedFetch(host, globalThis.fetch, assertCurrent), label: config.name ?? spoke.label },
     ) };
   }
   return { provider: createOpenAICompatibleProvider(
@@ -64,6 +64,6 @@ export async function resolveSceneProvider(config: ProviderConfig, signal?: Abor
       ...(customHeaders ? { customHeaders } : {}),
       ...(spoke.scene.support ? { support: spoke.scene.support } : {}),
     },
-    { fetch: guardedFetch(host), label: config.name ?? spoke.label },
+    { fetch: guardedFetch(host, globalThis.fetch, assertCurrent), label: config.name ?? spoke.label },
   ) };
 }

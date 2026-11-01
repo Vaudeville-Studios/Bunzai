@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "decisions/ADR-016-extension-command-and-prompt-hooks",
+  "sourcePath": "docs/decisions/ADR-016-extension-command-and-prompt-hooks.md",
+  "sourceHash": "sha256:d4f03950654ba3532eff0ebf025f94af72c12760e8d95bb746af9280122d471d",
+  "semanticSummaryHash": "sha256:b710a1dcce0ea1ae9383c40b38e6083409c706a23983fb5c304bdb4b046c1e35",
+  "verdict": "APPROVE",
+  "reviewer": "root",
+  "notes": "Root independently approved documentation-summary accuracy for source SHA-256 d4f03950654ba3532eff0ebf025f94af72c12760e8d95bb746af9280122d471d. This approval covers documentation accuracy only, not security or release readiness.",
+  "reviewedAt": "2026-10-31T13:40:01.686Z"
+}

@@ -26,6 +26,8 @@ import { readVault } from "./providers/vault";
 import { APP_VERSION } from "../version";
 import { scheduleFsWatch, watchStudio, type StudioWatchSource } from "./watch/watcher";
 import { LAUNCH_USAGE, parseLaunchArgs } from "./launch-args";
+import { createTerminalExtensionRuntime, readTerminalQuickJsWasm, type TerminalExtensionRuntime } from "./extensions/owner";
+import { toErrorMessage } from "../error-message";
 
 async function main(): Promise<void> {
   // BEFORE ANY OF THE STUDIO IS READ. --help must answer instantly rather than after a walk of
@@ -72,7 +74,19 @@ async function main(): Promise<void> {
    * right: the session never imports render.
    */
   const railCell: { read: () => RailSnapshot | null } = { read: () => null };
-  const session = await createSession(bridge, () => railCell.read());
+  let extensionRuntime: TerminalExtensionRuntime | undefined;
+  if (library?.state === "unlocked") {
+    try {
+      if (!library.stateStore) throw new Error("the opened library has no state store");
+      extensionRuntime = await createTerminalExtensionRuntime({
+        store: library.extensionStore, content: library.content, stateStore: library.stateStore, chats: library.chats, storeId: bridge.studioDir,
+        wasmBinary: await readTerminalQuickJsWasm(),
+      });
+    } catch (error) {
+      console.error(`kit: extension runtime unavailable: ${toErrorMessage(error)}`);
+    }
+  }
+  const session = await createSession(bridge, () => railCell.read(), undefined, extensionRuntime);
   const commands = await discoverCommands();
   const doctorChecks = await discoverDoctorChecks();
   const diagnose = (): ReturnType<typeof runDoctor> =>
@@ -126,11 +140,18 @@ async function main(): Promise<void> {
       useKittyKeyboard: { disambiguate: true, alternateKeys: true },
     });
     const root = createRoot(renderer);
+    let quitting = false;
     const quit = (): void => {
+      if (quitting) return;
+      quitting = true;
       root.unmount();
       renderer.destroy();
       restoreTerminalBackground(process.stdout);
-      process.exit(0);
+      void (async () => {
+        await extensionRuntime?.close();
+        await library?.close();
+        process.exit(0);
+      })();
     };
 
     root.render(
@@ -155,12 +176,14 @@ async function main(): Promise<void> {
       setTimeout(quit, 500);
     }
   } catch (error) {
+    await extensionRuntime?.close();
+    await library?.close();
     restoreTerminalBackground(process.stdout);
     throw error;
   }
 }
 
 void main().catch((error) => {
-  console.error("kit: failed to start", error);
+  console.error("kit: failed to start", toErrorMessage(error));
   process.exit(1);
 });

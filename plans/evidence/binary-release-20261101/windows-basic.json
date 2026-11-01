@@ -1,0 +1,78 @@
+{
+  "source": "9f8e8571929e32fc8e65ad721a13b653c1aa787f",
+  "bun": "1.3.14",
+  "profile": "C:/Users/chiev/AppData/Local/Temp/codex-bunzai-binary-smoke-20261101",
+  "artifacts": [
+    {
+      "name": "Bunzai.exe",
+      "size": 464129536,
+      "sha256": "b5e61e384f634090de011df7939db5bd044f36435304f04c897adab25f6a1ef3"
+    },
+    {
+      "name": "bunzai-cli-windows-x64.exe",
+      "size": 461639168,
+      "sha256": "cab4a8b7954faf233e6c77f9cc2de71383c2d7fb2128456485e618c2e398b3b0"
+    },
+    {
+      "name": "bunzai-kit-windows-x64.exe",
+      "size": 474245120,
+      "sha256": "868374141ac09d7fd8ea33a0c040e0af23deac3082f4887e60b656c4e3aeffe4"
+    }
+  ],
+  "checks": [
+    {
+      "name": "cli-help",
+      "code": 0,
+      "expected": 0,
+      "passed": true,
+      "ms": 1824,
+      "stdout": "\n  bunzai  0.1.42\n  the forge for AI-roleplay content\n\n  Usage\n    bunzai <command> [options]\n\n  Commands\n    convert <in> <out>    Convert a file from one format to another\n    inspect <file>        Show what is inside a file\n    validate <file>       Detect + parse; exit 0 if bunzai can open it\n    label <file>          Guess a card's format and which app it is likely from\n    formats               List the formats bunzai knows about\n    ui [port] [studio]    Open the Studio on loopback (remote access is configured inside the Studio)\n    export <folder> [studio]  Write your library out as a plain, unencrypted studio folder\n    derived --stats|--clear [studio]  Inspect or clear rebuildable derived cache rows\n    version               Print the version\n    help                  Print this help\n\n  Options\n    -v, --version         Print the version\n    -h, --help            Print this help\n    --to <format>         convert: force the output format (else resolved from the <out> extension)\n    --yes                 convert: allow replacing an existing output file (never overwrites input)\n    --json                version/formats/validate/convert: machine-readable stdout\n\n  Example\n    bunzai convert vera.png vera.charx --to risu\n    bunzai convert card.json out.charx --to lumiverse --yes\n    bunzai validate samples/sillytavern/characters/v3-full.json\n\n  Status\n    Converter jewel (M1): open/inspect/validate/convert across discovered adapters.\n    Schema v1. Format matrix: docs/FORMAT-SUPPORT.md\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "cli-version",
+      "code": 0,
+      "expected": 0,
+      "passed": true,
+      "ms": 1575,
+      "stdout": "{\"version\":\"0.1.42\",\"schema\":\"1\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cli-formats",
+      "code": 0,
+      "expected": 0,
+      "passed": true,
+      "ms": 1561,
+      "stdout": "{\n  \"schema\": \"1\",\n  \"adapters\": [\n    {\n      \"id\": \"agnai\",\n      \"kind\": \"character\",\n      \"label\": \"Agnai (Agnaistic) character (.json)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"agnai-lorebook\",\n      \"kind\": \"lorebook\",\n      \"label\": \"Agnai memory book (json)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"backyard\",\n      \"kind\": \"character\",\n      \"label\": \"Backyard.ai / Faraday character (legacy json)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"byaf\",\n      \"kind\": \"character\",\n      \"label\": \"Backyard archive (.byaf)\",\n      \"outputExtensions\": [\n        \"byaf\"\n      ]\n    },\n    {\n      \"id\": \"bunzai-promptbook\",\n      \"kind\": \"promptbook\",\n      \"label\": \"Bunzai Promptbook\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"bunzai-agent\",\n      \"kind\": \"agent\",\n      \"label\": \"Bunzai Agent\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"image-pack\",\n      \"kind\": \"pack\",\n      \"label\": \"Pack (zip of pictures and sounds)\",\n      \"outputExtensions\": [\n        \"zip\"\n      ]\n    },\n    {\n      \"id\": \"janitor\",\n      \"kind\": \"character\",\n      \"label\": \"JanitorAI character (PNG for the avatar importer)\",\n      \"outputExtensions\": [\n        \"png\"\n      ]\n    },\n    {\n      \"id\": \"janitor-lorebook\",\n      \"kind\": \"lorebook\",\n      \"label\": \"JanitorAI lorebook (ST world info for Scripts > Import JSON)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"lumiverse\",\n      \"kind\": \"character\",\n      \"label\": \"Lumiverse character (ST + modules)\",\n      \"outputExtensions\": [\n        \"json\",\n        \"charx\"\n      ]\n    },\n    {\n      \"id\": \"lumiverse-regex\",\n      \"kind\": \"regex\",\n      \"label\": \"Lumiverse regex scripts (versioned export file)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"lumiverse-persona\",\n      \"kind\": \"persona\",\n      \"label\": \"Lumiverse persona (account object)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"lumiverse-preset\",\n      \"kind\": \"preset\",\n      \"label\": \"Lumiverse preset (wrapper import; exports as an ST flat preset)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"marinara-regex\",\n      \"kind\": \"regex\",\n      \"label\": \"Marinara-Engine regex scripts (API dump array)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"marinara-persona\",\n      \"kind\": \"persona\",\n      \"label\": \"Marinara persona (theming and stat bars ride sealed)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"marinara-lorebook\",\n      \"kind\": \"lorebook\",\n      \"label\": \"Marinara-Engine lorebook (native .marinara.json export)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"marinara-preset\",\n      \"kind\": \"preset\",\n      \"label\": \"Marinara-Engine prompt preset (marinara_preset export)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"novelai-lorebook\",\n      \"kind\": \"lorebook\",\n      \"label\": \"NovelAI lorebook (native export .lorebook / json)\",\n      \"outputExtensions\": [\n        \"lorebook\"\n      ]\n    },\n    {\n      \"id\": \"pygmalion\",\n      \"kind\": \"character\",\n      \"label\": \"Pygmalion character (flat JSON / PNG)\",\n      \"outputExtensions\": [\n        \"json\",\n        \"png\"\n      ]\n    },\n    {\n      \"id\": \"risu\",\n      \"kind\": \"character\",\n      \"label\": \"RisuAI .charx (zip: card.json + assets)\",\n      \"outputExtensions\": [\n        \"charx\"\n      ]\n    },\n    {\n      \"id\": \"risu-lorebook\",\n      \"kind\": \"lorebook\",\n      \"label\": \"RisuAI lorebook (native export json)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"risu-regex\",\n      \"kind\": \"regex\",\n      \"label\": \"RisuAI regex scripts (.risum module or customscript array)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"rolecall\",\n      \"kind\": \"character\",\n      \"label\": \"RoleCall character card (v3, png/json)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"rolecall-lorebook\",\n      \"kind\": \"lorebook\",\n      \"label\": \"RoleCall lorebook (v1 export json)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"rolecall-compendium\",\n      \"kind\": \"lorebook\",\n      \"label\": \"RoleCall compendium export (compendium.json)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"rolecall-persona\",\n      \"kind\": \"persona\",\n      \"label\": \"RoleCall persona (rcpersona / RC persona-card export)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"rolecall-regex\",\n      \"kind\": \"regex\",\n      \"label\": \"RoleCall regex script (chat-pipeline find/replace set)\",\n      \"outputExtensions\": [\n        \"json\"\n      ]\n    },\n    {\n      \"id\": \"rolecall-preset\",\n      \"kind\": \"preset\",\n      \"label\": \"RoleCall preset export (ST gra",
+      "stderr": ""
+    },
+    {
+      "name": "cli-validate",
+      "code": 0,
+      "expected": 0,
+      "passed": true,
+      "ms": 1614,
+      "stdout": "{\"ok\":true,\"path\":\"C:/Users/chiev/Documents/Bunzai-binary-release-20261101/samples/sillytavern/characters/v3-full.json\",\"format\":\"sillytavern\",\"kind\":\"character\",\"name\":\"Test Character\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "kit-help",
+      "code": 0,
+      "expected": 0,
+      "passed": true,
+      "ms": 3194,
+      "stdout": "kit - your Bunzai studio, in the terminal\n\n  kit                 open a fresh session\n  kit -r              pick up the most recent session, rail and all\n  kit -r <id>         pick up a particular one\n  kit --help          this\n\nEverything else happens inside: type / for the command list.\n",
+      "stderr": ""
+    },
+    {
+      "name": "kit-invalid-argument",
+      "code": 2,
+      "expected": 2,
+      "passed": true,
+      "ms": 2960,
+      "stdout": "",
+      "stderr": "kit: unrecognised --definitely-invalid\nkit - your Bunzai studio, in the terminal\n\n  kit                 open a fresh session\n  kit -r              pick up the most recent session, rail and all\n  kit -r <id>         pick up a particular one\n  kit --help          this\n\nEverything else happens inside: type / for the command list.\n"
+    }
+  ]
+}

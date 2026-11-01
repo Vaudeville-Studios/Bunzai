@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "bunzai.extension.character-audit",
+  "version": "1.0.0",
+  "name": "Character name audit",
+  "description": "Shows bounded character names in an extension panel.",
+  "author": "Bunzai example",
+  "api": { "major": 1, "minMinor": 0, "maxMinor": 0 },
+  "entry": "main.js",
+  "requirements": [
+    { "operation": "content.list", "resources": ["library"], "fields": ["id", "kind", "name"], "methods": [], "destinations": [], "purpose": "Show up to 20 character names in this extension panel", "required": false },
+    { "operation": "ui.panel.set", "resources": [], "fields": ["panel"], "methods": [], "destinations": [], "purpose": "Render the name audit in a host-drawn panel", "required": true }
+  ],
+  "contributions": [
+    { "type": "command", "id": "audit", "label": "Refresh character name audit", "operation": "ui.panel.set" },
+    { "type": "panel", "id": "audit-panel", "title": "Character name audit", "events": [] }
+  ]
+}

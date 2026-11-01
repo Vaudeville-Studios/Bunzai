@@ -1,212 +1,192 @@
 {
-    "schemaVersion":  1,
-    "docId":  "reference/security/remote-access",
-    "sourcePath":  "docs/reference/security/remote-access.md",
-    "sourceHash":  "sha256:c08e14f8c84144fa1a9c4b466c9a61baa3b4e9a37a7e311fe35e895080293740",
-    "summary":  "Bunzai offers opt-in remote access through a private Tailscale sidecar or an approved LAN session, while its trusted primary listener remains loopback-only. Forwarded traffic crosses a separate untrusted handler with host-only operations refused. Tailscale admission requires the owner identity and the LAN listener requires a random Argon2-hashed connect code plus host approval. LAN session cookies require Secure and HttpOnly, login bodies and code length are bounded, and verification reserves per-IP and global admission before asynchronous work. Reset generations revoke stale credentials, comparisons and issuance. Listener startup is coalesced and invalidated by Off, and the sidecar manager terminates only its retained child rather than sweeping process names. Helper downloads are explicit host-only operations checked against repository-pinned hashes before publication. Existing tests cover authorization and download policy. The October 30 admission, transport and lifecycle changes have isolated handler and lifecycle evidence; older live journeys do not establish fresh browser, real-LAN or packaged security proof for these patches.",
-    "topics":  [
-                   "remote access off by default",
-                   "Tailscale owner gate",
-                   "LAN connect code approval",
-                   "two listeners trust boundary",
-                   "sidecar shared secret",
-                   "host-only routes",
-                   "unavailable phase no helper",
-                   "aux package pinned download",
-                   "argon2id connect code",
-                   "kick device sidecar"
-               ],
-    "sections":  [
-                     {
-                         "slug":  "containers-and-ssh-forwarding",
-                         "title":  "Containers and SSH forwarding",
-                         "level":  2,
-                         "sourceHash":  "sha256:35a438b1cd34a9159d8c428e05e82f6059eb0983652d733eef3a8a9d2a23d3e8",
-                         "summary":  "Container or headless use does not need a browser inside that environment. The bunzai ui startup receipt prints the local Studio URL, one copyable SSH command for the Studio port, and when the isolated Lua regex listener started a second forward for its random sandbox port. Run it on the browser machine, replace user@server, keep the tunnel open, browse localhost with the printed ui-port. Browsing the server or container IP is refused by the trusted Host gate. HTML may arrive before api/settings is refused, so the browser turns that 403 into localhost and SSH instructions with Studio, Settings Remote access deep link, and one-port recovery copy buttons; host-only API gates still decide whether controls may change anything. One-port is enough for ordinary Studio work; Lua and regex benches need both ports because ADR-009 uses a second ephemeral loopback origin. Tailscale and LAN serve the approved Studio surface only and do not make the sandbox listener a general remote endpoint. This does not broaden hostAllowed, expose a new listener, or weaken token and Origin checks.",
-                         "topics":  [
-                                        "SSH startup receipt",
-                                        "two-port sandbox forward",
-                                        "Host gate refuses IP browse",
-                                        "403 localhost instructions",
-                                        "does not broaden hostAllowed"
-                                    ],
-                         "children":  [
-
-                                      ]
-                     },
-                     {
-                         "slug":  "two-listeners-one-trust-boundary",
-                         "title":  "Two listeners, one trust boundary",
-                         "level":  2,
-                         "sourceHash":  "sha256:7d9b82eea4cd41b01c277d39db942b3ea33955451f6d8d8e86643b82856d509b",
-                         "summary":  "The app binds two loopback listeners in server-remote and server. Trusted 127.0.0.1 port default 8321 is the local owner\u0027s browser, gated by loopback Host Origin check plus a per-launch session token on state-changing requests via checkApiRequest in server-security. Untrusted 127.0.0.1:8788 is the ONLY thing the Tailscale sidecar reverse-proxies already-owner-gated remote traffic to; gated by a per-boot shared secret the sidecar stamps on every forwarded request checkRemoteApiRequest plus the session token on writes. The shared secret is a CSPRNG value generated once per launch in setupRemoteAccess, passed to the sidecar via environment variable never argv because argv is world-readable in the process table. The untrusted listener REQUIRES the secret so a local process or DNS-rebinding page without it fails closed. The trusted listener REFUSES the secret on any path before routing: a request carrying the sidecar secret is by definition sidecar-proxied remote traffic and has no business at the local door in createHandler.",
-                         "topics":  [
-                                        "trusted 127.0.0.1:8321",
-                                        "untrusted 127.0.0.1:8788",
-                                        "CSPRNG shared secret env",
-                                        "untrusted requires secret",
-                                        "trusted refuses secret",
-                                        "session token writes"
-                                    ],
-                         "children":  [
-
-                                      ]
-                     },
-                     {
-                         "slug":  "the-tailscale-owner-gate",
-                         "title":  "The Tailscale owner gate",
-                         "level":  2,
-                         "sourceHash":  "sha256:9008ac679ba5ad9ace15c5fd1c83488679732dbd965154744935b8ac7eea0989",
-                         "summary":  "The sidecar embeds Tailscale via tsnet and for every remote request calls WhoIs on the caller tailnet address, admitting only the studio owner\u0027s own account. Identity is compared by numeric user id who.UserProfile.ID equals Self.UserID via resolveOwnerID and newProxy; login-name strings are not used because tsnet can return an empty login for the owner node while the numeric id is populated. Fail closed everywhere: unresolved owner id zero denies everyone; unidentifiable caller with no WhoIs is denied; a caller whose node has no stable id is denied because a device that cannot be tracked or kicked will not be served. Identity headers forwarded upstream X-Tailscale-User and X-Tailscale-Node are taken from WhoIs never from client-supplied headers so a forged header cannot survive. These properties are unit-tested against a fake resolver in sidecar main_test.go.",
-                         "topics":  [
-                                        "WhoIs owner only",
-                                        "numeric UserID not login",
-                                        "fail closed owner id zero",
-                                        "no stable id denied",
-                                        "WhoIs identity headers",
-                                        "sidecar main_test"
-                                    ],
-                         "children":  [
-
-                                      ]
-                     },
-                     {
-                         "slug":  "the-lan-gate-connect-code-per-device-approval",
-                         "title":  "The LAN gate: connect code + per-device approval",
-                         "level":  2,
-                         "sourceHash":  "sha256:b92fef29b4aa20f9d61b8cece9a346a4a6ffeb672dd558d302bb538e437e9efa",
-                         "summary":  "LAN access requires a random Argon2-hashed connect code and separate host approval. Wrong guesses use per-IP exponential backoff; pending sessions expire after fifteen minutes and have per-IP limits. The listener uses self-signed TLS with LAN and loopback subject alternative names, and the owner verifies the fingerprint. Approval cookies require Secure, HttpOnly, SameSite Lax and Path slash: HTTPS-only listening does not stop a plaintext request to another port from exposing an insecure cookie. Login JSON caps at 1024 bytes and code input at 32 characters. Admission reserves one verification per IP and four globally before await, with bounded attempt and session stores. Reset immediately invalidates old credentials and generations; only current comparisons can issue sessions. Disabling invalidates pending startup, and expired sessions are swept before capacity checks. Browser certificate compatibility cannot justify removing Secure.",
-                         "topics":  [
-                                        "CSPRNG connect code",
-                                        "argon2id never sent",
-                                        "per-IP throttle backoff",
-                                        "pending approval 15 min",
-                                        "self-signed TLS 8790",
-                                        "cookie no Secure attribute"
-                                    ],
-                         "children":  [
-                                          {
-                                              "slug":  "session-transport-and-bounded-admission",
-                                              "title":  "Session transport and bounded admission",
-                                              "level":  3,
-                                              "sourceHash":  "sha256:494a3a1a081c306223cc8e25e6b45ac3c3fae51186846604d8e8f8874f542e86",
-                                              "summary":  "The session cookie requires Secure and HttpOnly with SameSite Lax and Path slash. A browser that cannot retain a Secure cookie must fail closed. The login route bounds JSON and code length; verification has synchronous per-IP and global admission without an unbounded queue. Attempt and session counts are capped, with expiry swept before admitting a session. Reset generations invalidate old hashes, comparisons and issuance immediately, and disabling LAN also invalidates pending listener startup. These are transport and admission protections rather than a measured browser compatibility guarantee.",
-                                              "topics":  [
-                                                             "HttpOnly SameSite Lax",
-                                                             "no Secure attribute",
-                                                             "self-signed not secure context",
-                                                             "avoid stuck re-enter code"
-                                                         ],
-                                              "children":  [
-
-                                                           ]
-                                          }
-                                      ]
-                     },
-                     {
-                         "slug":  "host-only-surface",
-                         "title":  "Host-only surface",
-                         "level":  2,
-                         "sourceHash":  "sha256:30e8f7098fd1b9bc4c6486977f952bad6d61f746ac9444a168e7eeb980026024",
-                         "summary":  "Remote and LAN handlers refuse host management: remote-access controls, opening browsers, shutdown, restart and settings writes. Export-folder creation and file uploads are host-only because they write to the host disk; remote clients download locally instead. Bounded exclusive export writes preserve finished artifacts when a request is refused, remove only their own incomplete files and reject cancellation before opening. The same local token and origin checks still govern host requests.",
-                         "topics":  [
-                                        "isHostOnlyRoute",
-                                        "remote management blocked",
-                                        "api open shutdown restart",
-                                        "settings writes host only",
-                                        "use not manage"
-                                    ],
-                         "children":  [
-
-                                      ],
-                         "shortSource":  true
-                     },
-                     {
-                         "slug":  "kicking-a-device",
-                         "title":  "Kicking a device",
-                         "level":  2,
-                         "sourceHash":  "sha256:e739f536859543251a30ce465f0b0e33b85f5d2070e21ef663524bff2d76d8f6",
-                         "summary":  "The owner can remove any connected device from the host. Over Tailscale the app writes a kick command to the sidecar stdin; the sidecar blocklists that node stable id and denies it on the next request even though it is the owner own account via deviceTracker in main.go. On LAN the session is dropped.",
-                         "topics":  [
-                                        "kick via sidecar stdin",
-                                        "blocklist stable node id",
-                                        "LAN session drop",
-                                        "owner account still kickable"
-                                    ],
-                         "children":  [
-
-                                      ],
-                         "shortSource":  true
-                     },
-                     {
-                         "slug":  "where-the-sidecar-binary-comes-from",
-                         "title":  "Where the sidecar binary comes from",
-                         "level":  2,
-                         "sourceHash":  "sha256:acf93a4030d4cc6498babc7df8c9463391759cbf745a309f12249487e0a7eaf4",
-                         "summary":  "The sidecar is compiled Go and is not inside Bunzai.exe. sidecarCandidates in server-remote checks three locations in order: the repository sidecar folder that bun sidecar/build.ts writes, a sidecar folder beside the running executable, and the aux-package cache where a requested download installs it. None present reports unavailable, its own RemotePhase distinct from off and error, because off is a switch the owner can flip and error invites a retry while a build with no helper can do neither; the panel says so up front and offers no Enable control instead of spawning a path that is not there. LAN mode needs no helper. The beside-the-executable candidate is load-bearing: deriving the path from import.meta.url alone is correct from source and meaningless once compiled, resolving onto the Bun virtual filesystem, so every packaged studio failed to start remote access and surfaced a raw uv_spawn ENOENT. Pinned by server-remote.test.ts.",
-                         "topics":  [
-                                        "three candidate locations",
-                                        "unavailable RemotePhase",
-                                        "packaged path resolution bug",
-                                        "no Enable control offered",
-                                        "LAN needs no helper"
-                                    ],
-                         "children":  [
-
-                                      ]
-                     },
-                     {
-                         "slug":  "the-aux-package-fetching-the-helper-on-request",
-                         "title":  "The aux package: fetching the helper on request",
-                         "level":  2,
-                         "sourceHash":  "sha256:047d8d5c8d8972013a97ea43e3237cb03507740a7332934fb897c6d4171f38cc",
-                         "summary":  "The helper is about 31 MB, so it ships as a release asset the owner fetches with an explicit click. A SHA-256 pin is the integrity control and it is committed in sidecar-pins.ts, pinned like a dependency: scripts/pin-sidecar.ts reads a release\u0027s published SHA256SUMS, re-downloads each asset to confirm it matches, and rewrites the module for review. Computing it during the build was the earlier design and it split the product in two, because only a CI-built binary carried a hash, so the download worked for packaged users and silently did not from source. Committing it works because the helper is not tied to an app version: the coupling is to the stdio protocol, not the version number, which is also why there is no staleness signal. Verification runs on bytes in memory before anything reaches the path the spawner reads, and the install renames from a sibling staging file, so no tampered or torn download leaves a runnable binary. HTTPS only with every hop inspected, the size cap applies while reading, and the routes are host-only.",
-                         "topics":  [
-                                        "SHA-256 pin baked at build",
-                                        "verify before writing bytes",
-                                        "atomic rename install",
-                                        "single inspected redirect",
-                                        "streaming size cap",
-                                        "host-only download route",
-                                        "no staleness signal"
-                                    ],
-                         "children":  [
-
-                                      ]
-                     },
-                     {
-                         "slug":  "sidecar-lifecycle",
-                         "title":  "Sidecar lifecycle",
-                         "level":  2,
-                         "sourceHash":  "sha256:ef7c3960bcde71600d6c8234157d2fb63d1190043a2664010e04ab4cc5fb4cfd",
-                         "summary":  "The mesh helper uses stdio for status and commands, and its parent-watch exits when stdin closes. The manager terminates only the child handle it launched, never all processes sharing an executable name. It ignores late output from a stopped child. LAN startup is coalesced and checked against a lifecycle generation, so a listener returned after Off is stopped immediately. Windows GUI-subsystem builds and hidden spawn windows avoid console flashes while preserving pipe handles. This audit verifies those ownership rules in isolated tests and source, without rerunning native packaged or real LAN operation.",
-                         "topics":  [
-                                        "owned child process",
-                                        "parent watch",
-                                        "startup revocation",
-                                        "hidden Windows spawn"
-                                    ],
-                         "children":  [
-
-                                      ]
-                     },
-                     {
-                         "slug":  "what-is-proven",
-                         "title":  "What is proven",
-                         "level":  2,
-                         "sourceHash":  "sha256:1312e21ca5857a504b2d641a121fd54d9180e1f2bbc1ac7a3f3d0077c6314250",
-                         "summary":  "Unit tests cover the Tailscale owner gate, LAN code formatting, per-IP throttle, approval limits and expiry, trusted-port secret refusal, host-only routes and unavailable helper behavior. The helper resolver has earlier compiled-path evidence. Download tests cover checksum mismatch, truncation, redirect policy and body limits; pin-format tests reject duplicate digests and constrain assets. Release tests assert workflow shape and platform coverage, while successful cross-builds require a real release. Earlier LAN and Tailscale journeys had live evidence, but the October 30 Secure-cookie, capped login, hash-concurrency, reset-generation and startup-revocation changes have only isolated handler and lifecycle regressions. They have not been reverified with a browser, real LAN or packaged host. This distinction prevents older live evidence from being attributed to the changed authentication implementation.",
-                         "topics":  [
-                                        "sidecar main_test",
-                                        "lan-host unit tests",
-                                        "server-remote handler tests",
-                                        "aux-download refusal tests",
-                                        "release workflow shape pinned",
-                                        "live LAN end-to-end"
-                                    ],
-                         "children":  [
-
-                                      ]
-                     }
-                 ]
+  "schemaVersion": 1,
+  "docId": "reference/security/remote-access",
+  "sourcePath": "docs/reference/security/remote-access.md",
+  "sourceHash": "sha256:30b6f6ab5a2246d8d25fc8bd74989fa309e8b86c392648b550efd7d8c811439f",
+  "summary": "Bunzai remote access is off by default and managed from Settings. Tailscale supplies an encrypted private link gated by the studio owner's numeric account identity, while LAN requires a random connect code followed by host approval. Trusted loopback requests use Host, Origin and session-token checks. Every Studio instance owns a separate ephemeral private loopback listener, passes its actual address to its helper, and authenticates it with a per-boot secret refused by the trusted door. Failed private binding disables mesh while local Studio and LAN remain available. Failed primary startup releases its private listener, and shutdown prevents deferred automatic resume. Host-only controls remain unavailable to remote clients. The helper is found in the source tree, beside the executable or in the product-specific support cache. Downloads require an explicitly published SHA-256 pin, bounded HTTPS fetching and verified bytes before installation. Locally supplied helpers carry no invented release marker; readiness can refresh without enabling mesh, and redownload is shown only when offered. Downloading leaves mesh off until a separate explicit Enable action. The manager kills only its owned child and ignores stale output. Isolated real-handler tests prove concurrent listener and lifecycle isolation. Earlier device evidence is separate from this pass, which does not claim new tailnet activation or physical-device verification.",
+  "topics": [
+    "remote access off by default",
+    "Tailscale owner gate",
+    "LAN connect code approval",
+    "two listeners trust boundary",
+    "sidecar shared secret",
+    "host-only routes",
+    "unavailable phase no helper",
+    "aux package pinned download",
+    "argon2id connect code",
+    "kick device sidecar"
+  ],
+  "sections": [
+    {
+      "slug": "containers-and-ssh-forwarding",
+      "title": "Containers and SSH forwarding",
+      "level": 2,
+      "sourceHash": "sha256:35a438b1cd34a9159d8c428e05e82f6059eb0983652d733eef3a8a9d2a23d3e8",
+      "summary": "Container or headless use does not need a browser inside that environment. The bunzai ui startup receipt prints the local Studio URL, one copyable SSH command for the Studio port, and when the isolated Lua regex listener started a second forward for its random sandbox port. Run it on the browser machine, replace user@server, keep the tunnel open, browse localhost with the printed ui-port. Browsing the server or container IP is refused by the trusted Host gate. HTML may arrive before api/settings is refused, so the browser turns that 403 into localhost and SSH instructions with Studio, Settings Remote access deep link, and one-port recovery copy buttons; host-only API gates still decide whether controls may change anything. One-port is enough for ordinary Studio work; Lua and regex benches need both ports because ADR-009 uses a second ephemeral loopback origin. Tailscale and LAN serve the approved Studio surface only and do not make the sandbox listener a general remote endpoint. This does not broaden hostAllowed, expose a new listener, or weaken token and Origin checks.",
+      "topics": [
+        "SSH startup receipt",
+        "two-port sandbox forward",
+        "Host gate refuses IP browse",
+        "403 localhost instructions",
+        "does not broaden hostAllowed"
+      ],
+      "children": []
+    },
+    {
+      "slug": "two-listeners-one-trust-boundary",
+      "title": "Two listeners, one trust boundary",
+      "level": 2,
+      "sourceHash": "sha256:f3c3e3e5894b68f3bd0682496dbd845d2c427f3149080289dc1b1dd935a0ec5f",
+      "summary": "The trusted loopback listener defaults to port 8321 and requires the existing Host, Origin and session-token checks. Each Studio instance also binds its own ephemeral private loopback listener for the Tailscale helper. The actual bound address is passed to that helper, and every proxied request must carry the instance-specific per-boot CSPRNG secret. The secret travels through the child environment rather than argv and is refused by the trusted door. Another instance secret cannot authenticate this listener. A failed private bind leaves mesh unavailable while local Studio and LAN remain usable. Failed main-listener startup releases its already-created private listener, and closing before saved settings resolve prevents a later automatic mesh restart. LAN retains port 8790 and reports occupied-port failure rather than attaching to another app.",
+      "topics": [
+        "trusted 127.0.0.1:8321",
+        "untrusted 127.0.0.1 on an instance-owned ephemeral port",
+        "CSPRNG shared secret env",
+        "untrusted requires secret",
+        "trusted refuses secret",
+        "session token writes"
+      ],
+      "children": []
+    },
+    {
+      "slug": "the-tailscale-owner-gate",
+      "title": "The Tailscale owner gate",
+      "level": 2,
+      "sourceHash": "sha256:9008ac679ba5ad9ace15c5fd1c83488679732dbd965154744935b8ac7eea0989",
+      "summary": "The sidecar embeds Tailscale via tsnet and for every remote request calls WhoIs on the caller tailnet address, admitting only the studio owner's own account. Identity is compared by numeric user id who.UserProfile.ID equals Self.UserID via resolveOwnerID and newProxy; login-name strings are not used because tsnet can return an empty login for the owner node while the numeric id is populated. Fail closed everywhere: unresolved owner id zero denies everyone; unidentifiable caller with no WhoIs is denied; a caller whose node has no stable id is denied because a device that cannot be tracked or kicked will not be served. Identity headers forwarded upstream X-Tailscale-User and X-Tailscale-Node are taken from WhoIs never from client-supplied headers so a forged header cannot survive. These properties are unit-tested against a fake resolver in sidecar main_test.go.",
+      "topics": [
+        "WhoIs owner only",
+        "numeric UserID not login",
+        "fail closed owner id zero",
+        "no stable id denied",
+        "WhoIs identity headers",
+        "sidecar main_test"
+      ],
+      "children": []
+    },
+    {
+      "slug": "the-lan-gate-connect-code-per-device-approval",
+      "title": "The LAN gate: connect code + per-device approval",
+      "level": 2,
+      "sourceHash": "sha256:b92fef29b4aa20f9d61b8cece9a346a4a6ffeb672dd558d302bb538e437e9efa",
+      "summary": "LAN access requires a random Argon2-hashed connect code and separate host approval. Wrong guesses use per-IP exponential backoff; pending sessions expire after fifteen minutes and have per-IP limits. The listener uses self-signed TLS with LAN and loopback subject alternative names, and the owner verifies the fingerprint. Approval cookies require Secure, HttpOnly, SameSite Lax and Path slash: HTTPS-only listening does not stop a plaintext request to another port from exposing an insecure cookie. Login JSON caps at 1024 bytes and code input at 32 characters. Admission reserves one verification per IP and four globally before await, with bounded attempt and session stores. Reset immediately invalidates old credentials and generations; only current comparisons can issue sessions. Disabling invalidates pending startup, and expired sessions are swept before capacity checks. Browser certificate compatibility cannot justify removing Secure.",
+      "topics": [
+        "CSPRNG connect code",
+        "argon2id never sent",
+        "per-IP throttle backoff",
+        "pending approval 15 min",
+        "self-signed TLS 8790",
+        "Secure approval cookie"
+      ],
+      "children": [
+        {
+          "slug": "session-transport-and-bounded-admission",
+          "title": "Session transport and bounded admission",
+          "level": 3,
+          "sourceHash": "sha256:494a3a1a081c306223cc8e25e6b45ac3c3fae51186846604d8e8f8874f542e86",
+          "summary": "The session cookie requires Secure and HttpOnly with SameSite Lax and Path slash. A browser that cannot retain a Secure cookie must fail closed. The login route bounds JSON and code length; verification has synchronous per-IP and global admission without an unbounded queue. Attempt and session counts are capped, with expiry swept before admitting a session. Reset generations invalidate old hashes, comparisons and issuance immediately, and disabling LAN also invalidates pending listener startup. These are transport and admission protections rather than a measured browser compatibility guarantee.",
+          "topics": [
+            "HttpOnly SameSite Lax",
+            "no Secure attribute",
+            "self-signed not secure context",
+            "avoid stuck re-enter code"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "slug": "host-only-surface",
+      "title": "Host-only surface",
+      "level": 2,
+      "sourceHash": "sha256:30e8f7098fd1b9bc4c6486977f952bad6d61f746ac9444a168e7eeb980026024",
+      "summary": "Remote and LAN handlers refuse host management: remote-access controls, opening browsers, shutdown, restart and settings writes. Export-folder creation and file uploads are host-only because they write to the host disk; remote clients download locally instead. Bounded exclusive export writes preserve finished artifacts when a request is refused, remove only their own incomplete files and reject cancellation before opening. The same local token and origin checks still govern host requests.",
+      "topics": [
+        "isHostOnlyRoute",
+        "remote management blocked",
+        "api open shutdown restart",
+        "settings writes host only",
+        "use not manage"
+      ],
+      "children": [],
+      "shortSource": true
+    },
+    {
+      "slug": "kicking-a-device",
+      "title": "Kicking a device",
+      "level": 2,
+      "sourceHash": "sha256:e739f536859543251a30ce465f0b0e33b85f5d2070e21ef663524bff2d76d8f6",
+      "summary": "The owner can remove any connected device from the host. Over Tailscale the app writes a kick command to the sidecar stdin; the sidecar blocklists that node stable id and denies it on the next request even though it is the owner own account via deviceTracker in main.go. On LAN the session is dropped.",
+      "topics": [
+        "kick via sidecar stdin",
+        "blocklist stable node id",
+        "LAN session drop",
+        "owner account still kickable"
+      ],
+      "children": [],
+      "shortSource": true
+    },
+    {
+      "slug": "where-the-sidecar-binary-comes-from",
+      "title": "Where the sidecar binary comes from",
+      "level": 2,
+      "sourceHash": "sha256:acf93a4030d4cc6498babc7df8c9463391759cbf745a309f12249487e0a7eaf4",
+      "summary": "The sidecar is compiled Go and is not inside Bunzai.exe. sidecarCandidates in server-remote checks three locations in order: the repository sidecar folder that bun sidecar/build.ts writes, a sidecar folder beside the running executable, and the aux-package cache where a requested download installs it. None present reports unavailable, its own RemotePhase distinct from off and error, because off is a switch the owner can flip and error invites a retry while a build with no helper can do neither; the panel says so up front and offers no Enable control instead of spawning a path that is not there. LAN mode needs no helper. The beside-the-executable candidate is load-bearing: deriving the path from import.meta.url alone is correct from source and meaningless once compiled, resolving onto the Bun virtual filesystem, so every packaged studio failed to start remote access and surfaced a raw uv_spawn ENOENT. Pinned by server-remote.test.ts.",
+      "topics": [
+        "three candidate locations",
+        "unavailable RemotePhase",
+        "packaged path resolution bug",
+        "no Enable control offered",
+        "LAN needs no helper"
+      ],
+      "children": []
+    },
+    {
+      "slug": "the-aux-package-fetching-the-helper-on-request",
+      "title": "The aux package: fetching the helper on request",
+      "level": 2,
+      "sourceHash": "sha256:8ae4ad8171d660b30d89dfe298fe0865e491c2fb27af45849fe430c3b67fa723",
+      "summary": "The helper is a separate release asset fetched only by an explicit host action. Committed SHA-256 pins are reviewed like dependencies; the pinning script downloads every selected asset and verifies it against the release checksum inventory. The protocol is version-compatible independently of the app release. Downloads enforce bounded streaming, HTTPS and the existing GitHub redirect allowlist. Verification precedes installation into the executable path, and sibling staging plus rename avoids publishing partial downloads. Helper management is host-only. Installed helpers are not rehashed on every launch, and no staleness signal is inferred from build hashes. A known download marker names its release; an unmarked helper is labeled locally installed. Redownload controls appear only when a published pin exists. Bunzai pins remain empty until its own published assets exist; a local product-specific build does not imply a published release. Download never enables mesh; refreshed readiness presents a separate explicit Enable action.",
+      "topics": [
+        "SHA-256 pin baked at build",
+        "verify before writing bytes",
+        "atomic rename install",
+        "single inspected redirect",
+        "streaming size cap",
+        "host-only download route",
+        "no staleness signal"
+      ],
+      "children": []
+    },
+    {
+      "slug": "sidecar-lifecycle",
+      "title": "Sidecar lifecycle",
+      "level": 2,
+      "sourceHash": "sha256:ef7c3960bcde71600d6c8234157d2fb63d1190043a2664010e04ab4cc5fb4cfd",
+      "summary": "The mesh helper uses stdio for status and commands, and its parent-watch exits when stdin closes. The manager terminates only the child handle it launched, never all processes sharing an executable name. It ignores late output from a stopped child. LAN startup is coalesced and checked against a lifecycle generation, so a listener returned after Off is stopped immediately. Windows GUI-subsystem builds and hidden spawn windows avoid console flashes while preserving pipe handles. This audit verifies those ownership rules in isolated tests and source, without rerunning native packaged or real LAN operation.",
+      "topics": [
+        "owned child process",
+        "parent watch",
+        "startup revocation",
+        "hidden Windows spawn"
+      ],
+      "children": []
+    },
+    {
+      "slug": "what-is-proven",
+      "title": "What is proven",
+      "level": 2,
+      "sourceHash": "sha256:6143f62a821de1cb18a208f6e057f68abdf2f83f1ccb590ba0c7ce7454871ceb",
+      "summary": "Unit tests cover the Tailscale owner gate, LAN code formatting, per-IP throttle, approval limits and expiry, trusted-port secret refusal, host-only routes and unavailable helper behavior. The helper resolver has earlier compiled-path evidence. Download tests cover checksum mismatch, truncation, redirect policy and body limits; pin-format tests reject duplicate digests and constrain assets. Release tests assert workflow shape and platform coverage, while successful cross-builds require a real release. Earlier LAN and Tailscale journeys had live evidence, but the October 30 Secure-cookie, capped login, hash-concurrency, reset-generation and startup-revocation changes have only isolated handler and lifecycle regressions. They have not been reverified with a browser, real LAN or packaged host. This distinction prevents older live evidence from being attributed to the changed authentication implementation.",
+      "topics": [
+        "sidecar main_test",
+        "lan-host unit tests",
+        "server-remote handler tests",
+        "aux-download refusal tests",
+        "release workflow shape pinned",
+        "live LAN end-to-end"
+      ],
+      "children": []
+    }
+  ]
 }

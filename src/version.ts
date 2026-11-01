@@ -4,3 +4,5 @@
  * disagrees with package.json, so tag = package.json = this).
  */
 export const APP_VERSION = "0.1.42";
+
+export const APP_PRODUCT = "bunzai";

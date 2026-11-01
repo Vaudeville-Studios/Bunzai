@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:929f8689615e4c1b77fff6092948f7ee457900adbc19331cd3b04c9647b9bd1e",
-  "summary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. Verification statements distinguish source, fixture, live-browser and packaged evidence.",
+  "sourceHash": "sha256:e62397ba9c98eab1f92664ed55cd4d718e1fea8f9fc4d50fca9882cb4a9cc573",
+  "summary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close.",
   "topics": [
     "Kit conversational terminal",
     "temporary browser Studio",
@@ -36,7 +36,7 @@
       "slug": "bottom-app-navigation",
       "title": "Bottom app navigation",
       "level": 2,
-      "sourceHash": "sha256:fe9a238c5ce92a3ecd49132c292b4b99c3a514062715e72c9b91ff9b3003420e",
+      "sourceHash": "sha256:55f8b1bd27cb770e368e06f385a417c2964447ed118bb944efc3f9356500a5be",
       "summary": "The bottom dock follows RoleCall geometry, with an accent glow and a collapsible edge pill. Every available discovered app appears; unavailable apps are excluded, with Settings and Overlay at the end. Tiles navigate the workspace. The dock sits above apps and below dialogs; its measured bottom reserve clears while hidden. Hidden controls remain inert and outside the tab order. Arrow keys, Home and End move focus. Theme slots remain decorative. Overlay and Ctrl+K or Cmd+K open the temporary overlay with theme and piece counts. The contextual status line holds real messages, failures and reload warnings, disappearing when empty. Narrow shells retain safe-area placement, 44px targets and the selected app in view. Coarse-pointer text focus hides the dock; physical-phone keyboard behavior is unverified.",
       "topics": [
         "bottom dock",

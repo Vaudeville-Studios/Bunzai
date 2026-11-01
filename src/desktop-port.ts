@@ -16,16 +16,17 @@ export function desktopPortOverride(value: string | undefined): number | null {
 }
 
 /** An override is an exact, isolated claim; only the default mode may reuse another Bunzai. */
-export async function claimDesktopPort<T extends { url: string; stop: () => void }>(
+export async function claimDesktopPort<T extends { instanceId: string; url: string; stop: () => void; close?: () => Promise<void> }>(
   override: number | null,
   start: (port: number) => T,
-  isBunzaiRunning: (port: number) => Promise<string | null> = runningBunzaiAt,
-): Promise<{ server: T; ours: boolean }> {
+  isBunzaiRunning: (port: number, instanceId?: string) => Promise<string | null> = (port, instanceId) => runningBunzaiAt(port, undefined, instanceId),
+): Promise<{ server: T; ours: true } | { server: { url: string; stop: () => void; close: () => Promise<void> }; ours: false }> {
   if (override !== null) {
     if (await isBunzaiRunning(override)) throw new Error(`Bunzai is already running on requested port ${override}`);
     const server = start(override);
-    if (server.url !== `http://127.0.0.1:${override}`) {
+    if (server.url !== `http://127.0.0.1:${override}` || !(server.instanceId && await isBunzaiRunning(override, server.instanceId))) {
       server.stop();
+      await server.close?.();
       throw new Error(`desktop server did not claim requested port ${override}`);
     }
     return { server, ours: true };
@@ -33,11 +34,13 @@ export async function claimDesktopPort<T extends { url: string; stop: () => void
 
   for (let port = DEFAULT_DESKTOP_PORT; port < DEFAULT_DESKTOP_PORT + DEFAULT_PORT_TRIES; port += 1) {
     try {
-      return { server: start(port), ours: true };
-    } catch {
-      const existing = await isBunzaiRunning(port);
-      if (existing) return { server: { url: existing, stop: () => {} } as T, ours: false };
-    }
+      const server = start(port);
+      if (server.instanceId && await isBunzaiRunning(port, server.instanceId)) return { server, ours: true };
+      server.stop();
+      await server.close?.();
+    } catch {}
+    const existing = await isBunzaiRunning(port);
+    if (existing) return { server: { url: existing, stop: () => {}, close: async () => {} }, ours: false };
   }
   throw new Error(`no free port between ${DEFAULT_DESKTOP_PORT} and ${DEFAULT_DESKTOP_PORT + DEFAULT_PORT_TRIES - 1}`);
 }

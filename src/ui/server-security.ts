@@ -3,7 +3,7 @@
  * Extracted from server.ts (behavior-preserving).
  */
 import { isColdReadLimit } from "../stage/contracts/content-store";
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, randomUUID, randomBytes, timingSafeEqual } from "node:crypto";
 import { toErrorMessage } from "../error-message";
 
 import { pumpStream } from "../core/stream-bytes";
@@ -24,6 +24,8 @@ export { err, json, readBodyCapped, readJsonObject } from "./server-extension-ht
 export const INSPECT_BODY_MAX = ADAPTER_INPUT_MAX_BYTES;
 
 export interface UiSecurityContext {
+  /** Public per-server ownership identity, independent of the session bearer. */
+  instanceId: string;
   /** Per-launch bearer; never log or persist. */
   token: string;
   /** Exact Host header expected (e.g. 127.0.0.1:8321). Filled after bind. */
@@ -35,6 +37,7 @@ export interface UiSecurityContext {
 export function createSecurityContext(): UiSecurityContext {
   return {
     token: randomBytes(32).toString("base64url"),
+    instanceId: randomUUID(),
     expectedHost: "",
     expectedOrigin: "",
   };

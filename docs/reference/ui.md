@@ -87,6 +87,8 @@ contextual status line sits below the top chrome and disappears when empty. It r
 messages, library-read failures, the Browser Studio export-before-reload warning and approved
 `shell.status.end` slot content. No status or reload row stacks under the dock.
 
+Launchers identify this product using the explicit product field from `/api/version`; another app or a generic version server is not reused. A new bind is accepted only when its public per-server instance ID matches; this ID is independent of the private session bearer. Default launches search ports 8321-8330. Browser launchers open only the actual positively identified address within a shared twelve-second readiness deadline. The native desktop accepts `BUNZAI_PORT` as an isolated explicit port from 1024 to 65535; an occupied override fails rather than attaching to another session. Failed native creation is reported as a window failure, not a normal close; the owned Studio server remains available and opens its verified URL in the browser.
+
 ## Browser Studio
 
 The GitHub Pages build (`scripts/build-pages.ts`) publishes two things. At the root is the public

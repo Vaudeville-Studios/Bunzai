@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:929f8689615e4c1b77fff6092948f7ee457900adbc19331cd3b04c9647b9bd1e",
-  "semanticSummaryHash": "sha256:4cbf9be8d2fe4be8d077159857928a9e1189203ebac38146173740c6fd01c00b",
+  "sourceHash": "sha256:e62397ba9c98eab1f92664ed55cd4d718e1fea8f9fc4d50fca9882cb4a9cc573",
+  "semanticSummaryHash": "sha256:d587f58ee92352f11083c4d5f0b5ee49c4a5741b64e3593ca0e6a71dae1436e3",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Independently reviewed the updated UI reference and summary. The public auditorium preroll is distinguished from the installed velvet landing; Browser extension support is limited to reviewed Browser operations in volatile memory, while provider/native/Core scene limitations and the standalone test bench remain clear.",
-  "reviewedAt": "2026-10-31T22:54:39.659Z"
+  "notes": "Root independently reviewed product and instance ownership, helper explicit Enable, native fallback and verification limits against source and isolated regressions. Visual checking was explicitly waived.",
+  "reviewedAt": "2026-11-01T03:11:43.434Z"
 }

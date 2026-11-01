@@ -13,25 +13,28 @@ Getting started is four things: install Bunzai, run the first-run wizard once, l
 
 ## The short version
 
-1. **Install Bunzai.** Download the build for your platform from
-   [Releases](https://github.com/Vaudeville-Studios/Bunzai/releases). To run from source instead, install
-   Bun 1.3+ and use:
+1. **Install Bunzai.** There is no published release yet. To use the currently available source checkout,
+   install Bun 1.3.14 and use:
    ```bash
-   git clone https://github.com/Vaudeville-Studios/Bunzai
+   git clone --recurse-submodules https://github.com/Vaudeville-Studios/Bunzai.git
    cd Bunzai
-   bun install
+   bun install --frozen-lockfile
    ```
-2. **Open the studio.** Run the downloaded app, or from a source checkout:
+   See the [illustrated installation guide](installation.md) for platform choices, first launch,
+   library backups, updates, and troubleshooting.
+2. **Open the studio.** From the available source checkout, run:
    ```bash
    bun run dev
    ```
    This starts the primary loopback server and prints its address, `127.0.0.1:8321` by default. Open
    that in your browser. Optional remote listeners remain off until you enable Remote access. Your
-   pieces live encrypted in `library.db` in a studio folder at `~/Documents/Bunzai Studio` unless you
+   pieces live encrypted in `library.db` in a studio folder at `Documents/Bunzai Studio` unless you
    point it elsewhere: `bun run bunzai ui 8321 path/to/studio`.
 3. **Answer the wizard, or don't.** The very first run only, it asks four questions. Skip all fills in the defaults and drops you straight into the studio. Theme, first deck, publish targets, and accent can change later in Settings.
 4. **Land on the Library's two doors.** A brand-new studio opens here exactly once. Drag a file onto the primary door, or click it to browse for one.
 5. **Check the receipt, then click Import.** Uncheck anything you do not want kept. Import only writes the pieces still checked.
+
+To generate a scene reply, add a provider connection and select a model in Settings. A provider is not needed to import, edit, or convert local files. See the [installation guide](installation.md) for the provider setup context, library backups, and updates.
 
 ![The Library](../media/shot-library.png)
 
@@ -39,7 +42,7 @@ Getting started is four things: install Bunzai, run the first-run wizard once, l
 
 The wizard only appears once, the first time `bun run dev` finds no completed setup in your studio's settings. Once you finish it, or skip it, it never comes back on its own. It asks four questions, in this order:
 
-1. **Light or dark?** Light or Dark. Dark is the default.
+1. **Choose your theme.** RoleCall is the default; Theater, Paper, and GirliePop are also available.
 2. **What do you want to make?** Pick one or more of Characters, Lorebooks, Personas, Packs,
    or Presets. The first selection decides which Library deck opens first; Characters is the
    fallback when you skip the question. Nothing is locked to these choices.
@@ -54,13 +57,13 @@ Theme, first deck, publish targets, and accent all live in Settings after this, 
 
 ## The Dock
 
-The Dock is the column of everyday app tiles down the side of the studio:
+The Dock gathers the everyday app tiles. In the RoleCall workspace shown here, it runs along the bottom of the studio:
 
 - **The Workbench** is where a piece you send to it gets edited, character, lorebook, persona, regex set, preset, or pack, each with its own editor pane.
 - **The Library** is the browse room: every deck's cards in rows or a grid, a rail of decks with live counts that shows one deck alone with its views, and the door your files come in through.
 - **The Press** ships work out. It only ever works a staged queue: right-click a piece anywhere and choose Stage for the Press, pick one target platform, click run the press, then download the bundle.
 
-Settings is pinned into the Dock's foot and stays reachable. The app catalog contains included specialist
+Settings stays reachable from the Dock. The app catalog contains included specialist
 tools such as Docs and the CSS Workshop, plus future apps such as The Company; catalog-only tools are not
 ordinary Dock tiles. Your chosen home app controls a normal launch, while a reload restores the room you
 were using when possible.
@@ -80,8 +83,8 @@ opens it in the Workbench. Use the import door when you already have a supported
 
 ## Tips
 
-- Release builds are the shortest installation path. Bun 1.3+ is required only when you run from
-  source.
+- When a release is published, its platform assets will appear on [GitHub Releases](https://github.com/Vaudeville-Studios/Bunzai/releases). Until then, the source checkout is the available local installation path.
+- Bun 1.3.14 is the version pinned by this checkout.
 - The wizard's Skip all is not a lesser path. It fills the defaults; the retained setup choices remain editable in Settings.
 - The first kind selected under "What do you want to make?" chooses the initial Library deck. After that, the Library remembers the deck you last opened.
 - A lorebook that arrives attached to a character comes in as one bundle under one receipt row; that row's entry count is the lorebook's.

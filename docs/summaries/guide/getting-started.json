@@ -2,29 +2,27 @@
   "schemaVersion": 1,
   "docId": "guide/getting-started",
   "sourcePath": "docs/guide/getting-started.md",
-  "sourceHash": "sha256:53a1982a574c9c313c6f0a42d27a309c4e199d0e3336a1e96ca98179c91a5696",
-  "summary": "Getting started covers release or source installation, the one-time first-run wizard, everyday Dock rooms, specialist catalog apps, and the Library's import and blank-character paths. Release builds are the shortest install; source use requires Bun 1.3+, clone, install, and bun run dev for the primary loopback server at 127.0.0.1:8321. Optional remote listeners stay off until enabled. The studio folder defaults to Documents/Bunzai Studio or a custom bunzai ui path. Wizard asks theme, one or more kinds to make, publish targets, and a palette or custom accent; Skip all uses defaults. Settings retains theme, the first selected kind as the initial Library deck, publish targets, and accent rather than the complete ordered make selection. Dock rooms are Workbench, Library, and Press with Settings pinned below; Docs and CSS Workshop are catalog tools. Import receipts write only checked pieces, while Start fresh creates, saves, and opens a blank character.",
+  "sourceHash": "sha256:5880287d9ececa4849c92f538333773e1d246a91ca5fd46faa45ed8ba68c5b51",
+  "summary": "Get started with the source checkout that is available today, choose a theme preset or skip the first-run choices, learn the Studio rooms, and bring a file into the Library. Bunzai does not currently have a published release, so this walkthrough points to the pinned Bun version and recursive submodule setup. The wizard can be revisited through Settings only for the choices the Studio retains; it does not limit what you can create. The Library receipt lets you choose which parsed pieces to keep before import writes them. Its separate Start fresh door creates a blank character. A provider is only needed when you submit a scene turn, not for local import, editing, or conversion.",
   "topics": [
-    "release or Bun source install",
-    "first-run wizard four questions",
-    "Dock Workbench Library Press",
-    "loopback 8321 studio folder",
-    "first import receipt",
-    "Skip all defaults Settings",
-    "Company not open yet"
+    "source installation",
+    "one-time first-run wizard",
+    "Dock rooms",
+    "Library import receipt",
+    "encrypted studio folder"
   ],
   "sections": [
     {
       "slug": "the-short-version",
       "title": "The short version",
       "level": 2,
-      "sourceHash": "sha256:bdc3ac72fbf2f31db6608d45554bf42dd3dcdfb870f6fc7ffd8404899dc8483a",
-      "summary": "Download a platform build from GitHub Releases, or install Bun 1.3+, clone Bunzai, and run bun install for source use. Open the app or use bun run dev for the primary loopback address at 127.0.0.1:8321. Studio JSON defaults under Documents/Bunzai Studio or a custom path. Complete or skip the wizard, then import through the Library door or create a blank character through Start fresh.",
+      "sourceHash": "sha256:31a99ee4694bcaf4e7ad825ba7671c79affe9af03fd8542cec05391d6279ce90",
+      "summary": "There is no published Bunzai release yet. The available path is a source checkout using Bun 1.3.14: clone with recursive submodules, install the lockfile dependencies, and run the local Studio with bun run dev. The server prints its loopback address, normally 127.0.0.1:8321. A new studio opens the first-run wizard and then the Library, where you can import a supported file or create a blank character. See the illustrated installation guide for platform-specific Bun instructions, backups, updates, and troubleshooting.",
       "topics": [
-        "release or Bun install",
-        "bun run dev",
-        "wizard or skip",
-        "Library first import"
+        "no public release",
+        "Bun 1.3.14",
+        "recursive clone",
+        "bun run dev"
       ],
       "children": [],
       "shortSource": true
@@ -33,14 +31,13 @@
       "slug": "the-first-run-wizard",
       "title": "The first-run wizard",
       "level": 2,
-      "sourceHash": "sha256:25c6c8b08860bd5ca9337144fd26fc29bdfac614130f064d3001524fa3f056b6",
-      "summary": "Wizard appears once when the Studio finds no completed setup; after finish or skip it never returns on its own. Four questions: light or dark, default Dark; one or more kinds to make, where the first pick controls the first Library deck and an empty choice falls back to Characters; publish targets as a multi-select populated from known formats, with Not sure as default; and a house-palette or custom accent, default Rose. Skip all fills remaining defaults and jumps to the You're set recap. Theme, the initial Library deck, publish targets, and accent remain editable afterward; the complete ordered kind selection is not a Settings field.",
+      "sourceHash": "sha256:82ac3bb08266209cf596524088ddaffa9691ecefacb0b69145ecb306b283a918",
+      "summary": "The first-run wizard appears when a studio has no completed setup. It asks which theme preset to use, which kinds of pieces you want to make, where you expect to publish, and which accent color to use. RoleCall is the default theme, with Theater, Paper, and GirliePop also available. The first selected kind controls the initial Library deck; Characters is the fallback. Publish targets come from the formats Bunzai knows, and Not sure keeps the defaults ready. Skip all fills remaining defaults and proceeds to the closing screen. Retained setup choices can be changed later in Settings.",
       "topics": [
-        "wizard once only",
-        "theme first deck",
-        "publish targets",
-        "accent Rose default",
-        "Skip all Settings later"
+        "first launch",
+        "four setup choices",
+        "Skip all",
+        "Settings"
       ],
       "children": []
     },
@@ -48,15 +45,13 @@
       "slug": "the-dock",
       "title": "The Dock",
       "level": 2,
-      "sourceHash": "sha256:510e7aa4bf1bbdb33ac19f4c2cb0da7d2b38234bd2e45aa0a0167ca07a4e5ddd",
-      "summary": "Dock is the side column of everyday app tiles. Workbench edits character lorebook persona regex preset or pack; Library browses every deck's cards in rows or a grid, with a rail of live counts that shows one deck alone with its views, and the import door; Press ships only a staged queue to one selected target. Settings is pinned in the foot. The app catalog exposes included specialist tools such as Docs and CSS Workshop plus future apps such as Company; catalog-only tools are not ordinary Dock tiles. The configured home app controls normal launch, while a reload restores the active room when possible.",
+      "sourceHash": "sha256:d5a52df926df4f5f55c8fa8f15ca3903305dc894e9432b4147f46878252c7b97",
+      "summary": "The Dock gathers the everyday Studio rooms. In the RoleCall workspace shown in the guide, it runs along the bottom of the Studio. Workbench edits pieces, Library browses and imports them, and Press exports only items you stage to a selected target. Settings stays reachable from the Dock. Specialist tools such as Docs and CSS Workshop are available from the app catalog rather than appearing as everyday Dock tiles. The configured home app controls a normal launch, and the Studio tries to restore the active room after reload.",
       "topics": [
-        "configurable home app",
-        "Library six decks",
-        "Press staged export",
-        "CSS Workshop",
-        "catalog specialists and future apps",
-        "reload restores active room"
+        "Workbench",
+        "Library",
+        "Press",
+        "catalog tools"
       ],
       "children": []
     },
@@ -65,13 +60,11 @@
       "title": "Bringing in your first file",
       "level": 2,
       "sourceHash": "sha256:bd2eb5da02842c6cce967fff613bcc3009846fa0561bd2539b87baa1120a3320",
-      "summary": "Empty studio primary door accepts drop or click file picker; after pieces exist drop anywhere on Library for the same flow. Files are read before write. Headings are Pick what to keep when all clean or Here is what we read when some fail. Readable files show receipt with name, kind, and default-checked checkbox; unreadable files show a plain reason without a checkbox. Add more files appends the batch, Import N writes only checked pieces, and Not now writes nothing. The second empty-studio door creates and saves a blank character, then opens it in the Workbench.",
+      "summary": "When the Library is empty, use its import door to drop a supported file or choose one from the file picker. The Studio reads files before it writes anything and presents a receipt showing parsed pieces. Readable pieces are selected by default; uncheck anything you do not want to keep. Import writes only the pieces still checked. Add more files appends another batch, while Not now closes without importing. The empty Library has a separate Start fresh door that creates and saves a blank character, then opens it in Workbench. Use that path when you want a clean starting point rather than importing a file.",
       "topics": [
-        "empty studio door",
-        "receipt before write",
-        "Import N checked",
-        "Add more files",
-        "start fresh blank character"
+        "import receipt",
+        "checked pieces only",
+        "blank character"
       ],
       "children": []
     },
@@ -79,14 +72,12 @@
       "slug": "tips",
       "title": "Tips",
       "level": 2,
-      "sourceHash": "sha256:30da886c689a3e7f111e38e7b68a5d2538aaffa882e48d43bb2316dfa5eaa831",
-      "summary": "Release builds are the shortest installation path; Bun 1.3+ is required only for a source checkout. Skip all fills defaults, and retained setup choices remain editable. The first selected make kind chooses the initial Library deck; later the Library remembers the last open deck. Attached character lorebooks arrive in one bundle receipt. An unreadable receipt means safe parsing failed because the file may be unsupported, malformed, or damaged; bunzai formats lists adapters. bunzai ui port path selects another studio folder.",
+      "sourceHash": "sha256:e4a686472f48795c6adc419de4ced75d08271b463ade181b1afd3d25e67f06f9",
+      "summary": "No release is published yet, so use the pinned source installation. Skip all fills the wizard defaults; retained choices remain editable. The first selected kind sets the initial Library deck. If an import receipt says a file could not be read, it may be unsupported, malformed, or damaged. The formats command lists available adapters, and the CLI UI command accepts a custom studio folder.",
       "topics": [
-        "release build or Bun source",
-        "Skip all fine",
-        "remember last deck",
-        "bunzai formats",
-        "custom studio path"
+        "source checkout",
+        "skip wizard",
+        "custom studio folder"
       ],
       "children": [],
       "shortSource": true

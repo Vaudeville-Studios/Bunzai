@@ -1070,9 +1070,9 @@
       "docId": "reference/security/remote-access",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "node_placement_review",
-      "sourceHash": "sha256:c08e14f8c84144fa1a9c4b466c9a61baa3b4e9a37a7e311fe35e895080293740",
-      "semanticSummaryHash": "sha256:c8b10c4f2363c173990b4dbc966cfda4c8bc4ac85b4ec60aae9b0b4675266760"
+      "reviewer": "root",
+      "sourceHash": "sha256:30b6f6ab5a2246d8d25fc8bd74989fa309e8b86c392648b550efd7d8c811439f",
+      "semanticSummaryHash": "sha256:1139a6ce1067f9b095f4f70a5b6ba78f3c6dde315b5719cc74f61e07c583b8b4"
     },
     {
       "docId": "reference/security/safe-rendering",
@@ -1119,8 +1119,8 @@
       "status": "APPROVED",
       "verdict": "APPROVE",
       "reviewer": "root",
-      "sourceHash": "sha256:929f8689615e4c1b77fff6092948f7ee457900adbc19331cd3b04c9647b9bd1e",
-      "semanticSummaryHash": "sha256:4cbf9be8d2fe4be8d077159857928a9e1189203ebac38146173740c6fd01c00b"
+      "sourceHash": "sha256:e62397ba9c98eab1f92664ed55cd4d718e1fea8f9fc4d50fca9882cb4a9cc573",
+      "semanticSummaryHash": "sha256:d587f58ee92352f11083c4d5f0b5ee49c4a5741b64e3593ca0e6a71dae1436e3"
     },
     {
       "docId": "reference/updates",

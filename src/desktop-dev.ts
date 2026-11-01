@@ -17,6 +17,8 @@ import { startUi } from "./ui/server";
 import { openInBrowser } from "./ui/server-security";
 import { startDesktopWindow } from "./desktop-window-launch";
 import { focusExisting } from "./desktop-focus";
+import { claimDesktopPort } from "./desktop-port";
+import { runningBunzaiAt } from "./ui/port-owner";
 import { detachEnvironFromGtk } from "./desktop-env";
 
 detachEnvironFromGtk(); // Linux: keeps libgtk-4's unsetenv from crashing Bun's Workers (desktop-env.ts)
@@ -24,27 +26,7 @@ detachEnvironFromGtk(); // Linux: keeps libgtk-4's unsetenv from crashing Bun's 
 const PORT = 8321;
 const DEV_URL = `http://127.0.0.1:${PORT}`;
 
-/** True if something is already listening on the dev port (another Bunzai (dev)). */
-async function portBusy(port: number): Promise<boolean> {
-  try {
-    const s = Bun.listen({
-      hostname: "127.0.0.1",
-      port,
-      socket: {
-        data() {},
-        open() {},
-        close() {},
-        error() {},
-      },
-    });
-    s.stop(true);
-    return false;
-  } catch {
-    return true;
-  }
-}
-
-if (await portBusy(PORT)) {
+if (await runningBunzaiAt(PORT)) {
   // Second click of the Start Menu tile: bring the running window forward (decision 9); failing that,
   // do not crash on EADDRINUSE - send them to the live UI.
   if (await focusExisting(false, "Bunzai (Dev)", PORT)) process.exit(0);
@@ -61,8 +43,10 @@ const studioDir = join(homedir(), "Documents", "Bunzai Studio");
 // As the packaged app does: the window comes up first and
 // the encrypted library opens behind it; an unopened library.db would answer 423 forever.
 const library = createLibrary(studioDir);
-const { url: uiUrl, stop, close } = startUi(PORT, studioDir, undefined, library); // no packaged assets -> live source + dev watch
-void library.open();
+const { server, ours } = await claimDesktopPort(null, (port) => startUi(port, studioDir, undefined, library));
+const { url: uiUrl, stop, close } = server; // no packaged assets -> live source + dev watch
+if (ours) void library.open();
+else await library.close();
 console.log(`Bunzai (dev) is up at ${uiUrl} - live source, no rebuild needed`);
 
 // Use import.meta.dir (string path). Avoid `new URL(..., import.meta.url)` after binding a `url`

@@ -65,7 +65,7 @@ describe("B14: readJsonObject is the one content-type + object-shape gate", () =
 });
 
 describe("B14: all three /api gates refuse the same cross-site GET", () => {
-  const sec = { token: "t", expectedHost: "127.0.0.1:8321", expectedOrigin: "http://127.0.0.1:8321" };
+  const sec = { instanceId: "fixture", token: "t", expectedHost: "127.0.0.1:8321", expectedOrigin: "http://127.0.0.1:8321" };
   const crossSiteGet = (headers: Record<string, string> = {}) =>
     new Request("http://127.0.0.1:8321/api/x", { headers: { host: "127.0.0.1:8321", "sec-fetch-site": "cross-site", ...headers } });
 
@@ -104,7 +104,7 @@ describe("an oversized body is rejected before anything would parse it", () => {
 });
 
 describe("same-site GETs from a foreign loopback port are refused", () => {
-  const sec = { token: "t", expectedHost: "127.0.0.1:8321", expectedOrigin: "http://127.0.0.1:8321" };
+  const sec = { instanceId: "fixture", token: "t", expectedHost: "127.0.0.1:8321", expectedOrigin: "http://127.0.0.1:8321" };
   const get = (headers: Record<string, string>) =>
     new Request("http://127.0.0.1:8321/api/x", { headers: { host: "127.0.0.1:8321", ...headers } });
   // The browser sets Sec-Fetch-Site: same-site for a page on another port of the same host.

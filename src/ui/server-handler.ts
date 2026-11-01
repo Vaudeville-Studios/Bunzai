@@ -49,7 +49,7 @@ import {
   setupRemoteAccess,
   type MakeHandler,
 } from "./server-remote";
-import { APP_VERSION } from "../version";
+import { APP_PRODUCT, APP_VERSION } from "../version";
 import { handleUpdateCheck } from "./server-update";
 import { makeSwitchManager } from "./switch/setup";
 import type { SwitchManager } from "./switch/manager";
@@ -298,6 +298,8 @@ export function createHandler(
     if (p === "/api/version") {
       return json({
         version: APP_VERSION,
+        product: APP_PRODUCT,
+        instanceId: security.instanceId,
         // Never leak the host filesystem path to a remote/LAN device.
         studioDir: isRemote ? undefined : store.studioPath(),
         mode: packaged ? "packaged" : "source",

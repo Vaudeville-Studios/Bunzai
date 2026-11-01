@@ -2,7 +2,7 @@
   "generated": "2026-11-01",
   "targetChars": 90000,
   "totalPages": 141,
-  "totalSourceChars": 1710985,
+  "totalSourceChars": 1713065,
   "batches": [
     {
       "id": "batch-001",
@@ -1136,7 +1136,7 @@
     },
     {
       "id": "batch-016",
-      "sourceChars": 72603,
+      "sourceChars": 73931,
       "pages": [
         {
           "docId": "reference/security/archives",
@@ -1167,7 +1167,7 @@
           "sourcePath": "docs/reference/security/remote-access.md",
           "sidecarPath": "docs/summaries/reference/security/remote-access.json",
           "sectionCount": 11,
-          "sourceChars": 16312,
+          "sourceChars": 17640,
           "status": "APPROVED"
         },
         {
@@ -1220,14 +1220,14 @@
     },
     {
       "id": "batch-018",
-      "sourceChars": 295892,
+      "sourceChars": 296644,
       "pages": [
         {
           "docId": "reference/ui",
           "sourcePath": "docs/reference/ui.md",
           "sidecarPath": "docs/summaries/reference/ui.json",
           "sectionCount": 34,
-          "sourceChars": 295892,
+          "sourceChars": 296644,
           "status": "APPROVED"
         }
       ]

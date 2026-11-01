@@ -1,13 +1,14 @@
 import {chromium} from "playwright-core";
 type ResponsiveLayout={viewport:number;pageWidth:number;sidebar:{x:number;y:number;bottom:number;width:number};article:{x:number;y:number;bottom:number;width:number};toc:{x:number;y:number;bottom:number;width:number};navHeight:number;navContentHeight:number};
 const browser=await chromium.launch({headless:true,executablePath:chromium.executablePath()});
+const origin=process.env.DOCS_PREVIEW_ORIGIN??"http://127.0.0.1:18877";
 try {
  const page=await browser.newPage({viewport:{width:1365,height:900},deviceScaleFactor:1});
  const errors:string[]=[]; const blocked:string[]=[]; const offOrigin:string[]=[];
  page.on("pageerror",e=>errors.push(e.message));
- page.on("request",request=>{if(new URL(request.url()).origin!=="http://127.0.0.1:18877")offOrigin.push(request.url());});
+ page.on("request",request=>{if(new URL(request.url()).origin!==new URL(origin).origin)offOrigin.push(request.url());});
  await page.route("https://api.github.com/**",async route=>{blocked.push(route.request().url());await route.abort("blockedbyclient");});
- await page.goto("http://127.0.0.1:18877/Bunzai/",{waitUntil:"networkidle"});
+ await page.goto(`${origin}/Bunzai/`,{waitUntil:"networkidle"});
  const home={title:await page.title(),docsLink:await page.getByRole("link",{name:/docs/i}).count(),star:await page.getByRole("link",{name:/star/i}).count()};
  await page.getByRole("link",{name:/docs/i}).first().click();
  await page.waitForURL(/\/Bunzai\/docs\/index\.html/);
@@ -16,10 +17,10 @@ try {
  await page.waitForFunction(()=>document.querySelectorAll("[data-doc-search-results] a").length>0);
  const searchCount=await page.locator("[data-doc-search-results] a").count();
  await page.screenshot({path:"plans/evidence/public-docs-20261031/pages-docs-index.png",fullPage:true});
- await page.goto("http://127.0.0.1:18877/Bunzai/docs/guide/installation.html#doc-run-from-source",{waitUntil:"networkidle"});
+ await page.goto(`${origin}/Bunzai/docs/guide/installation.html#doc-run-from-source`,{waitUntil:"networkidle"});
  const install={title:await page.title(),heading:await page.locator("#doc-run-from-source").count(),image:await page.locator("img[alt*=first-run]").count(),allLocalLinks:await page.locator("a[href^='/Bunzai/docs/']").count()};
  await page.screenshot({path:"plans/evidence/public-docs-20261031/pages-installation.png",fullPage:true});
- await page.goto("http://127.0.0.1:18877/Bunzai/docs/guide/installation.html",{waitUntil:"networkidle"});
+ await page.goto(`${origin}/Bunzai/docs/guide/installation.html`,{waitUntil:"networkidle"});
  const layouts:ResponsiveLayout[]=[];
  for(const width of [375,768,1440]) {
   await page.setViewportSize({width,height:900});

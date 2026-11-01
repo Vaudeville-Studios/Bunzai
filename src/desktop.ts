@@ -46,8 +46,8 @@ async function boot(): Promise<void> {
   // only if there is no window to raise does it open one onto the running studio.
   const library = createLibrary(studioDir);
   const { server, ours } = await claimDesktopPort(portOverride, (port) => {
-    const { url, stop, close } = startUi(port, studioDir, assets, library);
-    return { url, stop, close };
+    const { instanceId, url, stop, close } = startUi(port, studioDir, assets, library);
+    return { instanceId, url, stop, close };
   });
   const { url: uiUrl, stop, close } = server;
   if (ours) void library.open();

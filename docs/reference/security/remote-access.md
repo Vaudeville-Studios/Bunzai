@@ -54,7 +54,7 @@ The app binds two loopback listeners (`src/ui/server-remote.ts`, `src/ui/server.
 - **Trusted** `127.0.0.1:<port>` (default 8321): the local owner's own browser. Gated by a loopback
   Host/Origin check plus a per-launch session token on state-changing requests
   (`checkApiRequest`, `src/ui/server-security.ts`).
-- **Untrusted** `127.0.0.1:8788`: the ONLY thing that reaches it is the Tailscale sidecar, which
+- **Untrusted** `127.0.0.1:<private-port>`: the ONLY thing that reaches it is the Tailscale sidecar, which
   reverse-proxies already-owner-gated remote traffic here. Gated by a per-boot shared secret the sidecar
   stamps on every forwarded request (`checkRemoteApiRequest`), plus the session token on writes.
 
@@ -67,6 +67,8 @@ world-readable in the process table), and:
 - the **trusted** listener REFUSES it on any path, before routing: a request carrying the sidecar secret
   is by definition sidecar-proxied remote traffic and has no business at the local door
   (`createHandler`, `src/ui/server.ts`).
+
+Each Studio instance binds a separate ephemeral private loopback port and passes its actual address to its own helper. Its own per-boot secret authenticates that listener; another instance's secret fails. A failed private bind disables mesh access while local Studio and LAN remain available. A failed main-listener startup releases its private listener, and closing before saved settings become readable prevents a later automatic mesh restart. LAN retains port 8790 and reports an occupied-port failure rather than attaching to another app.
 
 ## The Tailscale owner gate
 
@@ -192,7 +194,9 @@ directory, so anyone able to rewrite it can equally rewrite `Bunzai.exe`; re-ver
 against an attacker who already holds the account. There is deliberately no "your helper is out of date"
 signal either: the pinned hash changes on every release whether the helper changed or not, so a staleness
 warning derived from it would fire after every app update about a helper that works. The panel reports which
-release the installed helper came from and offers to fetch it again.
+release the installed helper came from when its download marker is known. An unmarked helper is described as installed locally; fetching it again is offered only when this build has a published pin. A newly installed local helper becomes available on the next status read without enabling mesh access. Downloading also leaves mesh off; the refreshed status exposes a separate explicit Enable action.
+
+The committed Bunzai download pin table remains empty until Bunzai publishes its own helper assets. A locally built Bunzai helper can use the product-specific support directory without pretending to be a published release.
 
 ## Sidecar lifecycle
 
@@ -231,3 +235,5 @@ layer.
 - The full LAN path (code -> cookie -> pending -> host approval -> served; host-only routes refused to an
   approved device) has been verified live end-to-end at the listener boundary, and the Tailscale path has
   been verified live from a phone reaching the studio.
+
+The October 31 coexistence changes have isolated real-handler HTTP and lifecycle regressions. This pass does not claim a real Tailscale sign-in, physical-device LAN journey or new cross-platform packaged verification.

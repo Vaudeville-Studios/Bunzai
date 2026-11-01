@@ -63,7 +63,7 @@ export const FP_SPECS: readonly FpSpec[] = [
   s("extension_budget_usage", ["package_hash", "operation_hash", "grant_revision"], ["body_cell"], []),
   s("extension_budget_reservations", ["reservation_hash"], ["body_cell"], ["package_hash"]),
   s("extension_runtime_lease", ["singleton"], ["owner_cell"], ["epoch", "expires_at", "last_now"]),
-  s("core_scene_creation_bindings", ["chat_id"], ["body_cell"], ["branch_id", "operation_hash", "package_hash"]),
+  s("core_scene_creation_bindings", ["chat_id"], ["body_cell"], ["branch_id", "operation_hash", "package_hash", "origin"], 2), // v2: origin; legacy v1 rows are explicitly adopted
   s("core_operation_projections", ["operation_hash"], ["body_cell"], ["session_id", "chat_id", "branch_id", "first_seq", "last_seq", "projected_seq"]),
   s("core_message_links", ["session_id", "core_message_id", "branch_id"], [], ["message_id", "swipe_id", "swipe_position"]),
   s("core_pending_extension_state", ["state_hash"], ["body_cell"], ["turn_operation_hash", "turn_id", "session_id", "branch_id", "phase", "ordinal", "accepted_seq", "core_message_id", "bytes"]),

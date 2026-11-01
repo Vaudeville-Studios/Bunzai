@@ -1,8 +1,15 @@
 ﻿# 004: Restore full remote helper and separate Hoplight/Bunzai launch identity
 
-Status: INVESTIGATING; implementation authorized by owner 2026-10-31.
+Status: IMPLEMENTED; SOURCE VERIFIED; CANDIDATE MERGED; PUBLICATION PENDING.
 Base Bunzai: 7588d4bf5c835b4a2176e3ebaf1843f9f5006c66.
 Hoplight: inspect and record current clean HEAD before changes.
+
+## Integrated implementation checkpoint (2026-10-31)
+
+- Bunzai source commit `68262753aa83110cc7ff312abb91252223a828b2` is included through merge `454b4902571fb1b218864dee3345833e8699ef3e` in the unpublished delivery candidate. The candidate's focused helper/launch checks passed 105 tests / 246 assertions, and its whole-tree TypeScript check passed.
+- Product identity, per-instance nonce checks, occupied-port behavior, helper lifecycle cleanup, and the explicit-download-then-enable interaction were reviewed and have focused regressions. The generated docs/catalog was refreshed from the integrated source before the merge.
+- Hoplight source and rebuilt artifact were reviewed separately. The packaged worker failure leaves the local HTTP Studio available and opens the browser fallback. The owner accepted completion without a live visual native-window check; this plan makes no native-window success claim.
+- Local helper repair was performed only in the approved isolated installation path with backup/manifest evidence. No real Bunzai library, mesh account, or LAN-device activation was used. Mainstage publication remains pending root's final checkpoint.
 
 ## Result and evidence
 

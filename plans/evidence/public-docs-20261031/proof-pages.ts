@@ -33,9 +33,22 @@ try {
   layouts.push(layout);
   await page.screenshot({path:`plans/evidence/public-docs-20261031/pages-${width}.png`});
  }
- const result={home,docsIndex,searchCount,install,layouts,blocked,offOrigin,errors};console.log(JSON.stringify(result,null,2));
+ const delayedPage=await browser.newPage({viewport:{width:1365,height:900},deviceScaleFactor:1});
+ delayedPage.on("pageerror",e=>errors.push(e.message));
+ delayedPage.on("request",request=>{if(new URL(request.url()).origin!==new URL(origin).origin)offOrigin.push(request.url());});
+ let releaseIndex!:()=>void; let markRequested!:()=>void;
+ const heldIndex=new Promise<void>(resolve=>{releaseIndex=resolve;});
+ const requestedIndex=new Promise<void>(resolve=>{markRequested=resolve;});
+ await delayedPage.route("**/docs/docs-index.json",async route=>{markRequested();await heldIndex;await route.continue();});
+ await delayedPage.goto(`${origin}/Bunzai/docs/index.html`,{waitUntil:"domcontentloaded"});
+ await requestedIndex;
+ const delayedInput=delayedPage.getByRole("searchbox",{name:"Search docs"}); await delayedInput.fill("Bun 1.3.14");
+ releaseIndex();
+ await delayedPage.waitForFunction(()=>document.querySelectorAll("[data-doc-search-results] a").length>0);
+ const delayedSearchResults=await delayedPage.locator("[data-doc-search-results] a").count();
+ const result={home,docsIndex,searchCount,delayedSearchResults,install,layouts,blocked,offOrigin,errors};console.log(JSON.stringify(result,null,2));
  const mobile=layouts[0]!;const desktop=layouts[2]!;
  if(mobile.pageWidth>mobile.viewport||mobile.article.y<mobile.sidebar.bottom-1||mobile.navHeight>260||mobile.navContentHeight<=mobile.navHeight)throw new Error("mobile Docs layout did not stack or bound the page list");
  if(desktop.pageWidth>desktop.viewport||desktop.article.x<=desktop.sidebar.x||desktop.toc.x<=desktop.article.x)throw new Error("desktop Docs columns did not remain side by side");
- if(home.docsLink===0||docsIndex.pages<140||searchCount===0||install.heading!==1||errors.length||offOrigin.length)throw new Error("Pages browser proof failed");
+ if(home.docsLink===0||docsIndex.pages<140||searchCount===0||delayedSearchResults===0||install.heading!==1||errors.length||offOrigin.length)throw new Error("Pages browser proof failed");
 } finally {await browser.close();}

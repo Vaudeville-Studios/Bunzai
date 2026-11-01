@@ -17,37 +17,40 @@ export function runDocsSearch(doc: Document): void {
   const root = layout?.dataset.docRoot;
   if (!layout || !input || !status || !results || !indexHref || !root) return;
 
+  let index: ReturnType<typeof parseDocsIndex> = null;
+  const update = () => {
+    if (!index) return;
+    const query = input.value.trim();
+    results.replaceChildren();
+    if (!query) { results.hidden = true; status.textContent = "Search the page titles, sections, and summaries."; return; }
+    const matches = searchDocs(index.docs, query);
+    for (const record of matches.slice(0, RESULT_LIMIT)) {
+      const item = doc.createElement("li");
+      const link = doc.createElement("a");
+      link.href = route(root, record.id);
+      const title = doc.createElement("strong");
+      title.textContent = record.title;
+      const summary = doc.createElement("span");
+      summary.textContent = record.summary;
+      link.append(title, summary);
+      item.append(link);
+      results.append(item);
+    }
+    results.hidden = matches.length === 0;
+    status.textContent = matches.length === 0
+      ? `No pages match “${query}”.`
+      : matches.length > RESULT_LIMIT
+        ? `Showing ${RESULT_LIMIT} of ${matches.length} pages. Refine your search to see more.`
+        : `${matches.length} page${matches.length === 1 ? "" : "s"} found.`;
+  };
+  input.addEventListener("input", update);
   const indexUrl = new URL(indexHref, doc.baseURI);
   void fetch(indexUrl).then((response) => {
     if (!response.ok) throw new Error("The search index is unavailable.");
     return response.json() as Promise<unknown>;
   }).then((raw) => {
-    const index = parseDocsIndex(raw);
+    index = parseDocsIndex(raw);
     if (!index) throw new Error("The documentation index is invalid.");
-    status.textContent = "Search the page titles, sections, and summaries.";
-    input.addEventListener("input", () => {
-      const query = input.value.trim();
-      results.replaceChildren();
-      if (!query) { results.hidden = true; status.textContent = "Search the page titles, sections, and summaries."; return; }
-      const matches = searchDocs(index.docs, query);
-      for (const record of matches.slice(0, RESULT_LIMIT)) {
-        const item = doc.createElement("li");
-        const link = doc.createElement("a");
-        link.href = route(root, record.id);
-        const title = doc.createElement("strong");
-        title.textContent = record.title;
-        const summary = doc.createElement("span");
-        summary.textContent = record.summary;
-        link.append(title, summary);
-        item.append(link);
-        results.append(item);
-      }
-      results.hidden = matches.length === 0;
-      status.textContent = matches.length === 0
-        ? `No pages match “${query}”.`
-        : matches.length > RESULT_LIMIT
-          ? `Showing ${RESULT_LIMIT} of ${matches.length} pages. Refine your search to see more.`
-          : `${matches.length} page${matches.length === 1 ? "" : "s"} found.`;
-    });
+    update();
   }).catch(() => { status.textContent = "Search is unavailable; use the page list below."; });
 }

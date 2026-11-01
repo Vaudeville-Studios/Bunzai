@@ -26,6 +26,7 @@ import { createColdReadService } from "../stage/store/cold-read-service";
 import { sqliteStateStore } from "../stage/store/sqlite/state-store";
 import { sqliteExtensionStore } from "../stage/store/sqlite/extension-store";
 import { sqliteCoreRecordStore } from "../stage/store/sqlite/core-record-store";
+import { createCoreTurnOwner } from "../studio/core-turn-owner";
 import { sqliteChatStore } from "../stage/store/sqlite-chat-store";
 import type { ContentStore, DocumentBackend } from "../stage/contracts/content-store";
 import type { StateStore } from "../stage/contracts/state-store";
@@ -91,11 +92,13 @@ const removeDatabaseFiles = (file: string): void => {
  * (below), never inline with `createContentStore` here, so building the stores never itself competes
  * with boot.
  */
-const storesOf = (database: StageDatabase, cipher: CellCipher, file: string, keyring: ReturnType<typeof createKeyring>, coreSceneIntegration = true): LibraryStores & { backend: DocumentBackend; extensionStore: ExtensionStore; closeColdReads(): void } => {
+const storesOf = (database: StageDatabase, cipher: CellCipher, file: string, studioDir: string, keyring: ReturnType<typeof createKeyring>, coreSceneIntegration = true): LibraryStores & { backend: DocumentBackend; extensionStore: ExtensionStore; closeColdReads(): void } => {
   const backend = sqliteDocumentBackend(database, cipher);
   const coldReads = createColdReadService({ database, path: file, cipher, keyring });
+  const chats = sqliteChatStore(database, cipher);
+  const core = coreSceneIntegration ? sqliteCoreRecordStore(database, cipher) : undefined;
   return {
-    content: createContentStore(backend, Date.now, { coldFill: coldReads.fill }), state: sqliteStateStore(database, cipher), chats: sqliteChatStore(database, cipher), ...(coreSceneIntegration ? { core: sqliteCoreRecordStore(database, cipher) } : {}),
+    content: createContentStore(backend, Date.now, { coldFill: coldReads.fill }), state: sqliteStateStore(database, cipher), chats, ...(core ? { core, coreTurns: createCoreTurnOwner(chats, core, studioDir) } : {}),
     importCompleted: async (pieceCount) => { if (pieceCount > 1000) await database.optimize(); },
     backend, extensionStore: sqliteExtensionStore(database, cipher), closeColdReads: coldReads.close,
   };
@@ -180,7 +183,7 @@ async function importIn(studioDir: string, vault: DeviceVault, options: OpenOpti
   try {
     importKeyring = createKeyring(database, vault);
     await importKeyring.setup();
-    coldStores = storesOf(database, cellCipher(() => importKeyring!.keys()), building, importKeyring);
+    coldStores = storesOf(database, cellCipher(() => importKeyring!.keys()), building, studioDir, importKeyring, false);
     result = await importFolderIntoLibrary(studioDir, coldStores, {
       foreign: readForeignFile,
       ...(options.onProgress ? { onProgress: options.onProgress } : {}),
@@ -275,7 +278,7 @@ export async function openLibrary(studioDir: string, options: OpenOptions = {}):
     let search: LibrarySearch | undefined;
     let removeStores = () => {};
     let removeSessions = () => {};
-    stores = storesOf(database, cipher, file, keyring, options.coreSceneIntegration ?? true);
+    stores = storesOf(database, cipher, file, studioDir, keyring, options.coreSceneIntegration ?? true);
     releases.push(() => stores?.closeColdReads());
     assets = createLibraryAssets(stores.content, cipher, keyring);
     releases.push(() => assets?.close());
@@ -318,7 +321,7 @@ export async function openLibrary(studioDir: string, options: OpenOptions = {}):
       pieceChanges: (after, limit) => stores.backend.pieceChanges(after, limit),
       ...(imported ? { imported } : {}),
       rebuildScheduler,
-      async close() { await closeSceneRuntime(stores.chats); closeResources(); },
+      async close() { await stores.coreTurns?.close(); await closeSceneRuntime(stores.chats); closeResources(); },
     };
   } catch (error) {
     try { closeResources(); } catch { /* Preserve the open failure after releasing every resource. */ }

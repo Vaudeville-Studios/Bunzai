@@ -48,6 +48,8 @@ export interface StateSql {
   drop(branchId: string): void;
   /** Keeps a turn's deltas with the version it stored; they follow the ones it already has. */
   stampSwipe(swipeId: string, deltas: readonly Delta[]): void;
+  /** The caller has already fenced or proven acceptance; this owner still validates namespace and exact swipe. */
+  applyExtensionOnSwipe(packageId: string, branchId: string, messageId: string, swipeId: string, raw: unknown): boolean;
 }
 
 interface DeltaSql { owner: string; swipe: string | null; slot: string; path_json: string; value_json: string | null; removed: number; at: number }
@@ -149,11 +151,11 @@ export function stateMethods(k: StateSqlDeps): StateSql {
       k.run("INSERT OR REPLACE INTO state_keyframes (branch_id, message_id, state_json) VALUES (?, ?, ?)", branchId, messageId, cipher.seal("state_keyframes.state_json", JSON.stringify(s)));
     }
     const tip = rows.at(-1);
-    k.run(
-      `INSERT INTO branch_state (branch_id, state_json, tip_message_id, tip_swipe_id) VALUES (?, ?, ?, ?)
-         ON CONFLICT (branch_id) DO UPDATE SET state_json = excluded.state_json, tip_message_id = excluded.tip_message_id, tip_swipe_id = excluded.tip_swipe_id`,
-      branchId, cipher.seal("branch_state.state_json", JSON.stringify(state)), tip?.message_id ?? null, tip?.swipe_id ?? null,
-    );
+    const cell = cipher.seal("branch_state.state_json", JSON.stringify(state));
+    // An UPSERT's conflict policy overrides the fingerprint trigger's OR IGNORE on a second refresh.
+    if (!k.run("UPDATE branch_state SET state_json = ?, tip_message_id = ?, tip_swipe_id = ? WHERE branch_id = ?", cell, tip?.message_id ?? null, tip?.swipe_id ?? null, branchId)) {
+      k.run("INSERT INTO branch_state (branch_id, state_json, tip_message_id, tip_swipe_id) VALUES (?, ?, ?, ?)", branchId, cell, tip?.message_id ?? null, tip?.swipe_id ?? null);
+    }
   };
 
   /** Adds deltas after the ones the owner has; a message's write that names a version carries its swipe id. */
@@ -170,6 +172,14 @@ export function stateMethods(k: StateSqlDeps): StateSql {
   };
 
   return {
+    applyExtensionOnSwipe(packageId, branchId, messageId, swipeId, raw) {
+      const deltas = checkExtensionDeltas(raw, packageId), message = k.writableMessage(messageId);
+      if (!message || message.branch_id !== branchId || !k.one(`SELECT 1 FROM swipes WHERE message_id = ? AND swipe_id = ? AND cut_at IS NULL`, messageId, swipeId)) return false;
+      const through = build(branchId, [], [...shown(shownPath(branchId, message.seq)), { messageId, swipeId }], message.seq).state;
+      const added = changed(through, deltas);
+      if (added.length) { stamp("message_deltas", "message_id", messageId, added, swipeId); refresh(branchId, message.seq); }
+      return true;
+    },
     refresh,
     stampSwipe: (swipeId, deltas) => stamp("swipe_deltas", "swipe_id", swipeId, deltas),
     copyBase: (fromBranchId, toBranchId) => {

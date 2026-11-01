@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31",
+  "generated": "2026-11-01",
   "count": 140,
   "pages": [
     {
@@ -623,16 +623,16 @@
       "status": "APPROVED",
       "verdict": "APPROVE",
       "reviewer": "root",
-      "sourceHash": "sha256:61d6c099d1f3b222d346ffa6e86afb2a0183050bcb75401f81e92777dd733b68",
-      "semanticSummaryHash": "sha256:cab002cc1efe17d580836eefe251b7231ee3fea8a49d7f2488eb976c24d83060"
+      "sourceHash": "sha256:63522ff1a6029d00827651460828ed6a6977383f5eaf71631db1fbd6cfd39cd9",
+      "semanticSummaryHash": "sha256:e711f1ecb6dd382acccf067f28640d46eea49c77b1ce06195657ad2c138acc13"
     },
     {
       "docId": "reference/extending/coverage",
       "status": "APPROVED",
       "verdict": "APPROVE",
       "reviewer": "root",
-      "sourceHash": "sha256:5062f77c6b261b5d982846917a710c15a2e9ecb6f1e40571db5c9a88130f3fdb",
-      "semanticSummaryHash": "sha256:f69f6f82e9d597fd7821fd6a38056e628e9ffd6206d5da0e3b1adf3572a15670"
+      "sourceHash": "sha256:923cbdaa5331708617c36e684ddb1b677990eb134679bc84102e3ced98e58a9d",
+      "semanticSummaryHash": "sha256:67a70420f89e6fec1a4ea32a14566ea2899c84aec78035712354ddd93145180b"
     },
     {
       "docId": "reference/extending/file-reader-test",

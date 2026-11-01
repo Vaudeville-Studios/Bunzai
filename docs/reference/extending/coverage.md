@@ -4,7 +4,7 @@ Generated from source drop-ins. Absence from the operation catalog means unavail
 
 ## rp-core compatibility
 
-The operation table lists host-level adapters. Desktop and Terminal cannot create extension scenes because new scenes use rp-core. Per-operation host notes identify legacy-scene-only writes. rp-core-linked turns do not invoke extension prompt or scene-event hooks, so Desktop/Terminal local prompt preview is unavailable for those scenes. Browser/Pocket has no rp-core owner; legacy scenes retain extension behavior. First-party rp-core turns remain available.
+The operation table lists host-level adapters. Desktop and Terminal create and run linked scenes through rp-core, including required extension prompt and scene-event hooks, and provide bounded local prompt preview. Browser/Pocket has no rp-core owner and retains its in-memory legacy scene path. Per-operation host notes identify narrower limits, including unavailable Core delete and take fork, connection/backdrop-only Core settings, and refused summary/Compendium follow-on jobs. First-party rp-core turns remain available.
 
 ## Semantic capability inventory
 
@@ -150,12 +150,12 @@ Each group requires an explicit grant. The full body can include authored prompt
 | `logs.write` | available | desktop, browser, terminal |
 | `macros.describe` | available | desktop, browser, terminal |
 | `macros.preview` | available | desktop, browser, terminal |
-| `messages.delete` | Legacy scenes only; Core-linked scene targets are refused. | desktop, browser, terminal |
-| `messages.edit.apply` | Legacy scenes only; Core-linked scene targets are refused. | desktop, browser, terminal |
+| `messages.delete` | Core-linked scenes support append and exact mapped edit; delete and fork remain unavailable. | desktop, browser, terminal |
+| `messages.edit.apply` | Core-linked scenes support append and exact mapped edit; delete and fork remain unavailable. | desktop, browser, terminal |
 | `messages.edit.preview` | available | desktop, browser, terminal |
 | `messages.list` | available | desktop, browser, terminal |
 | `messages.read` | available | desktop, browser, terminal |
-| `messages.send` | Legacy scenes only; Core-linked scene targets are refused. | desktop, browser, terminal |
+| `messages.send` | Core-linked scenes support append and exact mapped edit; delete and fork remain unavailable. | desktop, browser, terminal |
 | `messages.versions.list` | available | desktop, browser, terminal |
 | `models.cancel` | available | desktop, terminal |
 | `models.describe` | available | desktop, terminal |
@@ -174,34 +174,34 @@ Each group requires an explicit grant. The full body can include authored prompt
 | `prompts.inspect` | available | desktop, browser, terminal |
 | `prompts.transform` | available | desktop, browser, terminal |
 | `regex.preview` | available | desktop, browser, terminal |
-| `scenes.create` | available | browser |
+| `scenes.create` | Creates a blank scene in the host ChatStore. Creates and links an rp-core scene using the approved frozen cast; UI loadout defaults and follow-on jobs are not run. | desktop, browser, terminal |
 | `scenes.list` | available | desktop, browser, terminal |
 | `scenes.read` | available | desktop, browser, terminal |
-| `scenes.settings.apply` | Legacy scenes only; Core-linked scene targets are refused. | desktop, browser, terminal |
-| `scenes.settings.preview` | Legacy scenes only; Core-linked scene targets are refused. | desktop, browser, terminal |
+| `scenes.settings.apply` | Core-linked scenes support only connection and backdrop setting selectors; legacy-only selectors are refused. | desktop, browser, terminal |
+| `scenes.settings.preview` | Core-linked scenes support only connection and backdrop setting selectors; legacy-only selectors are refused. | desktop, browser, terminal |
 | `scenes.summary` | available | desktop, browser, terminal |
 | `settings.read` | available | desktop, browser, terminal |
 | `settings.update` | available | desktop, browser, terminal |
 | `state.read` | available | desktop, browser, terminal |
 | `state.slots.describe` | available | desktop, browser, terminal |
-| `state.write.apply` | Legacy scenes only; Core-linked scene targets are refused. | desktop, browser, terminal |
+| `state.write.apply` | Core writes bind an exact mapped swipe. Pending state accepts only with this package's successful reply or regenerate commit. | desktop, browser, terminal |
 | `state.write.preview` | available | desktop, browser, terminal |
 | `storage.delete` | available | desktop, browser, terminal |
 | `storage.get` | available | desktop, browser, terminal |
 | `storage.list` | available | desktop, browser, terminal |
 | `storage.set` | available | desktop, browser, terminal |
-| `takes.fork` | Legacy scenes only; Core-linked scene targets are refused. | desktop, browser, terminal |
+| `takes.fork` | Core-linked scenes support append and exact mapped edit; delete and fork remain unavailable. | desktop, browser, terminal |
 | `takes.list` | available | desktop, browser, terminal |
 | `takes.read` | available | desktop, browser, terminal |
 | `tools.describe` | available | desktop, terminal |
 | `tools.invoke` | available | desktop, terminal |
 | `tools.list` | available | desktop, terminal |
 | `transfer.preview` | available | desktop, terminal |
-| `turns.cancel` | Legacy scenes only; Core-linked scene targets are refused. | desktop, terminal |
-| `turns.continue` | Legacy scenes only; Core-linked scene targets are refused. | desktop, terminal |
-| `turns.regenerate` | Legacy scenes only; Core-linked scene targets are refused. | desktop, terminal |
-| `turns.start` | Legacy scenes only; Core-linked scene targets are refused. | desktop, terminal |
-| `turns.status` | Legacy scenes only; Core-linked scene targets are refused. | desktop, terminal |
+| `turns.cancel` | Core-linked turns use the Core prompt and event pipeline; summary and Compendium follow-on jobs are refused. | desktop, terminal |
+| `turns.continue` | Core-linked turns use the Core prompt and event pipeline; summary and Compendium follow-on jobs are refused. | desktop, terminal |
+| `turns.regenerate` | Core-linked turns use the Core prompt and event pipeline; summary and Compendium follow-on jobs are refused. | desktop, terminal |
+| `turns.start` | Core-linked turns use the Core prompt and event pipeline; summary and Compendium follow-on jobs are refused. | desktop, terminal |
+| `turns.status` | Core-linked turns use the Core prompt and event pipeline; summary and Compendium follow-on jobs are refused. | desktop, terminal |
 | `ui.dialog.request` | available | desktop, browser |
 | `ui.editor.open` | available | desktop, browser |
 | `ui.notice.show` | available | desktop, browser |
@@ -214,6 +214,6 @@ Each group requires an explicit grant. The full body can include authored prompt
 
 | Host | Available operations |
 | --- | ---: |
-| desktop | 136 |
+| desktop | 137 |
 | browser | 105 |
-| terminal | 121 |
+| terminal | 122 |

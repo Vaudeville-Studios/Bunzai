@@ -36,7 +36,7 @@ export interface BrokerAuthority {
   readReceipts(packageId: string, limit: number): Promise<readonly EffectReceipt[]>;
   now(): number;
   id(): string;
-  commitContext(principal: OperationPrincipal, operation: string, access: ResolvedOperationAccess): ExtensionCommitContext;
+  commitContext(principal: OperationPrincipal, operation: string, access: ResolvedOperationAccess, invocationId: string): ExtensionCommitContext;
   promptInvocation?(): ExtensionPromptInvocation | undefined;
 }
 
@@ -123,7 +123,7 @@ export function createExtensionBroker(operations: readonly ExtensionOperationDes
     };
     const invocation = { resources: invocationResources.filter((resource) => grant.resources.some((allowed) => allowed.kind === resource.kind && allowed.id === resource.id)) };
     const context: ExtensionOperationContext = { principal, declaredCommands: authority.declarations?.commands ?? [], declaredPanels: authority.declarations?.panels ?? [], declaredAssets: authority.declarations?.assets ?? [], activationOrigin: authority.activationOrigin, invocation,
-      signal: authority.signal, resources: access.resources, access, commit: authority.commitContext(principal, operation.id, access), grantedOperations,
+      signal: authority.signal, resources: access.resources, access, commit: authority.commitContext(principal, operation.id, access, receiptId), grantedOperations,
       availableGrants, operationReceipts, host: authority.host, availableOperations, assertCurrent, confirm: authority.confirm,
       ...(promptInvocation ? { promptInvocation } : {}),
       invoke: async (nestedOperation: string, nestedArgs: JsonValue): Promise<JsonValue> => {

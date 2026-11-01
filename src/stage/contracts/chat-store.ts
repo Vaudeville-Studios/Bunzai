@@ -16,6 +16,8 @@ import type { ChatTrackerPatch, ChatTrackers, TrackerModule } from "./chat-track
 import type { ChatStoreSummaries, ChatSummary, SummarySettingsPatch, TakeSummary, TakeSummaryInput } from "./chat-summary-types";
 import type { Delta, SceneState } from "../../core/scene-state/types";
 import type { ExtensionCommitContext } from "./extension-store";
+import type { CoreMessageProjection } from "./core-record-store";
+import type { CoreStateMessageTarget, CoreStateTurnBinding } from "./core-extension-state";
 import type { ExtensionTurnOwner } from "./extension-turn-owner";
 export type { ExtensionTurnOwner } from "./extension-turn-owner";
 import type { PartText } from "./content-store";
@@ -226,6 +228,8 @@ export interface TurnCheckpoint {
  */
 export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatStoreDramaturg {
   createChat(input: { title: string; cast: Cast; snapshot: CastSnapshot; history?: ChatHistory }, extensionCommit?: ExtensionCommitContext): Promise<Chat>;
+  /** Host-only creation path for libraries whose scene lifecycle requires an RP-Core session. */
+  createCoreChat?(input: { title: string; cast: Cast; snapshot: CastSnapshot; history?: ChatHistory }, extensionCommit?: ExtensionCommitContext): Promise<Chat>;
   getChat(id: string): Promise<Chat | null>;
   /** The chat's frozen cast; null when the chat is absent or deleted, like getChat. */
   castSnapshot(chatId: string): Promise<CastSnapshot | null>;
@@ -260,6 +264,13 @@ export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatSt
     extensionCommit?: ExtensionCommitContext,
   ): Promise<Branch | null>;
 
+  /** SQLite-only repair of an already committed Core message, atomic with its identity mapping. */
+  projectCoreMessage?(input: CoreMessageProjection): Promise<string>;
+  stageCoreExtensionState?(commit: ExtensionCommitContext, target: CoreStateTurnBinding, deltas: readonly Delta[]): Promise<boolean>;
+  recordCoreExtensionState?(commit: ExtensionCommitContext, target: CoreStateMessageTarget, deltas: readonly Delta[]): Promise<boolean>;
+  applyCoreExtensionState?(sessionId: string, coreMessageId?: string): Promise<void>;
+  discardCorePendingState?(turnOperationId: string, turnId: string): Promise<void>;
+  projectCoreMessages?(inputs: readonly CoreMessageProjection[]): Promise<string[]>;
   appendMessage(
     branchId: string,
     input: { role: MessageRole; content: string; generation?: Generation },

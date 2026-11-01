@@ -1,8 +1,8 @@
 {
-  "generated": "2026-10-31",
+  "generated": "2026-11-01",
   "targetChars": 90000,
   "totalPages": 140,
-  "totalSourceChars": 1702612,
+  "totalSourceChars": 1704084,
   "batches": [
     {
       "id": "batch-001",
@@ -600,7 +600,7 @@
     },
     {
       "id": "batch-008",
-      "sourceChars": 85764,
+      "sourceChars": 86442,
       "pages": [
         {
           "docId": "reference/entities/quickreply",
@@ -671,21 +671,21 @@
           "sourcePath": "docs/reference/extending/api.md",
           "sidecarPath": "docs/summaries/reference/extending/api.json",
           "sectionCount": 0,
-          "sourceChars": 16206,
+          "sourceChars": 16884,
           "status": "APPROVED"
         }
       ]
     },
     {
       "id": "batch-009",
-      "sourceChars": 73235,
+      "sourceChars": 74029,
       "pages": [
         {
           "docId": "reference/extending/coverage",
           "sourcePath": "docs/reference/extending/coverage.md",
           "sidecarPath": "docs/summaries/reference/extending/coverage.json",
           "sectionCount": 5,
-          "sourceChars": 14067,
+          "sourceChars": 14861,
           "status": "APPROVED"
         },
         {

@@ -10,8 +10,10 @@
  * hash; ids, sequence numbers, roles, and times (favored_at included) stay readable.
  */
 import { StudioConflictError } from "../../../studio/errors";
+import { coreRecordProjection } from "./core-record-projection";
 import type { Branch, CastSnapshotCodec, Chat, ChatStore, Generation, Message, WriteGuard } from "../../contracts/chat-store";
 import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import type { CoreMessageProjection } from "../../contracts/core-record-store";
 import {
   checkCast, checkCutoff, checkGuard, checkMessageInputs,
   checkPage, checkPinned, checkSnapshot, checkText, checkTitle, requireVersion as checkVersion,
@@ -30,7 +32,9 @@ import { splitQuarantine } from "./chat-store-quarantine";
 import { turnMethods } from "./chat-store-turns";
 import { sceneSettingMethods } from "./chat-store-scene-settings";
 import { stateMethods } from "./chat-store-state";
-import { versionMethods } from "./chat-store-versions";
+import { addSwipeInTransaction, versionMethods } from "./chat-store-versions";
+import { editSwipeInTransaction } from "./chat-store-edit";
+import { coreStateMethods } from "./chat-store-core-state";
 import { transcriptMethods } from "./chat-store-transcript";
 import type { StageDatabase } from "./database";
 import { applyPartChange, deletePartsForOwner } from "./piece-parts-sql";
@@ -235,6 +239,21 @@ export function sqliteChatStoreBackend(
     snapshotCodec, state,
   };
   const stats = statsCounters(kit);
+  const projectCoreMessages = (inputs: readonly CoreMessageProjection[]): Promise<string[]> => {
+    let inserted = 0;
+    return coreRecordProjection(database, cipher).projectMessages(inputs, (input, target) => {
+      const guard = { expectedVersion: input.expectedVersion + inserted };
+      const payload = { content: input.content, ...(input.generation ? { generation: input.generation } : {}) };
+      const before = target ? messageById(target.messageId) : null;
+      if (target && (!before || before.branchId !== input.takeId || before.swipes[before.current]?.id !== target.swipeId)) throw new Error("Core projection target is not the selected UI swipe");
+      const message = !target ? appendMany(input.takeId, [{ role: input.role, ...payload }], guard)?.[0]
+        : input.mode === "swipe" ? addSwipeInTransaction({ ...kit, insertSwipe }, target.messageId, payload, guard)
+        : editSwipeInTransaction(kit, target.messageId, target.swipeId, input.content, guard);
+      if (!message) throw new Error("Core projection take is unavailable");
+      inserted++;
+      return message.id;
+    });
+  };
   return refuseWhileLocked(cipher, {
     ...createChatMethod({ ...kit, insertSwipe, stats }),
     ...hiddenMethods(kit),
@@ -360,6 +379,11 @@ export function sqliteChatStoreBackend(
       });
     },
 
+    async projectCoreMessage(input) {
+      return (await projectCoreMessages([input]))[0]!;
+    },
+    projectCoreMessages,
+    ...coreStateMethods({ database, cipher, one, run, writableBranch, writableMessage, requireVersion, write, state, clock }),
     async appendMessage(branchId, input, guard, extensionCommit) {
       return (await write(() => { if (extensionCommit) requireExtensionCommit(database, cipher, extensionCommit); return appendMany(branchId, [input], guard); }))?.[0] ?? null;
     },
@@ -388,30 +412,9 @@ export function sqliteChatStoreBackend(
     },
 
     async editSwipe(messageId, swipeId, contentRaw, guard, extensionCommit) {
-      const content = checkText(contentRaw, "content");
-      const expected = checkGuard(guard);
       return write(() => {
         if (extensionCommit) requireExtensionCommit(database, cipher, extensionCommit);
-        const m = writableMessage(messageId);
-        const swipe = m && one<SwipeSql>(`SELECT * FROM swipes WHERE message_id = ? AND swipe_id = ? AND ${LIVE}`, messageId, swipeId);
-        if (!m || !swipe) return null;
-        requireVersion(branchRow(m.branch_id)!, expected);
-        const before = cipher.open("swipes.content", swipe.content);
-        if (before !== content) {
-          // D23: an edit never destroys the text it replaces.
-          run(
-            `INSERT INTO swipe_history (message_id, swipe_id, n, content)
-               SELECT ?, ?, coalesce(max(n), 0) + 1, ? FROM swipe_history WHERE message_id = ? AND swipe_id = ?`,
-            messageId, swipeId, cipher.seal("swipe_history.content", before), messageId, swipeId,
-          );
-          run(
-            "UPDATE swipes SET content = ? WHERE message_id = ? AND swipe_id = ?",
-            cipher.seal("swipes.content", content), messageId, swipeId,
-          );
-          bump(m.branch_id);
-          touch(branchRow(m.branch_id)!.chat_id);
-        }
-        return messageById(messageId);
+        return editSwipeInTransaction(kit, messageId, swipeId, contentRaw, guard);
       });
     },
 

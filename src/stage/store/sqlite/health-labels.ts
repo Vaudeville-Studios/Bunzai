@@ -65,10 +65,17 @@ export const COLUMN_WORDS: Readonly<Record<string, string>> = {
   "extension_budget_usage.body_cell": "an extension's usage limits",
   "extension_budget_reservations.body_cell": "reserved extension operation budget",
   "extension_runtime_lease.owner_cell": "the current extension runtime owner",
+  "core_scene_creation_bindings.body_cell": "the committed source of a Core scene",
+  "core_operation_projections.body_cell": "an authorized Core operation awaiting projection",
+  "core_pending_extension_state.body_cell": "package state staged for one Core reply",
 };
 
 const TABLE_WORDS: Readonly<Record<string, string>> = {
   documents: "a saved piece",
+  core_scene_creation_bindings: "a committed Core scene birth",
+  core_operation_projections: "a committed Core projection",
+  core_message_links: "a Core message and swipe identity",
+  core_pending_extension_state: "package state for one Core reply",
   document_versions: "a saved version of a piece",
   document_graves: "a deleted piece",
   grave_versions: "a version of a deleted piece",

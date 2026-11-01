@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/extending/coverage",
   "sourcePath": "docs/reference/extending/coverage.md",
-  "sourceHash": "sha256:5062f77c6b261b5d982846917a710c15a2e9ecb6f1e40571db5c9a88130f3fdb",
-  "summary": "This generated report combines discovered capabilities, reviewed strict field groups, source-declared operation hosts and per-host totals. Discovery is not authorization; field groups require matching grants. The fixed required-family matrix currently passes for this snapshot. Host notes identify compatibility limits: Desktop and Terminal refuse extension writes, turns and local prompt preview on rp-core-linked scenes, and cannot create extension scenes; Browser/Pocket has no rp-core owner and supports its in-memory legacy path. Core-owned turns do not yet invoke extension prompt or scene-event hooks. These inventories and tests do not certify a packaged release.",
+  "sourceHash": "sha256:923cbdaa5331708617c36e684ddb1b677990eb134679bc84102e3ced98e58a9d",
+  "summary": "This generated report combines discovered capabilities, reviewed strict field groups, source-declared operation hosts and per-host totals. Discovery is not authorization; field groups require matching grants. The fixed required-family matrix passes for this snapshot. Desktop and Terminal create linked scenes through rp-core, with extension prompt and scene-event hooks and bounded local prompt preview; Browser/Pocket has no rp-core owner and retains its in-memory legacy path. Per-operation notes identify narrower limits: Core delete and take fork are refused, Core settings support connection and backdrop selectors, and summary/Compendium follow-on jobs are refused. These inventories and tests do not certify a packaged release.",
   "topics": [
     "capability inventory",
     "field groups",
@@ -15,8 +15,8 @@
       "slug": "rp-core-compatibility",
       "title": "rp-core compatibility",
       "level": 2,
-      "sourceHash": "sha256:c374bdfab6d12e49f2fba081c7159a9bb4d039a70da76492ec7ee859953f4c0c",
-      "summary": "The compatibility note separates first-party rp-core turns from extension operations on legacy scenes. Desktop and Terminal refuse extension scene creation and refuse legacy extension writes, turns and local prompt previews when a target is Core-linked. Core-owned turns do not yet run extension prompt or scene-event hooks. Browser/Pocket has no rp-core owner and retains the in-memory legacy scene path. These are compatibility boundaries, not a second engine or a release-security certification.",
+      "sourceHash": "sha256:e21a26213f471012e0c8c2ad1b405ca8663000048eb5ab3626d45349ef99157a",
+      "summary": "Desktop and Terminal use rp-core for linked scenes and run required extension prompt and scene-event hooks on Core turns. Their bounded local preview uses a private journal snapshot. Browser/Pocket has no rp-core owner and retains the in-memory legacy scene path. Core delete and take fork, non-connection/backdrop settings, and summary/Compendium follow-on jobs remain unavailable. These are explicit operation limits, not a second engine or release-security certification.",
       "topics": [
         "rp-core linked scenes",
         "legacy-scene compatibility",
@@ -54,8 +54,8 @@
       "slug": "host-operation-inventory",
       "title": "Host operation inventory",
       "level": 2,
-      "sourceHash": "sha256:3afd63e7320585f50bac9ded7b55487ae6022a6783266ed969b41f41936d5c44",
-      "summary": "The inventory lists operation IDs, descriptor-declared hosts and any descriptor-owned compatibility note. Browser-only scene creation and graphical or native-file operations are examples of host-specific availability. The independent required-family fixture compares against fixed plan rows and passes for this snapshot. Desktop and Terminal legacy-scene restrictions are called out on affected descriptors; host availability is not a claim that every engine path has parity or that the package is release-certified.",
+      "sourceHash": "sha256:4e4e92fc5193b3c996b76c78e977fe71b5aec00d426bf611b8fed2e8bcf0bc76",
+      "summary": "The inventory lists operation IDs, descriptor-declared hosts and any descriptor-owned compatibility note. Browser-only UI and graphical or native-file operations are examples of host-specific availability. The independent required-family fixture compares against fixed plan rows and passes for this snapshot. Core-specific operation limits are called out on affected descriptors; host availability is not a claim that every engine path has parity or that the package is release-certified.",
       "topics": [
         "operation IDs",
         "declared hosts",
@@ -67,7 +67,7 @@
       "slug": "host-totals",
       "title": "Host totals",
       "level": 2,
-      "sourceHash": "sha256:1df35e553e40fc99bca87d1a12cff72af521fce7c3c8d586c84566000a3e6f04",
+      "sourceHash": "sha256:1952951061aba0f53cd1f47a93f6bb67809f0ebfa692d4ca4c863a915bb81b93",
       "summary": "The totals count how many generated descriptors currently include each host in their source metadata. A single operation is counted once per host, so totals across hosts may exceed the operation catalog size. These figures help track the breadth of declared support but do not measure user-flow completeness, test coverage, deployment behavior or security approval. The required-family test checks a different question: whether every plan-required operation is available on each expected host and no unexpected host is claimed. Host-specific integration tests supply evidence that a descriptor's service can actually work at its public boundary. Read the count only as an inventory snapshot, and refresh it from the generator whenever operation sources or supported host composition changes.",
       "topics": [
         "host totals",

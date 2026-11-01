@@ -8,6 +8,7 @@
  */
 import type { ChatStore } from "../stage/contracts/chat-store";
 import type { CoreSceneRecords } from "../stage/store/sqlite/core-record-store";
+import type { CoreTurnOwner } from "./core-turn-owner";
 import type { ContentStore } from "../stage/contracts/content-store";
 import type { StateStore } from "../stage/contracts/state-store";
 import type { createAssetThumbnails } from "../stage/store/asset-thumbnails";
@@ -18,6 +19,7 @@ export interface LibraryStores {
   state: StateStore;
   chats: ChatStore;
   core?: CoreSceneRecords;
+  coreTurns?: CoreTurnOwner;
   thumbnails?: ReturnType<typeof createAssetThumbnails>;
   /** Large completed imports may refresh planner statistics; memory libraries intentionally no-op. */
   importCompleted?: (pieceCount: number) => Promise<void>;

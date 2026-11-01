@@ -1,6 +1,6 @@
 /** Create a new scene from only the explicitly approved, versioned cast sources. */
 import { z } from "zod";
-import { bindExtensionOperation, type ExtensionOperationDefinition, type ExtensionOperationMetadata } from "../../contracts/operation";
+import { bindExtensionOperation, EXTENSION_HOSTS, type ExtensionOperationDefinition, type ExtensionOperationMetadata } from "../../contracts/operation";
 import { decodeJsonValue } from "../../contracts/value";
 import type { ExtensionOperationServices } from "../_services";
 import type { ExtensionSceneServices } from "./_services";
@@ -12,8 +12,9 @@ const input = z.strictObject({ characterId: sourceId, characterVersion: z.number
 const output = z.strictObject({ id: sourceId, title: z.string().min(1).max(120), characterId: sourceId, personaId: sourceId.nullable(), activeTakeId: sourceId, createdAt: z.number().int().nonnegative() });
 const metadata: ExtensionOperationMetadata<z.infer<typeof input>, z.infer<typeof output>> = {
   id: "scenes.create", version: 1, inputVersion: 1, outputVersion: 1, projectionVersion: 1, title: "Create scene",
-  description: "Create a blank Browser scene from explicitly approved character and optional persona versions. Desktop and Terminal create scenes through rp-core. Core title defaults apply; UI loadout defaults and follow-on jobs are not run.",
-  input, output, effect: "write", sensitivity: "private", hosts: ["browser"],
+  description: "Create a blank scene from explicitly approved character and optional persona versions. Core title defaults apply; UI loadout defaults and follow-on jobs are not run.",
+  input, output, effect: "write", sensitivity: "private", hosts: EXTENSION_HOSTS,
+  hostNotes: { browser: "Creates a blank scene in the host ChatStore.", desktop: "Creates and links an rp-core scene using the approved frozen cast; UI loadout defaults and follow-on jobs are not run.", terminal: "Creates and links an rp-core scene using the approved frozen cast; UI loadout defaults and follow-on jobs are not run." },
   policy: { resources: ["character", "persona"], fields: ["scene.create"], methods: [], destinationMode: "none", destinations: [], budget: "write", confirmation: "effect" },
   estimateBudget: () => ({ bytes: 4_000, tokens: 0 }), measureTokens: () => 0,
   resolveAccess: (raw) => { const args = input.parse(raw); return { resources: [{ kind: "character", id: args.characterId }, ...(args.personaId ? [{ kind: "persona", id: args.personaId }] : [])], fields: ["scene.create"], methods: [], destinations: [] }; },

@@ -38,6 +38,14 @@ async function shapeFiles(): Promise<string[]> {
     // Where the library lives: applied migration ids/names are immutable, and older builds refuse an unknown migration before writing; the pieces, Studio documents, and Kit transcripts live inside this database.
     "src/stage/store/sqlite/migrations.ts",
     "src/stage/store/sqlite/core-record-store.ts",
+    "src/stage/contracts/core-record-store.ts",
+    "src/stage/contracts/core-extension-state.ts",
+    "src/stage/store/sqlite/core-pending-state.ts",
+    "src/stage/store/sqlite/chat-store-core-state.ts",
+    "src/stage/store/sqlite/chat-store-state.ts",
+    "src/stage/store/sqlite/core-record-authority.ts",
+    "src/stage/store/sqlite/core-record-projection.ts",
+    "src/stage/store/sqlite/migration-52-core-projections.ts",
     "src/stage/store/sqlite/migration-18-parts.ts",
     "src/stage/store/sqlite/migration-19-blobs.ts",
     "src/stage/store/sqlite/migration-20-derived.ts",
@@ -475,10 +483,11 @@ async function shapeFiles(): Promise<string[]> {
 // Existing pieces remain readable. Older builds cannot read new kinds. Final Cut active saved Agents move
 // to canonical pieces with complete original escrow, verified exact identity and revision-guarded edits.
 // Downgrade remains one-way for those new pieces; the existing v0.1.42 storage-change fence covers this release.
-// 2026-10-31: migration 47 adds sealed rp-core journals; extension storage follows at migrations 48-51.
-// All prior migrations retain their IDs and SQL. Older builds refuse unknown migration IDs before writing.
-// The migration registry, extension tables, owner decoder, checkpoint fingerprint and snapshot inventory are pinned together.
-const PINNED_SHAPE_HASH = "7ee5add113510fd17cc88fdc7f5cb7fce9cf71c369a05db6aae1d79940af72b7";
+// 2026-10-31: migration 47 adds sealed rp-core journals; extension storage follows at 48-51.
+// Migration 52 adds sealed Core birth, operation, ordinal-state and projection shapes. Migrations
+// 1-51 remain unchanged; older hosts refuse the unknown schema before writing. Root and engine
+// reviewed and approved this exact additive shape.
+const PINNED_SHAPE_HASH = "f1706f2b902d1e801429927ee4b7af908e70977950bca036a3e4338aded9ee06";
 
 test("storage-shape tripwire: an on-disk shape change must be a deliberate, version-aware act", async () => {
   const h = createHash("sha256");

@@ -20,7 +20,7 @@ test("search applies text entered while the docs index is still loading", async 
   });
   try {
     runDocsSearch(dom.window.document);
-    input.value = "Bun 1.3.14";
+    input.value = `Bun ${readFileSync(join(root, ".bun-version"), "utf8").trim()}`;
     input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
     expect(results.childElementCount).toBe(0);
     release(new Response(index, { status: 200, headers: { "content-type": "application/json" } }));

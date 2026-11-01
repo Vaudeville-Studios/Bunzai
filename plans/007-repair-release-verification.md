@@ -539,3 +539,28 @@ SHA. Once GREEN, fast-forward Mainstage to the exact validated commit (or revali
 if its source changes), then start the one normal release gate. No pre-push hook
 bypass beyond the owner's already authorized source-push exception; normal commit
 hooks and all release checks remain required.
+
+### Derive the docs-search fixture from the runtime pin
+
+Normal v0.1.44 run 41298220078 stopped at its first failure after555 tests/71files:
+site/docs-search.test.ts still queries Bun1.3.14 while the correctly regenerated
+installation guide now says1.4.2. No binaries were built/published. The existing
+held-fetch assertion and installation-link assertion are meaningful and unchanged.
+
+Authorize ONLY src/site/docs-search.test.ts to read the query version from the
+existing authoritative .bun-version, using its existing readFileSync/join/root.
+No search implementation, assertion, timeout or gate change. Root also found the
+only other source/scripts occurrence in src/site/pages.ts: the source-install
+page hardcodes1.3.14 and incorrectly advertises optional Kit release builds. Keep
+the pure page module pure: link to the authoritative .bun-version instead of a
+second numeric version, and describe the existing CLI/desktop/helper release
+matrix truthfully. Preserve no-published-assets claims until actual publication.
+Use existing site tests for this reversible copy fix; no new low-value test.
+
+Fast-forward the clean task branch to the bot's reviewed two-file0.1.44 bump
+67a4b2c first; preserve v0.1.44 immutable. Run existing docs-search/site pages and
+egress tests with verified1.4.2/isolated profiles. Root reviews diff and independently
+reruns docs-search before normal-hook scoped commit/push with skip-ci/skip-release.
+After that, dispatch exactly one new normal release (next available tag, never
+retag v0.1.44). Its full gates remain required. No need to revalidate unchanged
+Chrome/toolchain through another diagnostic branch for this test/copy-only fix.

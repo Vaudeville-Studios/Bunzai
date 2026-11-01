@@ -100,14 +100,14 @@ function download(): Page {
 <p class="lede">There are no published release assets at the moment. The source checkout is the available installation path; the guide explains the exact steps and what to expect on each platform.</p>
 ${ticket("")}
 <section class="s tight"><h2>Source install</h2>
-<p class="lede">Install <a class="more" href="https://bun.sh">Bun</a> 1.3.14, then clone Bunzai with its rp-core submodule:</p>
+<p class="lede">Install <a class="more" href="https://bun.sh">Bun</a> at the <a href="${REPO}/blob/Mainstage/.bun-version">version pinned by the project</a>, then clone Bunzai with its rp-core submodule:</p>
 <pre class="source"><code>git clone --recurse-submodules ${REPO}.git
 cd Bunzai</code></pre>
 <pre class="source"><code>bun install --frozen-lockfile
 bun run dev</code></pre>
 <p>The server prints the loopback address to open in your browser. If port 8321 is busy, Bunzai selects another free port and prints that address.</p>
 <p><a class="more" href="docs/guide/installation.html">Full illustrated installation guide</a></p></section>
-<section class="s tight"><h2>What each build is for</h2><p>The release workflow defines a Windows desktop executable, cross-platform CLI builds, and optional Kit builds. Those files are not downloadable until a GitHub release is published. The <a class="more" href="${REPO}/releases">release page</a> is the source of truth for current files; do not use an old or guessed download link.</p><p>The <a href="studio/">Browser Studio</a> is a temporary browser session for trying import, editing, and export. Its data does not persist after reload, and playing scenes requires the installed application.</p></section>
+<section class="s tight"><h2>What each build is for</h2><p>The release workflow defines a Windows desktop executable, cross-platform CLI builds, and optional remote helpers. Those files are not downloadable until a GitHub release is published. The <a class="more" href="${REPO}/releases">release page</a> is the source of truth for current files; do not use an old or guessed download link.</p><p>The <a href="studio/">Browser Studio</a> is a temporary browser session for trying import, editing, and export. Its data does not persist after reload, and playing scenes requires the installed application.</p></section>
 </div>`;
   return { path: "download.html", html: frame({ title: "Install Bunzai", description: "Install Bunzai from source and choose the right platform build when releases are available.", up: "", section: "download", body }) };
 }

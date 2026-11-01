@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir -p "$DIAG_ROOT/evidence"
           cat > "$DIAG_ROOT/diagnostic.py" <<'PY'
-          import http.client, json, os, pathlib, re, resource, selectors, shlex, signal, socket, subprocess, sys, time
+          import http.client, json, os, pathlib, re, resource, selectors, shlex, signal, socket, subprocess, sys, tempfile, time
           resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
           root = pathlib.Path(os.environ["DIAG_ROOT"])
           evidence = root / "evidence"
@@ -197,19 +197,20 @@ jobs:
           print((evidence / "test.json").read_text())
           print((evidence / "test.stderr").read_text(errors="replace")[-12000:])
           probe_env = {key: value for key, value in env.items() if key != "CHROME_PATH"}
+          probe_root = pathlib.Path(tempfile.mkdtemp(prefix="bz-", dir="/tmp"))
           for key, relative in json.loads((root / "profile-paths.json").read_text()).items():
-              directory = root / "readiness-profile" / relative
+              directory = probe_root / relative
               directory.mkdir(parents=True, exist_ok=True, mode=0o700)
               probe_env[key] = str(directory)
           with socket.socket() as check:
               check.bind(("127.0.0.1", 9592))
-          profile = root / "readiness-profile" / "chrome"
+          profile = probe_root / "chrome"
           public_command = json.loads((evidence / "chrome.json").read_text())["command"]
           if public_command[0] != str(chrome) or sum(arg.startswith("--remote-debugging-port=") for arg in public_command) != 1 or sum(arg.startswith("--user-data-dir=") for arg in public_command) != 1:
               raise RuntimeError("The public Chrome command cannot be reproduced with only fixture port/profile replacements")
           probe_command = ["--remote-debugging-port=9592" if arg.startswith("--remote-debugging-port=") else f"--user-data-dir={profile}" if arg.startswith("--user-data-dir=") else arg for arg in public_command]
           (evidence / "readiness-environment.json").write_text(json.dumps(probe_env, indent=2))
-          (evidence / "readiness-differences.json").write_text(json.dumps({"publicEnvironmentFile": "chrome-environment.json", "probeEnvironmentFile": "readiness-environment.json", "fixtureChanges": ["fresh user-data-dir", "fresh isolated profile paths", "port 9591 becomes verified-unused 9592", "direct Chrome instead of stderr-capture shim"], "addedBrowserFlags": [], "publicTestExitCode": code}, indent=2))
+          (evidence / "readiness-differences.json").write_text(json.dumps({"publicEnvironmentFile": "chrome-environment.json", "probeEnvironmentFile": "readiness-environment.json", "fixtureChanges": ["fresh user-data-dir", "fresh short owned /tmp profile paths for Unix socket limits", "port 9591 becomes verified-unused 9592", "direct Chrome instead of stderr-capture shim"], "addedBrowserFlags": [], "publicTestExitCode": code}, indent=2))
           probe_code = capture(probe_command, "readiness", probe_env, True, True)
           print((evidence / "readiness.json").read_text())
           if list(evidence.glob("*.limit")):

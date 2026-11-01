@@ -376,6 +376,31 @@ environment. Keep the same 300s overall cap, 64MiB stream caps, --bail=1, normal
 Capture exact source/vendor identity and final exit/summary. Executor must send
 fixture preparation and exact command for root review before running it.
 
+### Controlled runtime comparison after native test-runner panics
+
+Pinned Bun 1.3.14 panics during the frame-matrix list-editor suite on Windows and
+Linux. Root reproduced the Linux panic on the older baseline as well as observing
+one earlier baseline pass; it is not established as introduced by these repairs.
+The first 217-file Linux attempt incorrectly forwarded the task-runner-only port
+offset to Bun, so it is invalid as an exact replay and cannot be counted green.
+A corrected one-file run also panicked. Preserve both facts rather than erasing
+an execution mistake. The Windows 217-file run likewise has no final summary.
+
+Root used the already installed explicit Windows Bun 1.4.2 (744846f84) with the
+same isolated runner and exact test arguments: all 55 tests/291 assertions passed.
+This bounded contrast motivates another experiment; it does not approve a runtime
+pin change, establish a general fix, or satisfy the release gate.
+
+Permit a read-only inventory of known task-local Linux Bun executables, followed
+if necessary by a task-local official Bun 1.4.2 download verified against its
+published SHA256. No global install, privileges, dependency edits, replacement of
+1.3.14, or changes to product source/pins. Send exact identity/preparation proposal
+for root approval before download/run. Then compare the same exact fresh candidate
+frame test with isolated profiles, actual Bun flags only, 120s overall cap and
+64MiB output caps. Preserve version, source/vendor/lock identity and final exit.
+If it passes, propose further bounded replay and toolchain compatibility review;
+do not silently upgrade the release or alter tests to avoid the crash.
+
 ### Measure Linux Chrome readiness before changing the launcher
 
 Manual diagnostic 41294103064 reproduced the original public failure on the exact

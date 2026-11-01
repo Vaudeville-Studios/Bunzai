@@ -25,6 +25,7 @@ const ALLOWED: Record<string, Entry> = {
   // The person's configured model endpoint.
   "src/stage/provider/provider-send.ts": { count: 1, reason: "the default transport for the connection's own configured endpoint; the caller's guardedFetch replaces it where the host is locked" },
   // Loopback and the studio's own origin.
+  "src/site/docs-search.ts": { count: 1, reason: "browser: the same-origin static docs-index.json URL emitted by the documentation page generator; queries search locally" },
   "src/ui/port-owner.ts": { count: 1, reason: "asks 127.0.0.1 whether the studio already runs on this port" },
   "src/ui/remote/lan-server.ts": { count: 2, reason: "two browser-script requests on the pairing page, both same-origin /lan routes; the listener callback is not an outbound fetch" },
   "src/ui/setup/wizard.tsx": { count: 1, reason: "browser: same-origin /api/setup/steps" },

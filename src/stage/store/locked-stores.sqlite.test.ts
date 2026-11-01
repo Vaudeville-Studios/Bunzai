@@ -16,6 +16,8 @@ import { sqliteExtensionStore } from "./sqlite/extension-store";
 import { sqliteDocumentBackend } from "./sqlite/document-backend";
 import { MIGRATIONS } from "./sqlite/migrations";
 import { sha256HexBytes } from "../../core/sha256";
+import type { CoreMessageProjection } from "../contracts/core-record-store";
+import type { CoreStateTurnBinding } from "../contracts/core-extension-state";
 
 const open: StageDatabase[] = [];
 afterEach(() => {
@@ -83,10 +85,23 @@ test("every store method refuses while locked, and nothing in the database chang
   await chats.deleteChat(gone.id);
   const swipe = m!.swipes[0]!.id;
   const turn = await chats.beginTurn(chat.activeBranchId, { kind: "reply" });
+  const coreProjection: CoreMessageProjection = { operationId: "locked-core-operation", sessionId: "locked-core-session",
+    takeId: chat.activeBranchId, coreMessageId: "feed0001", throughSeq: 1, role: "user", content: "hi", expectedVersion: 1 };
+  const coreTurn: CoreStateTurnBinding = { sceneId: chat.id, takeId: chat.activeBranchId, sessionId: coreProjection.sessionId,
+    turnId: turn!.id, turnOperationId: coreProjection.operationId, kind: "reply", expectedVersion: 1 };
+  const coreDeltas = [{ slot: "ext:fixture.extension:state", path: ["value"], value: 1, at: 1 }];
 
   locked = true;
   const before = snapshot(d);
   const calls: [string, () => Promise<unknown>][] = [
+    ["createCoreChat", () => chats.createCoreChat!({ title: "Core", cast: { character: { id: "mira", version: 1 } }, snapshot: { character: card } })],
+    ["projectCoreMessage", () => chats.projectCoreMessage!(coreProjection)],
+    ["projectCoreMessages", () => chats.projectCoreMessages!([coreProjection])],
+    ["stageCoreExtensionState", () => chats.stageCoreExtensionState!(extensionCommit, coreTurn, coreDeltas)],
+    ["recordCoreExtensionState", () => chats.recordCoreExtensionState!(extensionCommit,
+      { sceneId: chat.id, takeId: chat.activeBranchId, messageId: m!.id, expectedVersion: 1 }, coreDeltas)],
+    ["applyCoreExtensionState", () => chats.applyCoreExtensionState!(coreProjection.sessionId, coreProjection.coreMessageId)],
+    ["discardCorePendingState", () => chats.discardCorePendingState!(coreProjection.operationId, turn!.id)],
     ["list", () => library.list()],
     ["read", () => library.read("character", "mira")],
     ["backend.summaries", () => backend.summaries()],

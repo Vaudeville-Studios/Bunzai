@@ -12,6 +12,7 @@ These plans record intended implementation. Current implementation and verificat
 | [004](004-hoplight-helper-and-product-launch-identity.md) | Restore helper availability and isolate Hoplight/Bunzai launches | P1 | L / HIGH | Independent remote lane; reconcile with 002/003 | VERIFIED SOURCE; PUBLISHED BOTH REPOS; NATIVE LIMITS BELOW |
 | [005](005-binary-distribution-and-archive-reconciliation.md) | Prepare Hoplight-equivalent Bunzai binaries and reconcile archived plans | P1 | L / HIGH | 001-004 source merged | WINDOWS BUILT; BASIC COMPILED CHECKS PASS; RELEASE GATES OPEN |
 | [006](006-unbundle-kit-from-releases.md) | Keep Kit source development while excluding it from release downloads | P1 | S / LOW | 005 checkpoint | IMPLEMENTED; WORKFLOW INVENTORY VERIFIED; NOT PUBLISHED |
+| [007](007-repair-release-verification.md) | Repair confirmed release verification failures without weakening acceptance | P1 | L / HIGH | Actual failed release evidence | IN PROGRESS; LANE A VERIFIED; OTHER LANES PENDING |
 
 2026-11-01 reconciliation: Plans 001-004 are on published Bunzai Mainstage
 `9f8e8571929e32fc8e65ad721a13b653c1aa787f`. Pages deployment 41269539303

@@ -1,0 +1,9 @@
+# Separate Linux Chrome readiness observation
+
+Root authorized extending the manual diagnostic after run 41294103064 captured CDP refusal while Chrome was still alive. The unchanged public test retains its actual exit. A separate owned Chrome probe uses a fresh isolated profile recipe and verified-unused port 9592; its argv derives from the public Chrome command, replacing only the fixture port and user-data-dir. It adds no browser flags and makes no production launcher, sandbox or runtime-pin change.
+
+The probe records the first complete DevTools-listening line and requires the CDP response websocket URL to match that owned stderr nonce. Its readiness deadline is 15 seconds; cleanup uses the existing bounded owned-process-group owner. Actual child status, effective probe status, environment/profile differences, and the public test's status remain separate. Probe readiness cannot turn a failed public test into workflow success. Early exit 0 without readiness, a partial stderr endpoint, a mismatched endpoint, and a slow-trickle response do not count as readiness.
+
+Validation: YAML parsed and extracted Python compiled. Five existing capture/argv/cap/cleanup checks passed against the updated code. Five readiness checks passed: early clean exit remains nonpassing; matching nonce succeeds; split stderr URL waits for a full line; a mismatched nonce remains nonpassing; a real slow-trickle HTTP body is interrupted at the absolute deadline with no readiness (15.113 seconds including cleanup). A temporary Linux SIGALRM bounds the HTTP operation and is restored after it. These are fake-child protocol checks, not a Chrome or public-suite pass.
+
+Independent reviewer extension_plan_review approved the final diff and ten checks; root independently inspected and approved the scoped change. The original Linux startup cause and eventual readiness remain unproven until the next manual runner result. No release or tag is created by this diagnostic.

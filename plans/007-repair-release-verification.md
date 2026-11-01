@@ -375,3 +375,22 @@ environment. Keep the same 300s overall cap, 64MiB stream caps, --bail=1, normal
 120000ms per-test budget, single process and truthful stopped/failed result.
 Capture exact source/vendor identity and final exit/summary. Executor must send
 fixture preparation and exact command for root review before running it.
+
+### Measure Linux Chrome readiness before changing the launcher
+
+Manual diagnostic 41294103064 reproduced the original public failure on the exact
+reviewed source: CDP refused at 2.5s, then owned cleanup terminated a still-live
+Chrome at about 2.7s. Only a DBus warning was captured. That warning is not proven
+the cause; eventual readiness remains unknown. No launcher fix is approved yet.
+
+Permit one scoped extension of the existing manual diagnostic: after preserving
+the unchanged public test's real exit, launch a separate owned Chrome under a new
+fresh task profile, with the same original flags and isolated environment. Measure
+first DevTools-listening/owned-CDP readiness for at most 15 seconds, capture bounded
+stderr and actual exit, then terminate/drain only that owned process group. Record
+flag/profile differences explicitly; never hide the public test failure or turn
+it green based on a standalone probe. No sandbox disabling or ambient profile.
+Reuse the existing capture/cleanup owner rather than adding a parallel supervisor.
+Independent review and root diff inspection precede commit/push/one manual dispatch.
+The top commit must retain skip-ci/skip-release markers. This diagnostic remains
+manual-only, standard free runner, read-only, bounded and logs-only.

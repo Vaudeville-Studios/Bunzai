@@ -1,0 +1,134 @@
+{
+  "manifest": {
+    "schemaVersion": 2,
+    "id": "bunzai.theme.cloud-nine",
+    "version": "1.0.0",
+    "name": "Cloud Nine",
+    "requests": [
+      "appearance.accent",
+      "appearance.palette",
+      "appearance.shape",
+      "appearance.surfaces",
+      "appearance.type",
+      "appearance.styles"
+    ],
+    "appearance": {
+      "surfaces": {
+        "shell.nav": "tab-bar",
+        "shell.overlay": "sticker-widgets",
+        "shell.title": "sticker-splash",
+        "shell.status": "chip",
+        "library.grid": "covers",
+        "scenes.list": "chat-list",
+        "ui.dialog": "pop-card",
+        "ui.toast": "bubble",
+        "ui.empty": "doodle",
+        "ui.meter": "chunky-pill-bar",
+        "ui.icons": "filled-cute",
+        "ui.toolbar": "sticker-shelf",
+        "library.decks": "sticker-stack",
+        "ui.section-header": "banner-tag",
+        "ui.tabs": "pill-row",
+        "ui.label-type": "rounded-sentence",
+        "scene.layout": "chat-thread",
+        "scene.message": "bubble",
+        "scene.composer": "chat-input",
+        "scene.swipes": "dots",
+        "scene.wings": "drawer",
+        "scene.hud": "chips",
+        "scene.reasoning": "slab-note",
+        "editor.frame": "card-stack",
+        "editor.fields": "cards",
+        "settings.shape": "big-toggles",
+        "app.room": "sticker-tray",
+        "ui.controls": "quiet"
+      },
+      "palette": {
+        "surface": {
+          "well": "#e8ebfa",
+          "base": "#f3f4fd",
+          "sunken": "#ebedfb",
+          "field": "#ffffff",
+          "panel": "#ffffff",
+          "raised": "#f0f1fd",
+          "ink": "#e2e5f8"
+        },
+        "line": {
+          "strong": "#8f92e6",
+          "line": "#d9dcf3",
+          "track": "#e1e4f7",
+          "control": "#6b6fb5",
+          "focus": "#5546d9"
+        },
+        "text": {
+          "text": "#1c1d38",
+          "soft": "#32345a",
+          "dim": "#43456b",
+          "faint": "#54567d",
+          "onTint": "#1c1d38",
+          "onDeep": "#ffffff"
+        },
+        "roles": {
+          "brand": {
+            "fill": "#bdbcff",
+            "text": "#4b44c0",
+            "deep": "#4b44c0"
+          },
+          "action": {
+            "fill": "#acd5ff",
+            "text": "#1d5a96",
+            "deep": "#1d5a96"
+          },
+          "select": {
+            "fill": "#ffc4dd",
+            "text": "#a1275d",
+            "deep": "#a1275d"
+          },
+          "ok": {
+            "fill": "#aaebcf",
+            "text": "#146946",
+            "deep": "#146946"
+          },
+          "warn": {
+            "fill": "#ffd7a6",
+            "text": "#884900",
+            "deep": "#884900"
+          },
+          "danger": {
+            "fill": "#ffb5ba",
+            "text": "#a92232",
+            "deep": "#a92232"
+          },
+          "info": {
+            "fill": "#a6e7ef",
+            "text": "#0c626e",
+            "deep": "#0c626e"
+          }
+        }
+      },
+      "type": {
+        "display": "fredoka",
+        "ui": "inter",
+        "body": "inter",
+        "mono": "jetbrains-mono",
+        "scale": 1
+      },
+      "shape": {
+        "frame": "rule",
+        "frameWidth": 1,
+        "density": "comfortable",
+        "motion": "bouncy",
+        "chrome": "bunzai"
+      },
+      "accent": {
+        "follows": "user"
+      },
+      "marks": {}
+    },
+    "assets": [],
+    "styles": "styles.css"
+  },
+  "assets": {
+    "styles.css": "/* Cloud Nine: a soft pastel sky, frosted panels and round corners. Every colour is a wash of the palette's own roles. */\n\n/* The sky: three soft clouds of the brand, select and info hues over the base. */\n[data-part=\"shell.canvas\"], .scs .bgm {\n  background:\n    radial-gradient(ellipse 55% 45% at 12% 8%, color-mix(in srgb, var(--bk-role-brand) 45%, transparent), transparent 70%),\n    radial-gradient(ellipse 45% 40% at 92% 18%, color-mix(in srgb, var(--bk-role-select) 40%, transparent), transparent 70%),\n    radial-gradient(ellipse 60% 50% at 70% 100%, color-mix(in srgb, var(--bk-role-info) 35%, transparent), transparent 70%),\n    var(--bk-surface-base) !important;\n}\n\n/* Round, soft corners on every control, card and panel. */\nbutton[data-control], [data-control=\"chip\"], [data-part=\"scene.hud\"] > *, input:not([type=\"checkbox\"]):not([type=\"radio\"]):not([type=\"range\"]), textarea, select { border-radius: 12px !important; }\n[data-part=\"library.card\"], [data-part=\"scenes.card\"], [data-part=\"scenes.hero\"], [data-part=\"ui.dialog\"], [data-part=\"scene.wings.panel\"],\n[data-part=\"settings.body\"] section, [data-part=\"editor.section\"], [data-part=\"shell.overlay.widget\"] { border-radius: 20px !important; overflow: hidden; }\n\n/* Frosted glass: panels float over the sky with a soft lift instead of a hard edge. */\n[data-part=\"library.card\"], [data-part=\"scenes.card\"], [data-part=\"scenes.hero\"], [data-part=\"editor.section\"], [data-part=\"shell.overlay.widget\"] {\n  border-color: color-mix(in srgb, var(--bk-line-strong) 35%, transparent) !important;\n  box-shadow: 0 1px 0 color-mix(in srgb, var(--bk-surface-panel) 90%, transparent) inset, 0 14px 34px -18px color-mix(in srgb, var(--bk-role-brand-deep) 45%, transparent) !important;\n}\n[data-part=\"scene.wings.panel\"], [data-part=\"ui.dialog\"] {\n  background: color-mix(in srgb, var(--bk-surface-panel) 82%, transparent) !important;\n  backdrop-filter: blur(18px) saturate(1.3);\n  box-shadow: 0 24px 60px -24px color-mix(in srgb, var(--bk-role-brand-deep) 50%, transparent) !important;\n}\n\n/* Scene header and wing bar as one frosted strip. */\n.scs .sh, .scs nav.rail { background: color-mix(in srgb, var(--bk-surface-panel) 70%, transparent) !important; backdrop-filter: blur(14px); border-color: color-mix(in srgb, var(--bk-line-strong) 30%, transparent) !important; }\n.scs .sh .nm { font-family: var(--font-fancy) !important; font-weight: 600 !important; letter-spacing: 0 !important; text-transform: none !important; font-size: 1.15em !important; }\n[data-part=\"scene.wings\"] button[data-control] { border-color: transparent !important; background: transparent !important; box-shadow: none !important; }\n[data-part=\"scene.wings\"] button[data-control]:hover { background: color-mix(in srgb, var(--bk-role-brand) 30%, transparent) !important; }\n[data-part=\"scene.wings\"] button[data-control][aria-pressed=\"true\"], [data-part=\"scene.wings\"] button[data-control][aria-expanded=\"true\"] { background: var(--bk-role-brand) !important; color: var(--bk-text-on-tint) !important; }\n\n/* Bubbles (Full Chat only; chat layouts keep their own message shapes): round, with a tucked corner towards the speaker. */\n.scs > .play .msg .bub {\n  border-radius: 22px 22px 22px 6px !important; border: 0 !important;\n  background: color-mix(in srgb, var(--bk-surface-panel) 92%, transparent) !important;\n  box-shadow: 0 10px 26px -16px color-mix(in srgb, var(--bk-role-brand-deep) 45%, transparent) !important;\n}\n.scs > .play .msg.user .bub { border-radius: 22px 22px 6px 22px !important; background: color-mix(in srgb, var(--bk-role-brand) 55%, var(--bk-surface-panel)) !important; }\n.scs > .play .msg .por { border-radius: 28px !important; border: 3px solid var(--bk-surface-panel) !important; box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--bk-role-brand-deep) 60%, transparent) !important; }\n.scs > .play .msg .spk { font-family: var(--font-fancy) !important; font-weight: 600 !important; letter-spacing: 0 !important; text-transform: none !important; }\n\n/* The message box is a pill floating above the sky. */\n.scs .dockbar { background: transparent !important; border: 0 !important; }\n.scs .dockbar .cap { border-radius: 26px !important; border: 1px solid color-mix(in srgb, var(--bk-line-strong) 40%, transparent) !important; background: var(--bk-surface-field) !important; box-shadow: 0 16px 36px -18px color-mix(in srgb, var(--bk-role-brand-deep) 55%, transparent) !important; }\n\n/* The dock floats as a frosted pill. */\n[data-part=\"shell.nav\"] nav { border-radius: 24px !important; border: 1px solid color-mix(in srgb, var(--bk-line-strong) 35%, transparent) !important; background: color-mix(in srgb, var(--bk-surface-panel) 78%, transparent) !important; backdrop-filter: blur(16px) saturate(1.3); box-shadow: 0 18px 40px -20px color-mix(in srgb, var(--bk-role-brand-deep) 55%, transparent) !important; }\n[data-part=\"shell.nav.tile\"], [data-part=\"shell.nav.overlay\"] { border-radius: 16px !important; color: var(--bk-text-dim) !important; }\n[data-part=\"shell.nav.tile\"]:hover { background: color-mix(in srgb, var(--bk-role-brand) 28%, transparent) !important; color: var(--bk-text) !important; }\n[data-part=\"shell.nav.tile\"][aria-current=\"page\"] { background: var(--bk-role-brand) !important; color: var(--bk-text-on-tint) !important; }\n\n/* In the paper chat layouts the sheets and stamps get the same soft corners. */\n.scs [data-chat-layout=\"letters\"] .msg, .scs .sb-book, .scs .sb-page, .scs [data-chat-layout=\"notebook\"] .alt-main { border-radius: 22px !important; }\n.scs .sb-left { border-radius: 22px 0 0 22px !important; } .scs .sb-page.alt-main { border-radius: 0 22px 22px 0 !important; }\n"
+  }
+}

@@ -1,6 +1,6 @@
 /**
  * The chat layout chooser: RoleCall's first-run chat appearance page (components/scene/ChatAppearanceChooser.tsx, copy kept
- * word for word minus "We will save it to your account.", which is untrue in a local app) with all six Bunzai layouts.
+ * word for word minus "We will save it to your account.", which is untrue in a local app) with every Bunzai layout.
  * Full Chat is preselected; Preview opens the large view with a Choose button; Use hands the pick to onChoose.
  * The cards show real screenshots of one synthetic test scene in each layout (docs/media/chat-layouts/, 1920x947 like RoleCall's).
  * Look (wireframe design/wireframes/features/layout-chooser, header A): a centered marquee header under the title

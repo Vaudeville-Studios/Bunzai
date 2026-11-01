@@ -19,7 +19,7 @@ export const ADDITIONAL_LAYOUT_STYLE = `
 .scs .alt-layout .spk{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;text-align:left!important}
 .scs .alt-layout .bub{max-width:none!important;width:auto!important}.scs .alt-layout .prose{max-width:none!important}
 .scs .alt-layout .dockbar{left:0!important;right:0!important;bottom:0!important;transform:none!important;padding:12px 24px!important;max-width:none!important}
-.scs .alt-layout .hudline{display:none}
+.scs .alt-layout .hudline{display:none!important}
 .scs .alt-rail{flex:0 0 60px;z-index:3;overflow:auto;background:color-mix(in srgb,var(--stage-floor) 90%,transparent);border-right:1px solid var(--stage-line)}
 .scs .alt-rail .alt-tools{display:flex;flex-direction:column;padding:8px 4px;gap:6px}.scs .alt-rail [data-control="row"]{min-height:46px}
 .scs .alt-rail [data-control="row"] [data-slot="label"]{display:none}
@@ -31,7 +31,7 @@ export const ADDITIONAL_LAYOUT_STYLE = `
 .scs [data-chat-layout="familiar"] .scroll>*{max-width:none!important}
 .scs [data-chat-layout="familiar"] .msg>.pw{flex-basis:52px;width:52px!important}
 .scs [data-chat-layout="familiar"] .msg .por{width:52px!important;height:64px!important}
-.scs [data-chat-layout="familiar"] .bub{background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important}
+.scs [data-chat-layout="familiar"] .bub,.scs [data-chat-layout="letters"] .bub,.scs [data-chat-layout="notebook"] .bub,.scs [data-chat-layout="storybook"] .bub{background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important}
 .scs [data-chat-layout="immersive"] .alt-header{background:transparent;border:0;opacity:.85}
 .scs [data-chat-layout="immersive"] .msg:not(.user)>.pw{flex-basis:260px;width:260px!important}
 .scs [data-chat-layout="immersive"] .msg:not(.user) .por{width:260px!important;height:380px!important}

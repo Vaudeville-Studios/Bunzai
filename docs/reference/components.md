@@ -47,6 +47,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | ActivityTab | src/ui/apps/scenes/props/story-director/tab-activity.tsx | ({ entries, now, onClear, locked }: { entries: readonly DirectorActivity[]; now: number; onClear(): void; locked: boo... |  |  |
 | AddByModel | src/ui/apps/scenes/props/trackers/items/generate-kit.tsx | ({ ctx, chatId, ask, label, noun, namePlaceholder, guidePlaceholder, labels, preview, accept }: AddProps<T>) | RoleCall's "Add ..." form: a dashed button that opens a name and a guide, then Generate. |  |
 | AddEnemy | src/ui/apps/scenes/props/trackers/battle/battle-parts.tsx | ({ onAdd, onCancel }: { onAdd(e: Omit<Enemy, "id">): void; onCancel(): void }) |  |  |
+| AdditionalLayout | src/ui/apps/scenes/layouts/additional-layout.tsx | (p: LayoutProps) |  |  |
 | AddMenu | src/ui/apps/workbench/nodes/Board.tsx | ({ disabled, onAdd }: { disabled: boolean; onAdd(type: "note" \| "frame"): void }) |  | .view .head .grow .addWrap .addMenu .area .canvas .world ... |
 | AddParticipant | src/ui/apps/scenes/cast/add-participant.tsx | ({ rows, onChange, messenger }: { rows: readonly Pick<RosterRow, "name">[]; onChange(c: ParticipantChange): void; mes... |  |  |
 | AddPopover | src/ui/apps/scenes/scene-lore-books.tsx | ({ library, inScene, onPick, onCreate, onClose }: { library: StudioEntitySummary[] \| null; inScene: ReadonlySet<strin... | The dashed button's popover: "+ New Lorebook" (name it first, then Create) over the library list. |  |
@@ -155,7 +156,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | CharacterForm | src/ui/apps/scenes/cast/cast-character-tab.tsx | ({ ctx, id, chatId, chat, editor, summary, art, version, variants, variantId, busy, onVariant }: { ctx: AppContext; i... | The Character tab: the card's fields in RoleCall's order, the look strip, and the pinned Save. |  |
 | CharacterHero | src/ui/apps/scenes/messenger/settings/character-stats.tsx | ({ a }: { a: WingArgs }) |  |  |
 | CharacterLibrary | src/ui/apps/scenes/booth-navigator.tsx | ({ ctx, currentId, onClose, onStarted }: { ctx: AppContext; currentId: string; onClose(): void; onStarted?(): void }) | `onStarted` runs once the new scene exists, just before the page moves to it (the Messenger drops its cached scene list there). |  |
-| ChatLayoutRow | src/ui/apps/settings/sections/chat-layout-row.tsx | ({ prefs }: { prefs: { get(key: string): unknown; set(key: string, value: unknown): void } }) |  |  |
+| ChatLayoutRow | src/ui/apps/settings/sections/chat-layout-row.tsx | ({ prefs }: { prefs: { get(key: string): unknown; set(key: string, value: unknown): void } }) |  | .grid |
 | Check | src/ui/apps/scenes/final-cut/fc-controls.tsx | ({ label, checked, onChange }: { label: string; checked: boolean; onChange(next: boolean): void }) |  |  |
 | Checkbox | src/ui/components/rc-controls/index.tsx | ({ className, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) |  | .sr-only .field .area .chip .check .tipWrap .tip |
 | CheckedText | src/ui/apps/scenes/messenger/settings/scene/drafts.tsx | ({ saved, write, check, rows, delay = SAVE_MS, ...copy }: RowCopy & { saved: string; rows?: number; delay?: number; c... | A text area that saves what was typed once it rests, unless `check` names what is wrong with it. |  |
@@ -230,6 +231,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | DeleteMenu | src/ui/apps/scenes/scene-cuts.tsx | ({ onPick }: { onPick(scope: CutScope, skipConfirm: boolean): void }) |  |  |
 | DeleteNote | src/ui/apps/scenes/messenger/panels/lore/lore-list.tsx | ({ w, bookName }: { w: LoreApi; bookName: string }) | The inline delete confirmation (panels.html 3f), shared by the list and the inspector. It asks before `confirmDeleteEntry` removes the entry from its book. |  |
 | DeleteTakeDialog | src/ui/apps/scenes/scene-takes.tsx | ({ take, onCancel, onConfirm }: { take: TakeSummary; onCancel(): void; onConfirm(): void }) |  |  |
+| Desktop98 | src/ui/apps/scenes/layouts/desktop98.tsx | (p: LayoutProps) |  |  |
 | DesktopNoticeRow | src/ui/apps/scenes/messenger/settings/user/desktop-notice.tsx | ({ a }: { a: WingArgs }) |  |  |
 | DetailHint | src/ui/apps/scenes/scene-lore-entries.tsx | ({ empty, onAdd }: { empty: boolean; onAdd(): void }) | The editor pane while no entry is open (RoleCall's "Select an Entry" and "Empty Lorebook"). |  |
 | DiagnosticsSection | src/ui/apps/scenes/compendium/tabs/settings/diagnostics.tsx | ({ ctx, chat, compendium, lore }: SectionProps) |  |  |
@@ -350,6 +352,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | ForkDialog | src/ui/apps/scenes/scene-takes.tsx | ({ number, defaultName, retake, onCancel, onCreate }: { number: number; defaultName: string; retake?: boolean; onCanc... | `retake` is Retake from here: the same dialog, told that a fresh reply is written on the new take (message `number` is the one it answers). |  |
 | FormSection | src/ui/apps/scenes/cast/cast-parts.tsx | ({ title, icon, tone, note, expand, children, "data-part": part }: { title: string; icon: IconName; tone: string; not... | A titled form card with a tone from one deck token and an optional expand button. |  |
 | FormulaEditor | src/ui/apps/workbench/pieces/formula-editor.tsx | ({ entity, revision, ctx, piece, topRight }: KindEditorProps) |  | .root .problem .cols .flush .colsPair .rail .railTitle .section ... |
+| FullChatWings | src/ui/apps/scenes/layouts/full-chat-wings.tsx | ({ wing, side, extra, onWing, renderWing }: { wing: string \| null; side: "l" \| "r" \| undefined; extra: readonly Wing[... |  |  |
 | FullscreenLayer | src/ui/apps/scenes/fullscreen-layer.tsx | ({ children, label }: { children: ReactNode; label: string }) |  |  |
 | GalleryGrid | src/ui/apps/scenes/stage-gallery-grid.tsx | ({ items, onOpen }: { items: readonly GalleryItem[]; onOpen(item: GalleryItem): void }) |  |  |
 | GalleryLightbox | src/ui/apps/scenes/stage-gallery-lightbox.tsx | ({ item, busy = false, onUse, onClose }: { item: GalleryItem; busy?: boolean; onUse?(): void; onClose(): void }) | `onUse` is absent where the picture is only for looking at (a message portrait), and the button goes with it. |  |
@@ -809,6 +812,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | StatusToast | src/ui/agent/kit-bands.tsx | ({ text }: { text: string \| null }) | A brief statement about something the window itself just did. |  |
 | Stepper | src/ui/apps/scenes/props/trackers/items/item-parts.tsx | ({ value, onMinus, onPlus, label }: { value: number; onMinus(): void; onPlus(): void; label: string }) | RoleCall's +/- stepper beside a quantity. |  |
 | Storyboards | src/ui/apps/scenes/compendium/tabs/storyboards.tsx | ({ ctx, chat, entries, onChat, onOpen }: { ctx: AppContext; chat: Chat; entries: readonly CompendiumEntry[]; onChat?(... |  |  |
+| Storybook | src/ui/apps/scenes/layouts/storybook.tsx | (p: LayoutProps) |  |  |
 | StoryTab | src/ui/apps/scenes/props/story-director/tab-story.tsx | ({ state, chatId }: { state: DirectorState; chatId?: string }) | `chatId` is the scene whose composer a suggested action fills; without it the actions stay plain text. |  |
 | StructuredPersona | src/ui/components/structured-persona/index.tsx | ({ value, onChange }: StructuredPersonaProps) |  | .wrap .kinds .attr .top .key .chips .chip .chipInput ... |
 | StubEditor | src/ui/components/stub-editor/index.tsx | ({ title, note, onClose, children }: StubEditorProps) |  | .head .note .body .close |

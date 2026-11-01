@@ -723,7 +723,7 @@ Dramaturg polling for a conversation running in another window pauses while this
 
 Narrow scene containers use compact portraits and tap-revealed message actions. The composer uses 16px text and a 5.5rem height cap on phones across themes; unchanged drafts refit when their container changes width through the shared inline-size observer. Running-browser checks cover 375px RoleCall and Paper, narrow message editing and wide-to-narrow-to-wide draft resizing. Physical phones and installed-app behavior remain unverified.
 
-A scene opens only after a chat layout is chosen (`scenes/layout-chooser/`, wireframes `design/wireframes/rc-port/messenger.html` view 1 and `design/wireframes/features/layout-chooser/` header A; RoleCall's `ChatAppearanceChooser`): `LayoutGate` shows `LayoutChooser` (Full Chat preselected, Messenger, Preview dialog with Choose, "Use <name>") in place of the scene while `scenes.chatLayout` is unset or unreadable (`chat-layout.ts`), saves the pick, then renders the scene. Each card shows a real screenshot of one synthetic test scene in that layout (`docs/media/chat-layouts/full-chat.jpg` and `messenger.jpg`, 1920 by 947), under the caption "Actual screenshots from a test chat. Every layout runs the same scene." The page has a centered marquee header (gold kicker "Bunzai · A space for your stories", the title, then the two lines of copy) over the title screen's `LightRays` without fog. Behind it, the hovered or focused card's screenshot fills the page under a vignette, and the selected layout shows there otherwise. Settings > Appearance > Chat layout changes the same key.
+A scene opens only after a chat layout is chosen (`scenes/layout-chooser/`, wireframes `design/wireframes/rc-port/messenger.html` view 1 and `design/wireframes/features/layout-chooser/` header A; RoleCall's `ChatAppearanceChooser`): `LayoutGate` shows `LayoutChooser` (Full Chat preselected, Messenger, Preview dialog with Choose, "Use <name>") in place of the scene while `scenes.chatLayout` is unset or unreadable (`chat-layout.ts`), saves the pick, then renders the scene. Each card shows a real screenshot of one synthetic test scene in that layout (`docs/media/chat-layouts/`, one per layout, 1920 by 947), under the caption "Actual screenshots from a test chat. Every layout runs the same scene." The page has a centered marquee header (gold kicker "Bunzai · A space for your stories", the title, then the two lines of copy) over the title screen's `LightRays` without fog. Behind it, the hovered or focused card's screenshot fills the page under a vignette, and the selected layout shows there otherwise. Settings > Appearance > Chat layout changes the same key.
 
 `src/ui/apps/scenes/`: RoleCall's /scenes list, gamified onto the wireframe
 (`design/wireframes/soft/scenes-game.html`), and the scene page, ported from the earlier approved
@@ -1618,7 +1618,7 @@ Settings is built from section modules: one file in `src/ui/apps/settings/sectio
 `SettingsSection` (id, label, order, `Component: (props: { ctx }) => JSX.Element`);
 `sections/registry.ts` is the one stated seam. The rail derives from the registry (`src/ui/apps/settings/
 index.tsx`); every control is call-and-response against live settings (theme/accent repaint
-instantly). Appearance's house-accent palette labels its theme-aware first color **default**; its Chat layout row (`settings/sections/chat-layout-row.tsx`: Full Chat, Familiar, Basic, Desktop 98, Messenger or Immersive; unset shows Full Chat without saving it) is the studio-wide chat layout, the same key the first-open chooser saves. Shipped
+instantly). Appearance's house-accent palette labels its theme-aware first color **default**; its Chat layout row (`settings/sections/chat-layout-row.tsx`) is a grid of choice cards, each layout's title over its lead line, that reflows with the pane (Full Chat, Familiar, Basic, Desktop 98, Messenger, Immersive, Letters, Notebook and Storybook; unset shows Full Chat without saving it) is the studio-wide chat layout, the same key the first-open chooser saves. Shipped
 sections: Appearance (theme and house accent), Models (the provider vault),
 Connections (MCP in both directions), Spotify (the person's own Client ID and the sign-in), Studio (home app, Library first deck, publish targets, and
 the engine checkouts on this machine), Security (the library's lock, and its health check), Backups
@@ -1843,10 +1843,10 @@ supported. External-core sources live in the `vendor/rp-core` submodule.
 
 ### Additional chat layouts from VAUDEVILLE
 
-`scenes.chatLayout` accepts Full Chat, Familiar, Basic, Desktop 98, Messenger and Immersive.
+`scenes.chatLayout` accepts Full Chat, Familiar, Basic, Desktop 98, Messenger, Immersive, and the paper layouts Letters, Notebook and Storybook.
 The first-open chooser, Appearance settings and Messenger settings share `layout-options.ts`.
 These are presentation choices, independent of the theme's `scene.layout` variant.
-All six keep ScenePage's transcript, composer, turns and edits; no second chat store is created.
+Every layout keeps ScenePage's transcript, composer, turns and edits; no second chat store is created.
 Familiar reserves a left tool drawer beside a wide conversation; on narrow panes it opens as a modal.
 Basic keeps the portrait and conversation with tools behind Scene settings; Immersive uses a larger
 portrait and quieter, translucent chrome. Desktop 98 uses VAUDEVILLE's window reducer, draggable
@@ -1856,7 +1856,28 @@ so opening another tool or minimizing a window keeps its draft. Window geometry 
 the mounted scene; it is not saved across app restarts. Container queries adapt the layouts, and
 narrow Desktop 98 shows one active window above its taskbar.
 
+The paper layouts (`layouts/paper-layout-style.ts`) are Bunzai's own and draw only with theme tokens, so a light theme
+reads as paper on a desk and a dark theme as the same page by lamplight. **Letters** runs on the reading layout (header,
+Scene settings menu): each message is a sheet in a centered column, the reader's offset to the right on field paper, the
+portrait a perforated stamp in the corner and the speaker a signature at the foot. **Notebook** also runs on the reading
+layout: a ruled page with a margin rule and punched holes, polaroid portraits under tape, and the wings as colored index
+tabs (`ListRow`, each in its wing's tone) on the page edge; a tab opens its tool as a loose sheet beside the tabs, and
+below 720 px the tabs give way to Scene settings. **Storybook** (`layouts/storybook.tsx`) is an open book: the left page
+holds the portrait over a Contents page of the wings with their task lines, an open tool takes that page, and the right
+page carries the conversation with centered speaker lines and indented paragraphs. Below the compact width the book
+closes to one page and the left page opens as a dialog from the header. The portrait time stamp and the scene readout
+are hidden in all three; the time stays in each message's meta row.
+
 Messenger transcript avatars keep a fixed 40 px square and circular crop, including under theme
 packages that enlarge Full Chat portraits. The theme cannot stretch the Messenger avatar wrapper.
 
 Matinee 1.0.4 reserves a separate 160 × 224 px portrait column in Full Chat (80 × 112 px in narrow panes). Its package rules target the Full Chat play surface, leaving Messenger and the additional layout shells to control their own geometry.
+
+`theme-packages/` holds importable light theme packages (Settings > Appearance > Inspect a theme package): Matinee,
+Modern Minimal, Prismatic Journal, Washi, Gazette and Cloud Nine. **Washi** is sumi ink on handmade paper: a faint manuscript grid,
+a vermilion seal beside the scene name, portraits in a paper mat and quiet underlined wing tabs. **Gazette** is a front
+page: heavy headline serif, a masthead rule, a red byline square, a drop cap and two columns for replies of more than
+one paragraph, halftone grey portraits that return to color on hover, and a black dock. **Cloud Nine** is a pastel sky
+with frosted panels, round corners, bubbles with a tucked corner and a floating dock. All three keep message-shape rules
+on the Full Chat play surface (`.scs > .play`), so the chat layouts keep their own geometry, and none picks
+`scenes.list: marquee-hero`, which repaints the Scenes room in the dark premiere palette.

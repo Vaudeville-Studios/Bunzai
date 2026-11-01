@@ -22,14 +22,28 @@ async function click(label: string): Promise<void> {
   const button = [...host.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.getAttribute("aria-label") === label || b.textContent === label);
   expect(Boolean(button)).toBe(true); flushSync(() => button!.dispatchEvent(new dom.dom.window.MouseEvent("pointerdown", { bubbles: true }))); flushSync(() => button!.click()); await flushTasks();
 }
-for (const layout of ["familiar", "basic", "immersive"] as const) test(`${layout} opens tools and retains chat and tool drafts`, async () => {
+/** Opens the AI tool the way each layout offers it: a rail or tab, the Storybook contents page, or the settings menu. */
+async function openAi(layout: LayoutProps["layout"]): Promise<void> {
+  if (layout === "familiar" || layout === "notebook") await click("AI");
+  else if (layout === "storybook") await click("AIModel and generation settings");
+  else { await click("Scene settings"); await click("AI"); }
+}
+for (const layout of ["familiar", "basic", "immersive", "letters", "notebook", "storybook"] as const) test(`${layout} opens tools and retains chat and tool drafts`, async () => {
   await mount(layout); const chat = host.querySelector('[aria-label="Chat draft"]');
-  if (layout === "familiar") await click("AI"); else { await click("Scene settings"); await click("AI"); }
+  await openAi(layout);
   const draft = host.querySelector<HTMLTextAreaElement>('[aria-label="ai draft"]')!; expect(Boolean(draft)).toBe(true); draft.value = "edited";
   await click("Close scene settings");
   expect(host.querySelector('[aria-label="Chat draft"]') === chat).toBe(true);
-  if (layout === "familiar") await click("AI"); else { await click("Scene settings"); await click("AI"); }
+  await openAi(layout);
   expect(host.querySelector<HTMLTextAreaElement>('[aria-label="ai draft"]')?.value).toBe("edited");
+});
+test("Storybook shows the portrait and the contents page until a tool takes the left page", async () => {
+  await mount("storybook");
+  expect(host.querySelector(".sb-left")?.textContent).toContain("Portrait");
+  expect(host.querySelector('nav[aria-label="Scene tools"]')).not.toBeNull();
+  await openAi("storybook");
+  expect(host.querySelector(".sb-left [aria-label='ai draft']")).not.toBeNull();
+  expect(host.querySelector('nav[aria-label="Scene tools"]')).toBeNull();
 });
 test("Desktop 98 minimizes, restores and reopens a program without replacing its draft", async () => {
   await mount("desktop98"); const chat = host.querySelector('[aria-label="Chat draft"]');
@@ -58,7 +72,9 @@ test("Desktop 98 activates a retained portal's window when its field receives fo
   expect(host.querySelector('[data-desktop-window="model"]')?.getAttribute("data-active")).toBe("true");
 });
 
-test("Familiar toggles an active rail button closed through the scene outside-press boundary", async () => {
-  await mount("familiar"); await click("AI"); await click("AI");
-  expect(host.querySelector('[aria-label="AI"]')?.getAttribute("aria-pressed")).toBe("false");
+for (const layout of ["familiar", "notebook"] as const) test(`${layout} toggles an active rail button closed through the scene outside-press boundary`, async () => {
+  await mount(layout); await click("AI"); await click("AI");
+  const button = [...host.querySelectorAll("button")].find((b) => b.getAttribute("aria-label") === "AI" || b.textContent === "AI");
+  expect(button?.getAttribute("aria-pressed")).toBe("false");
+  expect(host.querySelector('[aria-label="ai draft"]')).toBeNull();
 });

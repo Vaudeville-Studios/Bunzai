@@ -27,7 +27,7 @@ beforeAll(async () => {
   Chrome = (await import("../messenger-chrome")).MessengerChrome;
   Swap = (await import("./persona-swap")).PersonaSwap;
 });
-afterAll(() => { (globalThis as { Notification?: unknown }).Notification = realNotification; installed.teardown(); });
+afterAll(async () => { (globalThis as { Notification?: unknown }).Notification = realNotification; await installed.teardown(); });
 
 const scene = (id: string, character: string, name: string, updatedAt: number, title: string): SceneSummary =>
   ({ id, title, updatedAt, snapshotVersion: 1, hasPortrait: false, characterName: name, folderId: null, cast: { character: { id: character, version: 1 } } }) as unknown as SceneSummary;

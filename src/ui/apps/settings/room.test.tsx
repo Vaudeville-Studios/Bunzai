@@ -26,7 +26,7 @@ let installed: InstalledDom;
 let tree: Root;
 let host: HTMLElement;
 beforeAll(() => { installed = installDom("<!doctype html><html><body></body></html>", { url: "http://127.0.0.1:8327/", extraGlobals: ["SVGElement"], globals: { IS_REACT_ACT_ENVIRONMENT: true } }); });
-afterAll(() => { installed.teardown(); mock.module("./sections/registry", () => ({ settingsSections: realSettingsSections })); });
+afterAll(async () => { await installed.teardown(); mock.module("./sections/registry", () => ({ settingsSections: realSettingsSections })); });
 beforeEach(() => { host = document.createElement("div"); document.body.append(host); tree = createRoot(host); });
 
 const published: unknown[] = [];

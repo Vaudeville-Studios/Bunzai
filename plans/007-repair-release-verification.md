@@ -108,6 +108,73 @@ Root must review the counterexamples and update this plan with exact permitted
 repair paths before runtime/native/harness implementation. Source-confirmed leads
 alone do not justify editing hundreds of product components or test expectations.
 
+### Reviewed DOM caller repair
+
+The deterministic public helper probe confirms that starting B before A's asynchronous
+teardown settles lets A overwrite B's globals. Exactly three real lifecycle callbacks
+discard the cleanup promise. The first named light-rays/ink-dialog pair reportedly
+failed once, but three subsequent reruns passed; do not describe that pair as a
+deterministic reproduction. The helper race and actual discarded callbacks are
+confirmed. This is a bounded repair of those unsafe lifecycle callers, not proof
+that they cause every recorded UI/Kit failure.
+
+The separate executor may change ONLY these three cleanup callbacks to return or
+await teardown, preserving the existing three-immediate drain and all assertions:
+
+- `src/ui/components/light-rays/light-rays.test.tsx`: await teardown before restoring
+  settings and the mocked renderer in its afterAll callback.
+- `src/ui/apps/settings/room.test.tsx`: await teardown before restoring the registry
+  mock in its afterAll callback.
+- `src/ui/apps/scenes/messenger/shell/shell-actions.test.tsx`: await teardown within
+  its existing cleanup hook, keeping all other cleanup ordering intact.
+
+Do not change `test-dom.ts` to synchronous restoration, touch production components,
+or alter Kit actSync. Return-promise arrow callbacks elsewhere are already correct.
+Record the exact inventory and probe under the existing DOM evidence note. Run all
+three caller suites, the helper lifecycle tests, ink-dialog, and representative
+previously failing virtual-list/Workbench/Scenes suites in the same process with
+isolated profiles. If a group still fails, preserve it for diagnosis rather than
+changing expectations. Run the Kit app/layout pair alongside the repaired caller
+sequence, reporting it separately. Root reviews the complete diff before commit.
+
+### Reviewed native cache repair
+
+The independent reviewer reproduced the unchanged Linux concurrency failure in
+2 of 30 runs on Bun 1.3.14. Instrumentation in a disposable source copy found
+NO publication exception: concurrent atomic renames caused lstat to inspect an
+inode that had become unlinked (nlink 0). The existing hard-link guard correctly
+refused that stale inode. Do not implement the earlier publication-error fallback;
+the observed mechanism contradicts it.
+
+The executor may change only the verify loop in `src/desktop-webview-lib.ts` and
+strengthen concurrency coverage in `src/desktop-webview-lib.test.ts`:
+
+- Re-read the current pathname only when lstat returns nlink 0, at most six lstat
+  attempts with a 1 ms yield between attempts. Use one named attempt bound, not
+  independently maintained magic values.
+- Every fresh observation must pass the UNCHANGED full safety predicate, size,
+  bounded read and SHA-256 checks before returning its path. A persistent zero at
+  the final attempt must fail that same predicate. Do not allow nlink 0 or 2.
+- Keep all other unsafe metadata, symlink, directory, ownership, mode, hash,
+  missing/read errors and publication failures fail-closed, without generic retry.
+- Do not add a second writer, process-local approval cache, global bypass or lock.
+  Path revalidation is not a claim of universal multi-process startup availability.
+
+The disposable prototype passed 1,200 concurrent pairs across 30 reruns, a
+16-caller burst and existing tamper/link/permission refusals. This is prototype
+evidence, not canonical implementation evidence. Apply the reviewed loop without
+instrumentation counters, reproduce the canonical baseline RED with unchanged
+public expectations, then run the same canonical API tests GREEN on Linux and
+Windows. Add a bounded multi-caller burst to improve the actual regression if
+needed; avoid large routine stress counts merely inflating the harness. Record
+extra repeated stress separately from the ordinary suite.
+
+Keep the exact original Linux snapshot as baseline; apply only the reviewed
+canonical diff for GREEN. Extra instrumented/prototype files remain task-local
+and must not be included in test discovery or published assets. Cleanup was
+policy-blocked; do not retry destructive commands through another shell. Use
+explicit test paths or a fresh clean snapshot instead.
+
 ## Consolidation and normal release
 
 After approved repairs, run representative cross-file sequences, adjacent affected

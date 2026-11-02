@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:88439556c9741158180da24f9cb9a18f6784b20d200227d3137a2e6e31f83b72",
-  "semanticSummaryHash": "sha256:381e786ee3c082d54e314f0875266c2edd8fabaec49e30017e7b4544dbb83d87",
+  "sourceHash": "sha256:da6913e8699876de45c164569b39ee2462cd2c55fa2c7ab43702bd970c8f0a11",
+  "semanticSummaryHash": "sha256:eb2907ca8446d42e5af45fd911da62b3c0494cadaae09e06293550acfd6d1b1b",
   "verdict": "APPROVE",
-  "reviewer": "root",
-  "notes": "Reviewed the refreshed UI summary against the current page and Director/Memory implementation; the summary preserves the remaining historical evidence limits.",
-  "reviewedAt": "2026-11-02T02:07:13.070Z"
+  "reviewer": "integration_review",
+  "notes": "reviewed_kit_and_release_download_availability",
+  "reviewedAt": "2026-11-02T08:51:50.947Z"
 }

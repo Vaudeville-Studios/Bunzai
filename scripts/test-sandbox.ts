@@ -1,12 +1,6 @@
 /**
- * The test sandbox, preloaded before every `bun test` run (bunfig.toml): every place Bunzai keeps
- * per-user files points at one throwaway folder, so no test can write into the person's real home
- * or read their real credentials (a keyring test once left a real ~/.bunzai/computer-id behind).
- *
- * HOME and USERPROFILE are left alone, because child processes (PowerShell for DPAPI, git) need the
- * real profile. So the run also watches the real locations: a new entry in ~/.bunzai or the real
- * app-data folder, or a default studio folder that did not exist before, fails the run and names it.
- * The real Studio app running at the same time can cause a false alarm; rerun with it closed.
+ * The test sandbox, preloaded before every `bun test` run (bunfig.toml): per-user paths point at
+ * throwaway folders, and the run audits the original Bunzai, app-data, and Studio locations for leaks.
  */
 import { afterAll } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
@@ -27,11 +21,21 @@ const inSandbox = (name: string) => {
   mkdirSync(dir, { recursive: true });
   return dir;
 };
+const profile = inSandbox("profile");
+const localAppData = inSandbox(join("profile", "AppData", "Local"));
+const roamingAppData = inSandbox(join("profile", "AppData", "Roaming"));
+process.env["HOME"] = profile;
+process.env["USERPROFILE"] = profile;
+process.env["APPDATA"] = roamingAppData;
 process.env["BUNZAI_HOME"] = inSandbox("home");
 process.env["CODEX_HOME"] = inSandbox("codex");
 process.env["CLAUDE_CONFIG_DIR"] = inSandbox("claude");
-process.env["LOCALAPPDATA"] = inSandbox("local-app-data");
+process.env["LOCALAPPDATA"] = localAppData;
+process.env["XDG_CONFIG_HOME"] = inSandbox("xdg-config");
+process.env["XDG_DATA_HOME"] = inSandbox("xdg-data");
 process.env["XDG_STATE_HOME"] = inSandbox("xdg-state");
+process.env["XDG_CACHE_HOME"] = inSandbox("xdg-cache");
+process.env["XDG_RUNTIME_DIR"] = inSandbox("xdg-runtime");
 
 /**
  * Every Studio test runs on the encrypted database, as the app does (plan phase 1 exit bar): each

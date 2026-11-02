@@ -24,10 +24,8 @@ selected; Bunzai operates no inference account or proxy. The current provider ro
 `src/kit/providers/spokes/`, and unknown providers or keyed providers without a key fail before a request is
 made (`src/kit/providers/adapters.ts`; `src/kit/providers/egress.ts`).
 
-Kit is a preview. Run it from a checkout with `bun run kit`, or use a `bunzai-kit-*` release binary.
-`package.json` is private and exposes that source entry, and the GitHub release workflow
-builds with `--kit`, publishing `bunzai-kit-*` binaries beside `Bunzai.exe` and the `bunzai-*` CLI binaries
-(`package.json`; `.github/workflows/release.yml`).
+Kit is currently a source preview. Run it from a checkout with `bun run kit`. The release workflow does
+not include Kit binaries in its Windows or Linux desktop, CLI, or helper assets.
 
 ### What the vault seals
 

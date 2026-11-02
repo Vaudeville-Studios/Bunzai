@@ -3,7 +3,7 @@ name: release
 # Builds and publishes a GitHub Release for one tag. Two doors, same room:
 #  - push a tag like v0.1.0 by hand, or
 #  - get called by auto-release.yml (workflow_call with the tag it just cut).
-# Builds the desktop exe (Windows), the CLI binaries for five targets (the same bake, so
+# Builds the desktop exe (Windows), the CLI binaries for three targets (the same bake, so
 # `bunzai ui` serves the packaged studio anywhere), checksums everything, and publishes with the
 # install guide (.github/RELEASE-NOTES-INSTALL.md) at the top of the notes. The tag must match
 # package.json's version.
@@ -129,42 +129,8 @@ jobs:
             dist/sidecar-linux-arm64
           if-no-files-found: error
 
-  build-macos:
-    needs: verify
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          ref: ${{ inputs.tag || github.ref_name }}
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: sidecar/go.mod
-          cache-dependency-path: sidecar/go.sum
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .bun-version
-      - run: bun install --frozen-lockfile
-      - name: Build the remote-access helpers (arm64 + x64)
-        run: |
-          bun sidecar/build.ts --target=darwin-arm64
-          bun sidecar/build.ts --target=darwin-x64
-      - name: Build macOS CLIs (arm64 + x64)
-        run: bun run scripts/build-desktop.ts --no-desktop --cli-targets=bun-darwin-arm64,bun-darwin-x64
-      - name: Stage the helpers as release assets
-        run: cp sidecar/sidecar-darwin-arm64 sidecar/sidecar-darwin-x64 dist/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos
-          path: |
-            dist/bunzai-cli-darwin-arm64
-            dist/bunzai-cli-darwin-x64
-            dist/sidecar-darwin-arm64
-            dist/sidecar-darwin-x64
-          if-no-files-found: error
-
   publish:
-    needs: [build-windows, build-linux, build-macos]
+    needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
@@ -183,9 +149,7 @@ jobs:
           cd dist
           sha256sum Bunzai.exe \
             bunzai-cli-windows-x64.exe bunzai-cli-linux-x64 bunzai-cli-linux-arm64 \
-            bunzai-cli-darwin-arm64 bunzai-cli-darwin-x64 \
             sidecar-windows-x64.exe sidecar-linux-x64 sidecar-linux-arm64 \
-            sidecar-darwin-arm64 sidecar-darwin-x64 \
             > SHA256SUMS
           cat SHA256SUMS
       - name: Release notes (install guide, changelog link, machine-parseable commit block)
@@ -221,11 +185,7 @@ jobs:
             dist/bunzai-cli-windows-x64.exe \
             dist/bunzai-cli-linux-x64 \
             dist/bunzai-cli-linux-arm64 \
-            dist/bunzai-cli-darwin-arm64 \
-            dist/bunzai-cli-darwin-x64 \
             dist/sidecar-windows-x64.exe \
             dist/sidecar-linux-x64 \
             dist/sidecar-linux-arm64 \
-            dist/sidecar-darwin-arm64 \
-            dist/sidecar-darwin-x64 \
             dist/SHA256SUMS

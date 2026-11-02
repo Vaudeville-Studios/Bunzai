@@ -5,7 +5,7 @@
  * without its escrow, then read back by the activation engine on the next turn. The fake library
  * (fake-lore-rig.ts) checks every patch's revision, so a save that built on a stale one fails here.
  */
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { runLore } from "../../../core/lore/engine";
 import { countText } from "../../../core/tokens";
 import { ApiHttpError } from "../../_shared/api-fetch";
@@ -16,6 +16,11 @@ import {
 beforeAll(installLoreDom);
 afterAll(() => rig.installed?.teardown());
 beforeEach(() => resetLore());
+afterEach(async () => {
+  if (!rig.mounted) return;
+  const { flushSync } = await import("react-dom");
+  unmount(flushSync);
+});
 
 const twoSelective = () => resetLore([
   entry("always1", { constant: true, triggers: [] }), entry("key1", { title: "The storm", sortOrder: 100 }), entry("key2", { title: "The lantern", sortOrder: 200 }),
@@ -154,7 +159,7 @@ describe("a typed edit", () => {
     typeInto(flushSync, byLabel("Entry title"), "The storm of '09");
     await settle(flushSync, 50);
     expect(rig.patches).toHaveLength(0); // still inside the pause
-    await settle(flushSync, PAUSE);
+    await waitFor(flushSync, () => rig.patches.length === 1 && text().includes("Saved to Keeper's Log. Every scene reading this book uses the new text from its next turn."), "entry autosave and notice");
     expect(rig.patches).toHaveLength(1);
     expect(sent(0)).toEqual(["i/key1"]);
     expect(rig.patches[0]!.patch.order).toBeUndefined();
@@ -230,9 +235,7 @@ describe("a typed edit", () => {
     await openEntry(flushSync, "The storm");
     rig.failPatch = () => { throw new ApiHttpError(409, "conflict"); };
     typeInto(flushSync, byLabel("Entry title"), "changed");
-    await settle(flushSync, PAUSE);
-    await waitFor(flushSync, () => rig.loads.length >= 2, "the reload");
-    await settle(flushSync, 40);
+    await waitFor(flushSync, () => rig.loads.length >= 2 && text().includes("changed somewhere else first"), "conflict reload notice");
     expect(text()).toContain("changed somewhere else first");
     expect(q<HTMLInputElement>('input[aria-label="Entry title"]')!.value).toBe("The storm"); // the latest copy, not the lost edit
     unmount(flushSync);
@@ -244,8 +247,7 @@ describe("a typed edit", () => {
     await openEntry(flushSync, "The storm");
     rig.failPatch = () => { throw new Error("the disk is full"); };
     typeInto(flushSync, byLabel("Entry title"), "kept");
-    await settle(flushSync, PAUSE);
-    await settle(flushSync, 40);
+    await waitFor(flushSync, () => text().includes("The edit was not saved: the disk is full. It is still here to try again."), "refused edit notice");
     expect(text()).toContain("The edit was not saved: the disk is full. It is still here to try again.");
     expect(q<HTMLInputElement>('input[aria-label="Entry title"]')!.value).toBe("kept");
     unmount(flushSync);
@@ -269,7 +271,7 @@ describe("the activation engine reads what the wing saved", () => {
     const input = byLabel("Add keyword")!;
     typeInto(flushSync, input, "gale");
     pressKey(flushSync, input, "Enter");
-    await settle(flushSync, PAUSE);
+    await waitFor(flushSync, () => rig.patches.length === 1 && heldEntry("key1").triggers.some((trigger) => trigger.keyword === "gale"), "keyword autosave before activation");
     expect(rig.patches).toHaveLength(1);
     expect(fires("a gale rolls in")).toContain("key1");
     expect(fires("the storm rolls in")).not.toContain("key1");

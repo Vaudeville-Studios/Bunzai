@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "reference/glossary",
   "sourcePath": "docs/reference/glossary.md",
-  "sourceHash": "sha256:bc70da041d672bbe2417113df7384242fd5cfa2071260b62cde3daa5e8f95f78",
+  "sourceHash": "sha256:4cedfa61c92d02d0833fb64891ad3fb17ca80c385589e28b89e1d6de2073383c",
   "summary": "The glossary explains project vocabulary, folder ownership, and naming traps, then points readers to the generated code map for individual files. Its folder table includes src/shared for cross-domain helpers and describes src/extensions as the package catalog, SDK, approval lifecycle, and bounded QuickJS runtime. It distinguishes Lua and regex test benches from extension JavaScript guest workers; imported script content remains data until its specific supported isolated worker is invoked. The glossary also covers the engine and formats, Studio and Kit, Stage, encryption, Compendium, snapshots, health checks, and documentation process. Its check requires every direct src folder and every named path to remain valid.",
   "topics": [
     "glossary",
@@ -51,8 +51,8 @@
       "slug": "the-studio-and-kit",
       "title": "The Studio and Kit",
       "level": 2,
-      "sourceHash": "sha256:d1a3596d51e9633e167df2a7131659458eef58319a98f34c41d40da3ce2532de",
-      "summary": "The Studio is the app where content is made and kept; its storage folder is src/studio and its screens are in src/ui. Each app inside it is a room: the Library for importing and browsing, the Workbench as the editing home, and Press for export, with the Binder lorebook editor living inside the Workbench rather than as its own room. The Dock is the row of tiles that switches rooms. Kit is the terminal agent over the same content, included by release build commands; its bridge is its one trust-bounded way into Studio content, its belt is the tool list offered to the model, its gate is the pause where a draft is applied or discarded (not the commit checks), its rail shows a preset's prompt blocks in order, and its doctor is a self-check distinct from the planned card health check. The graveyard holds deleted content before purging, and keep-both saves beside an existing copy on a name clash.",
+      "sourceHash": "sha256:59ee746c1fbfb2d72adbc61ac04bc0e06902de40bbb34599574dc9d6963cfe69",
+      "summary": "The Studio is the app where content is made and kept; its storage folder is src/studio and its screens are in src/ui. Each app inside it is a room: the Library for importing and browsing, the Workbench as the editing home, and Press for export, with the Binder lorebook editor living inside the Workbench rather than as its own room. The Dock is the row of tiles that switches rooms. Kit is the terminal agent over the same content, available from a source checkout and not included in release downloads; its bridge is its one trust-bounded way into Studio content, its belt is the tool list offered to the model, its gate is the pause where a draft is applied or discarded (not the commit checks), its rail shows a preset's prompt blocks in order, and its doctor is a self-check distinct from the planned card health check. The graveyard holds deleted content before purging, and keep-both saves beside an existing copy on a name clash.",
       "topics": [
         "Studio",
         "rooms",

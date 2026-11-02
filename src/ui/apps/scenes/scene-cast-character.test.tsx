@@ -179,6 +179,7 @@ describe("Cast wing: Character tab, the Tags card", () => {
 describe("Cast wing: Character tab, the Lorebooks section", () => {
   test("counts the card's bundled books and the ones this scene added, in RoleCall's words", async () => {
     const flushSync = await mount();
+    await waitFor(flushSync, () => has("(1 bundled, 1 added)"), "bundled and added lorebook count");
     expect(has("(1 bundled, 1 added)")).toBe(true);
     expect(has("Creator Recommends")).toBe(true);
     expect(has("Lighthouse Lore")).toBe(true);

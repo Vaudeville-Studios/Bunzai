@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:88439556c9741158180da24f9cb9a18f6784b20d200227d3137a2e6e31f83b72",
+  "sourceHash": "sha256:da6913e8699876de45c164569b39ee2462cd2c55fa2c7ab43702bd970c8f0a11",
   "summary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. The rp-core wing renders all Director records in virtualized variable-height rows; Memory remains paged in groups of 20. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close.",
   "topics": [
     "Kit conversational terminal",
@@ -71,7 +71,7 @@
       "slug": "kit-terminal-shell",
       "title": "Kit terminal shell",
       "level": 2,
-      "sourceHash": "sha256:9abd509d05f26db132046c55cba872a4dfd1baf60067318f51ac4d94e3ffd5c3",
+      "sourceHash": "sha256:868fbbce5dd9b0f49fd2cfa2ca26cbe6334705fa72e521cdf716bbb52d882638",
       "summary": "Kit is a terminal shell with a multiline composer, paste cards, bounded follow-up queue, draft-preserving history and search, interruptible streaming, and argument-completing palette. Right-click pastes text; Alt+V attaches readable images or displays them without sending; paths in messages link only to those files. Native scrolling, foldable replies, copy feedback and stage watching support terminal use. Sessions resume, rewind, fork and export; model settings, doctor, inventory and privacy are commands. /rail keeps a preset block list beside conversation: ctrl+B focuses it, ctrl+shift+arrows resize, ctrl+shift+D changes density, and < or > pages presets. Rail content enters ambient context; Enter stages edits as one draft at the same Gate. Bounded tool reads replace model save prose with revision-checked REVIEW CHANGE; conversion uses REVIEW CROSSING. Held calls wait at the Gate and applies serialize. /privacy reports recorded model calls and token counts, not all network activity; the greeting discloses transmission to the selected provider and connected services.",
       "topics": [
         "composer queue and search",
@@ -254,7 +254,7 @@
       "slug": "scenes-the-librarys-chats",
       "title": "Scenes (the library's chats)",
       "level": 2,
-      "sourceHash": "sha256:16e340d67b0016ec5eaf1c5f9e254191962c5808b6bc84b6221c00540e70786a",
+      "sourceHash": "sha256:372eb9c6250cb054a34977a61f53066f3685a510ebee10c596991e61bc2292bd",
       "summary": "Scenes opens encrypted chats with cast snapshots, takes, cuts and swipes. Full Chat and Messenger reuse wing owners for writing, lore, passes and appearance. Control Booth applies loadouts with receipts and Undo. Tracker state and summaries follow reply versions; rail Props reuse dockable panels. Optional Dramaturg stores a revision-guarded, sealed consultant conversation separate from scene messages. Six read-only tools inspect messages, lore and presets. Shared runtime owns cancellation and shutdown; input estimates and reply caps refuse overflow before egress. Its cache holds four scenes within 32 MiB, clears on lock or app unmount and rejects stale responses. Deterministic-provider UI checks cover tools, reload persistence and floating panels. Narrow scenes use compact portraits and tap actions. Across themes the phone composer uses 16px text and a 5.5rem cap; unchanged drafts refit through a shared inline-size observer. Live browser checks cover 375px RoleCall and Paper, editing and bidirectional resize. Physical phones, installed apps, real models and packaged behavior remain unverified. HTTP refusals cap bodies at 64 KiB, cancelling oversized reads and preserving status. Busy polling pauses in hidden tabs.",
       "topics": [
         "Start Scene from a card",
@@ -463,7 +463,7 @@
       "slug": "settings-drop-in-sections",
       "title": "Settings (drop-in sections)",
       "level": 2,
-      "sourceHash": "sha256:894097a8fb630c8eb8dd644d0d84d41172afc3117a9985344573d745f3aeeb94",
+      "sourceHash": "sha256:767a42d442470bc7f9730ad4ed96088299bfc3ac1655b89e06afbf44af1afec0",
       "summary": "Settings derives its sections from modules. Extensions owns package review, operation and appearance grants, lifecycle controls, private-data usage, redacted receipts and host-rendered contributions. Effect requests use expiring host-owned tickets and shared controls rather than guest HTML or CSS. Appearance owns theme selection, accents and stage lights; Models shares the provider vault with Kit. Studio, Workbench, Connections, Security, Backups, Memory and Summaries, Remote access, Updates and About remain separate sections. Protected pages preserve their lock state.",
       "topics": [
         "drop-in SettingsSection",
@@ -552,7 +552,7 @@
       "slug": "security",
       "title": "Security",
       "level": 2,
-      "sourceHash": "sha256:af7e6b6bf1bc2a9e2af05e3e85fe099805825e22b423fbf3506f75a3a5d94411",
+      "sourceHash": "sha256:8544dbde6e94b65bbad96e4445fdb51a16c6d4ec556bec903513a59c409ed4e9",
       "summary": "Authenticated server routes enforce path and request boundaries; imported Lua/regex remain sealed data until user-invoked isolated test benches. Upload staging bounds formats, bytes, grant count and lifetime; inert SVG/CSS rules reject active payloads. Lock or close aborts active uploads and revokes grants. Library, mentions, status and recents share PieceStore; exact summary identity and lock lifetimes fence delayed metadata and recovery. These integrated paths are source-reviewed, with focused fixture results recorded in delivery evidence and live proof pending.",
       "topics": [
         "loopback Studio bind",
@@ -561,7 +561,22 @@
         "entity scripts remain data",
         "manifest SVG sanitization"
       ],
-      "children": []
+      "children": [
+        {
+          "slug": "additional-chat-layouts-from-vaudeville",
+          "title": "Additional chat layouts from VAUDEVILLE",
+          "level": 3,
+          "sourceHash": "sha256:550060539b7e64d12b2ead6791b9dbeeb43c26e0f2bc6872ca7335644b682e75",
+          "summary": "scenes.chatLayout selects Full Chat, Familiar, Basic, Desktop 98, Messenger, Immersive, Letters, Notebook, or Storybook through the shared layout options. Every layout keeps the existing transcript, composer, turn, and edit owners. Desktop 98 reuses existing wing bodies in temporary movable windows; the paper layouts adapt their reading pages to narrow panes. Theme packages do not replace the layout shells, and Messenger avatars retain their fixed crop.",
+          "topics": [
+            "chat layout options",
+            "Desktop 98 temporary windows",
+            "responsive paper layouts",
+            "shared transcript and composer"
+          ],
+          "children": []
+        }
+      ]
     }
   ]
 }

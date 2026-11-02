@@ -129,7 +129,8 @@ test("syntax: updated private ciphertext staging retains only its exact write pr
 test("syntax: the upload file sink and the sealed sink keep their reviewed callers", () => {
   // server-body.ts pins what its handles write; the private temp root belongs to each caller.
   const callers = (name: string): string[] => walk("src", (path) => /\.tsx?$/.test(path) && !/\.test\.tsx?$/.test(path), new Set())
-    .filter((path) => path !== "src/ui/server-body.ts" && new RegExp(`\\b${name}\\s*\\(`).test(readFileSync(path, "utf8")));
+    .filter((path) => path !== "src/ui/server-body.ts" && new RegExp(`\\b${name}\\s*\\(`).test(readFileSync(path, "utf8")))
+    .sort();
   expect(callers("sealedFileSink")).toEqual(["src/ui/server-asset-staging.ts"]);
   expect(callers("fileSink")).toEqual(["src/ui/server-security.ts"]);
   expect(callers("streamBodyToFile")).toEqual(["src/ui/server-engine.ts", "src/ui/server-export-folder.ts", "src/ui/server-security.ts"]);

@@ -5,7 +5,7 @@
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import {
-  byLabel, entry, heldEntry, installLoreDom, mountWing, openBook, openEntry, press, pressKey, props, q, qa, resetLore, rig, settle, text, typeInto, unmount, type FlushSync,
+  byLabel, entry, heldEntry, installLoreDom, mountWing, openBook, openEntry, press, pressKey, props, q, qa, resetLore, rig, settle, text, typeInto, unmount, waitFor, type FlushSync,
 } from "./fake-lore-rig";
 
 beforeAll(installLoreDom);
@@ -13,14 +13,25 @@ afterAll(() => rig.installed?.teardown());
 beforeEach(() => resetLore());
 
 /** Mount, open "The storm" (advanced open when asked), run `act`, leave the wing so the pending edit saves, and return the library's copy. */
-async function edit(act: (flushSync: FlushSync) => Promise<void> | void, opts: { advanced?: boolean } = {}) {
+async function edit(act: (flushSync: FlushSync) => Promise<void> | void, opts: { advanced?: boolean; noPersist?: boolean } = {}) {
+  const revision = rig.held.get("b1")!.revision;
+  const patchCount = rig.patches.length;
   const flushSync = await mountWing();
-  await openBook(flushSync);
-  await openEntry(flushSync, "The storm");
-  if (opts.advanced && !q(".wl-ord")) await press(flushSync, q("[data-part='scene.lore.advanced']")); // the open state is remembered across entries
-  await act(flushSync);
-  unmount(flushSync);
-  await settle(flushSync, 80);
+  try {
+    await openBook(flushSync);
+    await openEntry(flushSync, "The storm");
+    if (opts.advanced && !q(".wl-ord")) await press(flushSync, q("[data-part='scene.lore.advanced']")); // the open state is remembered across entries
+    await act(flushSync);
+  } finally {
+    unmount(flushSync);
+  }
+  if (opts.noPersist) {
+    await settle(flushSync, 80);
+    expect(rig.patches).toHaveLength(patchCount);
+    expect(rig.held.get("b1")!.revision).toBe(revision);
+  } else {
+    await waitFor(flushSync, () => rig.held.get("b1")!.revision > revision, "the edited book revision to commit");
+  }
   return heldEntry("key1");
 }
 const choose = (flushSync: FlushSync, selector: string, label: string) => press(flushSync, qa(selector).find((b) => b.textContent!.startsWith(label)), 10);
@@ -58,6 +69,7 @@ describe("the header", () => {
     expect([saved.sortOrder, saved.scanDepth]).toEqual([250, 9]);
   });
   test("an emptied Order falls back to 100 when the field is left", async () => {
+    resetLore([entry("always1", { constant: true, triggers: [] }), entry("key1", { title: "The storm", sortOrder: 250 })]);
     const saved = await edit((f) => { number(f, "Insertion order", "7"); typeInto(f, byLabel("Insertion order"), ""); blurWith(f, "Insertion order", ""); }, { advanced: true });
     expect(saved.sortOrder).toBe(100);
   });
@@ -76,7 +88,7 @@ describe("keywords", () => {
     expect(saved.triggers[1]).toEqual({ keyword: "mage|wizard", isRegex: true, flags: "i" });
   });
   test("a regex that will not compile is refused with the reason, and nothing is added", async () => {
-    const saved = await edit((f) => { add(f, "Add keyword", "/(/"); expect(q('[role="alert"]')!.textContent).toContain("Invalid regex"); });
+    const saved = await edit((f) => { add(f, "Add keyword", "/(/"); expect(q('[role="alert"]')!.textContent).toContain("Invalid regex"); }, { noPersist: true });
     expect(saved.triggers).toHaveLength(1);
   });
   test("the x removes one", async () => {
@@ -91,7 +103,7 @@ describe("keywords", () => {
       expect(qa(".wl-ch")).toHaveLength(5);
       await press(f, byLabel("Show fewer triggers"), 5);
       expect(qa(".wl-ch")).toHaveLength(3);
-    });
+    }, { noPersist: true });
   });
   test("Simple and Advanced switch the mode; Advanced edits each key's percent and cooldown in place", async () => {
     const saved = await edit(async (f) => {
@@ -135,7 +147,7 @@ describe("keywords", () => {
 describe("injection, timing, recursion and group", () => {
   test("each position card writes its position", async () => {
     for (const [card, position] of [["World", "world"], ["Character", "character"], ["Scene", "scene"], ["Top", "prepend_top"], ["Bottom", "append_bottom"]] as const) {
-      resetLore();
+      resetLore([entry("always1", { constant: true, triggers: [] }), entry("key1", { title: "The storm", position: "depth" })]);
       expect((await edit((f) => choose(f, "[data-part='scene.lore.position'] button", card), { advanced: true })).position).toBe(position);
     }
   });

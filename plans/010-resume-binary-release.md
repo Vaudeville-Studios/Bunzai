@@ -403,20 +403,371 @@ independent actual-source review and normal scoped hooks, integrate the bot's
 version-only remote commit without rewriting history, then push once for the
 next normal release. Preserve every earlier failed run and never retag v48.
 
-### Focused verification for the next release candidate
+### Rebuild benchmark fixture preparation, only after attempt6 exits
 
-Candidate source is at `fc5337383ab3806a45f3a4860e8fcba72a9b072e` (the v0.1.48 version-bump commit; no release assets were published). After the reviewed fixture and Mac typecheck-memory changes:
+Attempt6's dense-rebuild failure is 210.8899ms versus <200ms; Bun's 741.87ms
+case duration includes setup and is not that measurement. One full suite was
+active. The same unchanged owner passed attempt5 and measured127.9ms alone.
+No production regression or GC causal attribution has been established.
 
-- Pinned Bun 1.4.2 focused `scene-prompting.test.tsx`: 12 passed, 0 failed, 39 expectations; run receipt: `%TEMP%/codex-release-v48-scene-prompting-focused`.
-- Pinned Bun 1.4.2 `scene-prompting.test.tsx` plus `scene-single-prompting.test.tsx`: 13 passed, 0 failed, 42 expectations; run receipt: `%TEMP%/codex-release-v48-prompting-neighbor`.
-- Pinned Bun 1.4.2 existing `scripts/ci-sidecar.test.ts` workflow contract: 7 passed, 0 failed, 28 expectations; run receipt: `%TEMP%/codex-release-v48-workflow-check-20261102`.
-- `git diff --check` is clean. The workflow change remains limited to a macOS-14-only 4096 MiB Node heap allowance for the existing typecheck step; this focused check does not establish that the next GitHub CI run passes.
+The measured section follows allocation of 2,000 messages and 6,000 encrypted
+delta rows. Existing authoritative benchmark conventions explicitly collect setup
+garbage before timing: scripts/perf-gate.ts, perf-gate-health.ts, and
+perf-gate-lore.ts. Do not change source until the current hook's native exit and
+complete failure list are preserved. If this remains its only failure, executor
+may run a bounded sequential comparison of the original exact benchmark and a
+task-only copy with only Bun.gc(true) immediately after fixture insertion, before
+the existing performance.now. Preserve source identity, normal preloads, real
+cipher, original semantic/keyframe assertions, raw actual ms and native exit.
+No simultaneous verification, new dependency, warmup rebuild, sample cherry-pick,
+median/min substitute, changed payload, fake cipher or relaxed200ms limit.
 
-These are focused checks only. The next normal push must run the unchanged full hooks and the normal release workflow; no full gate or published binary result is claimed here.
-### Attempt6 full-hook result and benchmark fixture measurement
+If evidence and independent review support aligning fixture preparation with the
+existing benchmark convention, permit that single GC call plus a concise reason
+in the original benchmark. This is an explicit measurement-boundary correction,
+not proof of a faster implementation or a general responsiveness guarantee.
+No storage source/pin/migration change. Run the focused owner, review the actual
+test-only diff, then normal scoped hooks and one push. Do not silently loop full
+push attempts on marginal timing failures without examining the measured cause.
 
-The normal pre-push hook for `179372ee71c9df42fd61739e7e13532c113be166` ran under the reviewed strict Bun 1.4.2 shim and blocked the remote update. Native Bun completed 16,576 tests across 1,763 files: 16,519 passed, 55 skipped, 1 todo, 1 failed, with 148,161 expectations in 2,105.37 seconds. The sole failure was `src/stage/store/chat-store-state.sqlite.test.ts`, the 2,000-message rebuild bound: the assertion measured 210.88990000000922 ms against `<200 ms`. The changed Scene Note fixtures passed in this full run. Raw native output is preserved at `%TEMP%\codex-release-v48-mainstagepush-attempt6\git.stderr.log` and `git.stdout.log`; the attempt's exit-file capture was blank, but stderr records the test guardrail and failed push. A post-hook remote read confirmed Mainstage remained `fc5337383ab3806a45f3a4860e8fcba72a9b072e`.
+### Batch the autosave assertion class before another release attempt
 
-Under a fresh isolated profile and pinned Bun 1.4.2, the unchanged benchmark alone measured 236.3 ms and failed. A temporary byte-equivalent copy with only `Bun.gc(true)` after fixture insertion and before the timer measured 163.5 ms and passed; that temporary copy is preserved at `%TEMP%\codex-stateperf-gc-probe-20261102\chat-store-state.sqlite.perf-diagnostic.test.ts`. This matches the existing performance-gate convention of collecting setup garbage before a timed action. The canonical test now uses that one-line measurement setup and leaves the 200 ms assertion, workload and semantic assertions unchanged. Its complete owner file passed 16 tests / 61 expectations, with the benchmark measured at 151.7 ms, under pinned Bun 1.4.2; receipt: `%TEMP%\codex-state-statefocused-20261102`.
+Attempt7 normal push passed16,520 tests/zero failures and published76fb9a4.
+Tagv0.1.49 is80eb5904. Its release verify job125147022584 failed a DIFFERENT
+Scene Note completion sleep: default-note autosave had sent its patch but still
+rendered Unsaved at scene-prompting.test.tsx197. Separate Ubuntu CI job125146921998
+failed scene-lore-entries.test.tsx165 because the expected saved notice had not
+rendered after PAUSE. Do not perform another immediate full push/release retry.
+The user explicitly asked to fix and continue rather than repeat the whole suite.
 
-The failed full hook is not a green release gate. No retry or release publication has occurred after it; a reviewed normal hook must pass before the next release is pushed.
+Meanwhile Levi merged PR1, eb4e9a64, adding layouts/themes; the bot cutv0.1.50 at
+290c2d3c. This cancelled old CI platform jobs via concurrency, not a completed
+non-bail result. Preserve this collaborator work. Before edits, fetch and inspect
+ancestry/file list; fast-forward the clean candidate through this normal descendant
+chain. Verify the bot commit changes only both version homes. Do not force/reset,
+revert PR1, cancel its release, or attribute its source to this task. Test the
+actual integrated source; older clean results do not cover the new layouts.
+
+Batch fixture corrections in scene-prompting.test.tsx and scene-lore-entries.test.tsx:
+inventory ALL waits whose purpose is autosave completion, refusal, conflict reload,
+or saved-status rendering. Replace guessed completion sleeps with existing
+test-dom.waitFor (already re-exported by fake-lore-rig). Wait for the actual required
+state/receipt before retaining each original assertion. Preserve deliberate
+negative-window sleeps proving no premature write, typed-back no-op checks,
+flush-on-close timing, exact patch counts/payloads/revisions and real production
+debounce. Never wait for a positive state in a negative test. No production edits.
+
+Use the existing fake-lore-rig unmount owner for reliable cleanup on failure;
+if necessary make it idempotent and track actual mounted ownership, then invoke
+that owner from this file's afterEach. Preserve tests deliberately unmounting
+mid-case to prove flush-on-close. Do not replace the canonical helper or create
+a second root registry. Run all callers of any modified shared rig.
+
+Collect the remaining failures before another final full run: derive an explicit
+ordered manifest from the actual Linux job log's file headers, including the
+failed two owners and the still-unrun suffix, without dropping failing cases or
+using bail. Preserve exact source/vendor/runtime/dependency identities, normal
+preloads and120000ms test budget. Reuse existing isolated Linux diagnostic tooling
+from Plan007 if available; a fresh task-only official Bun1.4.2 executable may be
+downloaded only with its published checksum verified. Frozen dependencies belong
+in that owned fixture, never global/user locations. Do not install a global
+browser or change sandbox flags; this suffix is a diagnostic, not full release
+verification. Bound the campaign to15minutes and64MiB per raw stream; hitting a
+bound is incomplete/nonpassing. No concurrent local test campaigns. Prefer an
+already sufficient real platform non-bail result over another diagnostic run.
+Send exact manifest/preparation/command for root review before running. Batch
+observed related repairs with focused RED/GREEN and independent exact-source
+review. Broader new owners require a concrete scoped plan amendment, not guesses.
+Only then one normal final push/full release gate. Keep all failed runs and
+incomplete CI results visible; do not claim assets until actually published.
+
+### Deterministic heartbeat regression after repeated real CI failures
+
+v0.1.50 release job125151146899 failed the same heartbeat fixture at exactly250ms
+versus strict<250, this time in its Mac-tool fake on Ubuntu. Prior Ubuntu CI had
+325ms. Both are native RED receipts. Do not raise the250ms bound, drop the sample
+count, fake the cipher, touch actual OS keyrings, or globally mock Date/timers.
+
+Proposed narrow owner amendment requires independent plan review BEFORE source
+editing: existing KeychainDeps may accept trusted optional now():number and
+heartbeat(tick,intervalMs):cancel dependencies. Their defaults must be exactly
+the current Date.now and setInterval/clearInterval behavior. Use the clock only
+at existing age/deadline/timestamp reads in keychain-key.ts; substitute scheduler
+only for its existing owned heartbeat. No expiry/period/default/locking/key-
+creation/token/takeover/error change, no new subsystem or generic clock registry.
+
+Replace ONLY the flaky own-heartbeat fixture with controlled logical time and
+the real callback supplied by the owner. Hold the actual fake OS-tool marker
+write behind a gate, after the real lock has been acquired. Establish that owned
+lock's mtime at the exact chosen logical baseline (otherwise a future real mtime
+could make negative ages pass a broken heartbeat). Advance at least six50ms ticks;
+sample age BEFORE each callback, invoke the real callback, verify same owner
+token and updated mtime. Preserve >5 samples and strict maximum<250. With a
+disabled callback six steps reach300ms, so the original bound must actually fail.
+Assert requested interval50ms; release gate, verify successful sealed/opened
+value and one key creation, and verify cancellation. Always release/settle owned
+work in finally so assertion failure cannot leave a pending creation or lock.
+
+Keep the real-timer fresh-holder, stale takeover, replaced-token/lost-lock and
+concurrent creation tests unchanged. The shared loop runs this fixture against
+both Mac and Linux tool protocols using temporary files only. Prove adversarial
+mutation: a callback that does not refresh mtime and an incorrect scheduling
+period must fail deterministically; restore exact reviewed source afterward.
+Do not commit mutation files. Focused complete keychain suite plus actual-source
+independent adversarial review are required. This is test determinism/default-
+preserving dependency injection, not a claim that real OS scheduling is bounded
+by250ms. Keep it with the autosave batch before ONE final full delivery attempt.
+
+### Accepted scope: publish Windows/Linux first; macOS held back
+
+The user explicitly selected Windows/Linux first. Preserve all collaborator
+layouts/themes and macOS source; do not undertake the separate Mac WAL/SQLite,
+keychain-selection or native platform repair in this task. Record its actual
+failures separately. Release.yml must build/publish only Windows desktop,
+Windows CLI/helper and Linux x64/arm64 CLI/helpers: seven binaries plus SHA256SUMS.
+Remove the Mac build job and its publish dependency/assets/checksum rows, without
+changing the shared verify gate or Windows exact-artifact S21 produce/consume
+steps. Update the release installation asset table and directly affected public
+download instructions truthfully: Mac binaries are held back. Do not change
+capability/target catalogs that also describe source-build support, or add a
+parallel availability registry. Check existing consumers/tests of release assets.
+
+Existing Windows platform CI was cut off at its30minute job limit while still
+running passing cases. Permit a bounded45minute job allowance ONLY for Windows
+in the existing tests-per-os matrix; leave Mac30 and all commands, assertions,
+test selection and120000ms case budget intact. This enables complete verification,
+does not claim faster tests, and does not resume broad test reduction. Standard
+runner only; no paid infrastructure. Final Windows/Linux release verification,
+native packaged probes and actual published artifacts are still required.
+
+### Complete the related editor fixture owner, not one case per release
+
+Observed13-file caller run is203pass/1fail, scene-lore-editor title/content still
+original after helper's80ms sleep; isolated28/64 pass does not erase that RED.
+Permit extending ONLY this owning edit helper and the one remaining two-switch
+completion wait in scene-prompting. Trace shows LoreBookSession.save queues a
+patch and fake-lore-rig applies it and increments the held book revision before
+returning; use that committed revision as the readiness fence, not request count
+alone and not repeatedly executing runLore. For expected-write edit calls,
+snapshot rig.held book revision, perform the existing interaction, unmount via
+the existing owner, await actual revision advance with shared waitFor, then
+retain every original held-field assertion. Always clean up the mounted helper
+in finally, including assertion failures. No production autosave/queue changes.
+
+The only truly UI-only/refusal cases are invalid regex and expanded keyword
+display. Give those explicit no-persist intent, retain their existing short
+settling window and prove patch/revision remain unchanged. Do not opt out the
+Condition test (it inserts Recency), the mixed boost-refusal test (it acceptskey2),
+or boost-add/remove: source scene-lore-advanced.tsx sets boostAmount0.2 and
+boostIds[], both absent in emptyLoreEntry, and the canonical diff preserves those
+optional authored fields. These are actual writes.
+
+Make the existing fallback/position fixtures nonvacuous rather than broadly
+opting out: start the emptied-Order case at an authored order different from100,
+and start the position-card loop at depth so World is a real change too. Preserve
+all interactions and expected fallback100/card values. No new permutations or
+tests. Replace the remaining two-guide switch settle200 with actual two-patch
+readiness followed by the original exact ordered assertion; its existing
+pre-debounce negative checks and real save period stay unchanged. Run the
+existing13-file direct-caller cohort once after this batch, plus independent
+actual-source review. Do not rerun just to fish for green if another cause appears.
+
+### Canonical Escape owner in the collaborator layout
+
+Actual source guard flags desktop98.tsx77 manually checking e.key. Permit only
+the existing shared isEscapeClose(e.nativeEvent) import/call used by other JSX
+owners, preserving menu-close action/layout. Keep guard rules unchanged and run
+the existing layout/keyboard checks plus guard. No broad PR1 restyling/refactor.
+
+### Remaining shared Windows/Linux fixture blockers from the complete Mac log
+
+These are not the deferred Mac WAL/platform repair. Each is a concrete common
+fixture mismatch or containment defect relevant to the shipped platforms.
+
+1. scripts/hooks/pre-commit-merge.test.ts sandbox writes .githooks/pre-commit
+without executable mode. POSIX Git warns and ignores it, so the real hook/staged
+docs assertions fail. Create that fresh fixture file with mode0755. Keep hook
+execution, stderr assertions, merge parents, staged-snapshot and untracked-work
+checks unchanged; do not bypass the final hook or relax the warning assertion.
+
+2. scripts/macro-oracle/load-source.test.ts says current-platform root in its
+header but converts a native POSIX temporary root into backslashes. The loader
+correctly joins native paths through pathToFileURL. Repair the fixture to pass
+its actual native root and name the test accordingly. Windows mkdtemp already
+returns the Windows path this regression must cover. Preserve real dynamic
+import and expected exported42. Do not alter production path semantics or turn
+valid POSIX backslashes into separators to accommodate the incorrect fixture.
+
+3. scripts/test-sandbox.ts claims no per-user writes yet deliberately leaves
+HOME/USERPROFILE unchanged; actual Mac post-check recorded .bunzai/sessions and
+kit-vault.json there. Fix this existing authoritative preload to isolate HOME,
+USERPROFILE and APPDATA, plus relevant XDG config/data/cache/runtime paths in its
+owned sandbox, reusing inSandbox. Create both standard Windows home/AppData/Local
+and home/AppData/Roaming directories so headless Chrome/PowerShell can resolve
+their profile. Existing LOCALAPPDATA should point at that owned local directory.
+Keep BUNZAI/CODEX/CLAUDE/STATE isolation and ORIGINAL-location breach snapshots,
+assertions and cleanup. Do not suppress the breach audit, modify appDataDir or
+redirect production defaults. Do not nest TMPDIR/TMP/TEMP anew: the documented
+Unix socket path-length failure makes that an unrelated regression risk. No
+user/global environment change; this applies only inside test processes. Existing
+strict-profile full Windows runs provide evidence that Git/DPAPI need not use
+the real user's HOME, contrary to the preload's obsolete comment. Verify actual
+Kit session/vault tests and real browser smoke under fresh outer task profiles,
+and record all resulting paths inside the owned sandbox. No actual credentials.
+
+4. messenger/settings/row-view.test.tsx40 still assumes exactly two layout
+radios and index0 means Messenger. PR1's authoritative LAYOUT_OPTIONS now offers
+nine. Repair the test's actual semantic contract: exactly one selected option,
+Full Chat selected by default, Messenger found by its visible/accessibility name,
+and the original stored messenger preference/repaint behavior after clicking it.
+No hardcoded nine-element boolean vector or second layout catalog. Keep the
+actual RowList/RadioCards components and clean the mounted root in finally.
+
+5. messenger/settings/scene/writing.test.tsx64 reads a missing setScenePreset
+record after wait900. Source saved.tsx has SAVE_MS400 and useDraft/useDebouncedSave;
+this IS the same positive completion class. Batch that file's positive sampler/
+prefill/custom-request completion sleeps (400/450/900) into shared DOM waitFor
+with flushSync and actual expected API call/receipt, followed by every original
+payload/count/order assertion. Keep initial control readiness truthful, negative
+no-send/no-preset checks and real production debounce unchanged. Clean modified
+mounts in finally. No production writer/event/provider changes without separate
+RED boundary evidence. Run the complete Writing owner and adjacent row tests.
+
+Existing doc availability statements should remain true both before and after
+publication: link to published assets and give conditional source-install fallback
+when assets are absent. Do not commit 'there is currently no public release' as
+an enduring claim that becomes false as soon as this same commit publishes one.
+Keep Windows/Linux target names and Mac holdback explicit. Update summaries and
+review stamps through existing docs owners; independent semantic review precedes
+generation. Limit copy edits to the directly affected release/Kit availability.
+
+Use focused existing checks and the already collected full platform result to
+batch these changes. Linux suffix may run once after refreshed source overlays
+and manifest review if needed. Its source must be a genuine native Linux Git
+checkout, not Windows .git path references. Task-only official Node22.23.4 is
+also permitted if existing native Node cannot execute the source TS helpers;
+verify its published SHASUMS and exact version, no global installation. Preserve
+15minute/64MiB bounds, explicit ./ paths and non-bail diagnostic semantics.
+Do not restart a full push/release until this common batch is source-reviewed.
+
+### Additional Windows evidence from v0.1.50
+
+The completed partial Windows log for job125151150872 contains a Cast Character
+Lorebooks count failure at scene-cast-character.test.tsx182 after mount's fixed
+80ms settling. Authorize the existing shared waitFor(flushSync, ...) to wait for
+the actual bundled/added count line before retaining every original assertion.
+Use existing afterEach unmount ownership. No production UI changes. Run the whole
+Cast Character owner with the already changed lore cohort as a focused diagnostic.
+
+The same log has the real on-disk ContentStore differential200-seed case timing
+out at its existing60000ms boundary (native duration119414ms). Investigate fixture
+setup cost before changing it. Preserve all200seeds, independent stores, real disk
+WAL/FULL durability and cipher, semantic assertions and existing time budget.
+Do not raise thresholds or retire scenarios. A derived empty migrated database
+image is only a candidate, not an approved implementation until measured and
+reviewed. No production storage changes are authorized by this finding.
+
+### Generated component catalog sidecar reconciliation
+
+Global docs generation exposed one existing stale sidecar from collaborator PR1:
+reference/components source gained AdditionalLayout, Desktop98, FullChatWings,
+Storybook and ChatLayoutRow styles; its semantic sidecar still has prior hashes.
+Authorize only docs/summaries/reference/components.json reconciliation to the
+current generated catalog (generic discovery description remains accurate, name
+new layout entries where useful), existing author stamp, independent semantic
+review and existing review receipt. Do not hand-edit generated components.md or
+change runtime/component behavior. Regenerate derived summary/index outputs only
+through their existing owners after exact-hash approval. This is a required
+freshness repair discovered before the final gate, not expanded UI work.
+
+### Measured on-disk fixture setup optimization
+
+Setup-only probe on pinned Bun1.4.2 compared20 independent file stores: canonical
+migration replay1361.3ms; canonical in-memory schema serialization34.2ms plus
+cloned-file normal opens158.4ms. Schema SQL, every table count,52 migration rows,
+derived_usage(1,0), user_version and normal WAL/FULL/FK/secure_delete matched.
+This demonstrates avoidable setup work, not a whole-property time guarantee.
+
+Authorize minimal test-only change in src/stage/store/content-store.sqlite.test.ts:
+lazily derive immutable serialized bytes once from openStageDatabase(':memory:',
+MIGRATIONS), always close that source handle, then write those bytes into each
+unique new onDisk fixture path before existing normal openStageDatabase(path,
+MIGRATIONS). Keep unique dirs, fresh testCipher/backend per rig, afterEach closes
+and removals, full canonical schema and all production durability settings. Reuse
+one owner in this file; no generated fixture committed, no production option.
+Stay under500 authored lines. Do not change the shared200-seed property, its
+assertions,60s budget or migration-specific tests. Run the full SQLite owner once
+in strict isolated profile, capture actual duration and result; stop on failure
+and report rather than repeat. Independent review required before delivery.
+
+### Final static guard reconciliation
+
+Non-bail static preflight finds authored conventions that have not yet been
+reached by failed full CI runs. Minimal fixes authorized after root source reads:
+- layouts/desktop98.tsx title and matching additional-layout.test.tsx accessible
+  labels: replace em dash with a plain separator in both, preserving close/
+  minimize/maximize/restore assertions and actual accessible names.
+- src/site/docs-search.test.ts, guides.test.ts, documentation.test.ts: add truthful
+  opening file-purpose docblocks only; no test assertion/behavior changes.
+- scene-page.tsx448 compares the chat layout preference from chatLayoutOf, not a
+  theme identity. Preserve its runtime selection. Use existing documented
+  theme-key-ok reason on that exact branch explaining this domain distinction;
+  do not add a broad allowlist entry or weaken the scanner. chat-layout.ts is
+  the authoritative independent preference catalog.
+Collect other static failures before expanding scope, preserve guards and run
+these focused existing scans after the batch. Changes require final diff review.
+
+The same collected static run also reports docs:parts:check stale. Authorize the
+existing bun run docs:parts owner to regenerate docs/generated/theme-parts.md
+from actual component data-part attributes and SLOT_IDS. Inspect generated diff;
+no manual parts catalog or runtime changes. If semantic metadata exists and
+becomes stale, report exact source delta for the same independent review before
+restamping approval. All other static checks should be retained as collected,
+with only failed/changed derived checks rerun after these scoped repairs.
+
+### Linux diagnostic result and final ordering repair
+
+The approved521-file native Linux non-bail diagnostic finished with4389pass,
+1fail,58582 assertions; native exit1, supervisor monotonic476.953s, no timeout,
+log-cap or drain issue, all46overlays unchanged. Raw logs/receipt live under
+/tmp/codex-ci-v50-linux-suffix-20261102/attempt-290c-20261102-r3/suffix-run-20261102.
+This is diagnostic coverage, not a whole-suite green result. Its sole failure is
+scripts/hooks/single-source-syntax.test.ts135: same three reviewed streamBodyToFile
+callers, different native filesystem enumeration order. Authorize local callers
+helper sorting its collected path array before comparing the original exact list.
+Keep strict membership, original assertions and production/shared walker intact.
+Run the whole syntax test owner on this Linux checkout after copying only that
+reviewed test change, bounded120s with native exit and raw logs. Do not rerun521
+files for this deterministic comparison repair. Independent final diff review.
+
+After focused repair passes, sync canonical Plan010, record concise current proof
+and remaining macOS limitations, and prepare one scoped normal-hook commit of
+reviewed files plus existing-authority generated docs. Exclude all eight untracked
+probe/evidence files and task-local tooling; no source/version/vendor/lock drift.
+Check actual origin/Mainstage and preserve collaborator work. Exact new commit
+and unchangedremote preflight go in the normal push runner. Reuse the successful
+approved200F shim env logic with a fresh task profile and exact Bun1.4.2, no hook
+bypass and no concurrent full campaigns. Retain raw stdout/stderr, actual native
+Git exit and query actual remote after completion. Then monitor the automatic
+Windows/Linux release, including normal verify:ci and S21; no duplicate dispatch.
+Publication means eight actual assets, checksums and exact-artifact proof.
+
+### Focused Linux caller-order repair result
+
+After the 521-file non-bail diagnostic's sole filesystem-order assertion failure,
+`single-source-syntax.test.ts` now sorts only the local caller list before the
+same exact three-caller comparison. The production walker and membership
+expectations are unchanged. The candidate file SHA-256 is
+`d9870fae83092218deb474d0f07bbe75000af9763bf63ff6f16a89da80558f09`. Copied to
+the native Linux checkout at the same hash, the focused owner passed under Bun
+1.4.2: 8 tests, 179 assertions, exit 0, 2.23 seconds. Raw logs and exit are at
+`/tmp/codex-ci-v50-linux-suffix-20261102/attempt-290c-20261102-r3/focused-owner-run/`.
+The 521-file suite was not repeated.
+
+Native checkout verification: root HEAD `290c2d3c04030aa343d6859d549965fec64adbd4`,
+vendor `9cce0552df233c7185329d9cfc5473be67e2e821`, Bun 1.4.2, Node v22.22.0.
+All 46 previously overlaid tracked files matched their manifest hashes; all 921
+tracked vendor files matched the installed `node_modules/rp-core` workspace copy
+byte-for-byte. The frozen install succeeded. Bun resolves the workspace package
+under `node_modules/rp-core`; this is the expected workspace path, with identity
+verified against the exact vendor commit.

@@ -3,7 +3,7 @@
  * actually ships the sidecar.
  *
  * The second half exists because it did not. CI vetted and built the helper on every push, which read as
- * "the sidecar is covered", while the release workflow published Bunzai.exe and six other binaries and
+ * "the sidecar is covered", while the release workflow published Bunzai.exe and command-line binaries but
  * no helper at all - so packaged remote access could never start, for anyone, and the only person who
  * never saw it was the developer with an untracked build product sitting in their own working tree.
  */
@@ -39,27 +39,47 @@ test("required test job vets, tests, and builds the sidecar", async () => {
   expect(requiredJob.match(/working-directory: sidecar/g)).toHaveLength(3);
 });
 
-test("the release BUILDS a helper for every platform the aux package pins", async () => {
+test("the release builds helpers for its Windows and Linux targets", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
-  for (const key of Object.keys(SIDECAR_TARGETS)) {
-    // win32-x64 is spelled windows-x64 on the command line; both are accepted by resolveTarget.
-    const flag = key === "win32-x64" ? "windows-x64" : key;
+  for (const flag of ["windows-x64", "linux-x64", "linux-arm64"]) {
     expect(release).toContain(`bun sidecar/build.ts --target=${flag}`);
   }
+  expect(release).not.toContain("--target=darwin-");
+});
+
+test("the release uploads only the seven Windows/Linux binaries plus their checksums", async () => {
+  const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
+  const publish = jobBlock(release, "publish");
+  for (const asset of [
+    "Bunzai.exe",
+    "bunzai-cli-windows-x64.exe",
+    "bunzai-cli-linux-x64",
+    "bunzai-cli-linux-arm64",
+    "sidecar-windows-x64.exe",
+    "sidecar-linux-x64",
+    "sidecar-linux-arm64",
+    "SHA256SUMS",
+  ]) {
+    expect(publish).toContain(`dist/${asset}`);
+  }
+  expect(release).not.toContain("build-macos:");
+  expect(publish).not.toContain("darwin-");
 });
 
 test("the release UPLOADS every helper it builds, so a pin can never point at a missing asset", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
-  for (const spec of Object.values(SIDECAR_TARGETS)) {
+  for (const key of ["win32-x64", "linux-x64", "linux-arm64"] as const) {
+    const spec = SIDECAR_TARGETS[key];
     // Once in an upload-artifact path, once in the gh release asset list, once in the checksum line.
     expect(release.match(new RegExp(spec.asset.replace(/\./g, "\\."), "g"))?.length ?? 0)
       .toBeGreaterThanOrEqual(3);
   }
+  expect(release).not.toContain("sidecar-darwin-");
 });
 
 test("every job that builds a helper has the Go toolchain to build it with", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
-  for (const job of ["build-windows", "build-linux", "build-macos"]) {
+  for (const job of ["build-windows", "build-linux"]) {
     const body = jobBlock(release, job);
     expect(body).toContain("bun sidecar/build.ts --target=");
     expect(body).toMatch(/actions\/setup-go@v\d+/);

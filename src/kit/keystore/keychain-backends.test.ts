@@ -9,6 +9,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { keychainAddress } from "./backends/keychain-address";
 import { keychainKeyBackend, type Runner } from "./backends/keychain-key";
 import { linuxSecretTool } from "./backends/linux-secret";
 import { macosKeychainTool } from "./backends/macos-keychain";
@@ -229,24 +230,74 @@ for (const c of cases) {
     });
 
     test("while this process works slowly, it keeps its own lock fresh, so nobody takes it over", async () => {
-      const fake = fakeTool(c.kind, { delay: 300 });
+      const fake = fakeTool(c.kind);
       const home = newHome();
       const id = `test-${++unique}`;
       const lockFile = join(home, ".bunzai", `${id}.lock`);
-      const pending = backend(fake, home, c.platform, id).seal("slow", {});
-      const ages: number[] = [];
-      const watch = setInterval(() => {
-        try {
-          ages.push(Date.now() - statSync(lockFile).mtimeMs);
-        } catch {
-          // Not taken yet, or already released.
+      const markerAccount = keychainAddress().accounts.marker;
+      let enteredMarkerWrite!: () => void;
+      let releaseMarkerWrite!: () => void;
+      const markerWrite = new Promise<void>((resolve) => { enteredMarkerWrite = resolve; });
+      const heldMarkerWrite = new Promise<void>((resolve) => { releaseMarkerWrite = resolve; });
+      let markerWriteHeld = false;
+      const run: Runner = async (command, args, stdin) => {
+        const writesMarker = c.kind === "security"
+          ? args[0] === "-i" && stdin?.includes(`-a ${markerAccount} `)
+          : args[0] === "store" && args.some((arg, index) => arg === "account" && args[index + 1] === markerAccount);
+        if (writesMarker && !markerWriteHeld) {
+          markerWriteHeld = true;
+          enteredMarkerWrite();
+          await heldMarkerWrite;
         }
-      }, 40);
-      await pending;
-      clearInterval(watch);
+        return fake.run(command, args, stdin);
+      };
+      let logicalNow = 0;
+      let tick: (() => void) | undefined;
+      let intervalMs: number | undefined;
+      let cancelled = false;
+      const b = keychainKeyBackend(id, c.name, c.tool, {
+        run,
+        platform: c.platform,
+        home,
+        staleLockMs: 400,
+        heartbeatMs: 50,
+        now: () => logicalNow,
+        heartbeat: (callback, interval) => {
+          tick = callback;
+          intervalMs = interval;
+          return () => { cancelled = true; };
+        },
+      });
+      const pending = b.seal("slow", {});
+      const ages: number[] = [];
+      const refreshed: boolean[] = [];
+      try {
+        await markerWrite;
+        const token = readFileSync(lockFile, "utf8");
+        logicalNow = statSync(lockFile).mtimeMs;
+        expect(token).not.toBe("");
+        expect(intervalMs).toBe(50);
+        if (!tick) throw new Error("the lock heartbeat was not scheduled");
+        for (let i = 0; i < 6; i++) {
+          logicalNow += 50;
+          const before = statSync(lockFile).mtimeMs;
+          const age = logicalNow - before;
+          ages.push(age);
+          expect(age).toBeLessThan(250);
+          tick();
+          refreshed.push(statSync(lockFile).mtimeMs > before);
+          expect(readFileSync(lockFile, "utf8")).toBe(token);
+        }
+      } finally {
+        releaseMarkerWrite();
+        await pending.catch(() => undefined);
+      }
       expect(ages.length).toBeGreaterThan(5);
-      // Stale is 400 ms here; a fresh lock never looks older than the heartbeat plus a little.
       expect(Math.max(...ages)).toBeLessThan(250);
+      expect(refreshed).toEqual([true, true, true, true, true, true]);
+      expect(await b.open(await pending, {})).toBe("slow");
+      expect(fake.keyCreates()).toBe(1);
+      expect(cancelled).toBe(true);
     });
 
     test("a lock left behind by a crashed process is taken over once stale", async () => {

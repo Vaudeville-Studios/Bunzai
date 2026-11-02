@@ -2,7 +2,7 @@
   "generated": "2026-11-02",
   "targetChars": 90000,
   "totalPages": 141,
-  "totalSourceChars": 1713465,
+  "totalSourceChars": 1717612,
   "batches": [
     {
       "id": "batch-001",
@@ -188,7 +188,7 @@
     },
     {
       "id": "batch-002",
-      "sourceChars": 89294,
+      "sourceChars": 89205,
       "pages": [
         {
           "docId": "guide/faq",
@@ -219,7 +219,7 @@
           "sourcePath": "docs/guide/installation.md",
           "sidecarPath": "docs/summaries/guide/installation.json",
           "sectionCount": 7,
-          "sourceChars": 6338,
+          "sourceChars": 6249,
           "status": "APPROVED"
         },
         {
@@ -290,7 +290,7 @@
     },
     {
       "id": "batch-003",
-      "sourceChars": 73793,
+      "sourceChars": 73797,
       "pages": [
         {
           "docId": "guide/platforms/novelai",
@@ -361,7 +361,7 @@
           "sourcePath": "docs/guide/security.md",
           "sidecarPath": "docs/summaries/guide/security.json",
           "sectionCount": 6,
-          "sourceChars": 9094,
+          "sourceChars": 9098,
           "status": "APPROVED"
         },
         {
@@ -414,14 +414,14 @@
     },
     {
       "id": "batch-005",
-      "sourceChars": 174335,
+      "sourceChars": 174800,
       "pages": [
         {
           "docId": "reference/components",
           "sourcePath": "docs/reference/components.md",
           "sidecarPath": "docs/summaries/reference/components.json",
           "sectionCount": 3,
-          "sourceChars": 174335,
+          "sourceChars": 174800,
           "status": "APPROVED"
         }
       ]
@@ -832,7 +832,7 @@
     },
     {
       "id": "batch-012",
-      "sourceChars": 72460,
+      "sourceChars": 72478,
       "pages": [
         {
           "docId": "reference/formats/rolecall",
@@ -871,7 +871,7 @@
           "sourcePath": "docs/reference/glossary.md",
           "sidecarPath": "docs/summaries/reference/glossary.json",
           "sectionCount": 6,
-          "sourceChars": 14974,
+          "sourceChars": 14992,
           "status": "APPROVED"
         },
         {
@@ -1190,14 +1190,14 @@
     },
     {
       "id": "batch-017",
-      "sourceChars": 52295,
+      "sourceChars": 52131,
       "pages": [
         {
           "docId": "reference/security/secrets-and-keys",
           "sourcePath": "docs/reference/security/secrets-and-keys.md",
           "sidecarPath": "docs/summaries/reference/security/secrets-and-keys.json",
           "sectionCount": 13,
-          "sourceChars": 26497,
+          "sourceChars": 26333,
           "status": "APPROVED"
         },
         {
@@ -1220,14 +1220,14 @@
     },
     {
       "id": "batch-018",
-      "sourceChars": 297000,
+      "sourceChars": 300913,
       "pages": [
         {
           "docId": "reference/ui",
           "sourcePath": "docs/reference/ui.md",
           "sidecarPath": "docs/summaries/reference/ui.json",
-          "sectionCount": 34,
-          "sourceChars": 297000,
+          "sectionCount": 35,
+          "sourceChars": 300913,
           "status": "APPROVED"
         }
       ]

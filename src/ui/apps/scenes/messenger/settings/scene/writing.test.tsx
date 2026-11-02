@@ -1,7 +1,8 @@
 /** The Writing page is rows: each reads the stored value and writes through the writer Full Chat uses; tools are drill rows to their program; no wing body is drawn inside. */
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { createElement, type ReactNode } from "react";
-import { teardownAllDoms, type InstalledDom } from "../../../../../_shared/test-dom";
+import { flushSync } from "react-dom";
+import { teardownAllDoms, waitFor, type InstalledDom } from "../../../../../_shared/test-dom";
 import { installSingleDom, mountSingle } from "../../../single-wing-rig";
 import { bodyOfSection, control, none, rig, rowOf, setValue, wait, type Rig } from "./fake-scene-rig";
 import { stub, withPreset } from "./writing-test-rig";
@@ -45,37 +46,40 @@ describe("Writing page", () => {
     const r = rig({ chat: { preset: { kind: "preset", id: "p1", toggles: {}, samplers: { temperature: 0.8 } } } as never });
     withPreset(r);
     const m = await mount(body(r, "samplers"));
-    await wait(60);
-    const slider = control<HTMLInputElement>(m.host, "Temperature");
-    expect(slider.value).toBe("0.8");
-    setValue(slider, "0.9");
-    await wait(400);
-    expect(r.calls["setScenePreset"]).toEqual([["c1", { kind: "preset", id: "p1", toggles: {}, samplers: { temperature: 0.9 } }]]);
-    none(m.host, ...WINGS);
-    m.done();
+    try {
+      await wait(60);
+      const slider = control<HTMLInputElement>(m.host, "Temperature");
+      expect(slider.value).toBe("0.8");
+      setValue(slider, "0.9");
+      await waitFor(flushSync, () => r.calls["setScenePreset"]?.length === 1, "temperature save");
+      expect(r.calls["setScenePreset"]).toEqual([["c1", { kind: "preset", id: "p1", toggles: {}, samplers: { temperature: 0.9 } }]]);
+      none(m.host, ...WINGS);
+    } finally { m.done(); }
   });
 
   test("Max reply length is a typed number that saves once it rests, within its range", async () => {
     const r = withOwn();
     const m = await mount(body(r, "samplers"));
-    await wait(60);
-    setValue(control<HTMLInputElement>(m.host, "Max reply length"), "900");
-    await wait(900);
-    expect(sentSamplers(r)["maxTokens"]).toBe(900);
-    m.done();
+    try {
+      await wait(60);
+      setValue(control<HTMLInputElement>(m.host, "Max reply length"), "900");
+      await waitFor(flushSync, () => r.calls["setScenePreset"]?.length === 1, "max reply length save");
+      expect(sentSamplers(r)["maxTokens"]).toBe(900);
+    } finally { m.done(); }
   });
 
   test("reasoning, start reply with and the thinking switches write the scene's prompting settings", async () => {
     const r = withOwn();
     const m = await mount(body(r, "samplers"));
-    await wait(60);
-    setValue(control<HTMLSelectElement>(m.host, "Reasoning effort"), "high");
-    click(control(m.host, "Show prefill in chat"));
-    click(control(m.host, "Let the model see its old thinking"));
-    setValue(control<HTMLTextAreaElement>(m.host, "Start reply with"), "<think>");
-    await wait(900);
-    expect(r.calls["setScenePrompting"]).toEqual([["c1", { reasoningEffort: "high" }], ["c1", { showPrefill: true }], ["c1", { keepThinking: true }], ["c1", { prefill: "<think>" }]]);
-    m.done();
+    try {
+      await wait(60);
+      setValue(control<HTMLSelectElement>(m.host, "Reasoning effort"), "high");
+      click(control(m.host, "Show prefill in chat"));
+      click(control(m.host, "Let the model see its old thinking"));
+      setValue(control<HTMLTextAreaElement>(m.host, "Start reply with"), "<think>");
+      await waitFor(flushSync, () => r.calls["setScenePrompting"]?.length === 4, "reasoning and prefill saves");
+      expect(r.calls["setScenePrompting"]).toEqual([["c1", { reasoningEffort: "high" }], ["c1", { showPrefill: true }], ["c1", { keepThinking: true }], ["c1", { prefill: "<think>" }]]);
+    } finally { m.done(); }
   });
 
   test("Catch thinking: Only these starts from the common tags and lists them as switches", async () => {
@@ -93,32 +97,34 @@ describe("Writing page", () => {
   test("a catalogue parameter is a switch with its value row while it is on, and Logit bias leads to the sampler tool", async () => {
     const r = withOwn();
     const m = await mount(body(r, "samplers"));
-    await wait(60);
-    expect(m.host.querySelector('[aria-label="Min P value"]')).toBeNull();
-    click(control(m.host, "Min P"));
-    await wait(400);
-    expect((sentSamplers(r)["params"] as Record<string, unknown>)["min_p"]).toEqual({ on: true });
-    expect(control<HTMLInputElement>(m.host, "Min P value").value).toBe("0.05");
-    click(control(m.host, "Logit Bias"));
-    await wait(30);
-    click(rowOf(m.host, "Logit bias words"));
-    expect(r.opened).toEqual(["sampler"]);
-    m.done();
+    try {
+      await wait(60);
+      expect(m.host.querySelector('[aria-label="Min P value"]')).toBeNull();
+      click(control(m.host, "Min P"));
+      await waitFor(flushSync, () => r.calls["setScenePreset"]?.length === 1, "Min P save");
+      expect((sentSamplers(r)["params"] as Record<string, unknown>)["min_p"]).toEqual({ on: true });
+      expect(control<HTMLInputElement>(m.host, "Min P value").value).toBe("0.05");
+      click(control(m.host, "Logit Bias"));
+      await wait(30);
+      click(rowOf(m.host, "Logit bias words"));
+      expect(r.opened).toEqual(["sampler"]);
+    } finally { m.done(); }
   });
 
   test("Custom request parameters save only a text that holds up", async () => {
     const r = withOwn();
     const m = await mount(body(r, "samplers"));
-    await wait(60);
-    const box = control<HTMLTextAreaElement>(m.host, "Include Request Headers");
-    setValue(box, "{nope");
-    await wait(900);
-    expect(r.calls["setScenePreset"]).toBeUndefined();
-    expect(m.host.textContent).toContain("That is not valid JSON");
-    setValue(box, "{\"x-trace\": \"on\"}");
-    await wait(900);
-    expect(sentSamplers(r)["customHeaders"]).toBe("{\"x-trace\": \"on\"}");
-    m.done();
+    try {
+      await wait(60);
+      const box = control<HTMLTextAreaElement>(m.host, "Include Request Headers");
+      setValue(box, "{nope");
+      await wait(900);
+      expect(r.calls["setScenePreset"]).toBeUndefined();
+      expect(m.host.textContent).toContain("That is not valid JSON");
+      setValue(box, "{\"x-trace\": \"on\"}");
+      await waitFor(flushSync, () => r.calls["setScenePreset"]?.length === 1, "valid custom request save");
+      expect(sentSamplers(r)["customHeaders"]).toBe("{\"x-trace\": \"on\"}");
+    } finally { m.done(); }
   });
 
   test("with no preset the sampler values give way to a link to the preset tool", async () => {
@@ -191,17 +197,18 @@ describe("Writing page", () => {
     const r = rig();
     stub(r, "setSceneFinalCut", () => r.a.scene.chat);
     const m = await mount(body(r, "final-cut"));
-    expect(control(m.host, "Final Cut").getAttribute("aria-checked")).toBe("false");
-    click(control(m.host, "Final Cut"));
-    click(control(m.host, "Output safety check"));
-    await wait(450);
-    const sent = r.calls["setSceneFinalCut"]!.at(-1)![1] as { on: boolean; passes: { type: string }[] };
-    expect(sent.on).toBe(true);
-    expect(sent.passes.map((p) => p.type)).toEqual(["validator"]);
-    expect(m.host.querySelector('[aria-label="Also check my messages before send"]')).not.toBeNull();
-    click(rowOf(m.host, "Final Cut workshop"));
-    expect(r.opened).toEqual(["post-production"]);
-    none(m.host, ...WINGS);
-    m.done();
+    try {
+      expect(control(m.host, "Final Cut").getAttribute("aria-checked")).toBe("false");
+      click(control(m.host, "Final Cut"));
+      click(control(m.host, "Output safety check"));
+      await waitFor(flushSync, () => r.calls["setSceneFinalCut"]?.length === 1, "coalesced Final Cut settings save");
+      const sent = r.calls["setSceneFinalCut"]!.at(-1)![1] as { on: boolean; passes: { type: string }[] };
+      expect(sent.on).toBe(true);
+      expect(sent.passes.map((p) => p.type)).toEqual(["validator"]);
+      expect(m.host.querySelector('[aria-label="Also check my messages before send"]')).not.toBeNull();
+      click(rowOf(m.host, "Final Cut workshop"));
+      expect(r.opened).toEqual(["post-production"]);
+      none(m.host, ...WINGS);
+    } finally { m.done(); }
   });
 });

@@ -7,7 +7,7 @@
  * one part name.
  */
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { decompose } from "../../entities/piece-parts";
@@ -36,13 +36,21 @@ contentStoreContract("sqlite backend", () => sqliteDocumentBackend(fresh(), test
 
 // The same suite against real files: WAL mode, fsync, and close only exist on a file.
 const dirs: string[] = [];
+let migratedSchema: Uint8Array | undefined;
 afterEach(() => {
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 const onDisk = () => {
   const dir = mkdtempSync(join(tmpdir(), "bunzai-content-"));
   dirs.push(dir);
-  const d = openStageDatabase(join(dir, "bunzai.db"), MIGRATIONS);
+  const path = join(dir, "bunzai.db");
+  if (!migratedSchema) {
+    const schema = openStageDatabase(":memory:", MIGRATIONS);
+    try { migratedSchema = schema.db.serialize(); }
+    finally { schema.close(); }
+  }
+  writeFileSync(path, migratedSchema);
+  const d = openStageDatabase(path, MIGRATIONS);
   open.push(d);
   return d;
 };

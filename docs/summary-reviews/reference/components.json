@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:132278d58e723d603de2251c9579ed34bc5de30da402553830abcb9066c49f35",
-  "semanticSummaryHash": "sha256:cfd43d5c0a27d64957e65bff5fd7c30034a9080727db6443b450dc139f23f5aa",
+  "sourceHash": "sha256:bed34b1b9a712aab5225aa26c9eb5e660b530daac993f5c0612063569d0f2205",
+  "semanticSummaryHash": "sha256:4633c52827da32d631d0341828c180110d3f3b3cca5f299f8bf8ac9f8fad392f",
   "verdict": "APPROVE",
-  "reviewer": "root",
-  "notes": "Independently reviewed generated component inventory and current catalog source. The summary accurately names the extension manager, bounded renderer, settings/effect review, existing virtualized host-command menu, and navigation handoff; it distinguishes discovery metadata from behavior and release proof.",
-  "reviewedAt": "2026-10-31T22:54:39.238Z"
+  "reviewer": "integration_review",
+  "notes": "Reviewed added component catalog rows and styles",
+  "reviewedAt": "2026-11-02T09:02:58.627Z"
 }

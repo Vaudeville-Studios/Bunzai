@@ -90,7 +90,7 @@ Tests are left out. For what a project word means, see [the glossary](../referen
 - `sillytavern-macros.ts`: Generate src/core/preset/macros/sillytavern-new.ts from SillyTavern's registry engine.
 - `slot-manifest.ts`: Writes the slot list from the slot files (every src/core/scene-state/slots/<id>.ts is a scene-state slot): src/generated/slots.ts.
 - `test-react-dom.ts`: Loads react-dom once, before any test file, with a DOM present (bunfig.toml preload).
-- `test-sandbox.ts`: The test sandbox, preloaded before every `bun test` run (bunfig.toml): every place Bunzai keeps per-user files points at one throwaway folder, so no test can write into the person's real home or read their real creden...
+- `test-sandbox.ts`: The test sandbox, preloaded before every `bun test` run (bunfig.toml): per-user paths point at throwaway folders, and the run audits the original Bunzai, app-data, and Studio locations for leaks.
 - `theme-measure.ts`: theme:measure - what share of the WHOLE app looks structurally different across the four bundled themes.
 - `third-party-notices.ts`: Writes or checks THIRD-PARTY-NOTICES.md: name, version, license and repository of every package in the production dependency closure (package.json `dependencies`, followed through each installed package's own `depende...
 - `ui-bundle.ts`: Shared Bun browser-bundle helpers for the desktop bake and static Pages build.

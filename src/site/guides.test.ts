@@ -1,3 +1,4 @@
+/** Guide URLs resolve to stable, non-colliding slugs. */
 import { expect, test } from "bun:test";
 import { guideSlug } from "./guides";
 import { sitePages } from "./pages";

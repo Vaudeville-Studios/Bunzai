@@ -68,6 +68,10 @@ export interface KeychainDeps {
   staleLockMs?: number;
   /** How often a holder refreshes its lock. */
   heartbeatMs?: number;
+  /** Clock used for lock age, deadline, and heartbeat timestamps; defaults to Date.now. */
+  now?: () => number;
+  /** Owns the heartbeat timer and returns its cancellation; defaults to setInterval/clearInterval. */
+  heartbeat?: (tick: () => void, intervalMs: number) => () => void;
 }
 
 /** One creation in flight per backend in this process; a second caller waits for the first. */
@@ -80,6 +84,11 @@ export function keychainKeyBackend(id: string, label: string, tool: KeyStoreTool
   const lockPath = () => join(dir(), `${id}.lock`);
   const staleMs = deps.staleLockMs ?? 30_000;
   const beatMs = deps.heartbeatMs ?? Math.max(10, Math.floor(staleMs / 5));
+  const now = deps.now ?? Date.now;
+  const scheduleHeartbeat = deps.heartbeat ?? ((tick, intervalMs) => {
+    const timer = setInterval(tick, intervalMs);
+    return () => clearInterval(timer);
+  });
 
   const readKey = async (): Promise<Buffer | null> => {
     const b64 = await tool.read(run, "key");
@@ -104,7 +113,7 @@ export function keychainKeyBackend(id: string, label: string, tool: KeyStoreTool
     }
     let expected = false;
     try {
-      expected = readFileSync(aside, "utf8") === token && (!mustBeStale || Date.now() - statSync(aside).mtimeMs > staleMs);
+      expected = readFileSync(aside, "utf8") === token && (!mustBeStale || now() - statSync(aside).mtimeMs > staleMs);
     } catch {
       expected = false;
     }
@@ -123,7 +132,7 @@ export function keychainKeyBackend(id: string, label: string, tool: KeyStoreTool
   const withLock = async <T>(work: (stillHeld: () => boolean) => Promise<T>): Promise<T> => {
     mkdirSync(dir(), { recursive: true });
     const token = randomUUID();
-    const deadline = Date.now() + staleMs * 4;
+    const deadline = now() + staleMs * 4;
     for (;;) {
       try {
         const fd = openSync(lockPath(), "wx");
@@ -134,7 +143,7 @@ export function keychainKeyBackend(id: string, label: string, tool: KeyStoreTool
         if ((error as { code?: string }).code !== "EEXIST") throw error;
         let held: { token: string; age: number } | null = null;
         try {
-          held = { token: readFileSync(lockPath(), "utf8"), age: Date.now() - statSync(lockPath()).mtimeMs };
+          held = { token: readFileSync(lockPath(), "utf8"), age: now() - statSync(lockPath()).mtimeMs };
         } catch {
           continue; // Released between our attempt and the check: try again at once.
         }
@@ -142,7 +151,7 @@ export function keychainKeyBackend(id: string, label: string, tool: KeyStoreTool
           removeIf(held.token, true);
           continue;
         }
-        if (Date.now() > deadline) throw new Error(`keystore: the ${id} key is being created by another process`);
+        if (now() > deadline) throw new Error(`keystore: the ${id} key is being created by another process`);
         await new Promise((r) => setTimeout(r, 50));
       }
     }
@@ -153,11 +162,11 @@ export function keychainKeyBackend(id: string, label: string, tool: KeyStoreTool
         return false;
       }
     };
-    const heartbeat = setInterval(() => {
+    const cancelHeartbeat = scheduleHeartbeat(() => {
       try {
         if (stillHeld()) {
-          const now = new Date();
-          utimesSync(lockPath(), now, now);
+          const timestamp = new Date(now());
+          utimesSync(lockPath(), timestamp, timestamp);
         }
       } catch {
         // The lock is gone; the finally block below will not touch whatever replaced it.
@@ -166,7 +175,7 @@ export function keychainKeyBackend(id: string, label: string, tool: KeyStoreTool
     try {
       return await work(stillHeld);
     } finally {
-      clearInterval(heartbeat);
+      cancelHeartbeat();
       removeIf(token, false);
     }
   };

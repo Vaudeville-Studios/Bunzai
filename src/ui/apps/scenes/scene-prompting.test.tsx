@@ -150,7 +150,7 @@ describe("the Guides tab", () => {
     await press(flushSync, byText("Guides"));
     flushSync(() => byLabel("Use Slow burn")!.click());
     flushSync(() => byLabel("Use Weld")!.click());
-    await settle(flushSync, 200);
+    await waitFor(flushSync, () => patches.length === 2, "both ordered guide saves");
     expect(patches).toEqual([{ guides: ["Slow burn"] }, { guides: ["Slow burn", "Weld"] }]);
   });
 
@@ -192,7 +192,7 @@ describe("the Scene Note tab", () => {
     await press(flushSync, byText("Every 2nd"), 100);
     expect(text()).toContain("Unsaved");
     expect(patches).toEqual([]);
-    await settle(flushSync, 1_100);
+    await waitFor(flushSync, () => patches.length === 1 && !text().includes("Unsaved"), "Scene Note autosave completion");
     expect(patches).toEqual([{ note: { text: "", position: "in_chat", depth: 4, frequency: 2 } }]);
     expect(text()).not.toContain("Unsaved");
   });
@@ -225,7 +225,7 @@ describe("the Scene Note tab", () => {
     flushSync(() => root.render(<PromptingWing ctx={c} chat={chatWith()} presetBody={null} onChanged={() => undefined} onBody={() => undefined} />));
     await press(flushSync, byText("Scene Note"));
     await press(flushSync, byText("Every 4th"), 100);
-    await settle(flushSync, 1_100);
+    await waitFor(flushSync, () => text().includes("Couldn't save Scene Note. Your changes are still pending.") && text().includes("Unsaved"), "Scene Note refused autosave");
     expect(text()).toContain("Couldn't save Scene Note. Your changes are still pending.");
     expect(text()).toContain("Unsaved");
   });

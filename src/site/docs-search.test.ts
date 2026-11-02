@@ -1,3 +1,4 @@
+/** Search behavior remains correct while the documentation index loads. */
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { expect, test } from "bun:test";

@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useReducer, useRef, useState, type CSSPrope
 import { Button, IconButton } from "../../../components/button";
 import { VirtualRows } from "../../../_shared/virtual-list";
 import { Ic } from "../../../_shared/ic";
+import { isEscapeClose } from "../../../_shared/use-escape-key";
 import { useMessengerNav } from "../messenger/use-messenger-nav";
 import { ProgramPortals, ProgramSlot, useProgramHolders } from "../messenger/shell/program-holders";
 import { createDesktop98WindowState, desktop98VisibleBounds, desktop98WindowReducer, resizeDesktop98Bounds, type Desktop98Viewport, type Desktop98Window } from "./desktop98-windows";
@@ -66,7 +67,7 @@ export function Desktop98(p: LayoutProps): JSX.Element {
     target.addEventListener("pointermove", move); target.addEventListener("pointerup", stop); target.addEventListener("pointercancel", stop);
   };
   const geometry = (w: Desktop98Window): CSSProperties => { const b = desktop98VisibleBounds(w, viewport); return { left: b.x, top: b.y, width: b.width, height: b.height, zIndex: 10 + w.z }; };
-  const title = (w: Desktop98Window): string => w.id === "chat" ? `${p.name} — Bunzai Instant Messenger` : p.programs.find((program) => program.id === w.id)?.title ?? w.id;
+  const title = (w: Desktop98Window): string => w.id === "chat" ? `${p.name} | Bunzai Instant Messenger` : p.programs.find((program) => program.id === w.id)?.title ?? w.id;
   const heading = (w: Desktop98Window): JSX.Element => <header className="d98-title" onPointerDown={(e) => pointer(e, w)} onDoubleClick={() => dispatch({ type: "maximize", id: w.id })}>
     <Ic name={w.id === "chat" ? "lucide:message-square" : "lucide:app-window"} size={16} /><strong>{title(w)}</strong>
     <IconButton variant="quiet" size="sm" label={`Minimize ${title(w)}`} icon="lucide:minus" onClick={() => dismiss(w)} />
@@ -74,7 +75,7 @@ export function Desktop98(p: LayoutProps): JSX.Element {
     <IconButton variant="quiet" size="sm" label={`Close ${title(w)}`} icon="lucide:x" onClick={() => closeWindow(w)} />
   </header>;
   const grip = (w: Desktop98Window): JSX.Element => <div className="d98-grip" aria-hidden="true" onPointerDown={(e) => pointer(e, w, true)} />;
-  return <div ref={root} className="alt-layout desktop98" data-chat-layout="desktop98" onKeyDown={(e) => { if (e.key === "Escape") setStart(false); }}>
+  return <div ref={root} className="alt-layout desktop98" data-chat-layout="desktop98" onKeyDown={(e) => { if (isEscapeClose(e.nativeEvent)) setStart(false); }}>
     <div className="alt-backdrop">{p.backdrop}</div>
     <nav className="d98-icons" aria-label="Desktop programs">
       <Button variant="quiet" icon="lucide:message-square" onClick={() => open("chat")}>Instant Messenger</Button>

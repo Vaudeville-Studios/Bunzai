@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:132278d58e723d603de2251c9579ed34bc5de30da402553830abcb9066c49f35",
+  "sourceHash": "sha256:bed34b1b9a712aab5225aa26c9eb5e660b530daac993f5c0612063569d0f2205",
   "summary": "The component catalog is generated from exported React components under src/ui and selected helpers under src/ui/_shared. Its two tables report source file, signature, optional documentation and styles. Reuse a catalog entry before creating another control; behavior remains owned by the component source and reference/ui. Current extension-related entries include the package manager, bounded guest renderer, settings editor, effect-review surface, and Library/Workbench host-command menu. The command menu reuses the shared virtual-row primitive to bound mounted options while keeping keyboard navigation and an in-flight command reachable. ScenePage also exposes the identifiers used for verified navigation handoff. The catalog is discovery metadata, not a behavior registry or release proof.",
   "topics": [
     "generated component catalog",
@@ -35,17 +35,17 @@
       "slug": "components-react-tsx",
       "title": "Components (React, `.tsx`)",
       "level": 2,
-      "sourceHash": "sha256:882489e42c97f08604664a8ffa1381e94543434f7d70da227daf8c4d89f34fa7",
-      "summary": "The React table lists exported components from the shell, Library, Workbench, Scenes, Settings and shared UI. Extension entries include the manager, guest renderer, settings editor, effect-review panel and host-command menu used in Library and Workbench. The menu uses the existing virtual-row primitive for a bounded DOM window and retains keyboard access to commands. ScenePage exposes navigation-ticket and load identifiers for verified handoff. Rows are generated discovery metadata; consult reference/ui and component source for behavior. Other entries include shared controls, editors, panels and app-specific surfaces.",
+      "sourceHash": "sha256:45043f9895791934da403847ccb0ca5a4faa7c6a067a707fbc40c533245483e9",
+      "summary": "The React table lists exported components from the shell, Library, Workbench, Scenes, Settings and shared UI. Extension entries include the manager, guest renderer, settings editor, effect-review panel and host-command menu used in Library and Workbench. The menu uses the existing virtual-row primitive for a bounded DOM window and retains keyboard access to commands. ScenePage exposes navigation-ticket and load identifiers for verified handoff. Scene layout entries include AdditionalLayout, Desktop98, FullChatWings and Storybook; ChatLayoutRow records its .grid style. Rows are generated discovery metadata; consult reference/ui and component source for behavior. Other entries include shared controls, editors, panels and app-specific surfaces.",
       "topics": [
         "React tsx exports",
         "shell Dock App",
         "workbench editors presenters",
         "library settings docs apps",
-        "signature and styles columns",
+        "signature/styles columns and ChatLayoutRow .grid",
         "RoomHeader and Panel",
         "extension effect review and host command menus",
-        "ScenePage navigation handoff props"
+        "ScenePage handoff; AdditionalLayout, Desktop98, FullChatWings, Storybook layouts"
       ],
       "children": []
     },

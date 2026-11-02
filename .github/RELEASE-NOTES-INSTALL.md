@@ -6,10 +6,10 @@ Choose an asset attached to this release for your operating system and processor
 |---|---|---|
 | Windows desktop, x64 | `Bunzai.exe` | Open the app. If its window does not appear, check that the Microsoft WebView2 Runtime is installed. |
 | Windows command line, x64 | `bunzai-cli-windows-x64.exe` | Run it from PowerShell or Command Prompt with a Bunzai command. |
-| macOS, Apple Silicon | `bunzai-cli-darwin-arm64` | In Terminal, run `chmod +x bunzai-cli-darwin-arm64`, then `./bunzai-cli-darwin-arm64 ui`. |
-| macOS, Intel | `bunzai-cli-darwin-x64` | In Terminal, run `chmod +x bunzai-cli-darwin-x64`, then `./bunzai-cli-darwin-x64 ui`. |
 | Linux, x64 | `bunzai-cli-linux-x64` | In a terminal, run `chmod +x bunzai-cli-linux-x64`, then `./bunzai-cli-linux-x64 ui`. |
 | Linux, arm64 | `bunzai-cli-linux-arm64` | In a terminal, run `chmod +x bunzai-cli-linux-arm64`, then `./bunzai-cli-linux-arm64 ui`. |
+
+macOS release binaries are currently held back. Use a source checkout on macOS until a macOS release is published.
 
 The CLI prints the local address to open in a browser. Kit is available from a source checkout for development and is not included in release downloads. The `sidecar-*` files support the optional remote-access helper and are not opened directly.
 

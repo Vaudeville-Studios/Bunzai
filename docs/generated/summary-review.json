@@ -206,9 +206,9 @@
       "docId": "guide/installation",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "root",
-      "sourceHash": "sha256:2b2d75c96199d1c4aaa957e44621b2af924bd4f9ec1e3ed22d896f7db017cea6",
-      "semanticSummaryHash": "sha256:fe283e23814888ca2592fd29c1fd39e36fd92ddc566aecde090253ccfee9c2e4"
+      "reviewer": "integration_review",
+      "sourceHash": "sha256:67ceea2908fe3161e52f39bf90ea53d320579abee601e04c635a0c99ba86a1eb",
+      "semanticSummaryHash": "sha256:954e92cf9a66b00eebba5bec7779400116696c64930ed786af6440e40b3bce94"
     },
     {
       "docId": "guide/library",
@@ -342,9 +342,9 @@
       "docId": "guide/security",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "sonnet-docs-reviewer",
-      "sourceHash": "sha256:e39bbb56cbcc194e70e5be97779d5500356f743b1cbe13ccb9ece70aa1673d02",
-      "semanticSummaryHash": "sha256:4363c0d625c6a84374a1cbbf9423582d9daac85755fd5fde21725a9c03d52f63"
+      "reviewer": "integration_review",
+      "sourceHash": "sha256:0b35d34373357bfbfb9529902e8ab7e5b61691a9ac3a01a5fe41da15c1002a67",
+      "semanticSummaryHash": "sha256:c7ad1fb0c5e73fb64bbea95260fd1e7244473de7aeb551b7f13c11fb6d1de2e3"
     },
     {
       "docId": "guide/troubleshooting",
@@ -390,9 +390,9 @@
       "docId": "reference/components",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "root",
-      "sourceHash": "sha256:132278d58e723d603de2251c9579ed34bc5de30da402553830abcb9066c49f35",
-      "semanticSummaryHash": "sha256:cfd43d5c0a27d64957e65bff5fd7c30034a9080727db6443b450dc139f23f5aa"
+      "reviewer": "integration_review",
+      "sourceHash": "sha256:bed34b1b9a712aab5225aa26c9eb5e660b530daac993f5c0612063569d0f2205",
+      "semanticSummaryHash": "sha256:4633c52827da32d631d0341828c180110d3f3b3cca5f299f8bf8ac9f8fad392f"
     },
     {
       "docId": "reference/concepts/bundles",
@@ -798,9 +798,9 @@
       "docId": "reference/glossary",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "root",
-      "sourceHash": "sha256:bc70da041d672bbe2417113df7384242fd5cfa2071260b62cde3daa5e8f95f78",
-      "semanticSummaryHash": "sha256:6822832983b0a68fdac675e543747bfb903119af2b090eeb617074b4f2f99e45"
+      "reviewer": "integration_review",
+      "sourceHash": "sha256:4cedfa61c92d02d0833fb64891ad3fb17ca80c385589e28b89e1d6de2073383c",
+      "semanticSummaryHash": "sha256:23012c8814bcc55dda9d2a9a8982f30da6b815bba84ded57e6d141d276de1d8e"
     },
     {
       "docId": "reference/kit",
@@ -1094,9 +1094,9 @@
       "docId": "reference/security/secrets-and-keys",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "public-luna-06",
-      "sourceHash": "sha256:f7acd56bb4d12b7f248dd91e6e6b09a4857b748a3855df28ca3aafa160592620",
-      "semanticSummaryHash": "sha256:2d23eee9cd393b377a890b3854fcd6b35ee8b39454d33c678458fb22b085922e"
+      "reviewer": "integration_review",
+      "sourceHash": "sha256:dc0c09197fc39360c00c745af0dd1c84edab8f0955d1b553cce506aa0e29bc1d",
+      "semanticSummaryHash": "sha256:5782157e0f9dec89fcc9e91e034169d5f37d275d9118bbabd0cd44b89e4097be"
     },
     {
       "docId": "reference/security/untrusted-content",
@@ -1118,9 +1118,9 @@
       "docId": "reference/ui",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "root",
-      "sourceHash": "sha256:88439556c9741158180da24f9cb9a18f6784b20d200227d3137a2e6e31f83b72",
-      "semanticSummaryHash": "sha256:381e786ee3c082d54e314f0875266c2edd8fabaec49e30017e7b4544dbb83d87"
+      "reviewer": "integration_review",
+      "sourceHash": "sha256:da6913e8699876de45c164569b39ee2462cd2c55fa2c7ab43702bd970c8f0a11",
+      "semanticSummaryHash": "sha256:eb2907ca8446d42e5af45fd911da62b3c0494cadaae09e06293550acfd6d1b1b"
     },
     {
       "docId": "reference/updates",

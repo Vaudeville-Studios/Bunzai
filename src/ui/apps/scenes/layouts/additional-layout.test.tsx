@@ -54,7 +54,7 @@ test("Desktop 98 minimizes, restores and reopens a program without replacing its
   await click("AI Connection"); expect(host.querySelector<HTMLTextAreaElement>('[aria-label="model draft"]')?.value).toBe("edited");
   await click("Close AI Connection"); await click("AI Connection");
   expect(host.querySelector<HTMLTextAreaElement>('[aria-label="model draft"]')?.value).toBe("edited");
-  await click("Maximize Vera — Bunzai Instant Messenger"); await click("Restore Vera — Bunzai Instant Messenger");
+  await click("Maximize Vera | Bunzai Instant Messenger"); await click("Restore Vera | Bunzai Instant Messenger");
   expect(host.querySelector('[aria-label="Chat draft"]') === chat).toBe(true);
 });
 

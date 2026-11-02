@@ -1,7 +1,7 @@
 /** Drives the real pre-commit hook in throwaway repos: a merge commit must keep both parents, and the
  *  docs index must come from the staged snapshot, never the working tree. */
 import { afterAll, expect, test } from "bun:test";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -42,7 +42,9 @@ function sandbox(): string {
     writeFileSync(join(dir, "scripts", "hooks", f), "process.exit(0);\n");
   }
   writeFileSync(join(dir, "scripts", "docs-index.ts"), GENERATOR_STUB);
-  writeFileSync(join(dir, ".githooks", "pre-commit"), "#!/bin/sh\nexec bun run scripts/hooks/pre-commit.ts\n");
+  const hook = join(dir, ".githooks", "pre-commit");
+  writeFileSync(hook, "#!/bin/sh\nexec bun run scripts/hooks/pre-commit.ts\n", { mode: 0o755 });
+  chmodSync(hook, 0o755);
   git(dir, "init", "-q", "-b", "main");
   for (const [k, v] of [["user.name", "t"], ["user.email", "t@t"], ["core.hooksPath", ".githooks"], ["core.autocrlf", "false"]]) {
     git(dir, "config", k!, v!);

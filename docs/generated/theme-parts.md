@@ -701,7 +701,7 @@
 | `scene.messenger.workshop.regex` | `div` | `src/ui/apps/scenes/messenger/panels/workshop/regex-scripts.tsx` |
 | `scene.messenger.workshop.regex.error` | `div` | `src/ui/apps/scenes/messenger/panels/workshop/regex-scripts.tsx` |
 | `scene.messenger.workshop.regex.row` | `div` | `src/ui/apps/scenes/messenger/panels/workshop/regex-scripts.tsx` |
-| `scene.paused` | `div` | `src/ui/apps/scenes/scene-page.tsx` |
+| `scene.paused` | `div` | `src/ui/apps/scenes/layouts/full-chat-wings.tsx` |
 | `scene.popout` | `div` | `src/ui/apps/scenes/popout/popout-host.tsx` |
 | `scene.popout.<id>` | `div` | `src/ui/apps/scenes/popout/popout-panel.tsx` |
 | `scene.popout.placeholder` | `div` | `src/ui/apps/scenes/popout/popout-panel.tsx` |

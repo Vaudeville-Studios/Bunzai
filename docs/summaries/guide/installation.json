@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:2b2d75c96199d1c4aaa957e44621b2af924bd4f9ec1e3ed22d896f7db017cea6",
-  "summary": "Bunzai currently has no published release, so this guide installs the available source checkout. It covers the pinned Bun version, recursive RP-Core submodule, local Studio launch, first-run choices, Library import, provider setup for scene replies, encrypted library backups, source updates, and common startup issues. The browser preview is temporary and is not a replacement for the installed local Studio. Planned desktop and CLI artifacts are described only as workflow targets. They are not downloadable until a release is published. Use the printed local address and keep recovery material separate from the computer.",
+  "sourceHash": "sha256:67ceea2908fe3161e52f39bf90ea53d320579abee601e04c635a0c99ba86a1eb",
+  "summary": "Check GitHub Releases for packaged Windows desktop, Windows x64 CLI, Linux x64 and arm64 CLI, and optional helper assets; macOS release binaries are held back. When no release is listed, the source checkout remains the usable local install path. Kit is available only from source. The guide also covers the pinned Bun version, recursive RP-Core submodule, local Studio launch, first-run choices, Library import, provider setup for scene replies, encrypted library backups, source updates, and common startup issues. The browser preview is temporary and is not a replacement for the installed local Studio. Use the printed local address and keep recovery material separate from the computer.",
   "topics": [
     "source install and pinned Bun",
     "recursive RP-Core submodule",
@@ -17,10 +17,12 @@
       "slug": "what-is-available-today",
       "title": "What is available today",
       "level": 2,
-      "sourceHash": "sha256:4867fd482a5fe9ae506a16590af91036da16013ffb4df791b9af8fc3fd68740f",
-      "summary": "No public release is available at present. The source checkout is the current usable local installation path, while the browser-only preview keeps its data in the tab and loses it on reload. The release workflow names possible future Windows desktop and cross-platform CLI files; those names do not mean files have been published. Kit remains available from source for development and is excluded from release downloads. Check the GitHub Releases page for an actual release before downloading anything. Playing scenes requires the installed application, while the browser preview can be used to explore temporary import, editing, and export flows.",
+      "sourceHash": "sha256:a3068bf945b107ff23c9ccdd71d59b583192a22def797f02d5c8563e804b247c",
+      "summary": "The GitHub Releases page is the source for packaged Windows desktop, Windows x64 CLI, Linux x64 and arm64 CLI, and optional helper assets; macOS binaries are held back. When no release is listed, the source checkout below is the usable local installation path. The browser-only preview keeps its data in the tab and loses it on reload, and Kit remains source-checkout only. Playing scenes requires the installed application, while the browser preview can be used to explore temporary import, editing, and export flows.",
       "topics": [
-        "no published release",
+        "conditional release downloads",
+        "Windows and Linux release assets",
+        "macOS binaries held back",
         "source checkout",
         "temporary browser preview"
       ],
@@ -82,8 +84,8 @@
       "slug": "if-something-does-not-open",
       "title": "If something does not open",
       "level": 2,
-      "sourceHash": "sha256:637afae1a9287775cd430232899ff857625f723714d111700cfca8b4cf036599",
-      "summary": "If Bun is missing or the version is wrong, check bun --version against the checkout's 1.4.2 pin and follow Bun's official installation or upgrade instructions. If RP-Core or another package is missing, initialize recursive submodules and reinstall from the lockfile. When the server prints a port other than 8321, open that exact address. A future Windows desktop build will use WebView2; consult Microsoft's distribution and download pages for its runtime. If a release binary is published, confirm that its platform and architecture match and verify the checksum shown with that release. Unpublished workflow names are not valid download links.",
+      "sourceHash": "sha256:561021a72110160b5e38f50c9bf9eb6014d83ca6843ca07382218574809aa357",
+      "summary": "If Bun is missing or the version is wrong, check bun --version against the checkout's 1.4.2 pin and follow Bun's official installation or upgrade instructions. If RP-Core or another package is missing, initialize recursive submodules and reinstall from the lockfile. When the server prints a port other than 8321, open that exact address. Windows desktop builds use WebView2; consult Microsoft's distribution and download pages for its runtime. If a release binary is published, confirm that its platform and architecture match and verify the checksum shown with that release. Unpublished workflow names are not valid download links.",
       "topics": [
         "Bun version",
         "missing submodule",

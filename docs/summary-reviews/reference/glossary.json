@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/glossary",
   "sourcePath": "docs/reference/glossary.md",
-  "sourceHash": "sha256:bc70da041d672bbe2417113df7384242fd5cfa2071260b62cde3daa5e8f95f78",
-  "semanticSummaryHash": "sha256:6822832983b0a68fdac675e543747bfb903119af2b090eeb617074b4f2f99e45",
+  "sourceHash": "sha256:4cedfa61c92d02d0833fb64891ad3fb17ca80c385589e28b89e1d6de2073383c",
+  "semanticSummaryHash": "sha256:23012c8814bcc55dda9d2a9a8982f30da6b815bba84ded57e6d141d276de1d8e",
   "verdict": "APPROVE",
-  "reviewer": "root",
-  "notes": "Root conditionally approved summary accuracy for source SHA-256 bc70da041d672bbe2417113df7384242fd5cfa2071260b62cde3daa5e8f95f78 after the where-things-live summary was corrected to name bounded Lua/regex test benches, JavaScript guest workers, inert imports, and src/shared. Documentation accuracy only; no implementation, security, or release approval.",
-  "reviewedAt": "2026-10-31T13:43:53.437Z"
+  "reviewer": "integration_review",
+  "notes": "reviewed_kit_source_only_availability",
+  "reviewedAt": "2026-11-02T08:51:48.248Z"
 }

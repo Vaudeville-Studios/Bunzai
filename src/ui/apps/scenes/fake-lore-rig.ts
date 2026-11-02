@@ -48,6 +48,7 @@ export const rig = {
   host: null as unknown as HTMLElement,
   root: null as unknown as Root,
   installed: null as InstalledDom | null,
+  mounted: false,
   /** What the scene reads, and what the library holds for each book (keyed by id). */
   books: BOOKS as SceneLoreBook[],
   held: new Map<string, Held>(),
@@ -148,12 +149,17 @@ export async function mountWing(ctx: AppContext = loreCtx(), tab: (props: { ctx:
   rig.host = rig.dom.window.document.createElement("div");
   rig.dom.window.document.body.appendChild(rig.host);
   rig.root = createRoot(rig.host);
+  rig.mounted = true;
   flushSync(() => rig.root.render(createElement("div", null, createElement(LoreWing, { ctx, chat: CHAT, characterName: "Marguerite Vane", onLore: () => undefined }), tab({ ctx }))));
   await settle(flushSync);
   await settle(flushSync);
   return flushSync;
 }
-export const unmount = (flushSync: FlushSync): void => { flushSync(() => rig.root.unmount()); rig.host.remove(); };
+export const unmount = (flushSync: FlushSync): void => {
+  if (!rig.mounted) return;
+  rig.mounted = false;
+  try { flushSync(() => rig.root.unmount()); } finally { rig.host.remove(); }
+};
 
 // -- finding and driving things -------------------------------------------------------------------------
 

@@ -81,12 +81,12 @@ jobs:
 
   tests-per-os:
     # The whole test suite on Windows and macOS. The wall above runs on ubuntu only, and the library
-    # (SQLite, folded ids, file paths, the folder import and export) must be proven on every system
-    # the app ships to, not assumed from one. Tests and typecheck only: the wall's scans and the Go
+    # (SQLite, folded ids, file paths, the folder import and export) must be proven on each maintained
+    # OS runner, not assumed from one. Tests and typecheck only: the wall's scans and the Go
     # sidecar steps are platform-neutral and already run above.
     name: tests (${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
+    timeout-minutes: ${{ matrix.runner == 'windows-latest' && 45 || 30 }}
     strategy:
       fail-fast: false
       matrix:
@@ -160,9 +160,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # darwin x64 is absent on purpose: release.yml cross-compiles that target from macos-14 and
-        # never executes it either, and an Intel runner is the one line here nothing in this repo has
-        # ever exercised. That target keeps build proof only until someone runs it on real hardware.
+        # darwin x64 is absent because this matrix has no Intel runner. macOS release artifacts are
+        # held back while platform verification is completed; this job still runs its arm64 checks.
         runner:
           - ubuntu-latest # linux x64
           - ubuntu-24.04-arm # linux arm64

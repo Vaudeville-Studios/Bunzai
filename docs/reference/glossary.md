@@ -63,7 +63,7 @@ when a folder directly under `src/` is missing from the table below.
 | Workbench | The editing room, the Studio's home. | `src/ui/apps/workbench/` | |
 | Binder | The lorebook editor inside the Workbench. | `src/ui/apps/workbench/lore/` | Not its own room. |
 | Press | The export room. | `src/ui/apps/press/` | |
-| Kit | The terminal agent that works on the same content as the Studio. | `src/kit/` | Release build commands include the Kit executable. |
+| Kit | The terminal agent that works on the same content as the Studio. | `src/kit/` | Run it from a source checkout; release downloads do not include Kit. |
 | bridge | Kit's one way into the Studio's content, and the trust boundary it cannot go around. | `src/kit/bridge.ts` | |
 | belt | The tools Kit offers the model. | `src/kit/belt.ts` | |
 | gate (Kit) | The pause where a Kit draft must be applied or discarded on purpose. | `src/kit/changes/` | "Gate" also names the commit and push checks in `scripts/hooks/`. |

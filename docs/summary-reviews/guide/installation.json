@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:2b2d75c96199d1c4aaa957e44621b2af924bd4f9ec1e3ed22d896f7db017cea6",
-  "semanticSummaryHash": "sha256:fe283e23814888ca2592fd29c1fd39e36fd92ddc566aecde090253ccfee9c2e4",
+  "sourceHash": "sha256:67ceea2908fe3161e52f39bf90ea53d320579abee601e04c635a0c99ba86a1eb",
+  "semanticSummaryHash": "sha256:954e92cf9a66b00eebba5bec7779400116696c64930ed786af6440e40b3bce94",
   "verdict": "APPROVE",
-  "reviewer": "root",
-  "notes": "Independent review confirms the current install and troubleshooting instructions use Bun 1.4.2 without changing unpublished release claims.",
-  "reviewedAt": "2026-11-01T10:14:16.527Z"
+  "reviewer": "integration_review",
+  "notes": "reviewed_installation_assets_webview2_and_source_fallback",
+  "reviewedAt": "2026-11-02T08:51:45.568Z"
 }

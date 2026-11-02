@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/security",
   "sourcePath": "docs/guide/security.md",
-  "sourceHash": "sha256:e39bbb56cbcc194e70e5be97779d5500356f743b1cbe13ccb9ece70aa1673d02",
-  "semanticSummaryHash": "sha256:4363c0d625c6a84374a1cbbf9423582d9daac85755fd5fde21725a9c03d52f63",
+  "sourceHash": "sha256:0b35d34373357bfbfb9529902e8ab7e5b61691a9ac3a01a5fe41da15c1002a67",
+  "semanticSummaryHash": "sha256:c7ad1fb0c5e73fb64bbea95260fd1e7244473de7aeb551b7f13c11fb6d1de2e3",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "rename to Bunzai only",
-  "reviewedAt": "2026-10-29T20:47:40.399Z"
+  "reviewer": "integration_review",
+  "notes": "reviewed_windows_linux_scope_and_macos_holdback",
+  "reviewedAt": "2026-11-02T08:51:46.906Z"
 }

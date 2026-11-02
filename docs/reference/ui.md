@@ -185,8 +185,7 @@ available to Browser extensions. This does not enable the standalone script test
 ## Kit terminal shell
 
 Kit is Bunzai's conversational terminal preview. Run it from a source checkout with `bun run kit`;
-release binaries also carry a Kit executable for Windows, Linux (x64 and arm64) and macOS, built by
-the same bake as the CLI. Its composer accepts multiline text and up to five
+Kit is not included in release downloads. Its composer accepts multiline text and up to five
 large paste cards. Up and Down recall submitted drafts only at the relevant buffer edge, Ctrl+F opens
 transcript search without discarding the current draft, and Escape stops an active turn. A rejected
 submission remains in the composer. The block editor stores UTF-16 offsets but projects editing,

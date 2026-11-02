@@ -1,0 +1,11 @@
+# Boot fixture fetch restoration
+
+The interrupted pre-push suite first failed in `scripts/theme-measure/chrome-startup.test.ts` while checking a real delayed child. The isolated startup case passed. The ordered public repro showed that `App.boot-retry.test.tsx` and `App.boot.test.tsx` each replace global `fetch` with their `fetchImpl` mock, while their `installDom` `globals` lists omitted `fetch`; `teardownAllDoms()` therefore had no saved fetch property to restore. The mock's unmatched-URL branch returns 404, so the Chrome readiness loop retried without sending `/ready` to the child server.
+
+Both existing boot fixtures now pass `fetch: globalThis.fetch` through `installDom({ globals })`. This uses the existing DOM harness to restore the pre-fixture fetch descriptor after each file. The implementation preserves all Chrome assertions, the double `session.close()`, retry behavior, and the original 10-second test timeout. No production code or test timeout changed.
+
+## Evidence
+
+At candidate HEAD `1b0955b0e7a45b38a8b7fe01dc7c22c7cc0b65c3`, the exact ordered cohort used Bun 1.4.2 with default isolation/concurrency settings and `--timeout 120000`. Before the two fixture changes, both App files passed and the first Chrome case copy timed out at 10,008 ms (18 passed, 1 failed). After the change, the same ordered cohort passed (19 tests, 61 assertions; 16.74 seconds total), and the Chrome case passed in 3.59 seconds. The changed-file hashes are `3b536da3e20a2a4748b96cb538955331051f7ec8190a1ef1ed1af8da4aa7c054` and `fafafa33bd4a226141f805500fb5bc9223db8f02025ad37961e0cfe12f944810`; the Chrome test and driver hashes remained unchanged. Root independently replayed the ordered cohort with a verbatim copy of the first Chrome case (19 tests, 61 assertions; 17.00 seconds).
+
+The initial isolated Chrome case also passed (1 test, 17 assertions; 3.58 seconds). The earlier full pre-push attempt stopped on its first Chrome timeout and did not update the remote. The full normal pre-push suite must pass before delivery; no full-suite success is claimed here.

@@ -218,3 +218,9 @@ profile for the actual run; previous owned aborted profiles remain archived.
 Executor's focused tripwire and line-cap results are recorded in
 plans/evidence/release-resume-20261101/storage-shape-pin-acknowledgement.md;
 Root's independent rerun remains pending.
+
+## Restoring the boot-test fetch owner
+
+The first normal pre-push attempt stopped at the real delayed Chrome startup test. An ordered three-file repro isolated the cause: both App boot test files replaced global `fetch` with their HTTP mocks, but did not include `fetch` in the `installDom` globals snapshot, so `teardownAllDoms()` could not restore native fetch for the following Chrome test. Both boot fixtures now include the existing `fetch: globalThis.fetch` snapshot option. The ordered candidate repro changed from 18 pass/1 timeout failure to 19 pass/61 assertions, without changing the Chrome test, its 10-second timeout or production code. Full pre-push remains required and has not yet passed.
+
+Evidence: `plans/evidence/release-resume-20261101/boot-fetch-restoration.md`.

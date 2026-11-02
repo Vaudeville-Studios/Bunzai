@@ -52,7 +52,7 @@ beforeAll(() => {
       pretendToBeVisual: true,
       observers: true,
       extraGlobals: ["DOMParser", "SVGElement", "localStorage", "sessionStorage", "MutationObserver", "URLSearchParams"],
-      globals: { IS_REACT_ACT_ENVIRONMENT: false, EventSource: FakeEventSource }
+      globals: { IS_REACT_ACT_ENVIRONMENT: false, EventSource: FakeEventSource, fetch: globalThis.fetch }
     },
   ).dom;
   // TitleScreen reads this; jsdom has no real implementation.

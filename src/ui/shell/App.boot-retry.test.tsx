@@ -34,7 +34,7 @@ beforeAll(() => {
       pretendToBeVisual: true,
       observers: true,
       extraGlobals: ["DOMParser", "SVGElement", "localStorage", "sessionStorage", "MutationObserver", "URLSearchParams"],
-      globals: { IS_REACT_ACT_ENVIRONMENT: false, EventSource: FakeEventSource }
+      globals: { IS_REACT_ACT_ENVIRONMENT: false, EventSource: FakeEventSource, fetch: globalThis.fetch }
     },
   ).dom;
   (dom.window as unknown as { matchMedia: typeof window.matchMedia }).matchMedia = ((query: string) =>

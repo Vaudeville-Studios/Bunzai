@@ -487,8 +487,8 @@ async function shapeFiles(): Promise<string[]> {
 // Migration 52 adds sealed Core birth, operation, ordinal-state and projection shapes. Migrations
 // 1-51 remain unchanged; older hosts refuse the unknown schema before writing. Root and engine
 // reviewed and approved this exact additive shape.
-// 2026-11-01: COMPATIBLE Core birth fingerprint v2 adds origin coverage; valid v1 rows adopt explicitly, with no migration or stored-column change.
-const PINNED_SHAPE_HASH = "dd80128451656e177f9fc720b6abbfd927ab061fd37fabb7c332ac67c36cb347";
+// 2026-11-01: COMPATIBLE Core birth fingerprint v2 adds origin coverage and adopts valid v1 rows; shared uncut timestamp ownership emits identical message SQL. No migration or stored-column change.
+const PINNED_SHAPE_HASH = "556c09498d8feac7e5fdc869874e48d9bdbea2b3152b85e36eaa307287442595";
 
 test("storage-shape tripwire: an on-disk shape change must be a deliberate, version-aware act", async () => {
   const h = createHash("sha256");

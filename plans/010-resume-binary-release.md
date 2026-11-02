@@ -190,3 +190,31 @@ docs/reference/ui.md and required generated docs through existing scripts.
 Root/independent review actual source and live evidence before committing. Rerun
 affected wing/shared virtualizer checks plus final typecheck when sources freeze.
 Do not repeat unchanged database/Chrome campaigns for this renderer-only delta.
+
+## Compatible SQL source-pin acknowledgement
+
+Root isolated tripwire RED found the expected source digest changed. Independent
+comparison confirms identical88-path manifests (LF-list SHA256
+c07c23e65fcbe4fc05e5443500d9bb2bdacf0eeccc90d8e8355553697e9ddb80).
+Only chat-store-core-state.ts, chat-store-state.ts and core-record-projection.ts
+differ among pinned owners: imports plus the reviewed byte-identical SQL predicate
+substitutions. No schema, migration, fingerprint, manifest or assertion changes.
+Baseline dd80128451656e177f9fc720b6abbfd927ab061fd37fabb7c332ac67c36cb347
+becomes556c09498d8feac7e5fdc869874e48d9bdbea2b3152b85e36eaa307287442595.
+Executor may change ONLY that expected digest in storage-shape-tripwire.test.ts
+and add ONE dated compatibility-comment line (file499→500lines maximum).
+Do not alter SCHEMA_BUMPS, applied migrations, manifest, runtime-schema count or
+hash assertion. Run focused tripwire GREEN plus line guard; no whole typecheck
+rerun for this comment/literal-only test acknowledgement. Root reruns the tripwire
+before normal-hook scoped commit and the normal push. Preserve previous commits.
+
+The task-only hook launcher now uses env-i explicit OS/profile allowlist, exact
+Bun1.4.2 and isolated Git config, preserving parent Git authentication. Its
+dirname-owned profile avoids ambient control variables. MSYSTEM=MINGW64 is an
+explicit platform marker. Actual nested bun-run→Node/bunx/compiler probe passed;
+no bunx wrapper is needed because the sanitized parent environment is inherited.
+All repository hooks and source commands remain unchanged. Use a fresh task
+profile for the actual run; previous owned aborted profiles remain archived.
+Executor's focused tripwire and line-cap results are recorded in
+plans/evidence/release-resume-20261101/storage-shape-pin-acknowledgement.md;
+Root's independent rerun remains pending.

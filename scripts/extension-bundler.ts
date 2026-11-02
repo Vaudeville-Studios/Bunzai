@@ -124,7 +124,11 @@ export async function bundleCapturedExtension(snapshot: ExtensionBundleSnapshot)
     || Object.values(result.metafile.inputs).some((input) => input.imports.some((item) => item.external))) {
     throw new Error("bundle contains an unresolved or over-limit runtime import");
   }
-  const bundledInputs = Object.keys(result.metafile.inputs).map((path) => realpathSync(resolve(path)));
+  const bundledInputs = Object.keys(result.metafile.inputs).map((path) => {
+    // Bun emits cross-drive metafile paths with POSIX-relative prefixes on Windows.
+    const input = process.platform === "win32" ? path.replace(/^(?:\.\.\/)+(?=[A-Za-z]:\/)/, "") : path;
+    return realpathSync(resolve(input));
+  });
   if (bundledInputs.some((path) => !sources.has(path))) throw new Error("bundle included an input outside the prevalidated import graph");
   const code = await result.outputs[0]?.text();
   if (code === undefined) throw new Error("Bun produced no extension bundle");

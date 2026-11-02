@@ -158,7 +158,38 @@ describe("readers and scrubbing", () => {
     reader.db.run("BEGIN");
     reader.db.query("SELECT * FROM t").all();
     d.transaction(() => d.db.query("INSERT INTO t (x) VALUES (2)").run());
-    const error = await d.scrub().then(() => null, (e: unknown) => e);
+    const checkpointTimeouts: number[] = [];
+    const originalPrepare = d.db.prepare;
+    let observingCheckpoints = true;
+    d.db.prepare = new Proxy(originalPrepare, {
+      apply(target, _this, args) {
+        const prepared = Reflect.apply(target, d.db, args) as ReturnType<typeof originalPrepare>;
+        if (args[0] !== "PRAGMA wal_checkpoint(TRUNCATE)") return prepared;
+        return new Proxy(prepared, {
+          get(statement, key) {
+            const value = Reflect.get(statement, key, statement);
+            if (key === "get" && typeof value === "function") {
+              return new Proxy(value, {
+                apply(method, _this, getArgs) {
+                  if (observingCheckpoints) checkpointTimeouts.push((d.db.query("PRAGMA busy_timeout").get() as { timeout: number }).timeout);
+                  return Reflect.apply(method, statement, getArgs);
+                },
+              });
+            }
+            return typeof value === "function" ? value.bind(statement) : value;
+          },
+        });
+      },
+    });
+    let error: unknown;
+    try {
+      error = await d.scrub().then(() => null, (e: unknown) => e);
+    } finally {
+      observingCheckpoints = false;
+      d.db.prepare = originalPrepare;
+    }
+    const timeoutAfterFailure = (d.db.query("PRAGMA busy_timeout").get() as { timeout: number }).timeout;
+    const walWhileBlocked = statSync(`${path}-wal`).size;
     expect(error).toBeInstanceOf(ScrubIncompleteError);
     expect((error as Error).message).toContain("nightly backup");
     reader.db.run("COMMIT");
@@ -166,6 +197,9 @@ describe("readers and scrubbing", () => {
     expect(d.readers()).toEqual([]);
     await d.scrub();
     expect(statSync(`${path}-wal`).size).toBe(0);
+    expect(checkpointTimeouts).toEqual(Array(8).fill(0));
+    expect(timeoutAfterFailure).toBe(5_000);
+    expect(walWhileBlocked).toBeGreaterThan(0);
   });
 
   test("a reader needs a purpose, and closing the database closes its readers", () => {

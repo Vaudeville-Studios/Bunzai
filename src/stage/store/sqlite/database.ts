@@ -353,11 +353,10 @@ export function openStageDatabase(path: string, migrations: readonly Migration[]
 
   const scrub = async () => {
     if (path === ":memory:") return;
-    // Success is exactly busy 0 and log 0: the WAL was checkpointed and truncated to nothing. Each
-    // try waits on a reader for at most 20 ms, and the pauses between tries yield to the app, so a
-    // blocked scrub reports in about a second without ever freezing it.
+    // Success is exactly busy 0 and log 0. Never synchronously wait on a reader; bounded retries
+    // below yield to the app while a registered reader holds its snapshot.
     for (let attempt = 0; attempt < 8; attempt++) {
-      db.run("PRAGMA busy_timeout = 20");
+      db.run("PRAGMA busy_timeout = 0");
       let r: { busy: number; log: number; checkpointed: number };
       try {
         r = statement("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number; log: number; checkpointed: number };

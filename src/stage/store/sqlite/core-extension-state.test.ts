@@ -11,6 +11,7 @@ import { createExtensionSceneStateServices } from "../../../extensions/runtime/s
 import { sqliteChatStore } from "../sqlite-chat-store";
 import { createTerminalExtensionRuntime, readTerminalQuickJsWasm } from "../../../kit/extensions/owner";
 import { sqliteStateStore } from "./state-store";
+import { installDom } from "../../../ui/_shared/test-dom";
 
 const rigs: Rig[] = [];
 afterEach(() => { for (const rig of rigs.splice(0)) rig.close(); });
@@ -248,14 +249,17 @@ test("pending assignments keep SQL admission order even when receipt hash order 
 });
 
 test("an actual QuickJS command crosses broker review into exact Core message state", async () => {
-  const f = await fixture();
-  await f.extensions.removeInstalled(f.control.id, 0, f.lease);
-  await f.extensions.releaseRuntimeFence(f.lease);
-  let serial = 1;
-  const runtime = await createTerminalExtensionRuntime({ store: f.extensions, content: f.rig.library, stateStore: sqliteStateStore(f.rig.d, f.rig.cipher),
-    chats: f.rig.chats, storeId: f.rig.dir, wasmBinary: await readTerminalQuickJsWasm(), now: () => 1_000,
-    id: () => `00000000-0000-4000-8000-${String(++serial).padStart(12, "0")}`, isCoreScene: async (sceneId) => (await f.records.sceneFor(sceneId)) !== null });
+  const installedDom = installDom(undefined, { globals: { window: undefined, document: undefined, navigator: undefined } });
+  let openedRuntime: Awaited<ReturnType<typeof createTerminalExtensionRuntime>> | undefined;
   try {
+    const f = await fixture();
+    await f.extensions.removeInstalled(f.control.id, 0, f.lease);
+    await f.extensions.releaseRuntimeFence(f.lease);
+    let serial = 1;
+    const runtime = await createTerminalExtensionRuntime({ store: f.extensions, content: f.rig.library, stateStore: sqliteStateStore(f.rig.d, f.rig.cipher),
+    chats: f.rig.chats, storeId: f.rig.dir, wasmBinary: await readTerminalQuickJsWasm(), now: () => 1_000,
+      id: () => `00000000-0000-4000-8000-${String(++serial).padStart(12, "0")}`, isCoreScene: async (sceneId) => (await f.records.sceneFor(sceneId)) !== null });
+    openedRuntime = runtime;
     const packageId = "demo.core-state";
     const pkg = { manifest: { schemaVersion: 1, id: packageId, version: "1.0.0", name: "Core state fixture", description: "", author: "Fixture",
       api: { major: 1, minMinor: 0, maxMinor: 0 }, entry: "main.js",
@@ -276,5 +280,7 @@ test("an actual QuickJS command crosses broker review into exact Core message st
     }
     expect(await activation).toMatchObject({ ok: true, value: { status: "completed", output: { status: "applied" } } });
     expect(await f.service.read(packageId, f.chat.id, f.chat.activeBranchId, f.scope)).toEqual([{ slot: `ext:${packageId}:memory`, value: { saved: "QuickJS" } }]);
-  } finally { await runtime.close(); }
+  } finally {
+    try { await openedRuntime?.close(); } finally { await installedDom.teardown(); }
+  }
 });

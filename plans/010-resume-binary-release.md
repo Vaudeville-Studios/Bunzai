@@ -752,22 +752,212 @@ Git exit and query actual remote after completion. Then monitor the automatic
 Windows/Linux release, including normal verify:ci and S21; no duplicate dispatch.
 Publication means eight actual assets, checksums and exact-artifact proof.
 
-### Focused Linux caller-order repair result
+### Normal push completed, binary publication still pending
 
-After the 521-file non-bail diagnostic's sole filesystem-order assertion failure,
-`single-source-syntax.test.ts` now sorts only the local caller list before the
-same exact three-caller comparison. The production walker and membership
-expectations are unchanged. The candidate file SHA-256 is
-`d9870fae83092218deb474d0f07bbe75000af9763bf63ff6f16a89da80558f09`. Copied to
-the native Linux checkout at the same hash, the focused owner passed under Bun
-1.4.2: 8 tests, 179 assertions, exit 0, 2.23 seconds. Raw logs and exit are at
-`/tmp/codex-ci-v50-linux-suffix-20261102/attempt-290c-20261102-r3/focused-owner-run/`.
-The 521-file suite was not repeated.
+On2026-11-02 the reviewed normal-hook commit17f9d9f7e5dee365371906866ea510d4b2ceda8b
+was pushed to Mainstage with native Git exit0. Full local hook:16553pass,55skip,
+1existingtodo,0fail,148346 assertions,16609 tests/1765files,1673.68s.
+Raw logs/exit: %TEMP%/codex-release-mainstagepush-17f9d9f-20261102/.
+Root independently read actual summary, Git exit and remote. No bypass.
+Auto-release41425545109 cut v0.1.51 at c07a805bbca6ba0df4ee5238aaf0bca888bd84b7,
+whose parent is17f9 and whose only changes are package.json/src/version.ts.
+The release verify/build/publish remains pending at this checkpoint; no claim
+of available binary downloads follows from this successful source push alone.
+Mac binaries remain deferred per the owner's Windows/Linux-first decision.
 
-Native checkout verification: root HEAD `290c2d3c04030aa343d6859d549965fec64adbd4`,
-vendor `9cce0552df233c7185329d9cfc5473be67e2e821`, Bun 1.4.2, Node v22.22.0.
-All 46 previously overlaid tracked files matched their manifest hashes; all 921
-tracked vendor files matched the installed `node_modules/rp-core` workspace copy
-byte-for-byte. The frozen install succeeded. Bun resolves the workspace package
-under `node_modules/rp-core`; this is the expected workspace path, with identity
-verified against the exact vendor commit.
+### v0.1.51 publication held by two actual verification failures
+
+No binaries were published. Auto-release41425545109 verify job125211334102
+failed after13055 tests/1363files at core-extension-state.test.ts277: actual
+Terminal QuickJS command returned RUNTIME_UNAVAILABLE: isolated sandbox origin
+required. Separate CI Windows packaged job125211153724 built/ran both native
+probes; ordinary SQLite runtime passed, lane probe preserved10000rows/password
+but maxheartbeat122ms exceeded100ms. AGENTS139-143 requires packaged proof and
+fixing gate causes. Do not waive thresholds, retagv51, rerun for luck or claim
+S21 substitutes for the failed lane contract. The release ended with builds/
+publish skipped, so no cancellation or restart is needed. CI41425545009 remains
+running to collect all failures.
+
+Authorize bounded diagnostics only before any next full run:
+1. In a disposable task-local source copy at exact shipped-tag sourcec07a805b
+(parent17f9 plus version metadata), copy lane-probe.ts and add observational
+phase labels/timestamps around cold-read,20k insert/delete setup, rebuild,
+newDataKey, password wrap/open and30ms drain. Record each >threshold/max heartbeat
+phase, start/end and synchronous call-return spans. Keep exact real workers,
+workload, password/10000rows assertions and strict100ms bound. Compile the
+instrumented copy with pinnedWindowsBun1.4.2 and same --root src/worker entrypoints;
+run ONCE in fresh ownedprofile, bounded120s, rawlogs/nativeexit/binary+sourcehashes.
+No production/source candidate edits, no GC injection or threshold change.
+A local green result is not proof of the remote failure cause. If it cannot
+reproduce, report the limitation and propose deterministic causal evidence.
+2. Read authoritative DOM/global override helper and exact Terminal test/worker
+owner. Reproduce ambient-document failure through actual Terminal test without
+weakening the browser origin refusal. Independent reviewer traces ownership.
+Propose a scoped native-host fixture isolation using the existing reversible
+global override owner only if appropriate; no production origin guard bypass.
+No implementation until reviewed plan scope. Batch all completed CI failures
+before one subsequent final gate; never launch another full push as a diagnostic.
+
+### Reviewed native-host fixture repair, gated on honest RED
+
+Independent review and root source reads confirm the Terminal integration test
+requires a headless host but never establishes that precondition. Ambientdocument
+makes the sharedworker runner correctly refuse missing isolated origin. The exact
+prior DOM producer is not proven; do not blame or alter nearby UI teardown based
+on order. Authorize a task-local wrapper that installs an actual JSDOM through
+existing installDom before importing/running the exact QuickJS Core test. Capture
+ambient document.URL/descriptor, then show the unchanged actual test RED with the
+required-origin error. No new production bypass or fake guest result.
+
+Only after that RED, authorize the actual Terminal test in
+src/stage/store/sqlite/core-extension-state.test.ts to scope native-host globals
+with existing installDom(undefined,{globals:{window:undefined,document:undefined,
+navigator:undefined}}). Use that authoritative descriptor-restoration owner;
+ensure runtime closes and fixture teardown is awaited in finally even if setup/
+activation/close fails. Keep every review/commit/state assertion. No new generic
+helper or ad-hoc delete/overwrite of globals; no production runtime/routing change.
+Run the same ambient-document wrapper GREEN and whole actual owner plus existing
+browser origin-refusal owner to prove native setup and browser refusal coexist.
+If scoped fixture cannot isolate without affecting other tests, stop and report.
+Independent actual diff review before any next commit/full check. A broad test-DOM
+lifecycle refactor is outside this release batch. Continue Windowsphaseprobe in
+parallel only as separate independent bounded diagnostics, no full campaign.
+
+### Bounded contention diagnostic, not a speculative production fix
+
+The first phase-instrumented compiled Windows probe passed at12ms max, measured
+in rebuild; it cannot explain hosted122ms. Source read finds scrub still sets
+SQLite busy_timeout20 on the main thread, while patiently uses0 with a documented
+Windows timeout inflation defect. Authorize one TEMP contrastive compiled probe
+with a real registeredreader transaction held during rebuild and released by an
+owned250ms timer. Preserve20ksetup,10000rows/password checks,workers, strict100ms;
+record phase and synchronous checkpoint spans. Bound120s, clean ownedreader/timer
+in finally, no production edits/GC injection/repeated attempts for a green result.
+Report whether a real >100ms public-boundary responsiveness RED occurs. Absence
+of a RED is not permission to alter the gate or claim hostedcause established.
+The direct TEMP JavaScript missing-origin check has now passed against the actual
+runner, along with8 existing JSworker tests; no new permanent test is required
+for this fixture-only change. Independent reviewer approved exactTerminalfixture
+05025f9f636d951be12aadca966b4005a7c62375fa64237cb2ba0b0026b4b499.
+CI job125211153485 rawlog is4393122bytes and actualSHA256 is
+F475C388F539BCA84E9EFB8DD8383431B8181D40588341F54F1338BF44081E94;
+an earlier agent report reused an unrelated stdout hash and was corrected.
+
+### Reviewed scrub nonblocking correction
+
+Independent source review approves a minimal production correction in
+src/stage/store/sqlite/database.ts scrub: busy_timeout20→0, correct itscomment
+to describe immediate busy return and existing asynchronous retry. This removes
+SQLite's demonstrated85/69ms synchronous waits (20ms requested onWindows),
+matching patiently's existing zero-busy policy. Preserve8attempts,40*n backoff,
+finally restoration to5000, nativeTRUNCATE, busy0&log0success and namedreadererror.
+No migration/schema/persistence-format changes. This is independently justified
+by the real contention probe, NOT proof that it caused CI's original122ms sample.
+
+Before production edit, enhance the existing real-reader scrub test in
+src/stage/store/sqlite/database.test.ts (no addedcasepermutation/newwalltimegate):
+realfile,registeredreaderBEGIN/SELECT,newwrite remain. Narrowlyobserve actual
+PRAGMA busy_timeout at the instant the real wal_checkpoint Statement.get executes,
+using test-only db.prepare/Statement proxy with originalnativeget and result.
+Do not substitute rows/results, inspectsource text, stubSQLite or changequeries.
+Baseline must RED actual20 vs requirednonblocking0. Assert each busyattempt's
+policy0, existing8tries/namedreadererror/WAL nonzero whileheld, default5000restored;
+releaseactualreader thenoriginalscrubsuccess/WAL0. Alwaysrestoretestinstrumentation.
+Afterminimalfix run full database owner and appropriate linked scrub/keyring/
+rebuild checks; mutation0→20mustRED policyassert. Run unchangedcompiled laneprobe
+and samebounded held-readerdiagnostic once afterfix, preserving100ms and real
+20k/10k/password workload. No repeat-untilgreen.
+
+Independent actualdiff review and storage-shape-compatible pin acknowledgement
+through the existing owner are required before commit; no SCHEMA_BUMPS or broad
+stamp. Run affected static guards/focusedchecks before one subsequent normalfull
+push. FirstcollectremainingWindowsCI results to batch any additional failures.
+No newmanualworkflow or automaticrelease retry authorized at this stage.
+
+Correction after root vetting: database.ts is NOT in shapeFiles()'s persisted
+schema pin list; storage-shape-tripwire.test.ts113 explicitly documents it as
+not pinned. The review's pin requirement was misattributed. Run the existing
+tripwire check after the change, but do not modify its hash or add an unnecessary
+acknowledgement if it remains green. No schema or migration change is authorized.
+
+### Completed Windows CI adds one cross-drive bundler family
+
+Windowsfulljob125211153728 completed with6failures, all extension-bundler(2)/
+extension-pack(4). Sharedowner scripts/extension-bundler.ts127 treats Bunmetafile
+input keys as cwd-relative filepaths; on checkoutD/tempC it attempts lstatD:\C:.
+Raw5523782byte logfile windows-test-job-125211153728.log SHA256
+BB328EB5A4B40E4827B298AD25BADBFA25E91DB25F6980AE6ECE22E8F08CD18E.
+No other Windowsfull failures reported. Batch this genuine cross-drive family
+before another fullpush; do not weaken validatedgraph/SDK/containment to pass.
+
+Authorize bounded TEMP-only reproduction/capture of actual Bunmetafile keys with
+repo cwd/sourcefixtures on different Windowsdrives. An unused task-only SUBST
+letter is permitted only after proving it is unused; map solely to an owned
+fixture directory, record target, and remove ONLY that exact mapping in finally
+if it still matches. No globalpersistentconfig/userdata/source edits. Alternatively
+use an alreadyavailable second drive only for an isolatedfixture directory.
+Run with pinnedBun1.4.2/freshprofile, rawkeys/nativeexit/hash, compare same-drive
+versuscross-drive once. Do not normalize/strip arbitraryinputstrings on speculation.
+Review authoritative known sources/SDKidentity graph and Bunmetafile representation
+before proposing implementation. Independentsecurityreview required; imported
+content remains data and outside/symlink/snapshot-mutation/budget tests stay intact.
+
+### Reviewed cross-drive bundler correction
+
+Actual Bun1.4.2 metadata receipt now confirms Windows cross-drive keys such as
+../../../../../R:/fixture/main.js; resolve incorrectly yieldsC:\R:\... . Same
+fixture actualbundleAPI succeeds Cdrive and fails Rdrive beforefix. Independent
+review verified metadata.stdout.log SHAc830dbe87c03296a7a3d4b603b931957ca506ea42668f18ce337e1a7767de5db
+and confirmed ownedR mapping removed.
+
+Authorize minimal scripts/extension-bundler.ts post-build input adapter ONLY:
+onWindows, recognize exact leading ../segments followed by drive-letter:/ and
+remove only those ../segments; then existing resolve→realpathSync→sources.has
+validation applies unchanged. Example anchored pattern
+/^(?:\.\.\/)+(?=[A-Za-z]:\/)/. Otherplatforms/ordinarypaths unchanged. Do not
+strip arbitraryprefixes, accept unknown paths, drop the postcheck or loosen
+onResolve/onLoad/capturedSDK/symlink/byte/file/source limits. One inline owner is
+sufficient; no newdependency/export/options/manualregistry.
+
+Beforechange actualcrossdriveownerRED is preserved. Afterchange run complete
+existing extension-bundler and extension-pack owners, plus boundedactualpositive
+SDK/localmodule and captured-byte cases with different cwd/source drives under
+exactownedSUBST rules/finallycleanup. Keep outside/junction/builtin/asset/dynamic
+import negatives and captured-source mutation semantics. ExistingWindowsCI
+positivecases already provide permanent crossdrive regression inDcheckout/Ctemp.
+No addedtestpermutation is necessary for countconsolidation. Independentreview
+actualdiff and exactnativeproof before commit. No fullpush until scrubproof,
+this family and all completed shippingplatform failures are reconciled.
+
+### Three-family repair batch approved for next normal delivery
+
+Final exact authoredsource approval hashes:
+- Terminalfixture05025f9f636d951be12aadca966b4005a7c62375fa64237cb2ba0b0026b4b499.
+- database.ts fb597321e3d97f5721fdcc4fc8c0dec340698af04eb0c00e6caa80ac8d4723e6.
+- database.test.ts1851b0b99a6593afff148ccfcaba33fe43b03a5ffabd45a178f27054e23e3b7f.
+- bundler5a337d5ea9ba76edd44972120981e1fee96d8794d1a7829855c7e696c353cc34.
+Independent integration_review approved all actualdiffs and verified ownedSUBST
+cleanup. Nativefocusedproof: TerminalambientRED then11/45GREEN, actualJSworker
+8/10GREEN+exactoriginrefusalTEMP1/1GREEN; scrub20/47GREEN,20msmutationRED,
+linkedkeyring/health34/95GREEN, unchangedtripwireGREEN; compiledcanonicalprobe
+11ms max and heldreader10ms vs baseline88ms, strict100/workloadunchanged;
+bundler/pack9/54GREEN and actualcrossdriveSDK/capturedbytes8811byteoutput0.
+The hosted122ms sample remains specificallyunattributed; newstrictnativeCI
+mustpass on the repairedrevision. No acceptance waiver or threshold change.
+
+Freeze exactly these4sourcefiles plus canonicalPlan010/conciseevidence. Root
+verified origin/Mainstage c07a805bbca6ba0df4ee5238aaf0bca888bd84b7 on2026-11-02.
+Fast-forward local17f9 to c07 metadata withoutstash/reset or unrelatedchanges;
+commit approvedbatch normally. No vendor/lock/manualversion/schema/pin changes.
+Then one newfreshprofile normalpush, pinnedBun/approved200Fshim, exactnewcommit
+andremote preflight, rawstdout/stderr/nativeGitexit+actualremote, bound45min.
+No concurrenttests, no repeatedfullrun forindividualassertionrepair. Auto-release
+owns the nexttag; v0.1.51 staysimmutable. Normalreleaseverification and shipped
+platformpackagedCI/S21 mustpass beforeclaimingactual8assets+checksums publication.
+Macdownloads remainheldback, no expansiontoMacrepair/testreduction.
+
+### Final scoped scrub and Windows bundler results
+
+The scrub change is limited to the existing maintenance owner and its registered-reader test. Independent review approved database.ts SHA256 FB597321E3D97F5721FDCC4FC8C0DEC340698AF04EB0C00E6CAA80AC8D4723E6 and database.test.ts SHA256 1851B0B99A6593AFFF148CCFCABA33FE43B03A5FFABD45A178F27054E23E3B7F. On pinned Bun1.4.2, the real observer test first failed with the old 20ms policy (8 observed 20ms attempts), then passed with nonblocking 0; mutation back to20 failed at that policy assertion. The complete database owner passed20 tests/47 expectations; keyring and SQLite health-scan linked owners passed34/95. Storage-shape tripwire passed1/2, unchanged pin. Typecheck exited0. The compiled original lane probe passed with 11ms maximum pause; the held-reader probe passed with the actual 250ms reader release and 10ms maximum pause. These local measurements do not establish the cause of the hosted122ms sample. Raw receipts are under `%TEMP%\codex-lane-probe-phase-20261102\`.
+
+The Windows CI failure family was six bundler/package tests caused by cross-drive Bun metafile keys. Independent review approved scripts/extension-bundler.ts SHA256 5A337D5EA9BA76EDD44972120981E1FEE96D8794D1A7829855C7E696C353CC34. The fix applies only on Windows to leading `../` segments directly before a drive path, then preserves resolve, realpath, and exact captured-source validation. On final source, existing bundler and pack owners passed9 tests/54 expectations; a real temporary SUBST-drive bundle passed with the exact SDK, captured local-module bytes, and changed-after-capture bytes excluded. The owned drive mapping was removed in finally. No dependency, lockfile, vendor, version, schema, migration, or storage-pin changes were made.

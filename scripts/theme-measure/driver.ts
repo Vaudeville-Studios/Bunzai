@@ -11,6 +11,7 @@ import { basename, dirname, isAbsolute, join } from "node:path";
 import { NEUTRALIZE } from "./neutralize.ts";
 import type { ControlName, ThemeName } from "./metric.ts";
 import type { Screen, Step } from "./screens.ts";
+import { toErrorMessage } from "../../src/error-message.ts";
 
 const CHROME = [process.env.CHROME_PATH, "C:/Program Files/Google/Chrome/Application/chrome.exe", "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe", "/usr/bin/google-chrome", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"].find((p) => p && existsSync(p));
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -105,12 +106,12 @@ export async function connectOwnedChrome<T extends { close(): Promise<void> }>(
       if (performance.now() >= deadline) throw new Error("Chrome connection exceeded its startup deadline");
       return { connection, close };
     }
-    throw new Error(`Chrome did not accept its owned CDP connection within 20 seconds: ${lastError instanceof Error ? lastError.message : "connection unavailable"}`);
+    throw new Error(`Chrome did not accept its owned CDP connection within 20 seconds: ${toErrorMessage(lastError, "connection unavailable")}`);
   } catch (error) {
     let cleanup = "";
-    try { await close(); } catch (stopError) { cleanup = `; ${stopError instanceof Error ? stopError.message : "cleanup failed"}`; }
+    try { await close(); } catch (stopError) { cleanup = `; ${toErrorMessage(stopError, "cleanup failed")}`; }
     const diagnostics = tail.toString("utf8").replace(/DevTools listening on [^\r\n]+/g, "DevTools listening on [endpoint omitted]");
-    throw new Error(`${error instanceof Error ? error.message : "Chrome startup failed"}${cleanup}\n${diagnostics}`);
+    throw new Error(`${toErrorMessage(error, "Chrome startup failed")}${cleanup}\n${diagnostics}`);
   }
 }
 
@@ -143,7 +144,7 @@ export async function launch(work: string, port = 9491 + Number(process.env.THEM
     return { context, page, close };
   } catch (error) {
     try { await close(); }
-    catch (cleanupError) { throw new Error(`${error instanceof Error ? error.message : "Chrome startup failed"}; ${cleanupError instanceof Error ? cleanupError.message : "profile cleanup failed"}`); }
+    catch (cleanupError) { throw new Error(`${toErrorMessage(error, "Chrome startup failed")}; ${toErrorMessage(cleanupError, "profile cleanup failed")}`); }
     throw error;
   }
 }

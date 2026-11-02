@@ -171,7 +171,10 @@ describe("App turn lifecycle", () => {
       expect(t.captureCharFrame()).toContain("QUEUED");
       expect(t.captureCharFrame()).toContain("second");
       release();
-      await tick(180);
+      await settleUntil(() => {
+        const frame = t.captureCharFrame();
+        return calls.length === 2 && !frame.includes("QUEUED");
+      });
       expect(calls).toEqual(["first", "second"]);
       expect(t.captureCharFrame()).not.toContain("QUEUED");
     } finally {

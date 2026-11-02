@@ -12,6 +12,7 @@ import type { ExtensionTurnServices } from "../operations/turns/_services";
 import type { ExtensionTurnFollowOn, ExtensionCoreTurnSnapshot } from "../operations/turns/_services";
 import type { HostActionPort } from "./host-action-port";
 import { StudioConflictError, StudioNotFoundError, StudioValidationError } from "../../studio/errors";
+import { toErrorMessage } from "../../error-message";
 import { NoConnectionError } from "../../studio/scene-turn";
 import { MAX_EXTENSION_TURN_OUTPUT_TOKENS } from "../contracts/limits";
 import { createExtensionTurnBudget } from "./extension-turn-budget";
@@ -140,7 +141,7 @@ export function createExtensionTurnServices(core: RoleplayCore, chats: ChatStore
             const requestedOutput = attempt.request.maxTokens;
             let outputTokens: number;
             try { outputTokens = reserveBudget(promptBytes, attempt.request.maxTokens); }
-            catch (error) { throw new StudioValidationError(error instanceof Error ? error.message : "The RP-Core turn exceeded its reviewed budget."); }
+            catch (error) { throw new StudioValidationError(toErrorMessage(error, "The RP-Core turn exceeded its reviewed budget.")); }
             return outputTokens < requestedOutput ? { maxTokens: outputTokens } : undefined;
           },
         });
@@ -180,7 +181,7 @@ export function createExtensionTurnServices(core: RoleplayCore, chats: ChatStore
         const requestedOutput = request.options.max_tokens ?? MAX_EXTENSION_TURN_OUTPUT_TOKENS;
         let outputTokens: number;
         try { outputTokens = reserveBudget(promptBytes, requestedOutput); }
-        catch (error) { throw new StudioValidationError(error instanceof Error ? error.message : "The extension turn exceeded its reviewed budget."); }
+        catch (error) { throw new StudioValidationError(toErrorMessage(error, "The extension turn exceeded its reviewed budget.")); }
         return send({ ...request, options: { ...request.options, max_tokens: outputTokens } });
       };
       if (signal.aborted) throw new Error("CANCELLED: turn was cancelled before it started");

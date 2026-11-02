@@ -4,6 +4,7 @@ import type { CoreMessageIdentity, CoreMessageLink, CoreMessageProjection, CoreS
 import type { CellCipher } from "../../crypto/cell-cipher";
 import type { StageDatabase } from "./database";
 import { coreOperationBody, coreRecordAuthority, requireCoreBirth, requireHostCoreBirth } from "./core-record-authority";
+import { liveOf } from "./swipe-sql";
 
 export function coreRecordProjection(database: StageDatabase, cipher: CellCipher, requireHost: () => void = () => {}): Pick<CoreSceneRecords,
   "pendingProjection" | "projectionEntries" | "pendingCreation" | "unlinkedBirth" | "unlinkedBirthForBranch" | "hostProjection" | "recoverCreation" | "messageFor" | "messageIdentityFor" | "linkMessage" | "linkMessages" | "markProjected" | "projectMessage" | "projectMessages"> {
@@ -37,7 +38,7 @@ export function coreRecordProjection(database: StageDatabase, cipher: CellCipher
     return row ? { messageId: row.message_id, swipeId: row.swipe_id } : null;
   };
   const visible = (messageId: string, swipeId?: string) => database.statement(`SELECT m.branch_id, m.role, s.content, s.swipe_id, s.position FROM messages m JOIN swipes s ON s.message_id = m.id
-    WHERE m.id = ? AND m.cut_at IS NULL AND s.cut_at IS NULL AND ${swipeId ? "s.swipe_id = ?" : "s.position = m.current_swipe"}`).get(...(swipeId ? [messageId, swipeId] : [messageId])) as { branch_id: string; role: string; content: string; swipe_id: string; position: number } | null;
+    WHERE m.id = ? AND ${liveOf("m")} AND ${liveOf("s")} AND ${swipeId ? "s.swipe_id = ?" : "s.position = m.current_swipe"}`).get(...(swipeId ? [messageId, swipeId] : [messageId])) as { branch_id: string; role: string; content: string; swipe_id: string; position: number } | null;
   const link = (input: CoreMessageLink): void => {
     const shown = proof(input);
     const message = visible(input.chatMessageId, input.chatSwipeId);

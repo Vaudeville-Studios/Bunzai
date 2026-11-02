@@ -17,7 +17,7 @@
 import { toErrorMessage } from "../error-message";
 import { createSceneCore } from "./server-scene-composition";
 import { sceneRuntimeFor } from "./server-scene-runtime";
-import { isRecord, str } from "../core/guards";
+import { hasErrorName, isRecord, str } from "../core/guards";
 import type { ChatBackdrop, ChatConnection, ChatPreset, ChatStore } from "../stage/contracts/chat-store";
 import type { ProviderRole } from "../stage/contracts/provider";
 import type { StateStore } from "../stage/contracts/state-store";
@@ -89,7 +89,7 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
   });
   void work.catch((error) => { if (!didStart) rejectStart(error); });
   try { await firstEvent; }
-  catch (error) { return err(toErrorMessage(error, "the Core turn could not start"), error instanceof Error && error.name === "StudioConflictError" ? 409 : 400); }
+  catch (error) { return err(toErrorMessage(error, "the Core turn could not start"), error instanceof Error && hasErrorName(error, "StudioConflictError") ? 409 : 400); }
   const encoder = new TextEncoder();
   let detached = false;
   const response = new Response(new ReadableStream<Uint8Array>({

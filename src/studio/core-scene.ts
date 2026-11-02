@@ -2,7 +2,7 @@
 import { Engine, createOpenAIChatProvider, resolveCaps } from "rp-core";
 import type { Character, Connection, Persona, PromptMsg } from "rp-core";
 import type { AsyncSessionHandle, RecordStore } from "rp-core";
-import { bodyOf } from "../core/guards";
+import { bodyOf, recOr, str } from "../core/guards";
 import type { ChatConnection, ChatStore } from "../stage/contracts/chat-store";
 import type { CoreSceneRecords } from "../stage/store/sqlite/core-record-store";
 import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
@@ -16,30 +16,27 @@ import { StudioConflictError } from "./errors";
 import type { ProviderRole } from "../stage/contracts/provider";
 import { reconcileCoreProjection } from "./core-scene-projection";
 
-const text = (value: unknown): string => typeof value === "string" ? value : "";
-const record = (value: unknown): Record<string, unknown> => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
-
 function coreCharacter(source: unknown): Character {
   const body = bodyOf(source);
-  const identity = record(body["identity"]);
-  const persona = record(body["persona"]);
-  const prompts = record(body["prompts"]);
-  const greetings = record(body["greetings"]);
-  const examples = record(body["examples"]);
+  const identity = recOr(body["identity"]);
+  const persona = recOr(body["persona"]);
+  const prompts = recOr(body["prompts"]);
+  const greetings = recOr(body["greetings"]);
+  const examples = recOr(body["examples"]);
   return {
-    name: text(identity["name"]), description: text(identity["description"]),
-    ...(text(persona["personality"]) ? { personality: text(persona["personality"]) } : {}),
-    ...(text(persona["scenario"]) ? { scenario: text(persona["scenario"]) } : {}),
-    greetings: [text(greetings["firstMessage"]), ...((Array.isArray(greetings["alternateGreetings"]) ? greetings["alternateGreetings"] : []).map((g) => text(record(g)["text"])))].filter(Boolean),
-    ...(text(examples["exampleMessages"]) ? { examples: text(examples["exampleMessages"]) } : {}),
-    ...(text(prompts["systemPrompt"]) ? { systemPrompt: text(prompts["systemPrompt"]) } : {}),
-    ...(text(prompts["postHistoryInstructions"]) ? { postHistory: text(prompts["postHistoryInstructions"]) } : {}),
+    name: str(identity["name"]), description: str(identity["description"]),
+    ...(str(persona["personality"]) ? { personality: str(persona["personality"]) } : {}),
+    ...(str(persona["scenario"]) ? { scenario: str(persona["scenario"]) } : {}),
+    greetings: [str(greetings["firstMessage"]), ...((Array.isArray(greetings["alternateGreetings"]) ? greetings["alternateGreetings"] : []).map((g) => str(recOr(g)["text"])))].filter(Boolean),
+    ...(str(examples["exampleMessages"]) ? { examples: str(examples["exampleMessages"]) } : {}),
+    ...(str(prompts["systemPrompt"]) ? { systemPrompt: str(prompts["systemPrompt"]) } : {}),
+    ...(str(prompts["postHistoryInstructions"]) ? { postHistory: str(prompts["postHistoryInstructions"]) } : {}),
   };
 }
 
 function corePersona(source: unknown): Persona {
   const body = bodyOf(source);
-  return { name: text(body["name"]), description: text(body["content"]) };
+  return { name: str(body["name"]), description: str(body["content"]) };
 }
 
 /** Uses the same pinned host and saved secret as Kit; this first route is OpenAI-chat compatible. */

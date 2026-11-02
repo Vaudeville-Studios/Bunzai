@@ -2,9 +2,9 @@
 import { Engine } from "rp-core";
 import type { Entry, MessageView } from "rp-core";
 import type { CoreSceneRecords } from "../stage/store/sqlite/core-record-store";
+import { isRecord } from "../core/guards";
 
 const PAGE_SIZE = 20;
-const object = (value: unknown): Record<string, unknown> | null => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 
 export interface CoreSceneState {
   directorEnabled: boolean;
@@ -28,12 +28,12 @@ export function directorOnPath(path: readonly MessageView[], entries: readonly E
     if (entry.t !== "msg" && entry.t !== "edit") continue;
     const id = entry.t === "msg" ? entry.id : entry.target;
     if (!onPath.has(id)) continue;
-    const record = object(entry.dir);
-    if (record && object(record["state"]) && typeof record["turn"] === "number") byMessage.set(id, record);
+    const record = entry.dir;
+    if (isRecord(record) && isRecord(record["state"]) && typeof record["turn"] === "number") byMessage.set(id, record);
   }
   for (let i = path.length - 1; i >= 0; i--) {
     const record = byMessage.get(path[i]!.id);
-    if (record) return { turn: record["turn"], ok: record["ok"] === true, state: record["state"], ...(object(record["directive"]) ? { directive: record["directive"] } : {}) };
+    if (record) return { turn: record["turn"], ok: record["ok"] === true, state: record["state"], ...(isRecord(record["directive"]) ? { directive: record["directive"] } : {}) };
   }
   return null;
 }

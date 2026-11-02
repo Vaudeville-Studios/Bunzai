@@ -15,9 +15,9 @@ export interface SwipeSqlKit {
   insertSwipe(messageId: string, position: number, content: string, generation: Generation | undefined, createdAt: number): number;
 }
 
-/** A swipe that has not been cut (rule 32). Spell the condition through here, never as a literal. */
+/** An uncut timestamp predicate shared by message and swipe rows (rule 32); other visibility checks remain caller-owned. */
 export const LIVE = "cut_at IS NULL";
-/** The same condition on a table alias, for joins and subqueries. */
+/** The same uncut timestamp predicate on an alias, for joins and subqueries. */
 export const liveOf = (alias: string): string => `${alias}.${LIVE}`;
 
 /** How many of a message's versions are live: one `?` for the message id. */

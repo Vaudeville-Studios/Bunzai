@@ -179,5 +179,24 @@ test("real Core links use Core preview and append paths while legacy scenes rema
     expect(desktopPreviewCalls).toBe(0);
     await desktopService.previewPrompts(legacyChat.id, "legacy", new AbortController().signal);
     expect(desktopPreviewCalls).toBe(1);
+    const beforeDesktopCreate = (await opened.chats.listChats()).chats.length;
+    let pendingEffect: { id: string } | undefined;
+    const creating = desktopService.activate("demo.core-scene-guard", "command", "create", null);
+    for (let attempt = 0; attempt < 300 && !pendingEffect; attempt++) {
+      pendingEffect = (await desktopService.pendingEffects())[0];
+      if (!pendingEffect) await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    if (!pendingEffect) throw new Error("Desktop scene creation did not request user approval");
+    expect((await opened.chats.listChats()).chats).toHaveLength(beforeDesktopCreate);
+    expect(await desktopService.answerEffect(pendingEffect.id, true)).toBe(true);
+    const desktopCreated = await creating;
+    expect(desktopCreated).toMatchObject({ status: "completed", output: { title: "Extension Core scene", characterId: "fixture-character" } });
+    const desktopScene = desktopCreated.status === "completed" ? desktopCreated.output as { id: string; activeTakeId: string } : null;
+    if (!desktopScene) throw new Error("Desktop scene creation returned no scene");
+    const desktopChat = await opened.chats.getChat(desktopScene.id);
+    expect(desktopChat?.cast.character).toMatchObject({ id: "fixture-character", version: 1 });
+    expect(await opened.chats.castSnapshot(desktopScene.id)).toMatchObject({ character: { kind: "character", id: "fixture-character", body: { identity: { name: "Fixture" } } } });
+    expect(await stores.core.sceneFor(desktopScene.id)).toMatchObject({ branchId: desktopScene.activeTakeId, sessionId: expect.any(String) });
+    expect((await opened.chats.listChats()).chats).toHaveLength(beforeDesktopCreate + 1);
   } finally { await desktop.close(); }
 }, 15_000);

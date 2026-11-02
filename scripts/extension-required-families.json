@@ -1,17 +1,7 @@
 {
   "description": "Fixed acceptance rows transcribed from section 6 of plans/001-unified-extension-runtime.md. Hosts are expected executable hosts, not merely metadata availability.",
   "hosts": ["desktop", "browser", "terminal"],
-  "hostExclusions": [
-    {
-      "id": "scenes.create",
-      "hosts": ["desktop", "terminal"],
-      "reason": "Desktop and Terminal create new scenes through rp-core. The extension ChatStore adapter cannot create a linked Core session atomically, so extension scene creation is Browser-only.",
-      "evidence": [
-        "src/extensions/operations/scenes/create.ts",
-        "src/kit/extensions/core-scene-guard.integration.test.ts"
-      ]
-    }
-  ],
+  "hostExclusions": [],
   "browserFamilies": ["discovery", "content discovery", "content reads", "content drafts", "collections", "scenes", "takes and navigation", "messages", "scene state", "extension data", "prompts", "events", "assets", "ui", "diagnostics", "logs", "character and persona capabilities", "lorebook capabilities", "writing capabilities"],
   "browserExcludedIds": [],
   "terminalExcludedFamilies": ["playback", "ui", "clipboard and links"],

@@ -20,7 +20,7 @@ import { GLOBAL_SLOT, baseState, changed, checkExtensionDeltas, checkImportedDel
 import { checkGuard } from "../chat-rules";
 import type { BranchSql, MessageSql } from "./chat-store-rows";
 import type { StageDatabase } from "./database";
-import { liveOf } from "./swipe-sql";
+import { LIVE, liveOf } from "./swipe-sql";
 import { requireExtensionCommit } from "./extension-commit-guard";
 import { requireCommitResource } from "../extension-commit-access";
 
@@ -174,7 +174,7 @@ export function stateMethods(k: StateSqlDeps): StateSql {
   return {
     applyExtensionOnSwipe(packageId, branchId, messageId, swipeId, raw) {
       const deltas = checkExtensionDeltas(raw, packageId), message = k.writableMessage(messageId);
-      if (!message || message.branch_id !== branchId || !k.one(`SELECT 1 FROM swipes WHERE message_id = ? AND swipe_id = ? AND cut_at IS NULL`, messageId, swipeId)) return false;
+      if (!message || message.branch_id !== branchId || !k.one(`SELECT 1 FROM swipes WHERE message_id = ? AND swipe_id = ? AND ${LIVE}`, messageId, swipeId)) return false;
       const through = build(branchId, [], [...shown(shownPath(branchId, message.seq)), { messageId, swipeId }], message.seq).state;
       const added = changed(through, deltas);
       if (added.length) { stamp("message_deltas", "message_id", messageId, added, swipeId); refresh(branchId, message.seq); }

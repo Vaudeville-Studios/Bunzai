@@ -5,6 +5,7 @@ import { requireExtensionCommit } from "./extension-commit-guard";
 import { requireCommitResource } from "../extension-commit-access";
 import { checkExtensionDeltas } from "../scene-state-rules";
 import { corePendingState } from "./core-pending-state";
+import { liveOf } from "./swipe-sql";
 
 export function coreStateMethods(k: StateSqlDeps & { state: StateSql; clock(): number }): Pick<ChatStore,
   "stageCoreExtensionState" | "recordCoreExtensionState" | "applyCoreExtensionState" | "discardCorePendingState"> {
@@ -25,7 +26,7 @@ export function coreStateMethods(k: StateSqlDeps & { state: StateSql; clock(): n
           JOIN core_sessions s ON s.id = l.session_id JOIN branches b ON b.id = l.branch_id JOIN chats c ON c.id = l.chat_id
           JOIN messages m ON m.id = x.message_id JOIN swipes w ON w.message_id = m.id AND w.swipe_id = x.swipe_id AND w.position = m.current_swipe
           WHERE x.message_id = ? AND l.chat_id = ? AND b.id = ? AND b.version = ? AND c.active_branch_id = b.id
-            AND b.deleted_at IS NULL AND c.deleted_at IS NULL AND m.cut_at IS NULL AND w.cut_at IS NULL`, target.messageId, target.sceneId, target.takeId, target.expectedVersion);
+            AND b.deleted_at IS NULL AND c.deleted_at IS NULL AND ${liveOf("m")} AND ${liveOf("w")}`, target.messageId, target.sceneId, target.takeId, target.expectedVersion);
         if (!binding) return false;
         if (binding.lease_owner && binding.lease_until !== null && binding.lease_until > commit.now()) throw new Error("Core scene state cannot be applied while its session is active");
         return k.state.applyExtensionOnSwipe(commit.packageId, target.takeId, target.messageId, binding.swipe_id, deltas);

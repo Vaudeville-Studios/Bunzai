@@ -1,6 +1,7 @@
 /** Pure catalog, search, link, and figure derivation for the in-app docs reader. */
 import type { DocFigure, DocRecord } from "../../docs-types";
 import { flattenAnchors } from "../../../kit/docs/navigation";
+import { safeOutwardHref } from "../../_shared/render-policy";
 
 export type DocSegment =
   | { kind: "markdown"; body: string }
@@ -167,7 +168,7 @@ const resolveRelative = (href: string, currentPath: string): string | null => {
 function rewriteDocLinks(markdown: string, current: DocRecord, docs: DocRecord[], options: DocLinkOptions): string {
   const byPath = new Map(docs.map((doc) => [doc.path, doc]));
   return markdown.replace(/(?<!!)\[([^\]]+)\]\(([^)\s]+)([^)]*)\)/g, (whole, label: string, rawHref: string, tail: string) => {
-    if (/^(?:https?:|mailto:)/i.test(rawHref)) return whole;
+    if (safeOutwardHref(rawHref) !== null) return whole;
     if (rawHref.startsWith("#")) {
       return options.localAnchorHref ? `[${label}](${options.localAnchorHref(rawHref.slice(1))}${tail})` : whole;
     }

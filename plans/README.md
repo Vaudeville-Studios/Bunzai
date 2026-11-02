@@ -13,6 +13,9 @@ These plans record intended implementation. Current implementation and verificat
 | [005](005-binary-distribution-and-archive-reconciliation.md) | Prepare Hoplight-equivalent Bunzai binaries and reconcile archived plans | P1 | L / HIGH | 001-004 source merged | WINDOWS BUILT; BASIC COMPILED CHECKS PASS; RELEASE GATES OPEN |
 | [006](006-unbundle-kit-from-releases.md) | Keep Kit source development while excluding it from release downloads | P1 | S / LOW | 005 checkpoint | IMPLEMENTED; WORKFLOW INVENTORY VERIFIED; NOT PUBLISHED |
 | [007](007-repair-release-verification.md) | Repair confirmed release verification failures without weakening acceptance | P1 | L / HIGH | Actual failed release evidence | IN PROGRESS; LANE A VERIFIED; OTHER LANES PENDING |
+| [010](010-resume-binary-release.md) | Resume normal Bunzai binary publication | P1 | S / HIGH | Published v0.1.46 baseline; focused repair and native host evidence | SOURCE REVIEW ACCEPTED; NORMAL-HOOK DELIVERY PENDING |
+
+Current release candidate work is isolated at `release/binary-v0.1.47-20261101`, based on published Mainstage `70ab382c1827721004912eb8f613baf4da4901c0`. The reviewed candidate has focused tests, the live source-ownership guard and typecheck passing; the normal pre-push test gate and release workflow have not run yet. Evidence is in [Plan 010](010-resume-binary-release.md) and its [execution note](evidence/release-resume-20261101/executor-proof.md).
 
 2026-11-01 reconciliation: Plans 001-004 are on published Bunzai Mainstage
 `9f8e8571929e32fc8e65ad721a13b653c1aa787f`. Pages deployment 41269539303

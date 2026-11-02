@@ -173,12 +173,18 @@ describe("extension prompt contributions", () => {
   });
 
   test("a contribution that overflows is rejected before send, including after reviewed edits", async () => {
-    const s = await scene({ context: 5_000, applyExtensionPrompts: async () => ["x".repeat(16_000)] });
+    const context = 16_000;
+    const payload = Array.from({ length: 8_000 }, (_, i) => `part${i}`).join(" ");
+    expect(countText(payload)).toBeGreaterThan(context);
+    let applied = false;
+    const s = await scene({ context, applyExtensionPrompts: async () => { applied = true; return [payload]; } });
     await s.turn();
+    expect(applied).toBe(true);
     expect(s.sent).toHaveLength(0);
-    expect(s.events.at(-1)).toMatchObject({ type: "failed", code: "context_length_exceeded" });
+    expect(s.events.at(-1)).toMatchObject({ type: "failed", code: "context_length_exceeded", message: "The prompt and its approved extension contributions exceed this model's context window." });
+    expect(await s.chats.resumeIncomplete()).toEqual([]);
 
-    const reviewed = await scene({ context: 100_000, applyExtensionPrompts: async () => ["small instruction"] });
+    const reviewed = await scene({ context, applyExtensionPrompts: async () => ["small instruction"] });
     const pending = reviewed.turn(true);
     for (let i = 0; i < 200 && !reviewed.events.some((event) => event.type === "review"); i++) await new Promise((resolve) => setTimeout(resolve, 5));
     const review = reviewed.events.find((event) => event.type === "review");
@@ -188,9 +194,11 @@ describe("extension prompt contributions", () => {
       await pending;
       throw new Error(`review was not requested; last event: ${JSON.stringify(reviewed.events.at(-1))}`);
     }
-    answerReview(reviewed.deps.runtime, reviewed.chat.id, review.type === "review" ? review.turnId : "", { kind: "send", edits: { 0: "x".repeat(500_000) } });
+    expect(review.messages.some((message) => message.content === "small instruction")).toBe(true);
+    answerReview(reviewed.deps.runtime, reviewed.chat.id, review.turnId, { kind: "send", edits: { 0: payload } });
     await pending;
     expect(reviewed.sent).toHaveLength(0);
-    expect(reviewed.events.at(-1)).toMatchObject({ type: "failed", code: "context_length_exceeded" });
+    expect(reviewed.events.at(-1)).toMatchObject({ type: "failed", code: "context_length_exceeded", message: "The reviewed prompt and its approved extension contributions exceed this model's context window." });
+    expect(await reviewed.chats.resumeIncomplete()).toEqual([]);
   });
 });

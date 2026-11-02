@@ -1856,6 +1856,9 @@ Paper’s manuscript scene layout keeps a 160 × 224 px portrait in a separate c
 The shared scene panel assembler passes the linked session to the rp-core wing in both chat layouts.
 New scenes created with the external rp-core integration expose an **rp-core** right wing for
 Director and Memory settings and their saved state. Existing scenes retain their previous engine.
+Director sections retain their complete records in virtualized variable-height rows inside the wing's
+scrolling body; scrolling reaches later records without mounting every row. Seed payoff and status
+remain with each row. The Memory section continues to page its entries in groups of 20.
 The Control Booth character navigator offers **Export scene**, exporting the host transcript and
 frozen cast as JSON, rather than the complete rp-core journal. Linked scenes refuse unsupported
 legacy transcript and setup mutations; native Ollama and OpenAI-chat compatible providers are

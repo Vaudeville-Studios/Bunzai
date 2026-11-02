@@ -156,3 +156,37 @@ the push hook. This supersedes the earlier extra local-wall step only; NO gate i
 removed or bypassed. Observe exact tag/source identity and all build/S21/publish
 jobs. Keep the broad reduction checkout unmodified. No duplicate manual release
 dispatch if the push already started one. Existing tags remain immutable.
+
+## Director-list correction before delivery
+
+Normal precommit found three unbounded JSX maps in scene-core-wing. Fixed five
+collection sections and the existing inspected-memory PAGE_SIZE20 are genuinely
+short by construction and may retain precise bounded-ok comments. The Director
+entry bound annotation is REJECTED: records.read yields raw JSON-cast entries,
+directorOnPath does not call checkRecord/checkState, and RP-Core accepts dir as
+anyObj. Private vendor validators are not a supported import or an existing bound.
+Commit1e5ca2b contains that unsupported annotation; its push was stopped in the
+pre-push typecheck BEFORE remote mutation. Preserve that commit, do not reset or
+amend history; correct it in a second normal-hook scoped commit before delivery.
+
+Executor may change scene-core-wing.tsx to replace ONLY the unbounded Director
+entries.map renderer with the existing VirtualRows from ui/_shared/virtual-list.
+It auto-discovers the panel scroller and supports variable measured row heights.
+Keep each existing entry text, seed payoff, status, ordering, section count and
+empty state. Stable key is existing id with existing index fallback. Do not
+truncate, add a second virtualizer, import private vendor modules or change Core
+state persistence. Remove the unsupported annotation; retain proven short maps.
+Use the established VirtualRows estimate/measurement conventions; no new CSS,
+dependencies, hardcoded colors or layout primitives unless a measured need appears.
+
+Extend existing scene-core-wing.test.tsx with a public rendered large-list case
+that would mount all rows before this fix, retain all existing switch/seed/wiring
+tests. Reproduce RED before applying windowing, then GREEN. Demonstrate scrolling
+to a late entry in an actual browser using the real component with isolated fixture
+data and the actual panel scroll styling; capture first/last visibility, bounded
+mounted rows and browser errors. This is component browser proof, not packaged
+Desktop or full user-journey certification. Update the RP-Core wing paragraph in
+docs/reference/ui.md and required generated docs through existing scripts.
+Root/independent review actual source and live evidence before committing. Rerun
+affected wing/shared virtualizer checks plus final typecheck when sources freeze.
+Do not repeat unchanged database/Chrome campaigns for this renderer-only delta.

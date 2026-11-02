@@ -7,6 +7,7 @@ import { Button } from "../../components/button";
 import { SwitchRow } from "./context/memory-controls";
 import { recOr, str } from "../../../core/guards";
 import { toErrorMessage } from "../../../error-message";
+import { VirtualRows } from "../../_shared/virtual-list";
 
 const items = (value: unknown): Record<string, unknown>[] => Array.isArray(value) ? value.map(recOr) : [];
 
@@ -35,11 +36,14 @@ function Director({ data }: { data: CoreSceneState }): JSX.Element {
       {chapter && <div className="mm-text"><b>Current chapter: {str(chapter["title"])}</b><p>{str(chapter["premise"])}</p></div>}
       {str(directive["narrativeGoal"]) && <div className="mm-text"><b>Narrative goal</b><p>{str(directive["narrativeGoal"])}</p></div>}
       {collections.map(/* bounded-ok: exactly five fixed Director categories */ ({ title, entries }) => <div key={title} className="mm-text"><b>{title} · {entries.length}</b>
-        {entries.length === 0 ? <p>Nothing recorded.</p> : entries.map(/* bounded-ok: checkState caps each Director list at four times its D-61 limit and state JSON at 128 KiB */ (entry, index) => <p key={str(entry["id"]) || index}>
-          {str(entry["title"]) || str(entry["hint"]) || str(entry["content"]) || str(entry["description"]) || str(entry["name"]) || `Item ${index + 1}`}
-          {title === "Seeds" && str(entry["payoff"]) && <small> · Payoff: {str(entry["payoff"])}</small>}
-          {str(entry["status"]) && ` · ${str(entry["status"])}`}
-        </p>)}
+        {entries.length === 0 ? <p>Nothing recorded.</p> : <VirtualRows
+          items={entries} keyOf={(entry, index) => `${String(index)}:${str(entry["id"])}`} estimate={52} pick={false} className="mm-director-entries"
+          render={(entry, index) => <p>
+            {str(entry["title"]) || str(entry["hint"]) || str(entry["content"]) || str(entry["description"]) || str(entry["name"]) || `Item ${index + 1}`}
+            {title === "Seeds" && str(entry["payoff"]) && <small> · Payoff: {str(entry["payoff"])}</small>}
+            {str(entry["status"]) && ` · ${str(entry["status"])}`}
+          </p>}
+        />}
       </div>)}
     </>}
   </section>;

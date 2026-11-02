@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:7b329116b8dbfcb4a762f0380c8e1d89a940fb8f77c9a3d22b19405b1010ec07",
-  "summary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close.",
+  "sourceHash": "sha256:88439556c9741158180da24f9cb9a18f6784b20d200227d3137a2e6e31f83b72",
+  "summary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. The rp-core wing renders all Director records in virtualized variable-height rows; Memory remains paged in groups of 20. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close.",
   "topics": [
     "Kit conversational terminal",
     "temporary browser Studio",
@@ -552,7 +552,7 @@
       "slug": "security",
       "title": "Security",
       "level": 2,
-      "sourceHash": "sha256:85c2384bf1af907b227f29e08f57a674b019bda0ba29da20a75e71ddddd10f8d",
+      "sourceHash": "sha256:af7e6b6bf1bc2a9e2af05e3e85fe099805825e22b423fbf3506f75a3a5d94411",
       "summary": "Authenticated server routes enforce path and request boundaries; imported Lua/regex remain sealed data until user-invoked isolated test benches. Upload staging bounds formats, bytes, grant count and lifetime; inert SVG/CSS rules reject active payloads. Lock or close aborts active uploads and revokes grants. Library, mentions, status and recents share PieceStore; exact summary identity and lock lifetimes fence delayed metadata and recovery. These integrated paths are source-reviewed, with focused fixture results recorded in delivery evidence and live proof pending.",
       "topics": [
         "loopback Studio bind",

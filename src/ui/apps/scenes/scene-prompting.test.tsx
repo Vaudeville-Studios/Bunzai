@@ -7,13 +7,13 @@
  * Typing is not simulated (see scene-preset-wing.test.tsx's header): a field's real onChange is called
  * straight off its React props, which runs the same handler a keystroke would.
  */
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import type { JSDOM } from "jsdom";
 import type { Root } from "react-dom/client";
 import type { AppContext } from "../../app-contract";
 import type { GuideInput, GuideRecord } from "../../../core/guide-record";
 import type { Chat, ChatPromptingPatch } from "../../../stage/contracts/chat-store";
-import { installDom, type InstalledDom, flushTasks } from "../../_shared/test-dom";
+import { installDom, type InstalledDom, flushTasks, waitFor } from "../../_shared/test-dom";
 
 
 let dom: JSDOM;
@@ -72,12 +72,21 @@ const ctx = (): AppContext => ({
 
 let root: Root;
 let host: HTMLElement;
+let mounted = false;
 const buttons = (): HTMLButtonElement[] => [...host.querySelectorAll("button")];
 const byText = (t: string) => buttons().find((b) => (b.textContent ?? "").includes(t));
 const byLabel = (t: string) => buttons().find((b) => (b.getAttribute("aria-label") ?? "").includes(t));
 const text = () => host.textContent ?? "";
 type FlushSync = typeof import("react-dom")["flushSync"];
 const settle = async (flushSync: FlushSync, ms = 30) => { await new Promise((r) => setTimeout(r, ms)); flushSync(() => undefined); };
+
+afterEach(async () => {
+  if (!mounted) return;
+  const { flushSync } = await import("react-dom");
+  flushSync(() => root.unmount());
+  host.remove();
+  mounted = false;
+});
 
 async function mount(chat: Chat): Promise<FlushSync> {
   const { flushSync } = await import("react-dom");
@@ -86,6 +95,7 @@ async function mount(chat: Chat): Promise<FlushSync> {
   host = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(host);
   root = createRoot(host);
+  mounted = true;
   flushSync(() => root.render(<PromptingWing ctx={ctx()} chat={chat} presetBody={null} onChanged={(c) => changed.push(c)} onBody={() => undefined} />));
   await settle(flushSync);
   return flushSync;
@@ -205,7 +215,6 @@ describe("the Scene Note tab", () => {
     expect(byText("Every 3rd")!.getAttribute("aria-pressed")).toBe("true");
     await press(flushSync, byText("In Chat History"));
     expect((host.querySelector("input[aria-label='Injection depth']") as HTMLInputElement).value).toBe("6");
-    root.unmount();
   });
 
   test("a save that fails says so and keeps the change pending", async () => {
@@ -244,7 +253,7 @@ describe("the Scene Note tab", () => {
     flushSync(() => root.render(<PromptingWing ctx={c} chat={chatWith()} presetBody={null} onChanged={() => undefined} onBody={() => undefined} />));
     await press(flushSync, byText("Scene Note"));
     await press(flushSync, byText("Every 4th"), 100);
-    await settle(flushSync, 1_100);
+    await waitFor(flushSync, () => text().includes("Couldn't save Scene Note.") && statuses.length === 1, "Scene Note save error and status");
     expect(text()).toContain("Couldn't save Scene Note.");
     expect(statuses).toHaveLength(1);
   });

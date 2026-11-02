@@ -360,16 +360,56 @@ Review exact test-only diff independently, run focused owners and typecheck, the
 normal scoped commit/push hooks and the actual release workflow. A clean focused
 timing rerun alone does not satisfy the required full release gate.
 
-## Attempt 3 full-hook result and fixture follow-up (2026-11-02)
+### Remote v0.1.48 verification follow-up
 
-The normal pre-push hook ran on candidate `9da9189ed057b6ca233f29c74071e51ce8e455b7` with the approved strict Bun 1.4.2 shim. Native Bun reported 16,516 passed, 55 skipped, 1 todo, 4 failed, 148,159 expectations across 16,576 tests and 1,763 files; `git push` exited 1 and the hook blocked the update. The exact failures were the crypto responsiveness bound (observed 101.96 ms against `<100 ms`), the 2,000-message state rebuild bound (225.04 ms against `<200 ms`), manager revision refresh still enabled after a guessed 2,100 ms, and the host review ticket still loading after a guessed 30 ms. No thresholds were changed.
+Attempt5 normal push passed all hooks and 16,520 tests, 55 skips, one todo,
+zero failures (1,737.25 s); remote c6029b8 triggered tag v0.1.48 at fc533738.
+Pages deployed. Four compiled SQLite/background probes and both actual keychain
+backend jobs passed. No release assets were published: first release verification
+failed Chrome readiness, while both the exact-tag browser diagnostic (9/33 plus
+owned CDP readiness) and normal Ubuntu CI browser passed. A single unchanged
+failed-jobs rerun passed browser but failed a different UI fixed-sleep fixture.
+Do not retry v0.1.48 again without a reviewed correction or change Chrome flags.
 
-The unchanged four failing cases passed alone under the same isolated Bun 1.4.2 profile: crypto 1 pass; state rebuild 1 pass at 127.9 ms; manager revision 1 pass; effect ticket 1 pass. These isolated passes do not replace the red full-hook result. After replacing the two UI fixtures' guessed waits with the existing `waitFor`, and adding `finally` cleanup, `extensions.test.tsx` passed 11 tests / 42 expectations. `bun run typecheck` exited 0 before a final restored `Go` assertion was added; the full focused file passed again after that assertion. The exact final test file SHA256 is `D90016AB707824A0FB0566680309147C03722361744CA6414BF230C9CD770BF0` and independent review approved it.
+Native remote RED: job125117649421 failed
+`src/ui/apps/scenes/scene-prompting.test.tsx:248`, the inline/status Scene Note
+save-refusal case: after settle(1100), state was Unsaved without the required
+error. Reuse existing DOM waitFor to await actual refusal state and status
+receipt, preserving both original assertions and actual one-second autosave.
+Inspect this file's root ownership: it has many mount calls, only one explicit
+unmount, and no per-test root cleanup. Repair the existing mount lifecycle with
+one authoritative per-test cleanup so all owned roots and host nodes are removed
+even on assertion failure. Remove redundant manual cleanup when subsumed. Do not
+rewrite unrelated cases or debounce production behavior. Native CI failure is
+the RED receipt; verify focused full file and cleanup after the exact failed case.
 
-The attempt 3 native output and exit are preserved unmodified at:
+Mac CI job125114742995 aborted Node22.23.2 at its ~2GB V8 heap limit during tsc,
+not on a TypeScript diagnostic. Official GitHub runner reference lists macos-14
+ARM standard runners with 7GB RAM; Node CLI documents max-old-space-size:
+https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+https://nodejs.org/api/cli.html
+Executor may add a 4096MiB NODE_OPTIONS heap allowance scoped to the existing Mac
+typecheck step (matrix conditional preserves Windows's current environment).
+Keep the exact command, runner, job limits, matrix, subsequent tests and all
+release gates unchanged. Validate YAML and exact diff; actual Mac success remains
+pending the next CI job. No dependency, paid runner or global setting change.
 
-- `%TEMP%\codex-release-v48-mainstagepush-attempt3\git.stdout.log`
-- `%TEMP%\codex-release-v48-mainstagepush-attempt3\git.stderr.log`
-- `%TEMP%\codex-release-v48-mainstagepush-attempt3\exit.txt` (exit 1)
+Separate Ubuntu CI job125114742841 failed a keychain fixture's maximum observed
+wall-clock lock age 325ms against <250ms; stale threshold400ms, heartbeat50ms.
+Record this separately; no threshold or production-lock change is authorized by
+that timing observation alone. The v48 release rerun passed that boundary.
+Do not import the broad paused test-reduction work. After focused evidence,
+independent actual-source review and normal scoped hooks, integrate the bot's
+version-only remote commit without rewriting history, then push once for the
+next normal release. Preserve every earlier failed run and never retag v48.
 
-Attempt 2 was an earlier task-owned duplicate suite that continued after its cancellation; its exact process tree was terminated after ownership and profile ancestry were confirmed. Its partial logs end mid-test and are not a result. Attempt 4 was stopped before its typecheck stage completed after the fixture-repair hold arrived; those partial logs are also not a result. After attempt 3 failed, `ls-remote` confirmed origin/Mainstage remained `fb562e0d6fab79d42ed978447af47311bfd84d0d`.
+### Focused verification for the next release candidate
+
+Candidate source is at `fc5337383ab3806a45f3a4860e8fcba72a9b072e` (the v0.1.48 version-bump commit; no release assets were published). After the reviewed fixture and Mac typecheck-memory changes:
+
+- Pinned Bun 1.4.2 focused `scene-prompting.test.tsx`: 12 passed, 0 failed, 39 expectations; run receipt: `%TEMP%/codex-release-v48-scene-prompting-focused`.
+- Pinned Bun 1.4.2 `scene-prompting.test.tsx` plus `scene-single-prompting.test.tsx`: 13 passed, 0 failed, 42 expectations; run receipt: `%TEMP%/codex-release-v48-prompting-neighbor`.
+- Pinned Bun 1.4.2 existing `scripts/ci-sidecar.test.ts` workflow contract: 7 passed, 0 failed, 28 expectations; run receipt: `%TEMP%/codex-release-v48-workflow-check-20261102`.
+- `git diff --check` is clean. The workflow change remains limited to a macOS-14-only 4096 MiB Node heap allowance for the existing typecheck step; this focused check does not establish that the next GitHub CI run passes.
+
+These are focused checks only. The next normal push must run the unchanged full hooks and the normal release workflow; no full gate or published binary result is claimed here.

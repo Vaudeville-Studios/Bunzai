@@ -103,6 +103,8 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
       - name: Typecheck
+        env:
+          NODE_OPTIONS: ${{ matrix.runner == 'macos-14' && '--max-old-space-size=4096' || '' }}
         run: bun run typecheck
       - name: Tests
         run: bun run test

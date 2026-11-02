@@ -23,7 +23,7 @@ beforeAll(() => {
     // Not act()'d: check() crosses a real fetch/Response await, an honest gap act() cannot close.
     // Warnings about updates outside act() are exactly what this flag turns off (App.boot.test.tsx's
     // same choice, for the same reason).
-    globals: { IS_REACT_ACT_ENVIRONMENT: false }
+    globals: { IS_REACT_ACT_ENVIRONMENT: false, fetch: globalThis.fetch, EventSource: globalThis.EventSource }
   }).dom;
 });
 

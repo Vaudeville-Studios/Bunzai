@@ -215,12 +215,51 @@ explicit platform marker. Actual nested bun-run→Node/bunx/compiler probe passe
 no bunx wrapper is needed because the sanitized parent environment is inherited.
 All repository hooks and source commands remain unchanged. Use a fresh task
 profile for the actual run; previous owned aborted profiles remain archived.
-Executor's focused tripwire and line-cap results are recorded in
-plans/evidence/release-resume-20261101/storage-shape-pin-acknowledgement.md;
-Root's independent rerun remains pending.
 
-## Restoring the boot-test fetch owner
+## Boot fixture fetch ownership investigation
 
-The first normal pre-push attempt stopped at the real delayed Chrome startup test. An ordered three-file repro isolated the cause: both App boot test files replaced global `fetch` with their HTTP mocks, but did not include `fetch` in the `installDom` globals snapshot, so `teardownAllDoms()` could not restore native fetch for the following Chrome test. Both boot fixtures now include the existing `fetch: globalThis.fetch` snapshot option. The ordered candidate repro changed from 18 pass/1 timeout failure to 19 pass/61 assertions, without changing the Chrome test, its 10-second timeout or production code. Full pre-push remains required and has not yet passed.
+Full pre-push attempt3 first failed at chrome-startup's real delayed-child case:
+the owned child announced its endpoint, but the unchanged10s test timed out.
+Exact isolated case passed1/17 in3.58s. Push stopped/drained; remote stays70ab.
+Code read found App.boot-retry.test.tsx and App.boot.test.tsx mutate global fetch
+but afterAll only tears down DOMs, whose current owned globals omit fetch.
 
-Evidence: `plans/evidence/release-resume-20261101/boot-fetch-restoration.md`.
+Executor may reproduce the actual ordered two boot files followed by a task-only
+copy of ONLY the unchanged first Chrome case, retaining assertions/10s deadline and
+the actual production driver. Run all predecessor callbacks, not a global test-name
+filter. Temporary diagnostics may record fetch identity/attempt errors/HTTP status
+and child receipt; do not edit canonical sources or increase timeouts for diagnosis.
+No repeated entire suite to establish this small cross-file failure.
+
+Independent lifecycle review approves the minimal repair IF ordered RED confirms
+the leak: add `fetch: globalThis.fetch` to BOTH existing beforeAll installDom
+options.globals. The existing authoritative owner snapshots that descriptor and
+awaited teardownAllDoms drains then restores it. Preserve all other setup, behavior,
+assertions, retry delays and timeouts. No new helper, manual parallel restore,
+production fetch replacement, new test registry or Chrome gate relaxation.
+Prove ordered cohort GREEN with actual local-server readiness, then root and
+independent source review. Root runs a bounded ordered replay before normal-hook
+scoped commit and the next normal push. Preserve prior commits. Full gates remain.
+
+### Second fetch fixture owner confirmed
+
+After boot cleanup, the next normal full run still hit the same Chrome case.
+The32-file default-order diagnostic campaign reproduced228pass/1fail: the connector
+received mock200{"phase":"unlocked"}140times, with no HTTP request reaching its
+owned child. A63-file probe campaign (260pass/646assertions) traced native fetch
+through probe10 after App.boot; probe11 after library-gate-mount.test.tsx introduced
+the exact impl hash e0921a9b2d7691b614e60aabfb0d4bcb9a09b685823e07bf3d79ada5138826a0.
+All later probes retained that responder. Canonical source stayed unchanged.
+
+Executor may change ONLY library-gate-mount.test.tsx's existing installDom globals
+to also own fetch:globalThis.fetch and EventSource:globalThis.EventSource. Its
+beforeEach currently replaces BOTH globals; awaited teardownAllDoms must restore
+their prior descriptors, including deleting a previously absent EventSource.
+Preserve all beforeEach behavior, test assertions, polling and deadlines. Reuse
+the existing global owner; no new helper, registry, Chrome transport or timeout.
+Run the same31mutator→firstChrome default cohort GREEN and a final probe proving
+fetch and EventSource return to their original values/descriptors. Root and
+independent actual-source review precede scoped normal-hook commit/push. No
+entire suite retry until this full bounded mutator cohort passes.
+
+Ordered verification after the narrow fixture repair: the 31 source-mutator files followed by the unchanged first Chrome startup case passed on the default Bun runner. Root independently ran the verbatim case: 229 passed, 664 expectations, 32 files, 56.52s. A diagnostic rerun inserted 32 descriptor probes: 261 passed, 664 expectations, 64 files, 55.70s. Fetch remained the original native implementation and EventSource remained absent before and after the cohort; the Chrome case observed 13 HTTP 503 warming responses followed by 200 and passed its existing nonce, repeated-close, and child-exit assertions. The one-line library-gate snapshot source hash is 4c948aa998d2885896fea7a5522de47b18ca7c83d41539c7f4073a0e83abd406. These are bounded cohort proofs, not a full-suite or release proof.

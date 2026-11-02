@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import type { JSDOM } from "jsdom";
 import type { AppContext } from "../../../app-contract";
-import { installDom, type InstalledDom } from "../../../_shared/test-dom";
+import { installDom, type InstalledDom, waitFor } from "../../../_shared/test-dom";
 import { disableVolatileWebStorage, enableVolatileWebStorage } from "../../../_shared/web-storage";
 import type { InstalledExtensionSummary } from "../../../../extensions/runtime/service";
 
@@ -45,16 +45,26 @@ test("revision changes from another manager refresh installed state and remove d
   const [{ flushSync }, { createRoot }, { ExtensionManager }] = await Promise.all([import("react-dom"), import("react-dom/client"), import("./extensions")]);
   let current: InstalledExtensionSummary = { id: "demo.panel", hostTrusted: false, revision: 2, digest: "b".repeat(64), name: "Demo", version: "1.0.0", description: "A test extension", enabled: true, recoveryRequired: false, grants: [], requirements: [], contributions: [{ type: "command", id: "go", label: "Go", operation: "content.list" }], eventSubscriptions: [], registeredCommands: ["go"], promptFailures: [], suspendedPromptIds: [], settings: undefined, theme: null, themeScopes: [], activity: [], dataKeys: [], dataBytes: 0 };
   let revision = "one";
-  const extensions = { list: async () => [current], revision: async () => revision, pendingEffects: async () => [], pendingFileActions: async () => [], hostActions: emptyHostActions, answerHostAction: async () => true, preview: async () => { throw new Error("unused"); }, install: async () => { throw new Error("unused"); }, previewInstalled: async () => { throw new Error("unused"); }, setGrants: async () => { throw new Error("unused"); }, enable: async () => ({} as never), disable: async () => ({} as never), revoke: async () => ({} as never), answerEffect: async () => true, activate: async () => ({ status: "completed" as const, output: null }) } as never;
+  let initialRevisionRequested = false, initialRevisionResolved = false;
+  let completeInitialRevision!: (value: string) => void;
+  const initialRevision = new Promise<string>((resolve) => { completeInitialRevision = resolve; });
+  const extensions = { list: async () => [current], revision: async () => {
+    if (initialRevisionRequested) return revision;
+    initialRevisionRequested = true;
+    const value = await initialRevision; initialRevisionResolved = true; return value;
+  }, pendingEffects: async () => [], pendingFileActions: async () => [], hostActions: emptyHostActions, answerHostAction: async () => true, preview: async () => { throw new Error("unused"); }, install: async () => { throw new Error("unused"); }, previewInstalled: async () => { throw new Error("unused"); }, setGrants: async () => { throw new Error("unused"); }, enable: async () => ({} as never), disable: async () => ({} as never), revoke: async () => ({} as never), answerEffect: async () => true, activate: async () => ({ status: "completed" as const, output: null }) } as never;
   const ctx = { api: { extensions, listEntities: async () => [], getLightEditableEntity: async () => ({ entity: null }) }, prefs: { get: () => undefined, set: () => undefined }, appearance: { get: () => ({}) } } as unknown as AppContext;
   const host = dom.window.document.createElement("div"); dom.window.document.body.appendChild(host); const root = createRoot(host);
-  flushSync(() => root.render(<ExtensionManager ctx={ctx} />));
-  await new Promise((resolve) => setTimeout(resolve, 20));
-  expect(host.textContent).toContain("Go");
-  current = { ...current, enabled: false, revision: 3 }; revision = "two";
-  await new Promise((resolve) => setTimeout(resolve, 2_100));
-  expect(host.textContent).toContain("disabled"); expect(host.textContent).not.toContain("Go");
-  flushSync(() => root.unmount()); host.remove();
+  try {
+    flushSync(() => root.render(<ExtensionManager ctx={ctx} />));
+    await waitFor(flushSync, () => host.textContent?.includes("Go") && initialRevisionRequested, "initial extension data and revision request");
+    expect(host.textContent).toContain("Go");
+    completeInitialRevision("one");
+    await waitFor(flushSync, () => initialRevisionResolved, "initial extension revision response");
+    current = { ...current, enabled: false, revision: 3 }; revision = "two";
+    await waitFor(flushSync, () => host.textContent?.includes("disabled") && !host.textContent?.includes("Go"), "manager revision refresh to remove disabled actions");
+    expect(host.textContent).toContain("disabled"); expect(host.textContent).not.toContain("Go");
+  } finally { flushSync(() => root.unmount()); host.remove(); }
 });
 
 test("effect ticket shows host review targets and sends explicit approval by ticket ID", async () => {
@@ -64,11 +74,15 @@ test("effect ticket shows host review targets and sends explicit approval by tic
   const extensions = { list: async () => [], revision: async () => "one", pendingEffects: async () => tickets, pendingFileActions: async () => [], hostActions: emptyHostActions, answerHostAction: async () => true, answerEffect: async (id: string, approved: boolean) => { answered.push([id, approved]); tickets = []; return true; }, preview: async () => { throw new Error("unused"); }, install: async () => { throw new Error("unused"); }, previewInstalled: async () => { throw new Error("unused"); }, setGrants: async () => { throw new Error("unused"); }, enable: async () => ({} as never), disable: async () => ({} as never), revoke: async () => ({} as never), activate: async () => ({ status: "completed" as const, output: null }) } as never;
   const ctx = { api: { extensions, listEntities: async () => [], getLightEditableEntity: async () => ({ entity: null }) }, prefs: { get: () => undefined, set: () => undefined }, appearance: { get: () => ({}) } } as unknown as AppContext;
   const host = dom.window.document.createElement("div"); dom.window.document.body.appendChild(host); const root = createRoot(host);
-  flushSync(() => root.render(<ExtensionManager ctx={ctx} />)); await new Promise((resolve) => setTimeout(resolve, 30));
-  expect(host.textContent).toContain("character: char-1"); expect(host.textContent).toContain("changed");
-  flushSync(() => [...host.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent === "Approve this action")?.click());
-  await new Promise((resolve) => setTimeout(resolve, 0)); expect(answered).toEqual([["ticket-1", true]]);
-  flushSync(() => root.unmount()); host.remove();
+  try {
+    flushSync(() => root.render(<ExtensionManager ctx={ctx} />));
+    await waitFor(flushSync, () => host.textContent?.includes("character: char-1") && host.textContent?.includes("changed"), "host review targets");
+    expect(host.textContent).toContain("character: char-1"); expect(host.textContent).toContain("changed");
+    const approve = await waitFor(flushSync, () => [...host.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent === "Approve this action"), "host approval control");
+    flushSync(() => approve.click());
+    await waitFor(flushSync, () => answered.length === 1, "recorded host approval answer");
+    expect(answered).toEqual([["ticket-1", true]]);
+  } finally { flushSync(() => root.unmount()); host.remove(); }
 });
 
 test("host action dialog is extension-branded and receives explicit user input", async () => {

@@ -319,4 +319,57 @@ New CI must compile AND run both native artifacts and pass the actual keychain
 probe before those platform claims become verified. Do not claim the proposed
 setup fix already passed remote CI. No release-workflow acceptance changes.
 
-Executor bounded CI workflow validation (candidate f28dad8): `scripts/ci-sidecar.test.ts` plus `src/ui/_shared/update-check.test.ts` passed 18 tests / 51 expectations with pinned Bun 1.4.2; the latter proves package.json and APP_VERSION both remain 0.1.47. PyYAML parsed ci.yml and explicit order checks confirmed standalone SQLite compile/run, frozen install, then unchanged background-lane compile/run; the Linux step retains private dbus-run-session and invokes the real probe after feeding the synthetic `ci` password. WSL has no gnome-keyring-daemon or secret-tool, so local CI-keychain success is unverified. The workflow changes have not yet run in GitHub CI; both packaged native artifacts and the keychain probe remain pending remote verification.
+Message-only exception: the unpublished task CI commit c1188 received a truncated
+subject through shell quoting. Executor may preserve its exact SHA under the
+precise task safety ref, then amend ONLY that latest task commit's message using
+an owned --file input and normal hooks. Verify identical tree and parent before
+and after, no remote publication/force push, and preserve every earlier commit.
+This narrowly supersedes the earlier no-amend caution for that message only.
+
+### Attempt3 native failures and bounded follow-up
+
+Preserve the complete attempt3 native summary and Git exit before editing source.
+An abandoned attempt2 hook was proven by its exact task profile and process
+ancestry to be running concurrently. Executor terminated only that prior owned
+tree; current attempt3 remains intact. Do not treat the interrupted attempt2 as
+verification. Before another full run, prove no prior task-owned full suite remains.
+
+Observed attempt3 failures: crypto responsiveness 101.96 ms against <100 ms;
+2,000-message state rebuild 225.04 ms against <200 ms; extension manager revision
+refresh still enabled after a guessed 2,100 ms; effect review still loading after
+a guessed 30 ms. Do not increase performance limits or infer production faults.
+After native exit, run the unchanged failed owners singly in the same isolated
+environment, with no competing verification. Record exact results.
+
+For `src/ui/apps/settings/sections/extensions.test.tsx`, authoritative DOM wait
+owner already exists: `waitFor` in `src/ui/_shared/test-dom.ts`, which flushes React
+and fails with a named condition after a bounded wait. Production revision owner
+is `checkRevision` plus `useVisibleInterval(..., 2_000)` in extensions.tsx.
+Executor may repair only the two failed fixtures after honest mounted-component
+RED evidence of the race. Wait for initial visible state AND completion of the
+initial revision request before changing the revision fixture; then await actual
+disabled state and absence of Go. Await actual reviewed targets before clicking
+the real approval control, then await the recorded exact ticket answer. Preserve
+all original assertions, approval identity, real manager path and real polling.
+Use the existing DOM helper, not Kit render helpers or a new timer utility. Ensure
+roots unmount and hosts are removed in finally, including failing assertions, so
+a failed test cannot leave an active manager polling into later tests. No broad
+fixture rewrite, production polling change, fake approval or weakened check.
+
+Review exact test-only diff independently, run focused owners and typecheck, then
+normal scoped commit/push hooks and the actual release workflow. A clean focused
+timing rerun alone does not satisfy the required full release gate.
+
+## Attempt 3 full-hook result and fixture follow-up (2026-11-02)
+
+The normal pre-push hook ran on candidate `9da9189ed057b6ca233f29c74071e51ce8e455b7` with the approved strict Bun 1.4.2 shim. Native Bun reported 16,516 passed, 55 skipped, 1 todo, 4 failed, 148,159 expectations across 16,576 tests and 1,763 files; `git push` exited 1 and the hook blocked the update. The exact failures were the crypto responsiveness bound (observed 101.96 ms against `<100 ms`), the 2,000-message state rebuild bound (225.04 ms against `<200 ms`), manager revision refresh still enabled after a guessed 2,100 ms, and the host review ticket still loading after a guessed 30 ms. No thresholds were changed.
+
+The unchanged four failing cases passed alone under the same isolated Bun 1.4.2 profile: crypto 1 pass; state rebuild 1 pass at 127.9 ms; manager revision 1 pass; effect ticket 1 pass. These isolated passes do not replace the red full-hook result. After replacing the two UI fixtures' guessed waits with the existing `waitFor`, and adding `finally` cleanup, `extensions.test.tsx` passed 11 tests / 42 expectations. `bun run typecheck` exited 0 before a final restored `Go` assertion was added; the full focused file passed again after that assertion. The exact final test file SHA256 is `D90016AB707824A0FB0566680309147C03722361744CA6414BF230C9CD770BF0` and independent review approved it.
+
+The attempt 3 native output and exit are preserved unmodified at:
+
+- `%TEMP%\codex-release-v48-mainstagepush-attempt3\git.stdout.log`
+- `%TEMP%\codex-release-v48-mainstagepush-attempt3\git.stderr.log`
+- `%TEMP%\codex-release-v48-mainstagepush-attempt3\exit.txt` (exit 1)
+
+Attempt 2 was an earlier task-owned duplicate suite that continued after its cancellation; its exact process tree was terminated after ownership and profile ancestry were confirmed. Its partial logs end mid-test and are not a result. Attempt 4 was stopped before its typecheck stage completed after the fixture-repair hold arrived; those partial logs are also not a result. After attempt 3 failed, `ls-remote` confirmed origin/Mainstage remained `fb562e0d6fab79d42ed978447af47311bfd84d0d`.

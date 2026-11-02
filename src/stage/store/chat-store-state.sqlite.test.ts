@@ -94,6 +94,7 @@ describe("a long branch", () => {
         row(m.swipes[0]!.id, 3, "last", `m${i}`, i);
       });
     });
+    Bun.gc(true); // keep fixture allocations out of the timed rebuild, as in the perf gates
     const began = performance.now();
     await s.record(0, set("first", true)); // the earliest message: every state after it is rebuilt, and every keyframe rewritten
     const ms = performance.now() - began;

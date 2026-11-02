@@ -8,6 +8,7 @@ describe("chatLayoutOf", () => {
   test("reads a saved layout", () => {
     expect(chatLayoutOf(prefsWith("stage"))).toBe("stage");
     expect(chatLayoutOf(prefsWith("messenger"))).toBe("messenger");
+    for (const layout of ["familiar", "basic", "desktop98", "immersive", "letters", "notebook", "storybook"] as const) expect(chatLayoutOf(prefsWith(layout))).toBe(layout);
   });
   test("unset and unreadable values ask again instead of guessing", () => {
     expect(chatLayoutOf(prefsWith(undefined))).toBeNull();

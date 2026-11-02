@@ -1,6 +1,6 @@
 /**
  * The chat layout chooser: RoleCall's first-run chat appearance page (components/scene/ChatAppearanceChooser.tsx, copy kept
- * word for word minus "We will save it to your account.", which is untrue in a local app) with the two layouts Bunzai has.
+ * word for word minus "We will save it to your account.", which is untrue in a local app) with every Bunzai layout.
  * Full Chat is preselected; Preview opens the large view with a Choose button; Use hands the pick to onChoose.
  * The cards show real screenshots of one synthetic test scene in each layout (docs/media/chat-layouts/, 1920x947 like RoleCall's).
  * Look (wireframe design/wireframes/features/layout-chooser, header A): a centered marquee header under the title
@@ -13,13 +13,11 @@ import { Ic } from "../../../_shared/ic";
 import { DialogCore } from "../../../components/dialog-core";
 import { LightRays } from "../../../components/light-rays";
 import { Button, IconButton } from "../../../components/button";
+import { LAYOUT_OPTIONS } from "../layout-options";
 import type { ChatLayout } from "../chat-layout";
 import styles from "./layout-chooser.module.css";
 
-const CHOICES: readonly { value: ChatLayout; title: string; image: string; lead: string; description: string }[] = [
-  { value: "stage", title: "Full Chat", image: "full-chat", lead: "Your complete writing workspace.", description: "Keep the conversation, character details and trackers together, with your tools close at hand." },
-  { value: "messenger", title: "Messenger", image: "messenger", lead: "A familiar place to catch up.", description: "Recent characters, your persona profile and a conversation with one settings workspace." },
-];
+const CHOICES = LAYOUT_OPTIONS;
 type Choice = (typeof CHOICES)[number];
 const shotUrl = (choice: Choice): string => docAssetUrl(`docs/media/chat-layouts/${choice.image}.jpg`);
 

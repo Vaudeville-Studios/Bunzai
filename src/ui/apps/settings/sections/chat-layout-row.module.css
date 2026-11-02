@@ -1,0 +1,2 @@
+/* The chat layout picks: a grid of choice cards that reflows with the settings pane, so every layout stays in view. */
+.grid { flex: 1 1 26rem; max-width: 40rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 10px; }

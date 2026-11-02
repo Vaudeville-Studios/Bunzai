@@ -1,0 +1,135 @@
+{
+  "manifest": {
+    "schemaVersion": 2,
+    "id": "bunzai.theme.gazette",
+    "version": "1.0.0",
+    "name": "Gazette",
+    "requests": [
+      "appearance.accent",
+      "appearance.palette",
+      "appearance.shape",
+      "appearance.surfaces",
+      "appearance.type",
+      "appearance.styles"
+    ],
+    "appearance": {
+      "surfaces": {
+        "shell.nav": "playbill-rail",
+        "shell.overlay": "gilt-widgets",
+        "shell.title": "title-page",
+        "shell.status": "footer-line",
+        "library.grid": "catalog-list",
+        "library.card": "index-card",
+        "ui.dialog": "curtain-card",
+        "ui.toast": "program-slip",
+        "ui.empty": "blank-page",
+        "ui.panel": "gilt-frame",
+        "ui.meter": "segmented",
+        "ui.icons": "line-ink",
+        "ui.toolbar": "playbill-bar",
+        "library.decks": "program-list",
+        "ui.section-header": "engraved-title",
+        "ui.tabs": "rule-tabs",
+        "ui.label-type": "caps-mono",
+        "scene.layout": "manuscript",
+        "scene.message": "prose",
+        "scene.composer": "typewriter-line",
+        "scene.swipes": "margin-numbers",
+        "scene.wings": "marginalia",
+        "scene.hud": "footnotes",
+        "scene.reasoning": "footnote",
+        "editor.frame": "two-pane",
+        "editor.fields": "labeled-rows",
+        "settings.shape": "program-sections",
+        "app.room": "ledger-rail",
+        "ui.controls": "quiet"
+      },
+      "palette": {
+        "surface": {
+          "well": "#e6e3da",
+          "base": "#f2f0e9",
+          "sunken": "#eae7df",
+          "field": "#fbfaf6",
+          "panel": "#f7f5ef",
+          "raised": "#ece9e1",
+          "ink": "#e0dcd2"
+        },
+        "line": {
+          "strong": "#111111",
+          "line": "#b8b3a7",
+          "track": "#d6d1c5",
+          "control": "#4a4740",
+          "focus": "#b3121f"
+        },
+        "text": {
+          "text": "#111111",
+          "soft": "#2a2926",
+          "dim": "#3b3935",
+          "faint": "#524f49",
+          "onTint": "#ffffff",
+          "onDeep": "#ffffff"
+        },
+        "roles": {
+          "brand": {
+            "fill": "#b3121f",
+            "text": "#a3101c",
+            "deep": "#8e0e18"
+          },
+          "action": {
+            "fill": "#1f4e8c",
+            "text": "#1c4880",
+            "deep": "#173c6c"
+          },
+          "select": {
+            "fill": "#5a3d8a",
+            "text": "#53387f",
+            "deep": "#46306b"
+          },
+          "ok": {
+            "fill": "#1d6a39",
+            "text": "#1a6034",
+            "deep": "#15502b"
+          },
+          "warn": {
+            "fill": "#875200",
+            "text": "#7a4a00",
+            "deep": "#663e00"
+          },
+          "danger": {
+            "fill": "#a3182b",
+            "text": "#9a1628",
+            "deep": "#821322"
+          },
+          "info": {
+            "fill": "#0b5e65",
+            "text": "#0a565c",
+            "deep": "#08484d"
+          }
+        }
+      },
+      "type": {
+        "display": "fraunces",
+        "ui": "archivo",
+        "body": "fraunces",
+        "mono": "courier-prime",
+        "scale": 0
+      },
+      "shape": {
+        "frame": "double",
+        "frameWidth": 2,
+        "density": "dense",
+        "motion": "snappy",
+        "chrome": "bunzai"
+      },
+      "accent": {
+        "follows": "locked"
+      },
+      "marks": {}
+    },
+    "assets": [],
+    "styles": "styles.css"
+  },
+  "assets": {
+    "styles.css": "/* Gazette: the story as tomorrow's front page. Black ink, heavy rules, one red, headlines in heavy serif. */\n\n/* Headlines: heavy, tight, set like a front page. */\n[data-part=\"shell.title\"] h1, [data-part=\"settings.page-head\"] h1, [data-part=\"scenes.header\"] h1,\n[data-part=\"library.section.header\"] h2, [data-part=\"ui.section-header\"] h2 {\n  font-family: var(--font-fancy) !important; font-weight: 900 !important; letter-spacing: -0.025em; text-transform: none;\n}\n[data-part=\"scenes.header\"], [data-part=\"settings.page-head\"], [data-part=\"library.section.header\"] {\n  border-top: 5px solid var(--bk-line-strong); border-bottom: 1px solid var(--bk-line-strong); box-shadow: 0 3px 0 -2px var(--bk-line-strong);\n}\n\n/* The scene header is a masthead: a heavy rule over a hairline, the name in black letter weight. */\n.scs .sh { background: var(--bk-surface-base) !important; border-top: 4px solid var(--bk-line-strong); border-bottom: 3px double var(--bk-line-strong) !important; }\n.scs .sh .nm { font-family: var(--font-fancy) !important; font-weight: 900 !important; letter-spacing: -0.01em !important; text-transform: none !important; font-size: 1.15em !important; }\n.scs .sh .tag { font-style: italic; }\n\n/* Plain newsprint behind the story, with a column rule down the gutter. */\n.scs .bgm { background: var(--bk-surface-base) !important; }\n\n/* Bylines: a red square, then the speaker in spaced capitals. */\n.scs .msg .spk { font-family: var(--font-ui) !important; font-weight: 800 !important; letter-spacing: .16em !important; color: var(--bk-text) !important; }\n.scs .msg.char .spk::before { content: \"\"; display: inline-block; width: .62em; height: .62em; margin-right: .5em; background: var(--bk-role-brand); vertical-align: .02em; }\n\n/* A drop cap opens every reply that runs to more than one paragraph. */\n.scs .msg.char .prose:has(> .blk + .blk) > .blk:first-child::first-letter {\n  float: left; font-family: var(--font-fancy); font-weight: 900; font-size: 3.4em; line-height: .82;\n  padding: .06em .1em 0 0; color: var(--bk-role-brand-text);\n}\n.scs .msg .prose { line-height: 1.6; }\n\n/* Long replies set in two columns with a hairline rule, the way a feature runs. */\n@container (min-width: 820px) {\n  .scs .msg.char .prose:has(> .blk + .blk) { column-count: 2; column-gap: 2.2em; column-rule: 1px solid var(--bk-line); }\n}\n\n/* The reader's lines are letters to the editor: indented, under a short rule. */\n.scs .msg.user .body { border-top: 2px solid var(--bk-line-strong); padding-top: 10px !important; }\n.scs .msg.user .prose { font-style: italic; }\n\n/* Pictures print in halftone black and white, and come back to colour when you look closer. */\n.scs .msg .por, [data-part=\"library.card\"] img, [data-part=\"scenes.card\"] img, [data-part=\"scenes.hero\"] img {\n  filter: grayscale(1) contrast(1.08); transition: filter var(--bk-dur-slow) var(--bk-ease-move);\n}\n.scs .msg:hover .por, [data-part=\"library.card\"]:hover img, [data-part=\"scenes.card\"]:hover img, [data-part=\"scenes.hero\"]:hover img { filter: none; }\n.scs .msg .por { border: 1px solid var(--bk-line-strong) !important; }\n\n/* The composer is a typewriter line under a heavy rule. */\n.scs .dockbar .cap { border-top: 3px solid var(--bk-line-strong) !important; background: var(--bk-surface-field) !important; }\n\n/* The dock is a black ticker bar with white type. */\n[data-part=\"shell.nav\"] nav { background: var(--bk-text) !important; border: 0 !important; box-shadow: 0 0 0 1px var(--bk-text), 0 0 0 3px var(--bk-surface-base), 0 0 0 4px var(--bk-text) !important; }\n[data-part=\"shell.nav\"] nav [data-part=\"shell.nav.tile\"], [data-part=\"shell.nav\"] nav [data-part=\"shell.nav.overlay\"] { color: var(--bk-surface-base) !important; background: transparent !important; }\n[data-part=\"shell.nav\"] nav [data-part=\"shell.nav.tile\"]:hover { background: color-mix(in srgb, var(--bk-surface-base) 14%, transparent) !important; }\n[data-part=\"shell.nav\"] nav [data-part=\"shell.nav.tile\"][aria-current=\"page\"] { background: var(--bk-role-brand) !important; color: var(--bk-text-on-deep) !important; }\n[data-part=\"shell.nav\"] nav > span[aria-hidden=\"true\"] { background: color-mix(in srgb, var(--bk-surface-base) 40%, transparent) !important; }\n"
+  }
+}

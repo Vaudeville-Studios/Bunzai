@@ -11,10 +11,10 @@ ${C}:has(.find){z-index:54}
 ${C}>.chat{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--msg-chat);transition:none}
 ${C}>.chat>.scroll{position:static;flex:1 1 auto;min-height:0;padding:20px 24px;color:var(--msg-text)}
 ${C} .msg,${C} .msg.user{flex-direction:row;gap:16px;margin:0;padding:10px 0 14px;animation:none}
-${C} .msg .pw{position:static;flex:0 0 40px;width:40px;height:auto;max-width:none;overflow:visible;border-radius:0;box-shadow:none}
-${C} .msg .pw .por{position:relative;width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--msg-brand);box-shadow:none}
+${C} .msg .pw{position:static!important;flex:0 0 40px!important;width:40px!important;height:auto!important;max-width:40px!important;overflow:visible;border-radius:0;box-shadow:none}
+${C} .msg .pw .por{position:relative!important;inset:auto!important;width:40px!important;height:40px!important;min-width:40px;max-width:40px;aspect-ratio:1;border-radius:50%!important;overflow:hidden;background:var(--msg-brand);box-shadow:none}
 ${C} .msg .pw .por::before{display:none}
-${C} .msg .pw .por .ini{font:700 13px var(--font-body);color:var(--msg-white)}
+${C} .msg .pw .por .ini{font:700 13px var(--font-body)!important;color:var(--msg-white)}
 /* the time sits after the name, not under the avatar (discord.css:79-80, .message-header and .message-timestamp) */
 ${C} .msg .pw .pstamp{display:none}
 ${C} .msg .spk,${C} .msg.user .spk{display:inline-block}

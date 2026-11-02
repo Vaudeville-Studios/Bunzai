@@ -1,0 +1,135 @@
+{
+  "manifest": {
+    "schemaVersion": 2,
+    "id": "bunzai.theme.washi",
+    "version": "1.0.0",
+    "name": "Washi",
+    "requests": [
+      "appearance.accent",
+      "appearance.palette",
+      "appearance.shape",
+      "appearance.surfaces",
+      "appearance.type",
+      "appearance.styles"
+    ],
+    "appearance": {
+      "surfaces": {
+        "shell.nav": "index-rail",
+        "shell.overlay": "ink-widgets",
+        "shell.title": "title-page",
+        "shell.status": "margin-note",
+        "library.grid": "covers",
+        "library.card": "index-card",
+        "scenes.list": "table-of-contents",
+        "ui.dialog": "margin-sheet",
+        "ui.toast": "footnote",
+        "ui.empty": "blank-page",
+        "ui.panel": "ruled-frame",
+        "ui.meter": "thin-rule",
+        "ui.icons": "line-ink",
+        "ui.toolbar": "margin-ruler",
+        "library.decks": "chapter-index",
+        "ui.section-header": "chapter-heading",
+        "ui.tabs": "underline-ink",
+        "scene.layout": "manuscript",
+        "scene.message": "prose",
+        "scene.composer": "prompt-line",
+        "scene.swipes": "dots",
+        "scene.wings": "drawer",
+        "scene.hud": "quiet-line",
+        "scene.reasoning": "program-note",
+        "editor.frame": "two-pane",
+        "editor.fields": "labeled-rows",
+        "settings.shape": "contents-page",
+        "app.room": "manuscript-column",
+        "ui.controls": "ink"
+      },
+      "palette": {
+        "surface": {
+          "well": "#ece5d7",
+          "base": "#f6f1e6",
+          "sunken": "#f0e9dc",
+          "field": "#fffcf6",
+          "panel": "#fbf8f1",
+          "raised": "#f2ece0",
+          "ink": "#e7dfcf"
+        },
+        "line": {
+          "strong": "#2f2a25",
+          "line": "#d8cebd",
+          "track": "#e3dacb",
+          "control": "#776b5c",
+          "focus": "#a3301e"
+        },
+        "text": {
+          "text": "#1e1b18",
+          "soft": "#38322c",
+          "dim": "#4a433b",
+          "faint": "#5b5349",
+          "onTint": "#1e1b18",
+          "onDeep": "#ffffff"
+        },
+        "roles": {
+          "brand": {
+            "fill": "#f2a896",
+            "text": "#a3301e",
+            "deep": "#a3301e"
+          },
+          "action": {
+            "fill": "#b3c5e6",
+            "text": "#2b4878",
+            "deep": "#2b4878"
+          },
+          "select": {
+            "fill": "#d3c6ea",
+            "text": "#5a468e",
+            "deep": "#5a468e"
+          },
+          "ok": {
+            "fill": "#bddaa8",
+            "text": "#38601f",
+            "deep": "#38601f"
+          },
+          "warn": {
+            "fill": "#f3d18d",
+            "text": "#784c00",
+            "deep": "#784c00"
+          },
+          "danger": {
+            "fill": "#f3abb1",
+            "text": "#9c2134",
+            "deep": "#9c2134"
+          },
+          "info": {
+            "fill": "#a5d8d3",
+            "text": "#0f5e5a",
+            "deep": "#0f5e5a"
+          }
+        }
+      },
+      "type": {
+        "display": "fraunces",
+        "ui": "inter",
+        "body": "fraunces",
+        "mono": "jetbrains-mono",
+        "scale": 1
+      },
+      "shape": {
+        "frame": "rule",
+        "frameWidth": 1,
+        "density": "airy",
+        "motion": "calm",
+        "chrome": "bunzai"
+      },
+      "accent": {
+        "follows": "locked"
+      },
+      "marks": {}
+    },
+    "assets": [],
+    "styles": "styles.css"
+  },
+  "assets": {
+    "styles.css": "/* Washi: sumi ink on handmade paper, one vermilion seal. Quiet rules, generous margins, no boxes where a line will do. */\n\n/* Paper fibres and a faint manuscript grid behind the app and every scene. */\n[data-part=\"shell.canvas\"], .scs .bgm {\n  background-color: var(--bk-surface-base) !important;\n  background-image:\n    radial-gradient(ellipse 60% 40% at 18% 12%, color-mix(in srgb, var(--bk-surface-field) 70%, transparent), transparent 70%),\n    radial-gradient(ellipse 50% 50% at 86% 78%, color-mix(in srgb, var(--bk-surface-well) 80%, transparent), transparent 70%),\n    linear-gradient(color-mix(in srgb, var(--bk-line-track) 28%, transparent) 1px, transparent 1px),\n    linear-gradient(90deg, color-mix(in srgb, var(--bk-line-track) 28%, transparent) 1px, transparent 1px) !important;\n  background-size: auto, auto, 32px 32px, 32px 32px !important;\n}\n\n/* The display face for every big title, set light and wide like a brush-written heading. */\n[data-part=\"shell.title\"] h1, [data-part=\"settings.page-head\"] h1, [data-part=\"scenes.header\"] h1,\n[data-part=\"library.section.header\"] h2, [data-part=\"ui.section-header\"] h2 {\n  font-family: var(--font-fancy); font-weight: 500; letter-spacing: -0.01em;\n}\n\n/* The seal: a small vermilion hanko beside the scene name and the title. */\n.scs .sh .nm::before, [data-part=\"shell.title\"] h1::after {\n  content: \"\"; display: inline-block; width: .9em; height: .9em; margin-right: .55em; vertical-align: -0.1em;\n  background: var(--bk-role-brand-text);\n  box-shadow: inset 0 0 0 2px var(--bk-role-brand-text), inset 0 0 0 3.5px var(--bk-surface-panel);\n  transform: rotate(-4deg);\n}\n[data-part=\"shell.title\"] h1::after { width: .32em; height: .32em; margin: 0 0 0 .18em; vertical-align: .9em; }\n\n/* Scene header: one ink rule instead of a bar. */\n.scs .sh { background: color-mix(in srgb, var(--bk-surface-base) 88%, transparent); border-bottom: 1px solid var(--bk-line-strong); }\n.scs .sh .nm { letter-spacing: .22em; }\n\n/* Tools read as a row of quiet index words, underlined in vermilion when open. */\n[data-part=\"scene.wings\"] button[data-control] {\n  border-color: transparent !important; background: transparent !important; box-shadow: none !important;\n  border-bottom: 2px solid transparent !important;\n}\n[data-part=\"scene.wings\"] button[data-control]:hover { border-bottom-color: var(--bk-line) !important; }\n[data-part=\"scene.wings\"] button[data-control][aria-pressed=\"true\"], [data-part=\"scene.wings\"] button[data-control][aria-expanded=\"true\"] {\n  border-bottom-color: var(--bk-role-brand-text) !important; color: var(--bk-text);\n}\n\n/* Portraits sit in a paper mount, the way a print is framed. */\n.scs .msg .por {\n  border: 1px solid var(--bk-line-strong) !important;\n  box-shadow: inset 0 0 0 5px var(--bk-surface-panel), inset 0 0 0 6px var(--bk-line) !important;\n}\n\n/* A character's lines carry a thin vermilion margin rule; the speaker is set in spaced small capitals. */\n.scs > .play .msg.char .body { border-left: 1px solid color-mix(in srgb, var(--bk-role-brand-text) 45%, transparent); padding-left: 18px !important; }\n.scs .msg .spk { letter-spacing: .24em !important; font-size: .78em !important; }\n.scs .msg .prose { line-height: 1.85; }\n.scs .msg .prose q, .scs .msg .prose .q { color: var(--bk-role-brand-text); }\n\n/* The composer is a single ink line on paper. */\n.scs .dockbar { background: linear-gradient(transparent, color-mix(in srgb, var(--bk-surface-base) 92%, transparent) 40%) !important; }\n.scs .dockbar .cap {\n  background: var(--bk-surface-field) !important;\n  box-shadow: 0 10px 30px -22px color-mix(in srgb, var(--bk-text) 70%, transparent);\n}\n\n/* Library covers get the same mount as portraits. */\n[data-part=\"library.card\"] { box-shadow: 0 0 0 5px var(--bk-surface-panel), 0 0 0 6px var(--bk-line), 0 16px 28px -22px color-mix(in srgb, var(--bk-text) 55%, transparent); }\n\n/* The dock is a strip of paper held by one rule. */\n[data-part=\"shell.nav\"] nav { background: var(--bk-surface-panel) !important; border: 0 !important; border-top: 1px solid var(--bk-line-strong) !important; box-shadow: 0 -12px 30px -26px color-mix(in srgb, var(--bk-text) 60%, transparent) !important; }\n[data-part=\"shell.nav.tile\"][aria-current=\"page\"] { background: transparent !important; color: var(--bk-role-brand-text) !important; box-shadow: inset 0 -2px 0 var(--bk-role-brand-text) !important; }\n"
+  }
+}

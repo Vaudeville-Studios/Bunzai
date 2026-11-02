@@ -98,10 +98,10 @@ describe("chat layout gate", () => {
   });
 
   test("an unreadable saved value asks again and is not overwritten until chosen", async () => {
-    store.set(CHAT_LAYOUT_KEY, "familiar");
+    store.set(CHAT_LAYOUT_KEY, "unsupported-layout");
     await mount(<LayoutGate ctx={ctx()}><Scene /></LayoutGate>);
     expect(host.querySelector("[data-testid=scene]")).toBeNull();
     expect(host.querySelector("[role=radiogroup]")).not.toBeNull();
-    expect(store.get(CHAT_LAYOUT_KEY)).toBe("familiar");
+    expect(store.get(CHAT_LAYOUT_KEY)).toBe("unsupported-layout");
   });
 });

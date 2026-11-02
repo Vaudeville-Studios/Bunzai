@@ -4,6 +4,7 @@
  * those owners export. The scene fields the wireframe drew as rows (tool rounds, show prefill) already have rows inside the Control Booth and Generation bodies the scene scope places, so they are not drawn twice.
  */
 import type { AppContext } from "../../../../app-contract";
+import { LAYOUT_OPTIONS } from "../../layout-options";
 import { CHAT_LAYOUT_KEY, chatLayoutOf } from "../../chat-layout";
 import { AUTO_OPEN_KEY, CAP_LONG_KEY, autoOpenReasoning, capLongReasoning } from "../../scene-reasoning-core";
 import { SHOW_TIMESTAMPS_KEY, showTimestamps } from "../../scene-meta-core";
@@ -31,7 +32,7 @@ const SCROLL_COPY: Record<(typeof AUTO_SCROLLS)[number], string> = { always: "Fo
 
 export const USER_ROWS = {
   layout: { id: "layout", label: "Chat layout", description: "Which chat layout scenes use.", control: "radios",
-    options: [{ value: "messenger", label: "Messenger", description: "Chat first, panels open as pages like this one." }, { value: "stage", label: "Full Chat", description: "Every panel stays a wing around the chat." }],
+    options: LAYOUT_OPTIONS.map((o) => ({ value: o.value, label: o.title, description: o.description })),
     read: (env) => chatLayoutOf(env.ctx.prefs) ?? "stage", write: (env, v) => setPref(env, CHAT_LAYOUT_KEY, v) } satisfies ChoiceDef,
   avatars: lookToggle("avatars", "Show avatars", "A small portrait beside the first message of each run."),
   timestamps: { id: "timestamps", label: "Show timestamps", description: "The time on the first message of a run.", control: "toggle",

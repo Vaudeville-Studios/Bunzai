@@ -292,6 +292,9 @@
    muted #b5bac1 :23, faint #a0a4ac :69, input #383a40 :79, divider #35363c :18, header edge #26272b :41, pill #383b45 and #c9ceff :35, modal edge #44464d :95, close ring #767b87 :108,
    focus #aab1ff :7, program field edge #494b53 :116, link #8cc8ff :75, settings scrim #14151bbf :91, modal shadow #0008 :95, drawer shadow #0007 :157, nav backdrop #0008 (the 640px step). */
 :root {
+  /* VAUDEVILLE Desktop 98's fixed native window palette, independent of the studio theme. */
+  --d98-face: #c0c0c0; --d98-ink: #111; --d98-paper: #fff; --d98-edge: #808080;
+  --d98-title-blue: #000080; --d98-title-end: #1084d0; --d98-desktop: #008080;
   --msg-rail: #1e1f22; --msg-side: #2b2d31; --msg-chat: #313338; --msg-bar: #232428; --msg-hover: #35373c; --msg-active: #404249;
   --msg-brand: #5865f2; --msg-text: #dbdee1; --msg-bright: #f2f3f5; --msg-mute: #b5bac1; --msg-faint: #a0a4ac; --msg-input: #383a40;
   --msg-divider: #35363c; --msg-edge: #26272b; --msg-pill: #383b45; --msg-pill-text: #c9ceff; --msg-modal-edge: #44464d;

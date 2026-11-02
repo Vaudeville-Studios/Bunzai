@@ -206,3 +206,12 @@ describe("ScenePage S3: the meta line on every message", () => {
     unmount(flushSync);
   });
 });
+
+for (const layout of ["familiar", "basic", "desktop98", "immersive"] as const) test(`${layout} mounts the scene's one transcript and composer`, async () => {
+  prefValues["scenes.chatLayout"] = layout;
+  const flushSync = await mountScenePage(makeCtx([msg("m1", "assistant", "Hello.", 1)]));
+  expect(host.querySelector(`[data-chat-layout="${layout}"]`) !== null).toBe(true);
+  expect(host.querySelectorAll(".msg").length).toBe(1);
+  expect(host.querySelectorAll(".dockbar").length).toBe(1);
+  unmount(flushSync);
+});

@@ -132,7 +132,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y gnome-keyring libsecret-tools dbus-x11
       - name: Probe (Linux)
         if: runner.os == 'Linux'
-        run: dbus-run-session -- sh -c 'printf "" | gnome-keyring-daemon --unlock --components=secrets >/dev/null && bun scripts/probe-keychain.ts'
+        run: dbus-run-session -- sh -c 'printf "%s" "ci" | gnome-keyring-daemon --unlock --components=secrets >/dev/null && bun scripts/probe-keychain.ts'
       - name: Prepare a keychain (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -149,8 +149,8 @@ jobs:
   # binary users actually receive (ADR-001, ADR-003). This job compiles the probe and runs the
   # artifact natively on every platform we ship, which is the only proof that counts.
   #
-  # No `bun install` on purpose: the probe imports nothing but `bun:sqlite` and node builtins, so the
-  # run cannot be rescued by anything in node_modules.
+  # The standalone SQLite probe deliberately runs before dependency installation, so node_modules
+  # cannot rescue its built-in runtime proof. The background worker bundle below uses package imports.
   packaged-sqlite:
     name: packaged sqlite (${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
@@ -179,6 +179,8 @@ jobs:
         shell: bash
         run: |
           if [ -f ./probe-sqlite.exe ]; then ./probe-sqlite.exe; else ./probe-sqlite; fi
+      - name: Install dependencies for the background-lane probe
+        run: bun install --frozen-lockfile
       # The background lane (a worker thread) must work inside the single-file binary, built with the
       # desktop app's root; a worker path that only works from source ships a broken app.
       - name: Compile the background-lane probe

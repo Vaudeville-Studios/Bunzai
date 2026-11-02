@@ -262,4 +262,61 @@ fetch and EventSource return to their original values/descriptors. Root and
 independent actual-source review precede scoped normal-hook commit/push. No
 entire suite retry until this full bounded mutator cohort passes.
 
-Ordered verification after the narrow fixture repair: the 31 source-mutator files followed by the unchanged first Chrome startup case passed on the default Bun runner. Root independently ran the verbatim case: 229 passed, 664 expectations, 32 files, 56.52s. A diagnostic rerun inserted 32 descriptor probes: 261 passed, 664 expectations, 64 files, 55.70s. Fetch remained the original native implementation and EventSource remained absent before and after the cohort; the Chrome case observed 13 HTTP 503 warming responses followed by 200 and passed its existing nonce, repeated-close, and child-exit assertions. The one-line library-gate snapshot source hash is 4c948aa998d2885896fea7a5522de47b18ca7c83d41539c7f4073a0e83abd406. These are bounded cohort proofs, not a full-suite or release proof.
+## Reconcile observed remote publication and release47
+
+GitHub is authoritative over the earlier local stop reports: Mainstage is now
+fb562e0d6fab79d42ed978447af47311bfd84d0d, releasebot v0.1.47 with EXACT parentae75f09.
+Compare70ab..fb562 confirms our four source commits plus ONLY the bot's package.json
+and src/version.ts bump. Thus ae75 reached Mainstage; do not claim it stayed local.
+Pages41384961386 succeeded on ae75. No binary assets exist. Auto-release41384961495
+failed verify after9596tests at real Lua WASM loading (not an asm header), which may
+share the now-proven leftover global-fetch mock cause; investigate before naming
+that linkage proven or changing production WASM loading.
+
+Pending55419cf is the independently reviewed library-gate cleanup with all31mutator
+cohort/root229tests GREEN. Fetch the exact remote Mainstage, verify bot-only diff
+and ancestry, then integrate it via a normal non-rewriting merge into the isolated
+candidate. Preserve all source/evidence/untracked plans. No resets, force pushes,
+retags, removal of bot version, or production/dependency changes. Confirm both
+version homes remain0.1.47 and all actual product source changes relative tofb562
+are ONLY the approved library-gate globals snapshot (plus task documentation).
+
+Root/independent merge review and focused version-parity/cohort proof precede a
+normal-hook delivery to Mainstage. This starts the next normal release train;
+existing v0.1.47 is immutable. Observe native hook final summary/exit AND actual
+remote SHA, then GitHub run/tag/source identities. Buffered or mixed progress
+output cannot establish that a push did not happen or that a gate passed.
+
+## Repair confirmed CI prerequisite setup
+
+Primary completed job logs from CI41384961478 show ALL FOUR configured packaged
+SQLite jobs passed the standalone compiled SQLite probe, then failed compiling
+the background-lane probe because zod/fflate/noble/scure dependencies were absent.
+The obsolete no-install comment predates that application's import graph.
+Executor may change ONLY ci.yml setup: preserve the standalone builtin-only
+compile AND native run BEFORE dependency installation; add frozen ROOT
+`bun install --frozen-lockfile` immediately before background-lane compilation.
+Do not add vendor installs without an actual graph need. Preserve all targets,
+compile entrypoints, artifact execution, timeouts and refusal assertions.
+
+Linux keychain job failed actual seal/open because its default login collection
+did not exist; it invoked a GUI prompter without DISPLAY. Current stdin is EMPTY.
+Ubuntu's official gnome-keyring-daemon manpage documents that --unlock reads a
+password from stdin and creates the login keyring if absent:
+https://manpages.ubuntu.com/manpages/stonking/man1/gnome-keyring-daemon.1.html
+Executor may replace only empty printf input with a fixed, clearly synthetic CI
+password, consistent with macOS's existing ci fixture. Keep private dbus-run-session,
+the real Secret Service daemon and existing probe; no session-only alias, fake
+backend, skipped check, display prompt bypass, credential change or acceptance cut.
+No local Linux package/global-service installation is authorized. WSL lacks the
+keyring tools, so real keychain success remains pending the actual CI job.
+
+Validate YAML and dependency/step order through existing tools; compare the exact
+two-job delta. Root and independent actual-source review precede normal-hook
+scoped commit/delivery. Run the existing version parity test for the bot merge;
+reuse unchanged31-file cohort hashes rather than repeating unrelated campaigns.
+New CI must compile AND run both native artifacts and pass the actual keychain
+probe before those platform claims become verified. Do not claim the proposed
+setup fix already passed remote CI. No release-workflow acceptance changes.
+
+Executor bounded CI workflow validation (candidate f28dad8): `scripts/ci-sidecar.test.ts` plus `src/ui/_shared/update-check.test.ts` passed 18 tests / 51 expectations with pinned Bun 1.4.2; the latter proves package.json and APP_VERSION both remain 0.1.47. PyYAML parsed ci.yml and explicit order checks confirmed standalone SQLite compile/run, frozen install, then unchanged background-lane compile/run; the Linux step retains private dbus-run-session and invokes the real probe after feeding the synthetic `ci` password. WSL has no gnome-keyring-daemon or secret-tool, so local CI-keychain success is unverified. The workflow changes have not yet run in GitHub CI; both packaged native artifacts and the keychain probe remain pending remote verification.

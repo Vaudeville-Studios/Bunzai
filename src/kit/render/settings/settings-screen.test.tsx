@@ -5,6 +5,7 @@
  * sections rail, and the "add a provider" row. The navigation logic itself is covered in model.test.
  */
 import { afterAll, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../../../scripts/test-home";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { rm } from "node:fs/promises";
@@ -20,14 +21,19 @@ const HOME = join(tmpdir(), `kit-settings-test-${randomUUID()}`);
 // Renderer drives can take several seconds under the full suite.
 setDefaultTimeout(30000);
 
+let restoreBunzaiHome: (() => void) | undefined;
+
 beforeAll(async () => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   await loadChoices(); // warm the spoke registry so the component's async load resolves fast
 });
 
 afterAll(async () => {
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    await rm(HOME, { recursive: true, force: true });
+  } finally {
+    restoreBunzaiHome?.();
+  }
 });
 
 test("renders the Panel Deck with the providers section and the add row", async () => {

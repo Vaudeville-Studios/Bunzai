@@ -1,5 +1,6 @@
 /** Provider-vault round trips and environment fallback against isolated storage. */
 import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../../scripts/test-home";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { rm } from "node:fs/promises";
@@ -21,13 +22,18 @@ const UNLOCK = { passphrase: "kit-vault-test-passphrase" };
 // DPAPI seals spawn PowerShell (~1s cold); give the write-heavy cases room.
 setDefaultTimeout(30000);
 
+let restoreBunzaiHome: (() => void) | undefined;
+
 beforeAll(() => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
 });
 
 afterAll(async () => {
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    await rm(HOME, { recursive: true, force: true });
+  } finally {
+    restoreBunzaiHome?.();
+  }
 });
 
 describe("vault", () => {

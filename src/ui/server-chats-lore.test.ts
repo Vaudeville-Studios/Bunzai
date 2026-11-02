@@ -5,6 +5,7 @@
  * own choice. Modeled on server-chats-turn.test.ts's preset route test.
  */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../scripts/test-home";
 import { CANONICAL_SCHEMA_VERSION } from "../core/canonical";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
@@ -20,11 +21,12 @@ afterEach(cleanupChatRouteRigs);
 setDefaultTimeout(30_000);
 const HOME = join(tmpdir(), `bunzai-lore-routes-${randomUUID()}`);
 const UNLOCK = { passphrase: "lore-routes-test" };
+let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
 let localId = "";
 
 beforeAll(async () => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   server = Bun.serve({
     port: 0,
     async fetch() {
@@ -37,9 +39,15 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  server.stop(true);
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    server.stop(true);
+  } finally {
+    try {
+      await rm(HOME, { recursive: true, force: true });
+    } finally {
+      restoreBunzaiHome?.();
+    }
+  }
 });
 
 const persona = (id: string, refs: string[]) => ({

@@ -956,8 +956,99 @@ owns the nexttag; v0.1.51 staysimmutable. Normalreleaseverification and shipped
 platformpackagedCI/S21 mustpass beforeclaimingactual8assets+checksums publication.
 Macdownloads remainheldback, no expansiontoMacrepair/testreduction.
 
-### Final scoped scrub and Windows bundler results
+### v0.1.52 held for ARM64 native pause, scope question pending
 
-The scrub change is limited to the existing maintenance owner and its registered-reader test. Independent review approved database.ts SHA256 FB597321E3D97F5721FDCC4FC8C0DEC340698AF04EB0C00E6CAA80AC8D4723E6 and database.test.ts SHA256 1851B0B99A6593AFFF148CCFCABA33FE43B03A5FFABD45A178F27054E23E3B7F. On pinned Bun1.4.2, the real observer test first failed with the old 20ms policy (8 observed 20ms attempts), then passed with nonblocking 0; mutation back to20 failed at that policy assertion. The complete database owner passed20 tests/47 expectations; keyring and SQLite health-scan linked owners passed34/95. Storage-shape tripwire passed1/2, unchanged pin. Typecheck exited0. The compiled original lane probe passed with 11ms maximum pause; the held-reader probe passed with the actual 250ms reader release and 10ms maximum pause. These local measurements do not establish the cause of the hosted122ms sample. Raw receipts are under `%TEMP%\codex-lane-probe-phase-20261102\`.
+Normal789push passed16553tests/0fail,16609cases1765files148345asserts1658.85s.
+Auto-release41437322168 cutv0.1.52 atc75be802512faf552333a33b9949507f510979f7.
+CurrentCI41437321942 packagedWindows/Linuxx64/macOS checks passed. ARM64 job
+125250284803 failed strict100ms at213ms (2088ms total,10000rows/password correct).
+Raw43064byte log SHA4E23CFBD9B5C74B10FB9D890C8BC16B543915D30A22107B7CA4F73766DFD3571.
+Linuxx64 sameprobe measured7ms max/3222ms total. These are observations, notcause.
+Rootrequested cancellation of ONLYownedauto-release beforepublication; cancellation
+confirmed duringverify beforebuilds/publish. No releaseobject/assets forv52.
+CIremainsrunning tocollectallresults. Userwasaskedwhetherx64downloadsfirstwith
+ARM64heldback orallheldforARM64; noanswer/approvalyet. Do NOTsilentlydropARM64,
+waive100ms, substituteemulationperformance, orrepeatgreenfishing.
 
-The Windows CI failure family was six bundler/package tests caused by cross-drive Bun metafile keys. Independent review approved scripts/extension-bundler.ts SHA256 5A337D5EA9BA76EDD44972120981E1FEE96D8794D1A7829855C7E696C353CC34. The fix applies only on Windows to leading `../` segments directly before a drive path, then preserves resolve, realpath, and exact captured-source validation. On final source, existing bundler and pack owners passed9 tests/54 expectations; a real temporary SUBST-drive bundle passed with the exact SDK, captured local-module bytes, and changed-after-capture bytes excluded. The owned drive mapping was removed in finally. No dependency, lockfile, vendor, version, schema, migration, or storage-pin changes were made.
+Independentprogress whilewaiting: prepare minimal canonical lane-probe diagnostic
+instrumentation fornativeARM64. Preserve exactsetup/workload/timer5ms/startpoint/
+awaitordering/30msdrain/100msassertions and data/password checks. Onlyrecord fixed
+phase labels and monotonicphase durations/maxgapstart/end/phase; print AFTERtimer
+clear. No newwaits,GC, workerpolicy, retries or threshold changes. Avoid per-tick
+logging, secrets or unboundedarrays. Reviewactualdiff andlocalcompiledprobeproof
+beforecommit. This is observability, NOTa performancefix or releaseacceptance.
+Further remoteexecution must honor normalhooks; use skiprelease diagnosticcommit
+if publishing additional source whileARM64 remainsunresolved. Nofullpushyetuntil
+reviewed diagnosticsource is concrete. Currentproduction789fixesstayunchanged.
+
+### Confirmed shared fixture HOME loss, complete CI results
+
+RootpureBunLinux1.4.2probe in two existingOWNED profilepaths confirmedhomedir()
+staysatstartupHOME afterprocess.env.HOME changes. No files/userhome werewritten.
+Therefore preloadHOME redirects do not repair a later lost BUNZAI_HOME override.
+Independentinventory identified14unconditionaldeleteowners:
+Kitproviders/vault.test.ts,sessions/store.test.ts,render/settings/settings-screen.test.tsx;
+UIserver-chats-{tracker-refresh,summary,tracker-item,forecast,trace,local-tools,
+final-cut,turn,lore,draft,ollama}.test.ts. Twoothers overridewithoutrestore:
+Kitrender/app-gate.test.tsx andrender/safety/use-gate.test.tsx. All aretestfixture
+ownership bugs, notpermission tochangeproductionconfigDir/identityPath/homedir.
+FullCIWindows job125250284914 isGREEN:16609cases/1765files,55skip,1todo,0fail,
+148350asserts,1847.08s. Linuxallcasescompleted, soleend-auditfailure. Macdeferred.
+Thus allremainingactualshipping failures are the sharedfixtureisolation andARMpause.
+
+Authorize onepure shared test helper scripts/test-home.ts to own temporary
+BUNZAI_HOME override/restoration: capture exactprior value atCALL/setup time,
+setprovidedownedfixturehome, returncleanup restoringexactprior (deleteONLYif
+priorabsent). No import-time effects, folderownership, productionuse or arbitrary
+profilepolicy. This replaces16copiedsetup/teardown patterns, not16newhelpers.
+Use helper insideexistingbeforeAll/beforeEach lifetimes ofthese16owners; restore
+infinally even ifserverstop/foldercleanup throws. Keep eachcaller's existingowned
+homepath/resourcecleanup; addmissingownedtemp cleanup toapp-gate/use-gate. Never
+remove a path readfrom current/restoredprocess.env (maybelongtoanotherfixture).
+Keep allactions/assertions/providerfakes and testcounts. Otheralreadycorrectenv
+lifecycles remainuntouched unlessactualrelatedfailure evidence appears.
+
+Strengthenexisting scripts/test-sandbox.ts endaudit to also requireBUNZAI_HOME
+restoredtoitscanonicalpreloadhome, usingonenamedcanonicalhomevalue asauthority.
+Keep originalreal-location snapshots,before/after breach detection,ownedroot
+cleanup and realwriteerror. Wrongenv alonemustfail evenifnowrite occurs, sofuture
+lostoverrides identifycausewithoutwritingoutside. Do notmakeenvreadonly, mock
+homedir, deletebreaches orsilenceaudit. No new general envframework.
+
+Beforefix establishboundednativeLinux orderedRED with ONLY anownedouterHOME and
+BUNZAI_HOME omittedbeforeBunstarts: existingvault/sessionorroutefixture thenactual
+defaultkeystore/sessionwriter. Allpossiblehomedir/configDir resolutions mustbe
+verified under theoutertaskroot BEFOREwrites; abortifnot. Currentunconditional
+delete+cachedfallback shouldproduce auditRED or missingcanonicalhomeRED. After
+sharedhelper/16callers/audit correction exactsamecohortGREEN. Captureactualenv/
+homedir/root paths,sourcehashes,rawnativeexit. DonotrunagainstWSLuserrealhome.
+Runaffected16-owner cohort once and focusedhelper/nativeconsumer checks; root
+andindependentactualdiff review before commit. No broadtestreduction/migrations/
+releasearchitecture changes. Phaseobservability canjointhisrepairbatch afterreview.
+Userarchitecturechoice stillpending; do notdropARM64 orpublishuntilauthorizedscope
+andactualgatespermit. Diagnostic-onlycommit mustskipautomaticrelease ifARMunfixed.
+
+### Shared HOME correction and native diagnostic batch ready
+
+Independent review approved sharedhelper5c8c7d8984ce17de350a4867cd4e3483ceeb344ed1bc68c36aa928e05ff8959a,
+preloadaudit0ecbd68120f93e5df44c7e88d4a0a2a3f5a98141fbfcc05e4df1ce9ebb40763b,
+all16callerfixtures and phaseobserver4aecfc738d9ff597a2cf0f667b0e4fb21fe3283c7c2a0b6900f501355213cf34.
+Rootcold-readsharedowner/audit/cleanup/observer actualdiffs. Finalturncleanup is
+semanticallysamefinallychain,hash2e1988fdb13e643d407bccb50ff5d5ae4d45125e0e84c7e65d078a49212cf8d6,
+existinglinecap500andwholeowner21/98GREEN. Sourcehelperpurposeheaderadded.
+SafeRED =unchangedvaultcases6pass+1globalnewcanonicalinvariantfailure,16asserts;
+no defaultwriters oroutsidewrites/ordertricks. Overlayhash0ecbd..., NOToriginal
+daf580...baseline. SAMEvaultGREEN6/16,16ownercohort121/480LinuxGREEN withowned
+outerHOME/BUNZAI_HOMEinitiallyabsent/noOSsecrettoolPATH. TSC/headers/lines and
+source-boundary8/179GREEN. PhaseinstrumentationcompiledWindowsGREEN unchanged
+workload/limit, notnativeARMcauseproof. Production789fixesunchanged.
+
+Freeze19authoredpaths (18HOMEharness/fixtures includingnewhelper +laneobserver),
+pluscanonicalPlan/conciseevidence. Normalcommit mustinclude[skip release] while
+ARMperformance anduserarchitecturechoice remainunresolved: this sourcepublication
+is toobtain native phaseattribution and validate the actualHOMErepair, NOTa claim
+of readybinaries or permissiontodropARM. Preservev51/v52tags andallvendor/locks/
+manualversion/schema/gates. Rootreviewexactcommit+freshnormalpushrunner before
+onefullhook. No concurrentcampaigns; allpriorCIresultsnowcollected. Do not rerun
+oldfailedARMjob foracceptance. SubsequentnativeCI trace guidescausefix. Userchoice
+stillpending; do notinterpret elapsedtimeasapproval.

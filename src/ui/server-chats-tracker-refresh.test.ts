@@ -4,6 +4,7 @@
  * guards apply as to any /api route.
  */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../scripts/test-home";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -17,6 +18,7 @@ setDefaultTimeout(30_000);
 
 const HOME = join(tmpdir(), `bunzai-tracker-refresh-routes-${randomUUID()}`);
 const UNLOCK = { passphrase: "tracker-refresh-routes-test" };
+let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
 const GOOD = JSON.stringify({ items: [{ name: "Fire Sword", description: "Hot.", category: "weapon", rarity: "rare", quantity: 1 }], currency: 5 });
 let answers: { status: number; content: string }[] = [];
@@ -24,7 +26,7 @@ const asked: { model: string; max_tokens?: number; messages: { role: string; con
 let localId = "";
 
 beforeAll(async () => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   server = Bun.serve({
     port: 0,
     async fetch(req) {
@@ -38,9 +40,15 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  server.stop(true);
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    server.stop(true);
+  } finally {
+    try {
+      await rm(HOME, { recursive: true, force: true });
+    } finally {
+      restoreBunzaiHome?.();
+    }
+  }
 });
 
 async function readyScene(connect = true) {

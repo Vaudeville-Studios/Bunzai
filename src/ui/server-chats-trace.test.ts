@@ -6,6 +6,7 @@
  * (modeled on server-chats-lore.test.ts) to prove the wiring.
  */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../scripts/test-home";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -321,11 +322,12 @@ test("an old trace without verdicts still answers, with missed: []", async () =>
 setDefaultTimeout(30_000);
 const HOME = join(tmpdir(), `bunzai-trace-route-${randomUUID()}`);
 const UNLOCK = { passphrase: "trace-route-test" };
+let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
 let localId = "";
 
 beforeAll(async () => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   server = Bun.serve({
     port: 0,
     async fetch() {
@@ -338,9 +340,15 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  server.stop(true);
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    server.stop(true);
+  } finally {
+    try {
+      await rm(HOME, { recursive: true, force: true });
+    } finally {
+      restoreBunzaiHome?.();
+    }
+  }
 });
 
 test("the real server answers a real turn's trace at GET /api/chats/trace", async () => {

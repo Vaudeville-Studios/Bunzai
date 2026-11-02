@@ -42,27 +42,50 @@ try {
   });
   d.transaction(() => d.db.run("DELETE FROM t WHERE rowid % 2 = 0"));
 
+  type ProbePhase = "rebuild" | "new-key" | "password-wrap" | "password-open" | "drain";
+  const phaseMarks: { phase: ProbePhase; startMs: number }[] = [];
   let longest = 0;
+  let longestStart = 0;
+  let longestEnd = 0;
   let last = performance.now();
   const beat = setInterval(() => {
     const now = performance.now();
-    longest = Math.max(longest, now - last);
+    const gap = now - last;
+    if (gap > longest) {
+      longestStart = last - started;
+      longestEnd = now - started;
+    }
+    longest = Math.max(longest, gap);
     last = now;
   }, 5);
   const started = performance.now();
+  const markPhase = (phase: ProbePhase) => phaseMarks.push({ phase, startMs: performance.now() - started });
+  phaseMarks.push({ phase: "rebuild", startMs: 0 });
   await d.rebuild();
+  markPhase("new-key");
   const key = newDataKey();
+  markPhase("password-wrap");
   const wrap = await wrapWithPassword(key, "probe password");
+  markPhase("password-open");
   const back = await openWithPassword(wrap, "probe password");
+  markPhase("drain");
   await new Promise((r) => setTimeout(r, 30));
+  const probeEnd = performance.now() - started;
   clearInterval(beat);
+  const phaseRanges = phaseMarks.map((mark, i) => {
+    const endMs = phaseMarks[i + 1]?.startMs ?? probeEnd;
+    return { ...mark, endMs, durationMs: endMs - mark.startMs };
+  });
   if (!back.equals(key)) {
     console.log("FAIL: the password worker did not give the key back");
     failed = true;
   }
 
   const rows = (d.db.query("SELECT count(*) AS n FROM t").get() as { n: number }).n;
-  console.log(`rebuild and a password check: ${Math.round(performance.now() - started)} ms in the background; longest main-thread pause ${Math.round(longest)} ms; ${rows} rows`);
+  const phaseSummary = phaseRanges
+    .map((x) => `${x.phase}=${Math.round(x.startMs)}-${Math.round(x.endMs)} ms (${Math.round(x.durationMs)} ms)`)
+    .join(", ");
+  console.log(`rebuild and a password check: ${Math.round(performance.now() - started)} ms in the background; longest main-thread pause ${Math.round(longest)} ms at ${Math.max(0, Math.round(longestStart))}-${Math.round(longestEnd)} ms; phases ${phaseSummary}; ${rows} rows`);
   if (rows !== 10_000) {
     console.log("FAIL: rows changed across the rebuild");
     failed = true;

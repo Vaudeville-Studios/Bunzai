@@ -4,6 +4,7 @@
  * status and a message, never an empty success; the token and same-site guards apply as to any /api route.
  */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../scripts/test-home";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -17,13 +18,14 @@ setDefaultTimeout(30_000);
 
 const HOME = join(tmpdir(), `bunzai-draft-routes-${randomUUID()}`);
 const UNLOCK = { passphrase: "draft-routes-test" };
+let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
 let answer: { status: number; content: string } = { status: 200, content: "I step into the rain." };
 const asked: { model: string; temperature?: number; stream?: boolean; messages: { role: string; content: string }[] }[] = [];
 let localId = "";
 
 beforeAll(async () => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   server = Bun.serve({
     port: 0,
     async fetch(req) {
@@ -36,9 +38,15 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  server.stop(true);
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    server.stop(true);
+  } finally {
+    try {
+      await rm(HOME, { recursive: true, force: true });
+    } finally {
+      restoreBunzaiHome?.();
+    }
+  }
 });
 
 async function readyScene(connect = true) {

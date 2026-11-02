@@ -4,6 +4,7 @@
  * and the parse boundary denies a malformed session whole rather than silently dropping wire history.
  */
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { useTestBunzaiHome } from "../../../scripts/test-home";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -24,14 +25,19 @@ const sample = (id: string, updatedAt: number): Session => {
   return renameSession(s, "a saved session", updatedAt);
 };
 
+let restoreBunzaiHome: (() => void) | undefined;
+
 beforeAll(() => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   store = createSessionStore();
 });
 
 afterAll(async () => {
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    await rm(HOME, { recursive: true, force: true });
+  } finally {
+    restoreBunzaiHome?.();
+  }
 });
 
 describe("session store", () => {

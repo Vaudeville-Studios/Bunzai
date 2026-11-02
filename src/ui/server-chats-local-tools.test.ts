@@ -4,6 +4,7 @@
  * answers 400 "does not support tools" is reported in one plain sentence that names the model, with nothing saved as a reply.
  */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../scripts/test-home";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -23,6 +24,7 @@ const HOME = join(tmpdir(), `bunzai-local-tools-${randomUUID()}`);
 const UNLOCK = { passphrase: "local-tools-test" };
 const health: TrackerBody = { name: "Health", description: "", layout: "record", note: "", fields: [{ name: "hp", description: "", type: "number", min: 0, default: 20 }] };
 const REFUSAL = '{"error":"registry.ollama.ai/library/qwen3 does not support tools"}';
+let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
 let refuse = false;
 const asked: { tools?: { function: { name: string } }[]; messages: { role: string }[] }[] = [];
@@ -31,7 +33,7 @@ let localId = "";
 const sse = (...chunks: unknown[]) => new Response(chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join("") + "data: [DONE]\n\n", { headers: { "content-type": "text/event-stream" } });
 
 beforeAll(async () => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   server = Bun.serve({
     port: 0,
     async fetch(req) {
@@ -50,9 +52,15 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  server.stop(true);
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    server.stop(true);
+  } finally {
+    try {
+      await rm(HOME, { recursive: true, force: true });
+    } finally {
+      restoreBunzaiHome?.();
+    }
+  }
 });
 
 async function linkedScene() {

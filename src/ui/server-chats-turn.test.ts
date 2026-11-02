@@ -5,6 +5,7 @@
  * connection is refused before anything opens. Kit's vault is sandboxed for the file.
  */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../scripts/test-home";
 import { randomUUID } from "node:crypto";
 import { Engine } from "rp-core";
 import { rm } from "node:fs/promises";
@@ -23,13 +24,14 @@ afterEach(cleanupChatRouteRigs);
 setDefaultTimeout(30_000);
 const HOME = join(tmpdir(), `bunzai-turn-routes-${randomUUID()}`);
 const UNLOCK = { passphrase: "turn-routes-test" };
+let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
 const asked: { model: string; messages: { role: string; content: string }[] }[] = [];
 let localId = "";
 let subId = "";
 
 beforeAll(async () => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   // A chat-completions server that streams "It might." in two pieces, then usage.
   server = Bun.serve({
     port: 0,
@@ -52,9 +54,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  server.stop(true);
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try { server.stop(true); } finally { await rm(HOME, { recursive: true, force: true }).finally(() => restoreBunzaiHome?.()); }
 });
 
 async function events(res: Response) {

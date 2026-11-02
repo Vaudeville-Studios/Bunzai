@@ -5,6 +5,7 @@
  * Kit's vault is sandboxed for the file.
  */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../scripts/test-home";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -20,13 +21,14 @@ setDefaultTimeout(30_000);
 
 const HOME = join(tmpdir(), `bunzai-final-cut-routes-${randomUUID()}`);
 const UNLOCK = { passphrase: "final-cut-routes-test" };
+let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
 const asked: { model: string; stream?: boolean; messages: { role: string; content: string }[] }[] = [];
 let localId = "";
 let passBody = "It might, and the light holds.";
 
 beforeAll(async () => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   server = Bun.serve({
     port: 0,
     async fetch(req) {
@@ -46,9 +48,15 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  server.stop(true);
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    server.stop(true);
+  } finally {
+    try {
+      await rm(HOME, { recursive: true, force: true });
+    } finally {
+      restoreBunzaiHome?.();
+    }
+  }
 });
 
 async function scene() {

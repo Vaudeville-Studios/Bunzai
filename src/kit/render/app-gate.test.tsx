@@ -2,7 +2,9 @@
 /**
  * App-to-gate integration: confirmed writes visibly pause and resume only after a user choice.
  */
-import { beforeAll, expect, test } from "bun:test";
+import { afterAll, beforeAll, expect, test } from "bun:test";
+import { rm } from "node:fs/promises";
+import { useTestBunzaiHome } from "../../../scripts/test-home";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -19,8 +21,19 @@ import railCommand from "../commands/rail";
  * prompt this test waits for never appeared - and the failure read as "the gate stopped pausing on
  * writes", which is alarming and was not true. BUNZAI_HOME is the seam the config already reads.
  */
+let home = "";
+let restoreBunzaiHome: (() => void) | undefined;
+
 beforeAll(() => {
-  process.env["BUNZAI_HOME"] = mkdtempSync(join(tmpdir(), "bunzai-appgate-"));
+  home = mkdtempSync(join(tmpdir(), "bunzai-appgate-"));
+  restoreBunzaiHome = useTestBunzaiHome(home);
+});
+afterAll(async () => {
+  try {
+    if (home) await rm(home, { recursive: true, force: true });
+  } finally {
+    restoreBunzaiHome?.();
+  }
 });
 
 test("a confirmed write pauses in GatePrompt before the session continues", async () => {

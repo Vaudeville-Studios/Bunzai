@@ -1,5 +1,6 @@
 /** `POST /api/chats/forecast` (rc-parity 08, Next send): the request a send would build, over the real server; a read that writes nothing and refuses what it cannot answer. */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../scripts/test-home";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -15,17 +16,24 @@ const HOME = join(tmpdir(), `bunzai-forecast-route-${randomUUID()}`);
 const UNLOCK = { passphrase: "forecast-route-test" };
 let localId = "";
 let calls = 0;
+let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
 
 beforeAll(async () => {
-  process.env.BUNZAI_HOME = HOME;
+  restoreBunzaiHome = useTestBunzaiHome(HOME);
   server = Bun.serve({ port: 0, async fetch() { calls++; return new Response("{}"); } });
   localId = (await saveProvider({ kind: "local", model: "qwen3", baseURL: `http://127.0.0.1:${server.port}/v1`, name: "Desk" }, UNLOCK)).id!;
 });
 afterAll(async () => {
-  server.stop(true);
-  delete process.env.BUNZAI_HOME;
-  await rm(HOME, { recursive: true, force: true });
+  try {
+    server.stop(true);
+  } finally {
+    try {
+      await rm(HOME, { recursive: true, force: true });
+    } finally {
+      restoreBunzaiHome?.();
+    }
+  }
 });
 afterEach(cleanupChatRouteRigs);
 

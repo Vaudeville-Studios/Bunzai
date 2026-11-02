@@ -1,5 +1,6 @@
 /** A core-linked scene keeps Ollama on its native /api/chat transport and chosen context window. */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { useTestBunzaiHome } from "../../scripts/test-home";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,12 +10,13 @@ import { chatRouteRig, cleanupChatRouteRigs, vera } from "./fake-server-chats-ri
 setDefaultTimeout(30_000);
 let server: ReturnType<typeof Bun.serve>;
 let home: string;
+let restoreBunzaiHome: (() => void) | undefined;
 let providerId: string;
 const requests: Array<{ model: string; options: { num_ctx: number } }> = [];
 
 beforeAll(async () => {
   home = await mkdtemp(join(tmpdir(), "bunzai-ollama-core-"));
-  process.env.BUNZAI_HOME = home;
+  restoreBunzaiHome = useTestBunzaiHome(home);
   server = Bun.serve({ port: 0, async fetch(request) {
     const path = new URL(request.url).pathname;
     if (path === "/api/show") return Response.json({ model_info: { "general.architecture": "llama", "llama.context_length": 32768 }, capabilities: ["completion"] });
@@ -29,7 +31,17 @@ beforeAll(async () => {
   providerId = (await saveProvider({ kind: "ollama", name: "Test Ollama", model: "fake-ollama", baseURL: `http://127.0.0.1:${server.port}`, options: { numCtx: "16384" } }, { passphrase: "ollama-core-test" })).id!;
 });
 afterEach(cleanupChatRouteRigs);
-afterAll(async () => { server.stop(true); delete process.env.BUNZAI_HOME; await rm(home, { recursive: true, force: true }); });
+afterAll(async () => {
+  try {
+    server.stop(true);
+  } finally {
+    try {
+      await rm(home, { recursive: true, force: true });
+    } finally {
+      restoreBunzaiHome?.();
+    }
+  }
+});
 
 test("rp-core sends a scene reply to /api/chat with the configured num_ctx", async () => {
   const rig = await chatRouteRig({ core: true });

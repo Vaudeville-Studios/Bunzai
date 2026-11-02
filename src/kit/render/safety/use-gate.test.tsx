@@ -11,7 +11,9 @@
  * blocks is not in a turn and calls `requestConfirm` directly. Lock down blocked that one write and
  * left the session unlocked.
  */
-import { beforeAll, expect, test } from "bun:test";
+import { afterAll, beforeAll, expect, test } from "bun:test";
+import { rm } from "node:fs/promises";
+import { useTestBunzaiHome } from "../../../../scripts/test-home";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -32,8 +34,19 @@ import type { GateRequest } from "../../tools/safety/gated-dispatch";
  * BUNZAI_HOME is the seam the config already reads, so pointing it at an empty directory gives
  * every run the same fresh-install starting point.
  */
+let home = "";
+let restoreBunzaiHome: (() => void) | undefined;
+
 beforeAll(() => {
-  process.env["BUNZAI_HOME"] = mkdtempSync(join(tmpdir(), "bunzai-gate-"));
+  home = mkdtempSync(join(tmpdir(), "bunzai-gate-"));
+  restoreBunzaiHome = useTestBunzaiHome(home);
+});
+afterAll(async () => {
+  try {
+    if (home) await rm(home, { recursive: true, force: true });
+  } finally {
+    restoreBunzaiHome?.();
+  }
 });
 
 const request = (name: string): GateRequest => ({

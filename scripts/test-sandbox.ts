@@ -27,7 +27,8 @@ const roamingAppData = inSandbox(join("profile", "AppData", "Roaming"));
 process.env["HOME"] = profile;
 process.env["USERPROFILE"] = profile;
 process.env["APPDATA"] = roamingAppData;
-process.env["BUNZAI_HOME"] = inSandbox("home");
+const canonicalBunzaiHome = inSandbox("home");
+process.env["BUNZAI_HOME"] = canonicalBunzaiHome;
 process.env["CODEX_HOME"] = inSandbox("codex");
 process.env["CLAUDE_CONFIG_DIR"] = inSandbox("claude");
 process.env["LOCALAPPDATA"] = localAppData;
@@ -99,5 +100,8 @@ afterAll(() => {
       `test sandbox: the run wrote into the real home folder: ${found.join(", ")}. ` +
         "Point the test at a temporary folder; the preload already sets BUNZAI_HOME, CODEX_HOME, CLAUDE_CONFIG_DIR, LOCALAPPDATA, and XDG_STATE_HOME.",
     );
+  }
+  if (process.env["BUNZAI_HOME"] !== canonicalBunzaiHome) {
+    throw new Error("test sandbox: BUNZAI_HOME was not restored to its isolated test home");
   }
 });

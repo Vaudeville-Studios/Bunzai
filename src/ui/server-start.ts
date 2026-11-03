@@ -27,6 +27,7 @@ export function startUiWithRoutes(
   studioDir: string,
   packaged?: PackagedAssets,
   library?: LibraryHandle,
+  bundledSidecar?: string,
 ): { instanceId: string; url: string; sandboxUrl: string | null; stop: () => void; close: () => Promise<void> } {
   // openStudio, not `new StudioStore`: the bare constructor cannot read a file it did not write, and
   // this window spent its life reporting a folder of SillyTavern presets as 145 damaged files.
@@ -46,7 +47,7 @@ export function startUiWithRoutes(
   // back here; setupRemoteAccess creates the managers, binds the untrusted listener, and resumes on boot.
   const makeHandler: MakeHandler = (o) =>
     createRouteHandler(store, settings, packaged, sec, sandboxOriginRef, lifecycle, o.remote, o.remoteSecret, o.lanApproved, o.lan, undefined, undefined, readCapability, undefined, sharedExtensionOwner);
-  const remoteAccess = setupRemoteAccess({ settings, studioDir, makeHandler, ...(library ? { ready: library.unlocked() } : {}) });
+  const remoteAccess = setupRemoteAccess({ settings, studioDir, makeHandler, bundledSidecar, ...(library ? { ready: library.unlocked() } : {}) });
   let closeHandler: (() => Promise<void>) | null = null;
   try {
 

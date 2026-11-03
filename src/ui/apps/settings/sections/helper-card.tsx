@@ -1,10 +1,8 @@
 /**
  * The downloadable remote-access helper (the "aux package"), as its own concept.
  *
- * The mesh link needs a compiled Go helper that is NOT inside the app: it is roughly 31 MB, and bundling
- * it would charge every download for a feature most people never turn on. So it is a release asset the
- * owner fetches with one explicit click, verified against a fingerprint baked into this build before a
- * single byte is written to the path that gets spawned (src/ui/remote/aux-download.ts).
+ * Current app downloads carry the helper. This card recovers source checkouts and incomplete installs
+ * through an explicit download verified against committed published pins before installation.
  *
  * Two surfaces, because the helper is visible in two different states:
  *   - MISSING: the panel is in the `unavailable` phase, and this card is the whole offer.
@@ -90,9 +88,7 @@ function HelperError({ h }: { h: HelperControls }): JSX.Element | null {
 }
 
 /**
- * The `unavailable` card. NOT an error card and it never offers "Try again": the helper is absent from
- * this build, so a retry would reproduce the same nothing. Either it can be fetched for this platform, or
- * the honest thing to say is that LAN mode below needs no helper at all.
+ * Recovery when a helper is unavailable: offer a pinned download where published, otherwise LAN.
  */
 export function HelperMissingCard({ detail, h }: { detail?: string; h: HelperControls }): JSX.Element {
   const offered = h.status?.offered ?? false;
@@ -103,7 +99,7 @@ export function HelperMissingCard({ detail, h }: { detail?: string; h: HelperCon
       </div>
       <div className={styles.cardBody}>
         {offered
-          ? "The private-mesh link needs one extra piece that is not bundled with the app, to keep the download small. Bunzai can fetch it for you now, once."
+          ? "The remote-access helper is not available in this installation. Current supported app downloads include it; Bunzai can also fetch a verified copy here."
           : (detail ?? "This copy of Bunzai was built without the Tailscale helper.")}
       </div>
       {offered && (

@@ -27,7 +27,7 @@ type Child = ReturnType<typeof Bun.spawn>;
  * actionable half is that LAN mode is right below and needs no extra binary at all.
  */
 export const NO_SIDECAR_DETAIL =
-  "This copy of Bunzai was built without the Tailscale helper, so the private-mesh link cannot start. " +
+  "The Tailscale helper is not available, so the private-mesh link cannot start. " +
   "LAN mode below works with no extra download.";
 
 export interface SidecarManagerOptions {

@@ -30,7 +30,8 @@ const LAN_PORT = 8790;
 /**
  * Locate the Tailscale sidecar binary, or null when this build does not carry one.
  *
- * TWO CANDIDATES, and the second one is the bug fix. `import.meta.url` is correct from source (the
+ * Source, sibling and downloaded candidates. Startup inserts its verified bundled path between the
+ * deliberate sibling override and downloaded fallback. `import.meta.url` is correct from source (the
  * repo's own sidecar/ folder, where `bun sidecar/build.ts` puts the binary) and USELESS once compiled:
  * inside a standalone Bun executable it points at the virtual filesystem, so the old single-candidate
  * version resolved to `B:\sidecar\sidecar.exe` and could never hit. Every packaged studio therefore
@@ -53,8 +54,10 @@ export function sidecarCandidates(execPath: string = process.execPath): string[]
   ];
 }
 
-function resolveSidecarBin(): string | null {
-  return sidecarCandidates().find((p) => existsSync(p)) ?? null;
+function resolveSidecarBin(bundledSidecar?: string): string | null {
+  const candidates = sidecarCandidates();
+  if (bundledSidecar) candidates.splice(2, 0, bundledSidecar);
+  return candidates.find((p) => existsSync(p)) ?? null;
 }
 
 /** Routes that are HOST-ONLY: remote-access management, version updates, plus host/app control. Refused to
@@ -222,7 +225,8 @@ export async function handleRemoteRoutes(
   // with. Host-only like every /api/remote/* route (isHostOnlyRoute covers the prefix), so a tailed-in
   // guest can never make the host machine download and install an executable.
   if (p === "/api/remote/helper/status") {
-    return json(auxHelperStatus());
+    const status = auxHelperStatus();
+    return json(remote && remote.getState().phase !== "unavailable" ? { ...status, installed: true, installedTag: undefined } : status);
   }
   if (p === "/api/remote/helper/download" && req.method === "POST") {
     return await downloadHelper();
@@ -308,6 +312,8 @@ export function setupRemoteAccess(deps: {
   studioDir: string;
   makeHandler: MakeHandler;
   createSidecar?: typeof createSidecarManager;
+  /** Verified helper materialized by this executable before the server starts. */
+  bundledSidecar?: string;
   /** Resolves when the library first unlocks; absent means the settings are readable now. */
   ready?: Promise<unknown>;
 }): RemoteAccessHandle {
@@ -329,7 +335,7 @@ export function setupRemoteAccess(deps: {
   }
   try {
     const remote = (deps.createSidecar ?? createSidecarManager)({
-      resolveBin: resolveSidecarBin,
+      resolveBin: () => resolveSidecarBin(deps.bundledSidecar),
       untrustedUpstream: untrustedServer ? `127.0.0.1:${untrustedServer.port}` : null,
       unavailableDetail: untrustedServer ? undefined : "The private-mesh listener could not start. Restart the studio to retry. LAN mode remains available.",
       sharedSecret,

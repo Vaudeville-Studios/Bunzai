@@ -9,6 +9,6 @@ export {
   inlineScriptHashes, injectSessionMeta, injectSandboxOriginMeta, readBodyCapped, checkApiRequest,
 } from "./server-security";
 
-export function startUi(port: number, studioDir: string, packaged?: PackagedAssets, library?: LibraryHandle) {
-  return startUiWithRoutes(createHandler, port, studioDir, packaged, library);
+export function startUi(port: number, studioDir: string, packaged?: PackagedAssets, library?: LibraryHandle, bundledSidecar?: string) {
+  return startUiWithRoutes(createHandler, port, studioDir, packaged, library, bundledSidecar);
 }

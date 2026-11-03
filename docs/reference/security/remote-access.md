@@ -139,12 +139,25 @@ though it is the owner's own account (`deviceTracker`, `sidecar/main.go`). On LA
 
 ## Where the sidecar binary comes from
 
-The sidecar is compiled Go, and it is **not** inside `Bunzai.exe`. Three locations are checked, in this
-order (`sidecarCandidates`, `src/ui/server-remote.ts`):
+Supported packaged desktop and CLI builds include their matching compiled Go helper inside the app.
+`scripts/sidecar-bake.ts` selects exactly the compile target's asset from `SIDECAR_TARGETS`; a missing
+asset fails the build. The generated file-loader module is restored to a null placeholder after
+compilation, so a source checkout does not claim to contain an embedded helper.
+
+Before starting the Studio, the desktop and CLI entrypoints prepare the embedded helper without a
+network request or process start (`src/ui/remote/bundled-sidecar.ts`). They check its target, size and
+SHA-256, then atomically extract it into the product's per-user support directory at
+`sidecar/bundled/<sha256>/sidecar` (`sidecar.exe` on Windows). Existing cached bytes must match before
+reuse. Each digest has its own path, so an app update does not overwrite an older running helper.
+Preparation does not enable remote access or change its saved setting. A failed preparation leaves the
+local Studio usable and does not hand an unverified path to the sidecar manager.
+
+The resolver checks these locations in order (`src/ui/server-remote.ts`):
 
 1. the repository's own `sidecar/` folder, where `bun sidecar/build.ts` writes it - the from-source path;
 2. a `sidecar/` folder beside the running executable, for anyone who places one there deliberately;
-3. the aux-package cache under the per-user support directory, where a requested download installs it.
+3. the verified bundled helper path returned by preparation, when present;
+4. the aux-package cache under the per-user support directory, where a requested download installs it.
 
 None present means the mesh path reports **`unavailable`**, its own `RemotePhase`, distinct from both `off`
 and `error`. `off` is a switch the owner can flip and `error` invites a retry; a build with no helper can do
@@ -159,8 +172,9 @@ not there. LAN mode is unaffected and needs no helper at all.
 
 ## The aux package: fetching the helper on request
 
-The helper is roughly 31 MB, so it ships as a **release asset** rather than inside the app, and the owner
-fetches it with an explicit click. This is a download-and-execute path and is built as one
+Separate helper release assets remain available for source checkouts, older apps and recovery. Current
+supported app builds already carry the helper; they do not need this extra download. The optional
+host action is a download-and-execute path and is built as one
 (`src/ui/remote/aux-download.ts`, `aux-install.ts`):
 
 - **A SHA-256 pin is the integrity control, and it is COMMITTED** (`src/ui/remote/sidecar-pins.ts`), pinned
@@ -189,14 +203,18 @@ fetches it with an explicit click. This is a download-and-execute path and is bu
 The host allowlist is defence in depth, not the guarantee. If GitHub renames its asset host, this loses
 availability and keeps integrity, which is the correct way round.
 
-The installed helper is **not** re-hashed before each spawn. It lives in the owner's own per-account support
+The optionally downloaded helper is **not** re-hashed before each spawn. It lives in the owner's own per-account support
 directory, so anyone able to rewrite it can equally rewrite `Bunzai.exe`; re-verifying would defend
 against an attacker who already holds the account. There is deliberately no "your helper is out of date"
 signal either: the pinned hash changes on every release whether the helper changed or not, so a staleness
-warning derived from it would fire after every app update about a helper that works. The panel reports which
-release the installed helper came from when its download marker is known. An unmarked helper is described as installed locally; fetching it again is offered only when this build has a published pin. A newly installed local helper becomes available on the next status read without enabling mesh access. Downloading also leaves mesh off; the refreshed status exposes a separate explicit Enable action.
+warning derived from it would fire after every app update about a helper that works. The panel reports
+helper availability without naming a release: a source, sibling or bundled helper may take precedence
+over the downloaded cache, so its download marker does not prove which helper is selected. Fetching
+again is offered only when this build has a published pin. A newly installed local helper becomes
+available on the next status read without enabling mesh access. Downloading also leaves mesh off;
+the refreshed status exposes a separate explicit Enable action.
 
-The committed Bunzai download pin table remains empty until Bunzai publishes its own helper assets. A locally built Bunzai helper can use the product-specific support directory without pretending to be a published release.
+The committed Bunzai download pin table names the published v0.1.53 Windows x64 and Linux x64/ARM64 helpers. That release has no macOS helper asset, so macOS offers no download. A locally built helper can use the product-specific support directory without pretending to be a published release.
 
 ## Sidecar lifecycle
 
@@ -237,3 +255,20 @@ layer.
   been verified live from a phone reaching the studio.
 
 The October 31 coexistence changes have isolated real-handler HTTP and lifecycle regressions. This pass does not claim a real Tailscale sign-in, physical-device LAN journey or new cross-platform packaged verification.
+
+## Local-access certificate dependency and failures
+
+Local network access creates its self-signed HTTPS certificate with installed OpenSSL. The host first
+uses OpenSSL on PATH. On Windows it also checks the standard Git for Windows installation's `usr/bin`
+and `mingw64/bin` executables. No certificate command downloads or installs an executable. If none is
+available, the settings card explains how to install OpenSSL or Git for Windows and permits retry.
+Certificate-generation and fingerprint failures remain failures; the UI does not claim local access is on.
+Enable, disable, approval, denial and removal errors appear in the card. Host-only management, connect
+codes and explicit device approval remain required.
+
+The isolated `lan-tls.test.ts` regression starts a real ephemeral HTTPS listener, validates its IP SAN and
+fingerprint, confirms an unapproved request cannot reach the app, and stops the listener afterward.
+This is source-level listener proof, not verification of an already installed binary or a physical device.
+
+The v0.1.53 helper pins were verified against the published SHA256SUMS and downloaded bytes.
+Updating source pins does not retrofit an already installed binary.

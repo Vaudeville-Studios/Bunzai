@@ -11,7 +11,7 @@ Choose an asset attached to this release for your operating system and processor
 
 macOS release binaries are currently held back. Use a source checkout on macOS until a macOS release is published.
 
-The CLI prints the local address to open in a browser. Kit is available from a source checkout for development and is not included in release downloads. The `sidecar-*` files support the optional remote-access helper and are not opened directly.
+The CLI prints the local address to open in a browser. Each supported app executable includes its matching remote-access helper and prepares a verified local copy automatically, without a second download. Remote access stays off until you enable it in Settings. Separate `sidecar-*` files remain available for source setups and recovery; do not open them directly. Kit is available from a source checkout for development and is not included in release downloads.
 
 This release includes `SHA256SUMS`. Compare the checksum for the exact asset you downloaded before opening it. A Windows reputation warning does not tell you whether a file is safe; verify the release source and checksum, or cancel if you cannot establish that you trust the file. Do not treat the warning itself as a reason to bypass Windows protections.
 

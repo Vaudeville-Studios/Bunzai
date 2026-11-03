@@ -2,14 +2,13 @@
  * The aux-package download: fetching the remote-access helper binary on demand, verified against a hash
  * baked into this build.
  *
- * WHY THIS EXISTS. The helper is ~31 MB of Go. Embedding it in every Bunzai.exe would add that to a
- * download most people never enable, and shipping it beside the exe would end the one-file install. So it
- * is a release asset the user fetches with an explicit click, once.
+ * Supported app downloads include their matching helper. This explicit download remains a recovery
+ * path for source checkouts and older or incomplete installations; it never runs automatically.
  *
  * THIS IS A DOWNLOAD-AND-EXECUTE PATH, and it is treated as one.
  *
- *   - The SHA-256 PIN is the integrity control, and it is baked at build time from the exact file the
- *     release uploads. Bytes that do not match the pin are discarded and never reach the disk path the
+ *   - The committed SHA-256 PIN is the integrity control, verified against published release bytes.
+ *     Bytes that do not match the pin are discarded and never reach the disk path the
  *     spawner reads. The host allowlist below is defence in depth, NOT the guarantee: if GitHub changes
  *     its asset host tomorrow, this loses availability and keeps integrity, which is the correct way
  *     round.

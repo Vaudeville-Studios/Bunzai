@@ -17,6 +17,15 @@ samples/**/*.charx
 design/_serve.cjs
 *.bun-build
 
+# Generated remote-access helper executables; shipped inside release binaries.
+/sidecar/sidecar
+/sidecar/sidecar.exe
+/sidecar/sidecar-windows-x64.exe
+/sidecar/sidecar-linux-x64
+/sidecar/sidecar-linux-arm64
+/sidecar/sidecar-darwin-x64
+/sidecar/sidecar-darwin-arm64
+
 # Agent-tooling state: never ships
 .agents/
 .claude/

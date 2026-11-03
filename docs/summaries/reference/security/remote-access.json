@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/security/remote-access",
   "sourcePath": "docs/reference/security/remote-access.md",
-  "sourceHash": "sha256:30b6f6ab5a2246d8d25fc8bd74989fa309e8b86c392648b550efd7d8c811439f",
-  "summary": "Bunzai remote access is off by default and managed from Settings. Tailscale supplies an encrypted private link gated by the studio owner's numeric account identity, while LAN requires a random connect code followed by host approval. Trusted loopback requests use Host, Origin and session-token checks. Every Studio instance owns a separate ephemeral private loopback listener, passes its actual address to its helper, and authenticates it with a per-boot secret refused by the trusted door. Failed private binding disables mesh while local Studio and LAN remain available. Failed primary startup releases its private listener, and shutdown prevents deferred automatic resume. Host-only controls remain unavailable to remote clients. The helper is found in the source tree, beside the executable or in the product-specific support cache. Downloads require an explicitly published SHA-256 pin, bounded HTTPS fetching and verified bytes before installation. Locally supplied helpers carry no invented release marker; readiness can refresh without enabling mesh, and redownload is shown only when offered. Downloading leaves mesh off until a separate explicit Enable action. The manager kills only its owned child and ignores stale output. Isolated real-handler tests prove concurrent listener and lifecycle isolation. Earlier device evidence is separate from this pass, which does not claim new tailnet activation or physical-device verification.",
+  "sourceHash": "sha256:f2206c24388b8b927ce6cc8fd7e4295acc1ea545480ec636f8fb7c45790da61c",
+  "summary": "Bunzai remote access is off by default and host-managed in Settings. Tailscale gates the private link by the owner's numeric account identity; LAN requires a random code and host approval. Separate authenticated loopback listeners and host-only routes preserve management authority. Supported packaged builds embed exactly their compile target's Go helper. Startup verifies its target, size and SHA-256, then atomically extracts it to a digest-specific per-user cache before the Studio starts. Cached bytes must match before reuse; old versions keep separate paths. Preparation neither downloads nor starts a helper, changes no setting and does not enable mesh. Failure leaves local Studio usable and supplies no unverified bundled path. Explicit source and beside-executable helpers precede the prepared bundled path, followed by the optional downloaded helper. Source checkouts carry a null generated placeholder. Recovery downloads retain committed release pins, bounded HTTPS fetching and verified installation. Missing macOS assets are not invented. OpenSSL resolves through PATH or standard Git for Windows directories; LAN operation failures are visible and retryable. Tests and earlier live evidence have specific boundaries; this reference does not turn source tests into installed-binary or physical-device guarantees.",
   "topics": [
     "remote access off by default",
     "Tailscale owner gate",
@@ -86,10 +86,10 @@
           "sourceHash": "sha256:494a3a1a081c306223cc8e25e6b45ac3c3fae51186846604d8e8f8874f542e86",
           "summary": "The session cookie requires Secure and HttpOnly with SameSite Lax and Path slash. A browser that cannot retain a Secure cookie must fail closed. The login route bounds JSON and code length; verification has synchronous per-IP and global admission without an unbounded queue. Attempt and session counts are capped, with expiry swept before admitting a session. Reset generations invalidate old hashes, comparisons and issuance immediately, and disabling LAN also invalidates pending listener startup. These are transport and admission protections rather than a measured browser compatibility guarantee.",
           "topics": [
-            "HttpOnly SameSite Lax",
-            "no Secure attribute",
-            "self-signed not secure context",
-            "avoid stuck re-enter code"
+            "Secure HttpOnly cookie",
+            "SameSite Lax",
+            "bounded login admission",
+            "reset generation invalidation"
           ],
           "children": []
         }
@@ -130,14 +130,14 @@
       "slug": "where-the-sidecar-binary-comes-from",
       "title": "Where the sidecar binary comes from",
       "level": 2,
-      "sourceHash": "sha256:acf93a4030d4cc6498babc7df8c9463391759cbf745a309f12249487e0a7eaf4",
-      "summary": "The sidecar is compiled Go and is not inside Bunzai.exe. sidecarCandidates in server-remote checks three locations in order: the repository sidecar folder that bun sidecar/build.ts writes, a sidecar folder beside the running executable, and the aux-package cache where a requested download installs it. None present reports unavailable, its own RemotePhase distinct from off and error, because off is a switch the owner can flip and error invites a retry while a build with no helper can do neither; the panel says so up front and offers no Enable control instead of spawning a path that is not there. LAN mode needs no helper. The beside-the-executable candidate is load-bearing: deriving the path from import.meta.url alone is correct from source and meaningless once compiled, resolving onto the Bun virtual filesystem, so every packaged studio failed to start remote access and surfaced a raw uv_spawn ENOENT. Pinned by server-remote.test.ts.",
+      "sourceHash": "sha256:4080b96a826f885c426782a0604deb397aa10b319fff7cf977de5eb65064f14c",
+      "summary": "Supported desktop and CLI builds embed exactly the helper named by their compile target in SIDECAR_TARGETS. A missing asset fails the build; the generated file-loader module returns to a null placeholder after compilation. Before serving, desktop and CLI startup verify target, size and SHA-256, then atomically extract into a per-user sidecar/bundled/digest path. Existing cached bytes are verified before reuse. Different versions have different paths, avoiding replacement of an older running helper. Preparation makes no network request, starts no process and changes no remote-access setting. Failure keeps local Studio usable and supplies no unverified path. Resolution prefers the repository helper, then a deliberate sibling helper, then the verified bundled path, then the optional downloaded cache. If none exists, mesh is unavailable and no Enable control is offered. LAN remains independent. The sibling candidate fixes the prior compiled virtual-filesystem path error.",
       "topics": [
-        "three candidate locations",
-        "unavailable RemotePhase",
-        "packaged path resolution bug",
-        "no Enable control offered",
-        "LAN needs no helper"
+        "target-specific embedded helper",
+        "verified atomic extraction",
+        "digest-versioned cache",
+        "source sibling bundled downloaded precedence",
+        "unavailable remote phase"
       ],
       "children": []
     },
@@ -145,10 +145,10 @@
       "slug": "the-aux-package-fetching-the-helper-on-request",
       "title": "The aux package: fetching the helper on request",
       "level": 2,
-      "sourceHash": "sha256:8ae4ad8171d660b30d89dfe298fe0865e491c2fb27af45849fe430c3b67fa723",
-      "summary": "The helper is a separate release asset fetched only by an explicit host action. Committed SHA-256 pins are reviewed like dependencies; the pinning script downloads every selected asset and verifies it against the release checksum inventory. The protocol is version-compatible independently of the app release. Downloads enforce bounded streaming, HTTPS and the existing GitHub redirect allowlist. Verification precedes installation into the executable path, and sibling staging plus rename avoids publishing partial downloads. Helper management is host-only. Installed helpers are not rehashed on every launch, and no staleness signal is inferred from build hashes. A known download marker names its release; an unmarked helper is labeled locally installed. Redownload controls appear only when a published pin exists. Bunzai pins remain empty until its own published assets exist; a local product-specific build does not imply a published release. Download never enables mesh; refreshed readiness presents a separate explicit Enable action.",
+      "sourceHash": "sha256:be3fe8619a81fd0156b8eb018d3240972bdf372ce27132fbbe6e56fda3234b74",
+      "summary": "Separate helper release assets remain a recovery path for source checkouts and older apps; current supported app builds already include a helper. Recovery downloads require an explicit host action, reviewed committed SHA-256 pins and bounded HTTPS fetching with the GitHub redirect allowlist. The pinning script verifies selected release assets against the published checksum inventory. Verification precedes atomic installation, and helpers remain executable only by the owner on POSIX. The downloaded helper is not rehashed before every spawn, and build hashes do not create a staleness warning. The panel reports availability without a release name, because source, sibling or bundled helpers may shadow the downloaded cache; its marker does not prove which helper is selected. Redownload is offered only when a pin exists. The committed v0.1.53 pins cover Windows x64 and Linux x64/ARM64, with no macOS helper asset. Downloading does not enable mesh; readiness refresh exposes a separate explicit Enable action. Embedded build metadata remains separate from published recovery-download pins.",
       "topics": [
-        "SHA-256 pin baked at build",
+        "committed release download pins",
         "verify before writing bytes",
         "atomic rename install",
         "single inspected redirect",
@@ -185,6 +185,20 @@
         "aux-download refusal tests",
         "release workflow shape pinned",
         "live LAN end-to-end"
+      ],
+      "children": []
+    },
+    {
+      "slug": "local-access-certificate-dependency-and-failures",
+      "title": "Local-access certificate dependency and failures",
+      "level": 2,
+      "sourceHash": "sha256:793909af02499fcb1dc3e74b987f6e4ff729168ddd38ef73925475d1c704b987",
+      "summary": "Local network access uses installed OpenSSL to create its self-signed HTTPS certificate. Discovery checks PATH first and standard Git for Windows usr/bin and mingw64/bin locations on Windows. It downloads or installs no certificate executable. Missing OpenSSL produces installation guidance and allows retry. Generation and fingerprint failures remain errors, and the card displays failures from enable, disable, approval, denial and removal operations. Connect codes, explicit device approval and host-only management remain required. The isolated TLS regression starts an ephemeral real HTTPS listener, checks its IP SAN and fingerprint, verifies an unapproved request stays gated, and stops the listener. This is source listener evidence; it does not verify installed binaries or physical devices.",
+      "topics": [
+        "installed OpenSSL discovery",
+        "visible local-access failures",
+        "isolated HTTPS regression",
+        "verification limits"
       ],
       "children": []
     }

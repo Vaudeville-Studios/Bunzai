@@ -22,6 +22,7 @@ import { claimDesktopPort, desktopPortOverride } from "./desktop-port";
 import { focusExisting } from "./desktop-focus";
 import { detachEnvironFromGtk } from "./desktop-env";
 import { webviewWorkerEnv } from "./desktop-webview-lib";
+import { prepareAppSidecar } from "./ui/remote/bundled-sidecar";
 
 const TITLE = "Bunzai.";
 
@@ -45,8 +46,9 @@ async function boot(): Promise<void> {
   // running owns the library, so a second launch brings its window forward and exits (decision 9);
   // only if there is no window to raise does it open one onto the running studio.
   const library = createLibrary(studioDir);
+  const bundledSidecar = await prepareAppSidecar();
   const { server, ours } = await claimDesktopPort(portOverride, (port) => {
-    const { instanceId, url, stop, close } = startUi(port, studioDir, assets, library);
+    const { instanceId, url, stop, close } = startUi(port, studioDir, assets, library, bundledSidecar);
     return { instanceId, url, stop, close };
   });
   const { url: uiUrl, stop, close } = server;

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/security/remote-access",
   "sourcePath": "docs/reference/security/remote-access.md",
-  "sourceHash": "sha256:30b6f6ab5a2246d8d25fc8bd74989fa309e8b86c392648b550efd7d8c811439f",
-  "semanticSummaryHash": "sha256:1139a6ce1067f9b095f4f70a5b6ba78f3c6dde315b5719cc74f61e07c583b8b4",
+  "sourceHash": "sha256:f2206c24388b8b927ce6cc8fd7e4295acc1ea545480ec636f8fb7c45790da61c",
+  "semanticSummaryHash": "sha256:7114aec5fad20ef51b50f57bf262506c63f4fede9cbb8bf071410b7e91645e2d",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root independently reviewed per-instance upstreams, local helper readiness, owned child lifecycle, LAN authentication descriptions and evidence limits; explicitly approved the stale topic correction to Secure approval cookie.",
-  "reviewedAt": "2026-11-01T03:11:43.593Z"
+  "notes": "Root independently reviewed embedded helper extraction and lookup precedence, committed recovery-download pins, availability-only provenance and source verification limits.",
+  "reviewedAt": "2026-11-03T03:22:52.202Z"
 }

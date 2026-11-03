@@ -17,6 +17,7 @@ import { useVisibleInterval } from "../../../_shared/use-visible-interval";
 import { mask } from "./redact";
 import { Button } from "../../../components/button";
 import styles from "./remote-access.module.css";
+import { toErrorMessage } from "../../../_shared/error-message";
 
 const OFF: LanStatus = { on: false, code: "", url: "", fingerprint: "", pending: [], connected: [] };
 
@@ -31,6 +32,7 @@ export function LanCard({
 }): JSX.Element | null {
   const [lan, setLan] = useState<LanStatus>(OFF);
   const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
   const aliveRef = useRef(true);
 
   const poll = async (): Promise<void> => {
@@ -56,12 +58,10 @@ export function LanCard({
 
   const run = (p: Promise<LanStatus>): void => {
     setBusy(true);
-    p.then(setLan)
-      .catch(() => {})
-      .finally(() => setBusy(false));
-  };
-  const settle = (p: Promise<LanStatus>): void => {
-    p.then(setLan).catch(() => {});
+    setProblem(null);
+    p.then((state) => { if (aliveRef.current) setLan(state); })
+      .catch((error: unknown) => { if (aliveRef.current) setProblem(toErrorMessage(error, "Local access could not be changed. Try again.")); })
+      .finally(() => { if (aliveRef.current) setBusy(false); });
   };
 
   if (!lan.on) {
@@ -78,6 +78,7 @@ export function LanCard({
             Enable local access
           </Button>
         </div>
+        {problem && <p role="alert" className={styles.bad}>{problem}</p>}
       </div>
     );
   }
@@ -93,6 +94,7 @@ export function LanCard({
       <div className={styles.cardBody}>
         On a device on this network, open the link and enter this code. Only enable on a network you trust.
       </div>
+      {problem && <p role="alert" className={styles.bad}>{problem}</p>}
       <div className={styles.code}>{redacted ? mask(lan.code) : lan.code}</div>
       {lan.url && <span className={styles.urlbar}>{redacted ? mask(lan.url) : lan.url}</span>}
       {lan.fingerprint && (
@@ -109,10 +111,10 @@ export function LanCard({
             <div key={d.id} className={styles.deviceRow}>
               <span className={styles.deviceName}>{redacted ? mask(d.label) : d.label}</span>
               <div className={styles.actions}>
-                <Button size="sm" onClick={() => settle(ctx.api.remoteLanApprove(d.id))}>
+                <Button size="sm" disabled={busy} onClick={() => run(ctx.api.remoteLanApprove(d.id))}>
                   Approve
                 </Button>
-                <Button size="sm" variant="danger" onClick={() => settle(ctx.api.remoteLanDeny(d.id))}>
+                <Button size="sm" variant="danger" disabled={busy} onClick={() => run(ctx.api.remoteLanDeny(d.id))}>
                   Deny
                 </Button>
               </div>
@@ -127,7 +129,7 @@ export function LanCard({
           {lan.connected.map(/* bounded-ok: fixed category set, per-item detail, capped or short by construction */ (d) => (
             <div key={d.id} className={styles.deviceRow}>
               <span className={styles.deviceName}>{redacted ? mask(d.label) : d.label}</span>
-              <Button size="sm" variant="danger" onClick={() => settle(ctx.api.remoteLanKick(d.id))}>
+              <Button size="sm" variant="danger" disabled={busy} onClick={() => run(ctx.api.remoteLanKick(d.id))}>
                 Remove
               </Button>
             </div>

@@ -62,10 +62,10 @@ jobs:
         with:
           bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
-      # The optional remote-access helper, published as its own asset. The app does NOT carry it: users who
-      # want the private-mesh link fetch it from this release on request, checked against the hashes
-      # committed in src/ui/remote/sidecar-pins.ts. After a release that changes the helper, run
-      # `bun scripts/pin-sidecar.ts <tag>` and commit the result.
+      # Build the helper before the app bake embeds the matching asset in each executable.
+      # Separate helper assets remain available for source setups and recovery. Their optional
+      # download pins stay committed in src/ui/remote/sidecar-pins.ts; after a helper change,
+      # run `bun scripts/pin-sidecar.ts <tag>` against the published release and commit the result.
       - name: Build the remote-access helper
         run: bun sidecar/build.ts --target=windows-x64
       - name: Build Bunzai.exe + Windows CLI

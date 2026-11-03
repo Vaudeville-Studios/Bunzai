@@ -18,6 +18,7 @@ import { bundleBrowser, PROD_REACT_DEFINE, VENDOR_SPECS, type BundleOptions } fr
 import { bakeFormatRegistry } from "./format-bake";
 import { exampleThemeInventory, themeInventory } from "../src/extensions/theme-inventory";
 import { inspectThemePackage } from "../src/extensions/theme-contract";
+import { bakeSidecar, SIDECAR_PLACEHOLDER } from "./sidecar-bake";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const uiDir = join(root, "src", "ui");
@@ -304,6 +305,7 @@ await mkdir(join(root, "dist"), { recursive: true });
 const desktopDefaultOut = process.platform === "win32" ? "dist/Bunzai.exe" : `dist/bunzai-${process.platform}-${process.arch}`;
 try {
   if (!skipDesktop) {
+    await bakeSidecar(root, `${process.platform}-${process.arch}`);
     const compile = Bun.spawnSync(
       [
         process.execPath, "build", "--compile", ...NO_PROPRIETARY_SDK,
@@ -328,6 +330,7 @@ try {
     console.log(`${desktopOutfile ?? desktopDefaultOut} ready`);
   }
   for (const target of cliTargets) {
+    await bakeSidecar(root, target);
     const short = target.replace(/^bun-/, "");
     // "cli" is in the name on purpose. These are terminal tools, and a Windows user who
     // double-clicks a bare `bunzai-windows-x64.exe` sees a console flash and vanish, which reads
@@ -343,6 +346,7 @@ try {
   }
 
   if (buildKit) {
+    await bakeSidecar(root, `${process.platform}-${process.arch}`);
     // Host platform only, and named for it, since this binary cannot be built anywhere else.
     const arch = process.arch === "arm64" ? "arm64" : "x64";
     const os = process.platform === "win32" ? "windows" : process.platform === "darwin" ? "darwin" : "linux";
@@ -360,4 +364,5 @@ try {
 } finally {
   // win or lose, the worktree goes back to the placeholder: the bake lives in the exe, not the repo
   await Bun.write(join(genDir, "packaged-assets.ts"), PLACEHOLDER);
+  await Bun.write(join(genDir, "packaged-sidecar.ts"), SIDECAR_PLACEHOLDER);
 }

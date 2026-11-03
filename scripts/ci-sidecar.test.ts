@@ -39,6 +39,15 @@ test("required test job vets, tests, and builds the sidecar", async () => {
   expect(requiredJob.match(/working-directory: sidecar/g)).toHaveLength(3);
 });
 
+test("scale evidence builds the matching helper before compiling the app", async () => {
+  const body = jobBlock(await Bun.file(workflowUrl).text(), "scale-evidence");
+  expect(body).toContain("go-version-file: sidecar/go.mod");
+  expect(body).toContain("cache-dependency-path: sidecar/go.sum");
+  const helper = body.indexOf("bun sidecar/build.ts --target=windows-x64");
+  expect(helper).toBeGreaterThanOrEqual(0);
+  expect(helper).toBeLessThan(body.indexOf("bun run scripts/build-desktop.ts"));
+});
+
 test("the release builds helpers for its Windows and Linux targets", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
   for (const flag of ["windows-x64", "linux-x64", "linux-arm64"]) {
@@ -121,5 +130,14 @@ test("a committed pin is a full SHA-256 and names a real target asset", async ()
     expect(pin.asset).toBe(spec!.asset);
     expect(pin.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(pin.tag).toMatch(/^[A-Za-z0-9._-]+$/);
+  }
+});
+
+test("standalone app builds carry their matching helper and prepare it before serving", async () => {
+  const build = await Bun.file(new URL("./build-desktop.ts", import.meta.url)).text();
+  expect(build).toContain("bakeSidecar");
+  for (const entry of ["desktop.ts", "cli.ts"]) {
+    const code = await Bun.file(new URL(`../src/${entry}`, import.meta.url)).text();
+    expect(code).toContain("prepareAppSidecar");
   }
 });

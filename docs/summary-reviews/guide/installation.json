@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:67ceea2908fe3161e52f39bf90ea53d320579abee601e04c635a0c99ba86a1eb",
-  "semanticSummaryHash": "sha256:954e92cf9a66b00eebba5bec7779400116696c64930ed786af6440e40b3bce94",
+  "sourceHash": "sha256:3ac44baa5a78e80ccb04f7389c54c3f392af7e1671804f6741a46bdbfc48ed58",
+  "semanticSummaryHash": "sha256:7955de69ca09bb9c3ed01f9c92f5ea0b6dd2b6b1152b8a76e0ff9793f8beead6",
   "verdict": "APPROVE",
-  "reviewer": "integration_review",
-  "notes": "reviewed_installation_assets_webview2_and_source_fallback",
-  "reviewedAt": "2026-11-02T08:51:45.568Z"
+  "reviewer": "root",
+  "notes": "Root independently reviewed installation source and semantic summary against target-specific embedded helper packaging, older-build recovery and explicit remote-enable behavior.",
+  "reviewedAt": "2026-11-03T03:22:51.949Z"
 }

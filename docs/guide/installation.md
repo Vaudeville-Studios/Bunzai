@@ -13,6 +13,13 @@ related: [guide/getting-started, guide/troubleshooting, reference/ui]
 
 Check the [GitHub Releases page](https://github.com/Vaudeville-Studios/Bunzai/releases) for available packaged files. Published releases provide the Windows desktop app, Windows x64 CLI, Linux x64 and arm64 CLIs, and optional remote-access helper assets. macOS release binaries are held back, so use a source checkout on macOS. If no release is listed, the source checkout below is the supported usable path; do not download an old or guessed asset URL.
 
+New supported app builds include the remote-access helper in the same executable. On startup the app
+prepares a verified local copy automatically, with no second download. Remote access stays off until
+you enable it in **Settings > Remote access**. Separate `sidecar-*` release assets are for source
+setups, older builds and recovery; do not open them directly. An already installed older executable
+does not gain a bundled helper from a source update: replace it with a release that includes this
+packaging change, or use the verified helper download offered in Settings.
+
 Kit is available from a source checkout for development and is not included in release downloads. The browser-only [Studio preview](https://vaudeville-studios.github.io/Bunzai/studio/) is useful for trying import, editing, and export, but its data is held in the tab and disappears when the page is reloaded. Playing scenes requires the installed app.
 
 ## Run from source
@@ -76,6 +83,7 @@ The update commands do not delete your studio folder, though a newer program may
 - **The address differs from 8321:** Bunzai prints the address it actually bound. Open that address, not a guessed port.
 - **The Windows desktop app starts without a window:** Windows desktop builds use WebView2. Microsoft's [distribution guide](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution) explains the runtime requirement; the [WebView2 download page](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) provides Microsoft's installer options.
 - **A binary does not match your computer:** packaged binaries are platform- and architecture-specific. Check the exact asset name and published checksum on the same GitHub release. The source workflow's platform list does not make an unpublished download available.
+- **The remote-access helper is unavailable:** current supported app builds include it. Older apps or source checkouts can use the verified helper download in **Settings > Remote access** when one is offered. If preparation fails, ordinary local Studio use remains available; the helper is not enabled by downloading or preparing it.
 
 ## Related guides
 

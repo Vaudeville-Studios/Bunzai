@@ -263,6 +263,8 @@ async function main(argv: string[]): Promise<number> {
 
   if (first === "ui") {
     await ensureFormats();
+    const { prepareAppSidecar } = await import("./ui/remote/bundled-sidecar");
+    const bundledSidecar = await prepareAppSidecar();
     const { startUi } = await import("./ui/server");
     const { claimPort } = await import("./ui/port-owner");
     const port = Number(args[1]) || 8321;
@@ -280,7 +282,7 @@ async function main(argv: string[]): Promise<number> {
      * starting at all. The port actually in use is printed below, and is the only URL that works.
      */
     const { server: started, port: bound } = await claimPort(port, 10, (p) =>
-      startUi(p, studioDir, PACKAGED_ASSETS ?? undefined, library));
+      startUi(p, studioDir, PACKAGED_ASSETS ?? undefined, library, bundledSidecar));
     const opened = await library.open();
     if (bound !== port) {
       console.log(`\n  Port ${port} is held by something that is not Bunzai - using ${bound}.`);

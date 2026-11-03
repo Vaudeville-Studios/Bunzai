@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:67ceea2908fe3161e52f39bf90ea53d320579abee601e04c635a0c99ba86a1eb",
-  "summary": "Check GitHub Releases for packaged Windows desktop, Windows x64 CLI, Linux x64 and arm64 CLI, and optional helper assets; macOS release binaries are held back. When no release is listed, the source checkout remains the usable local install path. Kit is available only from source. The guide also covers the pinned Bun version, recursive RP-Core submodule, local Studio launch, first-run choices, Library import, provider setup for scene replies, encrypted library backups, source updates, and common startup issues. The browser preview is temporary and is not a replacement for the installed local Studio. Use the printed local address and keep recovery material separate from the computer.",
+  "sourceHash": "sha256:3ac44baa5a78e80ccb04f7389c54c3f392af7e1671804f6741a46bdbfc48ed58",
+  "summary": "Check GitHub Releases for Windows desktop, Windows x64 CLI and Linux x64/ARM64 CLI downloads; macOS binaries remain held back. New supported app builds include their matching remote helper in the same executable and prepare a verified local copy automatically without a second download. Mesh stays off until enabled in Settings. Separate helper assets serve source setups, older builds and recovery; older installed apps need replacement or the verified Settings download. The guide covers pinned Bun, recursive RP-Core checkout, local Studio launch, first-run choices, Library import, provider setup, encrypted-library backups, source updates and startup troubleshooting. The browser preview is temporary, and Kit remains source-only. Use the printed local address and keep recovery material separate from the computer.",
   "topics": [
     "source install and pinned Bun",
     "recursive RP-Core submodule",
@@ -17,14 +17,16 @@
       "slug": "what-is-available-today",
       "title": "What is available today",
       "level": 2,
-      "sourceHash": "sha256:a3068bf945b107ff23c9ccdd71d59b583192a22def797f02d5c8563e804b247c",
-      "summary": "The GitHub Releases page is the source for packaged Windows desktop, Windows x64 CLI, Linux x64 and arm64 CLI, and optional helper assets; macOS binaries are held back. When no release is listed, the source checkout below is the usable local installation path. The browser-only preview keeps its data in the tab and loses it on reload, and Kit remains source-checkout only. Playing scenes requires the installed application, while the browser preview can be used to explore temporary import, editing, and export flows.",
+      "sourceHash": "sha256:37bfeb5573879f84319e028ce4869bdc3d3d26262fcc7592ce7b1e03d516f8a2",
+      "summary": "GitHub Releases is the authority for packaged Windows desktop, Windows x64 CLI and Linux x64/ARM64 CLI files; macOS binaries are held back. New supported app builds contain the remote helper and prepare a verified local copy automatically without another download. Remote access remains off until the owner enables it in Settings. Separate helper files support source setups, older builds and recovery and should not be opened directly. An older installed executable does not gain embedded bytes from updating source: replace the app or use its verified Settings download. Source remains the usable path when no release exists. The browser preview loses tab data on reload; Kit remains source-only, and scene play requires the installed app.",
       "topics": [
         "conditional release downloads",
         "Windows and Linux release assets",
         "macOS binaries held back",
         "source checkout",
-        "temporary browser preview"
+        "temporary browser preview",
+        "included remote helper",
+        "older-build recovery"
       ],
       "children": []
     },
@@ -84,14 +86,15 @@
       "slug": "if-something-does-not-open",
       "title": "If something does not open",
       "level": 2,
-      "sourceHash": "sha256:561021a72110160b5e38f50c9bf9eb6014d83ca6843ca07382218574809aa357",
-      "summary": "If Bun is missing or the version is wrong, check bun --version against the checkout's 1.4.2 pin and follow Bun's official installation or upgrade instructions. If RP-Core or another package is missing, initialize recursive submodules and reinstall from the lockfile. When the server prints a port other than 8321, open that exact address. Windows desktop builds use WebView2; consult Microsoft's distribution and download pages for its runtime. If a release binary is published, confirm that its platform and architecture match and verify the checksum shown with that release. Unpublished workflow names are not valid download links.",
+      "sourceHash": "sha256:60f081821ddef927cf282dfea42139a97bf778148dc806bad1a2b22e1d0987aa",
+      "summary": "Check Bun against the checkout's 1.4.2 pin and use official installation or upgrade instructions. Missing RP-Core requires recursive submodule initialization and a frozen-lockfile install. Open the exact local address printed by the running server. Windows desktop apps require WebView2, documented by Microsoft's distribution and download pages. Release binaries must match the operating system and architecture and the release's checksum; workflow platform names do not create unpublished assets. Current supported app builds include the remote helper. Older builds and source checkouts may use the verified download offered in Settings. A preparation failure leaves ordinary local Studio use available. Preparing or downloading the helper does not enable remote access.",
       "topics": [
         "Bun version",
         "missing submodule",
         "actual bound port",
-        "WebView2 future build",
-        "asset checksum"
+        "WebView2 runtime",
+        "asset checksum",
+        "remote helper recovery"
       ],
       "children": []
     },

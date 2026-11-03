@@ -2,9 +2,9 @@
 import { createTurnRuntime } from "./scene-turn-runtime";
 import { ProviderError, type Provider, type ProviderCompletion, type ProviderEvent, type ProviderRequest } from "../stage/contracts/provider";
 import type { ChatStore } from "../stage/contracts/chat-store";
+import type { StateStore } from "../stage/contracts/state-store";
 import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
 import { memoryChatStore } from "../stage/store/chat-store";
-import { memoryStateStore } from "../stage/store/memory/state-store";
 import { runTurn, type Connected, type TurnEvent } from "./scene-turn";
 
 const vera = {
@@ -34,12 +34,12 @@ export function scripted(script: { pieces: string[]; end?: Partial<ProviderCompl
   return { provider, sent };
 }
 
-export async function scene(provider: Provider | null, opts: { connection?: boolean; extensionCommit?: boolean; userMessage?: string } = {}) {
+export const sceneFactory = (makeState: () => StateStore) => async (provider: Provider | null, opts: { connection?: boolean; extensionCommit?: boolean; userMessage?: string } = {}) => {
   let now = 1_000;
   const chats = opts.extensionCommit
     ? memoryChatStore(() => now, () => crypto.randomUUID(), { authorizeExtensionCommit: () => undefined })
     : memoryChatStore(() => now);
-  const state = memoryStateStore();
+  const state = makeState();
   const chat = await chats.createChat({ title: "Night", cast: { character: { id: "vera", version: 1 } }, snapshot: { character: vera } });
   if (opts.connection !== false) await chats.setConnection(chat.id, { id: "conn", model: "vera-1" });
   const [greeting, hello] = (await chats.appendMessages(chat.activeBranchId, [
@@ -56,7 +56,7 @@ export async function scene(provider: Provider | null, opts: { connection?: bool
     runTurn(deps, { chatId: chat.id, kind, expectedVersion: expectedVersion ?? (await version()) }, (event) => events.push(event), extensionCommit);
   const texts = async () => (await chats.readMessages(chat.activeBranchId, { limit: 50 })).messages.map((message) => message.swipes[message.current]!.content);
   return { chats, state, chat, greeting: greeting!, hello: hello!, deps, events, turn, texts, version };
-}
+};
 
 export async function waitFor(events: TurnEvent[], type: TurnEvent["type"]): Promise<void> {
   for (let i = 0; i < 200; i++) {

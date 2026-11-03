@@ -14,7 +14,9 @@ import { emptyLoreEntry, emptyLorebookBody } from "../core/lore";
 import { commitAnyway, discardWaiting, NoConnectionError, resumeScene, runTurn, stopTurn, type Connected, type TurnEvent } from "./scene-turn";
 import { StudioConflictError } from "./errors";
 import { varsOf } from "../core/scene-state/vars-bridge";
-import { lastOf, scene, scripted, turnIdOf, waitFor } from "./scene-turn-test-support";
+import { lastOf, sceneFactory, scripted, turnIdOf, waitFor } from "./scene-turn-test-support";
+
+const scene = sceneFactory(memoryStateStore);
 
 describe("a reply", () => {
   test("extension turns do not inherit narrator tools from the scene", async () => {

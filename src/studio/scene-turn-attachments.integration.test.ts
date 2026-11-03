@@ -4,7 +4,10 @@ import { ProviderError } from "../stage/contracts/provider";
 import type { PresetBody } from "../entities/preset/schema";
 import { runTurn, type TurnEvent } from "./scene-turn";
 import { answerReview } from "./scene-turn-review";
-import { lastOf, scene, scripted, waitFor } from "./scene-turn-test-support";
+import { lastOf, sceneFactory, scripted, waitFor } from "./scene-turn-test-support";
+import { memoryStateStore } from "../stage/store/memory/state-store";
+
+const scene = sceneFactory(memoryStateStore);
 
 describe("turn attachments and fallback", () => {
   test("inspection edits stay on the resolved file companion and the provider receives ordered attachments", async () => {

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:4b1b67fcbfb3f46a766b0d8cab47371486e082fb759bda7bc67b6b6d2e5a312d",
-  "semanticSummaryHash": "sha256:d584960f148cefbc422bbc8868446b0d27a1ed34f883ff6eb8e74f1244e1e679",
+  "sourceHash": "sha256:a6cf349555778889f69a4ab49013bd6f99b768354b8e622da6d48f08c573de01",
+  "semanticSummaryHash": "sha256:8ee80f4cc669adf43095ced3e665da257de926dfcb46804761e3718abd33ddd1",
   "verdict": "APPROVE",
   "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read the generated shared CharacterTextControl catalog entry and semantic additions; Workbench defaults and source control behavior remain with their existing owners.",
-  "reviewedAt": "2026-11-03T21:29:33.395Z"
+  "notes": "Root independently read generated ReaderPicker and updated scene/setup/conversation signatures plus semantic summaries; catalog remains discovery metadata.",
+  "reviewedAt": "2026-11-03T21:53:33.821Z"
 }

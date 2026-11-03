@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "guide/table-read",
   "sourcePath": "docs/guide/table-read.md",
-  "sourceHash": "sha256:a3b7b2cd623095fb176e4a7529a6aa3908815ca1f39242c728633b9a2370db83",
-  "summary": "Table Read creates an ordinary Library character by conversation beside an editable living card. Choose Cold Read, Deep Dive or a timed choices-only Rapid Fire round and an existing saved model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain accepted work. Review current draft works without a model, while Finish with the interviewer requests synthesis. Only Save character creates the Library card, and interrupted saves recover the same identity. Open character hands off to the normal Workbench. Encrypted backups retain interview progress; character exports do not include the conversation. Auxiliary lorebook/persona creation and temporary browser Studio support are excluded. The manuscript-table scene changes pose during requests and respects reduced motion. Workbench sections offer source/rendered text and fullscreen writing. Keep or Cancel resolves local edits; Updated marks accepted changes.",
+  "sourceHash": "sha256:9e29e8be10d5ca4b041b2b34773ac86371f6c5223dc71f7bdae1f2c9fdc0619b",
+  "summary": "Table Read creates an ordinary Library character by conversation beside real Workbench field controls. Choose Cold Read, Deep Dive or timed choices-only Rapid Fire and a saved model. Five reader appearances are cosmetic preferences, changeable without restarting the interview or changing the model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain work. Review uses the current draft without inference; Finish requests synthesis. Only Save creates a character, with interrupted saves recovering the same identity. Source/rendered prose and fullscreen writing support one local scratch field until Keep or Cancel. Encrypted backups retain progress; character exports omit the conversation. The scene respects reduced motion.",
   "topics": [
     "character interview",
     "saved models",
@@ -16,8 +16,8 @@
       "slug": "choose-the-pace-and-the-model",
       "title": "Choose the pace and the model",
       "level": 2,
-      "sourceHash": "sha256:f2ce0f543552c2c41d423b96b8a9e81f06e82fd9240b24044fe06782bce88a47",
-      "summary": "Choose Cold Read for about five questions with an eight-question ceiling, Deep Dive for bounded follow-ups, or Rapid Fire for a 90-second choices-only round whose deck is prepared first. Select a saved model or visit Connections. The idea, answers and card go to that provider, with its normal charges; unrelated Library pieces do not.",
+      "sourceHash": "sha256:9a3d424aee3b5966b1dad7585215ac0d4f9a2446d9686ef4e914794914cee28f",
+      "summary": "Choose Cold Read for about five questions with an eight-question ceiling, Deep Dive for bounded follow-ups, or Rapid Fire for a 90-second choices-only round whose deck is prepared first. Select a saved model or visit Connections. The idea, answers and card go to that provider, with its normal charges; unrelated Library pieces do not. Five reader appearances are cosmetic preferences, changeable during an interview without changing the model.",
       "topics": [
         "character interview",
         "saved models",

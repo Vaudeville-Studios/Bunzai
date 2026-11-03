@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/table-read",
   "sourcePath": "docs/guide/table-read.md",
-  "sourceHash": "sha256:a3b7b2cd623095fb176e4a7529a6aa3908815ca1f39242c728633b9a2370db83",
-  "semanticSummaryHash": "sha256:e2d34818d22dbf36d7e0cf2ce37a52eab0856f490315c1fde01ea5c4e3bb24cb",
+  "sourceHash": "sha256:9e29e8be10d5ca4b041b2b34773ac86371f6c5223dc71f7bdae1f2c9fdc0619b",
+  "semanticSummaryHash": "sha256:6e72c6738cb8e2f33956482402114081224da3847fc6597f5cff0eeef97478bb",
   "verdict": "APPROVE",
   "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read the Workbench-control user instructions and condensed semantic summary; staged Keep/Cancel and fullscreen behavior accurately described.",
-  "reviewedAt": "2026-11-03T21:29:33.103Z"
+  "notes": "Root independently read the guide and semantic summary: five cosmetic reader appearances, preference persistence, unchanged model and existing interview/edit/save behavior.",
+  "reviewedAt": "2026-11-03T21:53:33.539Z"
 }

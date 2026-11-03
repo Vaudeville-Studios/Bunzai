@@ -8,6 +8,8 @@ import { describe, expect, test } from "bun:test";
 import { fileURLToPath } from "node:url";
 import { bundleBrowser, PROD_REACT_DEFINE, VENDOR_SPECS } from "./ui-bundle";
 import { bundleModule } from "../src/ui/server-static";
+import { READER_ART } from "../src/ui/apps/table-read/reader-art";
+import table from "../src/ui/apps/table-read/table.png";
 
 const reactDomEntry = fileURLToPath(VENDOR_SPECS["react-dom-client"]!.entryUrl);
 const reactDomExternal = VENDOR_SPECS["react-dom-client"]!.external;
@@ -19,8 +21,8 @@ test("Table Read PNG sources survive actual dev and packaged browser bundles as 
     await bundleBrowser(entry, undefined, { minify: true, define: PROD_REACT_DEFINE }),
   ];
   for (const code of bundles) {
-    for (const name of ["interviewer", "table"]) {
-      const bytes = await Bun.file(new URL(`../src/ui/apps/table-read/${name}.png`, import.meta.url)).arrayBuffer();
+    for (const path of [...READER_ART.map((reader) => reader.image), table]) {
+      const bytes = await Bun.file(path).arrayBuffer();
       expect(code).toContain(`data:image/png;base64,${Buffer.from(bytes).toString("base64")}`);
     }
     expect(() => new Bun.Transpiler({ loader: "js" }).transformSync(code)).not.toThrow();

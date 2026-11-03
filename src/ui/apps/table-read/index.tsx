@@ -14,6 +14,8 @@ import { Setup } from "./setup";
 import { useInterview } from "./use-interview";
 import { bindInterviewDraft, manualDraftDirty, useTableReadDraftStore } from "./draft-store";
 import { rapidChoicesComplete } from "./ui-core";
+import { readerArt, READER_PREF, type ReaderArt } from "./reader-art";
+import { ReaderPicker } from "./reader-picker";
 import styles from "./styles.module.css";
 
 export function TableRead({ ctx }: { ctx: AppContext }): JSX.Element {
@@ -22,6 +24,8 @@ export function TableRead({ ctx }: { ctx: AppContext }): JSX.Element {
   const session = view?.session;
   const [pane, setPane] = useState<"interview" | "card">("interview");
   const [discard, setDiscard] = useState(false);
+  const [reader, setReader] = useState(() => readerArt(ctx.prefs.get(READER_PREF)));
+  const chooseReader = (next: ReaderArt): void => { setReader(next); ctx.prefs.set(READER_PREF, next.id); };
   const dirty = useStore(drafts, manualDraftDirty);
   const draftAnswer = useStore(drafts, (state) => Boolean(state.answer?.text.trim()));
   const draftIdea = useStore(drafts, (state) => Boolean(state.setup.idea.trim()));
@@ -55,14 +59,15 @@ export function TableRead({ ctx }: { ctx: AppContext }): JSX.Element {
   return <main className={styles.room} data-part="table-read.room">
     <RoomHeader title="The Table Read" actions={actions} data-part="table-read.header" />
     {error && <div className={styles.error} role="alert" data-part="table-read.error"><span>{error}</span><Button variant="quiet" size="sm" onClick={() => { void refresh(); }}>Reload draft</Button></div>}
-    {loading && !view ? <p className={styles.loading} role="status">Opening your Table Read...</p> : !view ? <div className={styles.empty}><p>Your interview could not be opened.</p><Button onClick={() => { void refresh(); }}>Try again</Button></div> : !session ? <Setup ctx={ctx} drafts={drafts} busy={busy} onStart={(settings) => { void change({ action: "start", settings }); }} /> : <>
+    {loading && !view ? <p className={styles.loading} role="status">Opening your Table Read...</p> : !view ? <div className={styles.empty}><p>Your interview could not be opened.</p><Button onClick={() => { void refresh(); }}>Try again</Button></div> : !session ? <Setup ctx={ctx} drafts={drafts} busy={busy} reader={reader} onReaderChange={chooseReader} onStart={(settings) => { void change({ action: "start", settings }); }} /> : <>
       <div className={styles.sessionLine} data-part="table-read.session">
         <span>{session.phase === "saved" ? "Saved to your Library" : session.phase === "committing" ? "Saving your reviewed card" : "Interview kept in your encrypted library"}</span>
         <span>Model: {session.settings.connection.model}</span>
+        <ReaderPicker value={reader} onChange={chooseReader} compact />
       </div>
       <div className={styles.paneSwitch}><Segmented label="Table Read view" items={[{ value: "interview", label: "Interview" }, { value: "card", label: "Living card" }]} value={pane} onChange={setPane} data-part="table-read.panes" /></div>
       <div className={styles.workspace}>
-        <div className={styles.interviewPane} data-active={pane === "interview"}><Conversation session={session} drafts={drafts} busy={busy} running={view.running} now={now} change={change} />
+        <div className={styles.interviewPane} data-active={pane === "interview"}><Conversation session={session} drafts={drafts} busy={busy} running={view.running} now={now} change={change} reader={reader} />
           {session.phase === "saved" && <div className={styles.saved} data-part="table-read.saved"><p className={styles.eyebrow}>Ready for their entrance</p><h2>{session.saved?.name || session.body.identity.name}</h2><p>Your character is in the Library. Open the Workbench to add artwork, expand their card or export them.</p><Button onClick={openSaved}>Open character</Button></div>}
         </div>
         <div className={styles.cardPane} data-active={pane === "card"}><LivingCard key={session.id} session={session} drafts={drafts} change={change} /></div>

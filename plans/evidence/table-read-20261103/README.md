@@ -254,3 +254,68 @@ Final screenshots outside Git: `C:/Users/chiev/table-read-existing-editor-final.
 `C:/Users/chiev/table-read-existing-editor-paper-mobile.png`. Preview remains on the isolated
 PID 51816 at `http://127.0.0.1:18731/#table-read`. The normal staged precommit, global documentation
 summary/index freshness checks and all affected guards passed with inspected exit codes of 0.
+
+## Selectable reader cast and final production-path audit
+
+The final follow-up from `2448e94` adds four matching adult reader cutouts to the original:
+`reader-young-woman.png`, `reader-middle-aged-man.png`, `reader-older-woman.png` and
+`reader-older-man.png`. Each source is 1145 by 1374 with alpha, preserving the original pose and
+aspect ratio. The existing figure/table geometry is unchanged. `reader-art.ts` is the finite owner
+of all five image imports, stable IDs, labels and fallback. `ReaderPicker` uses existing art Cards
+on Setup and a compact native Select during an interview. The choice lives only in `ctx.prefs`
+under `table-read.reader`; unknown values resolve to the original. It changes no model, prompts,
+interview schema, accepted fields or scratch and makes no inference request. Exact built-in image
+generation prompts and method are recorded in `asset-prompts.md`.
+
+The scoped production audit found no confirmed integration gap to repair. Code-read evidence:
+Library empty/populated character creation controls call the real app; Apps discovers its manifest;
+`api.ts` invokes the actual Table Read routes; the authenticated handler composes TableReadService;
+generation resolves saved connections through `scene-connect` and sends bounded real provider
+requests. Existing encrypted resume, no-model review and exact-ID save remain the feature owners.
+The production source/scripts scan found no imports of this task's preview fixture or scripted
+responses. The deterministic provider is an isolated verification wire, not application logic or
+proof of real-model prose quality. No backend/domain/provider behavior was changed for the cast.
+
+`final-feature-service` passed 26 tests and 168 assertions across service, generation, real
+authenticated routes and saved-provider metadata. `final-feature-cast-ui` passed 25 tests and
+122 assertions across the three Table Read suites and the new normal entry-point suite. It proves
+both Library character doors and the actual discovered Apps catalog open Table Read without creating
+a character; all five illustrations persist through preferences; unknown values fall back; beginning
+an interview sends the original strict settings shape; and switching every cutout preserves active
+field/answer scratch without a model call. The entry test initially lacked DOMParser for AppMark;
+its harness was corrected without product changes.
+
+`final-feature-bundles` passed 13 tests and 62 assertions: both actual development and production
+browser bundles contain all five full original cutouts plus the table as valid JavaScript data URLs.
+Typecheck, scoped lint and staged structural/style/clone/list/line/color gates passed with inspected
+exit codes of 0. All verification uses the existing isolated task profile. This follow-up does not
+repeat the full backend suite or claim a new compiled native binary.
+
+The independent advisor reviewed source and all three changed guide/reference/catalog semantic
+sidecars; their actual approvals were recorded as `root-table-read-advisor`. Live, all five original
+images rendered at an identical 351.5 by 421.8 box with natural dimensions 1145 by 1374. Older man
+remained selected after an actual page reload. Dirty Name and answer scratch survived switching all
+five illustrations while provider calls stayed at 4. Keyboard Space on the Setup Young woman card
+selected it, set pressed=true and retained focus.
+
+The normal production UI journey was exercised through its real API and saved local-provider wire:
+Review current draft performed no inference; Save returned 200 and created an ordinary Vesper
+character; opening the real Workbench verified the manually kept Personality text. The Library's
+normal Table Read button reopened the feature, and Start another exposed the new Setup with five
+art Cards. These actions spent no additional model calls. Deterministic scripted prose remains
+workflow evidence rather than measured real-model quality.
+
+Final independent acceptance: the combined UI/entry/scratch/core-feedback and actual all-five bundle/
+server-static run passed 38 tests and 184 assertions across six files, exit 0. At Paper 390px,
+selecting Older woman worked without horizontal overflow or inference (provider calls 5 to 5).
+A fresh Cold Read started with Young woman; an actual reload retained question one, reader and
+the same call count. After selecting Older woman, real chip and freeform answers advanced the round
+to question three. Setup showed five unclipped portraits and keyboard Space selection worked.
+The final preview is left on Cold Read question three with Older woman and no unsent text.
+
+Final screenshots outside Git: `C:/Users/chiev/table-read-cast-final.png`,
+`C:/Users/chiev/table-read-cast-paper-mobile.png` and `C:/Users/chiev/table-read-cast-setup.png`.
+The isolated preview remains PID 51816 at `http://127.0.0.1:18731/#table-read`. Normal staged precommit
+passed, as did global semantic summary, generated index and parts documentation freshness checks
+with all 143 pages independently approved. Existing corpus summary warnings remain unchanged.
+No push, merge or deployment is part of this completion.

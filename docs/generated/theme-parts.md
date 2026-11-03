@@ -897,8 +897,8 @@
 | `table-read.answer.kept` | `div` | `src/ui/apps/table-read/conversation.tsx` |
 | `table-read.brief` | `Panel` | `src/ui/apps/table-read/setup.tsx` |
 | `table-read.brief.toggle` | `Disclosure` | `src/ui/apps/table-read/conversation.tsx` |
-| `table-read.card` | `Panel` | `src/ui/apps/table-read/living-card.tsx` |
-| `table-read.card.field` | `section` | `src/ui/apps/table-read/living-card.tsx` |
+| `table-read.card` | `div` | `src/ui/apps/table-read/living-card.tsx` |
+| `table-read.card.field` | `div` | `src/ui/apps/table-read/living-card.tsx` |
 | `table-read.card.retained-edit` | `section` | `src/ui/apps/table-read/living-card.tsx` |
 | `table-read.conversation` | `HTMLHeadingElement`, `Panel` | `src/ui/apps/table-read/conversation.tsx` |
 | `table-read.direction` | `p` | `src/ui/apps/table-read/conversation.tsx` |
@@ -909,6 +909,9 @@
 | `table-read.panes` | `Segmented` | `src/ui/apps/table-read/index.tsx` |
 | `table-read.question` | `div` | `src/ui/apps/table-read/conversation.tsx` |
 | `table-read.question.stage` | `div` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.reader` | `section` | `src/ui/apps/table-read/reader-picker.tsx` |
+| `table-read.reader.choice` | `img` | `src/ui/apps/table-read/reader-picker.tsx` |
+| `table-read.reader.compact` | `div` | `src/ui/apps/table-read/reader-picker.tsx` |
 | `table-read.review` | `div` | `src/ui/apps/table-read/conversation.tsx` |
 | `table-read.review-current` | `Button` | `src/ui/apps/table-read/conversation.tsx` |
 | `table-read.room` | `main` | `src/ui/apps/table-read/index.tsx` |

@@ -15,8 +15,9 @@ import type { TableReadDraftStore } from "./draft-store";
 import styles from "./styles.module.css";
 import sceneStyles from "./scene.module.css";
 import { InterviewScene } from "./interview-scene";
+import type { ReaderArt } from "./reader-art";
 
-export function Conversation({ session, drafts, busy, running, now, change }: { session: TableReadSession; drafts: TableReadDraftStore; busy: boolean; running: boolean; now: number; change(command: TableReadCommand): Promise<boolean> }): JSX.Element {
+export function Conversation({ session, drafts, busy, running, now, change, reader }: { session: TableReadSession; drafts: TableReadDraftStore; busy: boolean; running: boolean; now: number; change(command: TableReadCommand): Promise<boolean>; reader: ReaderArt }): JSX.Element {
   const heldAnswer = useStore(drafts, (state) => state.answer);
   const [history, setHistory] = useState(false);
   const [brief, setBrief] = useState(false);
@@ -44,7 +45,7 @@ export function Conversation({ session, drafts, busy, running, now, change }: { 
     if (await change({ action: "answer", questionId: question.id, answer: { kind: "freeform", text: asked } }) && drafts.getState().answer === sent) drafts.setState({ answer: null });
   };
   return <Panel className={styles.conversation} data-part="table-read.conversation" onKeyDownCapture={() => { keyboard.current = true; }} onPointerDownCapture={() => { keyboard.current = false; }}>
-    <div className={sceneStyles.scene} data-part="table-read.scene"><InterviewScene pending={waiting} questionId={questionId} /><div className={sceneStyles.dialogue}>
+    <div className={sceneStyles.scene} data-part="table-read.scene"><InterviewScene pending={waiting} questionId={questionId} reader={reader} /><div className={sceneStyles.dialogue}>
     <div className={styles.panelTop}>
       <span className={styles.status}>{TEMPO_COPY.find((mode) => mode.value === session.settings.tempo)?.title}</span>
     </div>

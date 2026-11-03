@@ -11,8 +11,10 @@ import { modelChoices, useSceneModels } from "../scenes/use-scene-models";
 import { TEMPO_COPY } from "./ui-core";
 import type { TableReadDraftStore } from "./draft-store";
 import styles from "./styles.module.css";
+import { ReaderPicker } from "./reader-picker";
+import type { ReaderArt } from "./reader-art";
 
-export function Setup({ ctx, drafts, busy, onStart }: { ctx: AppContext; drafts: TableReadDraftStore; busy: boolean; onStart(settings: TableReadSettings): void }): JSX.Element {
+export function Setup({ ctx, drafts, busy, onStart, reader, onReaderChange }: { ctx: AppContext; drafts: TableReadDraftStore; busy: boolean; onStart(settings: TableReadSettings): void; reader: ReaderArt; onReaderChange(value: ReaderArt): void }): JSX.Element {
   const { tempo, idea, model } = useStore(drafts, (state) => state.setup);
   const update = (change: Partial<{ tempo: TableReadSettings["tempo"]; idea: string; model: string }>): void => drafts.setState((state) => ({ setup: { ...state.setup, ...change } }));
   const models = useSceneModels(ctx, null, () => undefined);
@@ -24,6 +26,7 @@ export function Setup({ ctx, drafts, busy, onStart }: { ctx: AppContext; drafts:
     <div className={styles.tempos} aria-label="Choose an interview tempo">
       {TEMPO_COPY.map(/* bounded-ok: the three interview modes */ (mode) => <Card key={mode.value} kind="choice" selected={mode.value === tempo} aria-pressed={mode.value === tempo} mark="Selected" kicker={mode.title} heading={mode.subtitle} onClick={() => update({ tempo: mode.value })} disabled={busy} data-part="table-read.tempo" />)}
     </div>
+    <ReaderPicker value={reader} onChange={onReaderChange} />
     <Panel className={styles.setupBody} data-part="table-read.brief">
       <div>
         <p className={styles.eyebrow}>The first spark</p>

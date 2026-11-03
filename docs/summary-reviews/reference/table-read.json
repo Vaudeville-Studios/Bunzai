@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/table-read",
   "sourcePath": "docs/reference/table-read.md",
-  "sourceHash": "sha256:021a963c2dcd3e8241670cd300ae48eb62ab8b138b19a8e222da00b71060fe68",
-  "semanticSummaryHash": "sha256:a5d85390b279e9496ff40341e5a54a2bc77000e23137ede6605175ff5c7e3679",
+  "sourceHash": "sha256:b291a27f0403d18a9d77d7ed3772e0d36184660d05736d6d88a276dbdea93b59",
+  "semanticSummaryHash": "sha256:d2bd5a8c7f4a1ccd798a2d7755de2808ea291fbee7a27e51f9e39603d925305b",
   "verdict": "APPROVE",
   "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read source, reference and semantic summary: real Workbench presentation, bounded local scratch, manual ownership only on Keep, and retained-edit recovery.",
-  "reviewedAt": "2026-11-03T21:29:33.252Z"
+  "notes": "Root independently reviewed source, reference and semantic JSON: single artwork catalog, unknown-preference fallback, ctx.prefs-only persistence and no inference or scratch mutation from appearance changes.",
+  "reviewedAt": "2026-11-03T21:53:33.683Z"
 }

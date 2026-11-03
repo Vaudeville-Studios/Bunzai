@@ -26,6 +26,11 @@ other Library pieces are not included. The connection's normal provider charges 
 Write what you already know: a name, a premise, a scene, a conflict. The Understudy uses that as the
 starting point rather than asking you to fill every field from scratch.
 
+Choose a reader appearance from the five illustrated adults: androgynous adult, young woman,
+middle-aged man, older woman or older man. This changes the illustration; the Understudy's interview
+and your selected model stay the same. You can also use **Reader appearance** during an interview
+without discarding it. Studio remembers the choice in your preferences.
+
 ## Answer and take the pen
 
 In Cold Read and Deep Dive you can choose a quick answer or write your own. **Keep this answer**

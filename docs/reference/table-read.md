@@ -20,7 +20,12 @@ across the foreground. The figure leans, the spotlight dims and a paper shifts d
 request; narrow containers use a compact scene header above the dialogue. Decorative art is hidden
 from assistive technology and receives no pointer input. The shared build-only app PNG plugin embeds
 the source images as data URLs in both development and packaged browser bundles, without a new asset
-route. A keyed
+route. One finite UI artwork catalog owns the five adult cutouts, stable IDs, labels, imports and
+original-reader fallback. Shared Card controls select the illustration during setup; a compact Select
+can change it during an interview. The cosmetic choice is kept in `ctx.prefs` as `table-read.reader`,
+separate from the interview schema. Unknown preferences resolve to the original cutout. Appearance
+changes neither the Understudy prompts nor the saved provider/model, and do not issue a model request
+or clear field/answer scratch. A keyed
 question entrance and the existing Card choice controls establish the interview hierarchy; brief and
 history use Disclosure controls. The character rail uses the Workbench's actual BentoCard sections
 for Identity, Description, Personality, Scenario, First Message and Examples. FIELD_MODULES supplies

@@ -10,6 +10,7 @@ import { setCharacterField } from "../../../core/table-read/fields";
 import type { TableReadMutation, TableReadSession, TableReadView } from "../../../core/table-read/schema";
 import { TableRead } from "./index";
 import { PieceStore } from "../../_shared/piece-store";
+import { READER_ART, READER_PREF } from "./reader-art";
 
 let root: Root | null = null;
 let installed: InstalledDom | null = null;
@@ -22,7 +23,7 @@ function interview(tempo: TableReadSession["settings"]["tempo"] = "deep-dive"): 
   return session;
 }
 
-async function mount(initial: TableReadView, respond?: (input: TableReadMutation) => Promise<TableReadView>, available = false) {
+async function mount(initial: TableReadView, respond?: (input: TableReadMutation) => Promise<TableReadView>, available = false, appearance?: unknown) {
   installed = installDom(undefined, { pretendToBeVisual: true, globals: { IS_REACT_ACT_ENVIRONMENT: true } });
   const doc = installed.dom.window.document;
   const host = doc.createElement("div"); doc.body.append(host); root = createRoot(host);
@@ -30,6 +31,7 @@ async function mount(initial: TableReadView, respond?: (input: TableReadMutation
   const calls: TableReadMutation[] = [];
   const opened: string[] = [];
   const pieces = new PieceStore();
+  const prefs = new Map<string, unknown>([[READER_PREF, appearance]]);
   const ctx = {
     api: {
       getTableRead: async () => view,
@@ -39,7 +41,7 @@ async function mount(initial: TableReadView, respond?: (input: TableReadMutation
         const next = await respond(input); view = next; return next;
       },
       sceneConnections: async () => available ? [{ id: "ui-connection", label: "Local model", kind: "openai", model: "ui-model" }] : [], connectionModels: async () => ({ saved: "ui-model", models: [{ id: "ui-model", label: "Interview model" }] }),
-    }, prefs: { get: () => undefined, set: () => undefined }, setStatus: () => undefined,
+    }, prefs: { get: (key: string) => prefs.get(key), set: (key: string, value: unknown) => { prefs.set(key, value); } }, setStatus: () => undefined,
     openApp: (id: string) => opened.push(id), pieces, workbench: { open: () => undefined },
   } as unknown as AppContext;
   await act(async () => root!.render(<TableRead ctx={ctx} />));
@@ -74,6 +76,53 @@ test("setup exposes real modes and opens Connections instead of pretending a mod
   await act(async () => button("Open Connections").click());
   expect(opened).toEqual(["settings"]);
   expect(installed!.dom.window.location.hash).toBe("#settings/models");
+});
+
+test("five reader appearances persist through preferences and never become interview settings", async () => {
+  const { ctx, doc, button, calls, leaveRoom, returnToRoom } = await mount({ revision: -1, session: null, running: false }, async () => ({ revision: 0, session: interview(), running: false }), true, "unknown-reader");
+  expect(READER_ART.length).toBe(5);
+  expect(doc.querySelectorAll('[data-part="table-read.reader.choice"]').length).toBe(5);
+  expect(button(READER_ART[0].label).getAttribute("aria-pressed")).toBe("true");
+  const picked = READER_ART[3]!;
+  await act(async () => button(picked.label).click());
+  expect(ctx.prefs.get(READER_PREF)).toBe(picked.id);
+  expect(calls).toEqual([]);
+  await leaveRoom(); await returnToRoom();
+  expect(button(picked.label).getAttribute("aria-pressed")).toBe("true");
+  await waitFor(flushSync, () => doc.querySelector('option[value="ui-connection|ui-model"]'), "saved model choice");
+  await act(async () => {
+    fill(doc.querySelector<HTMLTextAreaElement>("#table-read-idea")!, "A keeper of debts.");
+    const model = doc.querySelector<HTMLSelectElement>("#table-read-model")!;
+    model.value = "ui-connection|ui-model";
+    model.dispatchEvent(new installed!.dom.window.Event("change", { bubbles: true }));
+  });
+  await act(async () => button("Begin the Table Read").click());
+  expect(calls).toEqual([{ action: "start", revision: -1, settings: { tempo: "deep-dive", connection: { id: "ui-connection", model: "ui-model" }, idea: "A keeper of debts." } }]);
+  expect(doc.querySelector<HTMLImageElement>('[data-part="table-read.scene.art"] img')!.getAttribute("src")).toBe(picked.image);
+});
+
+test("changing every reader appearance preserves active field and answer scratch without inference", async () => {
+  const { ctx, doc, calls, leaveRoom, returnToRoom } = await mount({ revision: 4, session: interview(), running: false });
+  await focusField(doc, "personality");
+  await act(async () => {
+    fill(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!, "Private field scratch");
+    fill(doc.querySelector<HTMLTextAreaElement>("#table-read-answer")!, "Private answer scratch");
+  });
+  for (const reader of READER_ART) {
+    await act(async () => {
+      const select = doc.querySelector<HTMLSelectElement>('[data-part="table-read.reader.compact"] select')!;
+      select.value = reader.id;
+      select.dispatchEvent(new installed!.dom.window.Event("change", { bubbles: true }));
+    });
+    expect(doc.querySelector<HTMLImageElement>('[data-part="table-read.scene.art"] img')!.getAttribute("src")).toBe(reader.image);
+    expect(ctx.prefs.get(READER_PREF)).toBe(reader.id);
+    expect(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!.value).toBe("Private field scratch");
+  }
+  await leaveRoom(); await returnToRoom();
+  expect(doc.querySelector<HTMLSelectElement>('[data-part="table-read.reader.compact"] select')!.value).toBe(READER_ART.at(-1)!.id);
+  expect(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!.value).toBe("Private field scratch");
+  expect(doc.querySelector<HTMLTextAreaElement>("#table-read-answer")!.value).toBe("Private answer scratch");
+  expect(calls).toEqual([]);
 });
 
 test("Rapid Fire offers only its stored chip choices and submits the current question identity", async () => {

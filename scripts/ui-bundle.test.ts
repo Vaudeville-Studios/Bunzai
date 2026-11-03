@@ -7,9 +7,25 @@
 import { describe, expect, test } from "bun:test";
 import { fileURLToPath } from "node:url";
 import { bundleBrowser, PROD_REACT_DEFINE, VENDOR_SPECS } from "./ui-bundle";
+import { bundleModule } from "../src/ui/server-static";
 
 const reactDomEntry = fileURLToPath(VENDOR_SPECS["react-dom-client"]!.entryUrl);
 const reactDomExternal = VENDOR_SPECS["react-dom-client"]!.external;
+
+test("Table Read PNG sources survive actual dev and packaged browser bundles as JavaScript data URLs", async () => {
+  const entry = fileURLToPath(new URL("../src/ui/apps/table-read/index.tsx", import.meta.url));
+  const bundles = [
+    await bundleModule({ id: "table-read", entrypoint: entry }),
+    await bundleBrowser(entry, undefined, { minify: true, define: PROD_REACT_DEFINE }),
+  ];
+  for (const code of bundles) {
+    for (const name of ["interviewer", "table"]) {
+      const bytes = await Bun.file(new URL(`../src/ui/apps/table-read/${name}.png`, import.meta.url)).arrayBuffer();
+      expect(code).toContain(`data:image/png;base64,${Buffer.from(bytes).toString("base64")}`);
+    }
+    expect(() => new Bun.Transpiler({ loader: "js" }).transformSync(code)).not.toThrow();
+  }
+});
 
 describe("bundleBrowser production React", () => {
   test("default call ships development React unminified (build-pages/build-site's shape, unchanged)", async () => {

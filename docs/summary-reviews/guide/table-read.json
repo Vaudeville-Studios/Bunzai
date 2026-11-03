@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/table-read",
   "sourcePath": "docs/guide/table-read.md",
-  "sourceHash": "sha256:e2dd3a68383a6b9ff050938a22b0a5bdf0fb7d8a7186687079d6867ae00cd649",
-  "semanticSummaryHash": "sha256:a3af1213810eab6fdf5d2af6ace4c86f6525820dcda32081f22f698d55a0f63d",
+  "sourceHash": "sha256:fa2391e130b6c4c4e009ec32218bd486333fae85da299baefd35a401219550d4",
+  "semanticSummaryHash": "sha256:059fae8e43ca54bbd0dcf5de2a69d56147fc44dbdd8f2785415bb7d5131d5915",
   "verdict": "APPROVE",
   "reviewer": "root-table-read-advisor",
-  "notes": "Root independently reviewed the visual guide and semantic additions, including the corrected instruction to keep or cancel field edits before saving or discarding rather than before app navigation.",
-  "reviewedAt": "2026-11-03T17:25:36.617Z"
+  "notes": "Root independently read the changed guide and condensed semantic summary; scene wording matches implemented behavior.",
+  "reviewedAt": "2026-11-03T20:28:18.804Z"
 }

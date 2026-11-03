@@ -13,3 +13,7 @@ declare module "@jitl/quickjs-wasmfile-release-sync/wasm" {
   const path: string;
   export default path;
 }
+declare module "*.png" {
+  const source: string;
+  export default source;
+}

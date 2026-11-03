@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/table-read",
   "sourcePath": "docs/reference/table-read.md",
-  "sourceHash": "sha256:68a6ede65dc7c51364b4fde197893538740d88f0a34ca41afa94c51c94fa959f",
-  "semanticSummaryHash": "sha256:bd68581e2f8ed341e10f93ae8319b2d024d654e694f16469a170d4e2ca418f96",
+  "sourceHash": "sha256:93d6cca9b0a9b1fa22af9e76aa485196389c8bfb35e5f6e4dd4a49124354d615",
+  "semanticSummaryHash": "sha256:cfdf98a34279f89c56e542836b006c9a929fd8b3cdb5d67c0da007d1006936d3",
   "verdict": "APPROVE",
   "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read the visual refinement prose and semantic additions: bounded question stage, shared choice/disclosure controls, factual filled count, actual-value feedback scoped to the draft lifetime and reduced motion.",
-  "reviewedAt": "2026-11-03T17:22:55.946Z"
+  "notes": "Root independently read the reference, condensed summary, shared PNG plugin and actual bundle assertions; scoped source claims approved.",
+  "reviewedAt": "2026-11-03T20:28:18.964Z"
 }

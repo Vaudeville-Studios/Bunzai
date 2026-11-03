@@ -32,7 +32,9 @@ In Cold Read and Deep Dive you can choose a quick answer or write your own. **Ke
 stores it before the interviewer works on the next question. The living card updates with validated
 proposals as turns finish; it does not pretend to stream fields before they can be read safely.
 
-The numbered question and answer cards lead the interview. **Your starting idea** and the accepted
+The Understudy sits at a manuscript table beside the numbered question and answer cards. The scene
+changes pose while the interviewer works; reduced-motion preferences disable those transitions.
+**Your starting idea** and the accepted
 answer history fold away when you want room to think. Beside the question, the living card counts
 filled fields, not character quality. Expand a field to read its full text. **Updated** briefly marks
 fields whose accepted values changed; unchanged refreshes do not restart that feedback.

@@ -416,6 +416,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | Input | src/ui/components/rc-controls/index.tsx | ({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) |  | .sr-only .field .area .chip .check .tipWrap .tip |
 | Inspector | src/ui/apps/workbench/nodes/Inspector.tsx | (p: InspectorProps) |  | .view .head .grow .addWrap .addMenu .area .canvas .world ... |
 | InspectorShell | src/ui/apps/scenes/context/inspector-shell.tsx | ({ bodies, tab, onTab, onReview }: { bodies: InspectorBodies; tab: InspectorTab; onTab(tab: InspectorTab): void; onRe... |  |  |
+| InterviewScene | src/ui/apps/table-read/interview-scene.tsx | ({ pending, questionId }: { pending: boolean; questionId?: string }) |  | .scene .dialogue .art .spotlight .figure .nameplate .table .papers ... |
 | InventoryPanel | src/ui/apps/scenes/props/trackers/inventory/inventory-panel.tsx | ({ ctx, chat, onChat, popOut }: PopoutContext) |  |  |
 | ItemCard | src/ui/apps/scenes/props/trackers/items/item-parts.tsx | ({ color, icon, title, meta, right, preview, under, foot, chip, veil, mod, badge, open, onToggle, removed, children }... |  |  |
 | ItemList | src/ui/apps/scenes/props/trackers/items/item-parts.tsx | ({ items, render }: { items: readonly T[]; render: (item: T) => ReactNode }) | The cards of one tracker, windowed: a tracker holds up to 300 expandable cards. The cards keep their own open state in the panel. |  |

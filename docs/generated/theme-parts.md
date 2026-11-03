@@ -913,6 +913,8 @@
 | `table-read.review-current` | `Button` | `src/ui/apps/table-read/conversation.tsx` |
 | `table-read.room` | `main` | `src/ui/apps/table-read/index.tsx` |
 | `table-read.saved` | `div` | `src/ui/apps/table-read/index.tsx` |
+| `table-read.scene` | `div` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.scene.art` | `div` | `src/ui/apps/table-read/interview-scene.tsx` |
 | `table-read.session` | `div` | `src/ui/apps/table-read/index.tsx` |
 | `table-read.setup` | `div` | `src/ui/apps/table-read/setup.tsx` |
 | `table-read.stop` | `Button` | `src/ui/apps/table-read/conversation.tsx` |

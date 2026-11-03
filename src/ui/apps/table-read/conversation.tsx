@@ -13,6 +13,8 @@ import type { TableReadCommand } from "./use-interview";
 import { rapidChoicesComplete, secondsRemaining, TEMPO_COPY } from "./ui-core";
 import type { TableReadDraftStore } from "./draft-store";
 import styles from "./styles.module.css";
+import sceneStyles from "./scene.module.css";
+import { InterviewScene } from "./interview-scene";
 
 export function Conversation({ session, drafts, busy, running, now, change }: { session: TableReadSession; drafts: TableReadDraftStore; busy: boolean; running: boolean; now: number; change(command: TableReadCommand): Promise<boolean> }): JSX.Element {
   const heldAnswer = useStore(drafts, (state) => state.answer);
@@ -42,8 +44,8 @@ export function Conversation({ session, drafts, busy, running, now, change }: { 
     if (await change({ action: "answer", questionId: question.id, answer: { kind: "freeform", text: asked } }) && drafts.getState().answer === sent) drafts.setState({ answer: null });
   };
   return <Panel className={styles.conversation} data-part="table-read.conversation" onKeyDownCapture={() => { keyboard.current = true; }} onPointerDownCapture={() => { keyboard.current = false; }}>
+    <div className={sceneStyles.scene} data-part="table-read.scene"><InterviewScene pending={waiting} questionId={questionId} /><div className={sceneStyles.dialogue}>
     <div className={styles.panelTop}>
-      <p className={styles.eyebrow}>In conversation with the Understudy</p>
       <span className={styles.status}>{TEMPO_COPY.find((mode) => mode.value === session.settings.tempo)?.title}</span>
     </div>
     <span className="sr-only" role="status">{question?.text}</span>
@@ -79,7 +81,7 @@ export function Conversation({ session, drafts, busy, running, now, change }: { 
       {completed && !waiting && <p className={styles.muted}>Every choice is kept. Review your draft, or ask the interviewer to bring the answers together.</p>}
       {(busy || running) && <div className={styles.composing} role="status"><span className={styles.busyMark} aria-hidden="true" />{session.pending?.kind === "finish" ? "Putting your answers into a character..." : rapid && session.deadline === null ? "Preparing your quick picks. The clock has not started." : "The Understudy is working with your answer..."}</div>}
       {session.pending && !running && !busy && <p className={styles.muted}>An earlier request still owns this draft. You can stop it before retrying.</p>}
-      <div className={styles.actions}>
+      <div className={`${styles.actions} ${styles.sceneActions}`}>
         {session.pending && <Button onClick={() => { void change({ action: "stop" }); }} data-part="table-read.stop">Stop</Button>}
         {!running && !busy && (session.retryKind || session.error || session.pending) && <Button onClick={() => { void change({ action: "retry" }); }}>{session.error || session.pending ? "Retry" : "Continue the interview"}</Button>}
         <Button variant="quiet" onClick={() => { void change({ action: "review" }); }} data-part="table-read.review-current" title="Review the draft already kept here, without another model request">Review current draft</Button>
@@ -100,5 +102,6 @@ export function Conversation({ session, drafts, busy, running, now, change }: { 
     </div>}
     {session.error && <p className={styles.failure} role="alert">{session.error}</p>}
     {session.note && session.phase !== "interview" && <p className={styles.direction} data-part="table-read.direction">{session.note}</p>}
+    </div></div>
   </Panel>;
 }

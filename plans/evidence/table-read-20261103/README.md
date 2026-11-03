@@ -153,3 +153,58 @@ scrolling, and manual scratch survives generation. Reduced-motion computation wa
 browser. Final screenshots are `C:/Users/chiev/table-read-redesign-final.png` and
 `C:/Users/chiev/table-read-redesign-paper-mobile.png`, outside Git. The existing scripted preview
 remains on Deep Dive question three with two answers and a manually kept personality field.
+
+## Generated manuscript-table scene
+
+The follow-up scenic stage uses original generated PNG sources in
+`src/ui/apps/table-read/interviewer.png` (1145 by 1374, transparent seated silhouette) and
+`src/ui/apps/table-read/table.png` (2172 by 724, transparent manuscript table). Prompt provenance is
+in `asset-prompts.md`. These originals are the asset authority; encoded copies are generated only
+while bundling. The shared `app-asset-plugin.ts` handles app-local PNG imports for both dev
+`server-static.ts` and packaged `scripts/ui-bundle.ts`, emitting JavaScript data URLs. No image
+HTTP route or dependency was added.
+
+The workspace now gives seven parts to the scenic interview and three to the editable card, within
+the existing 88rem bound. Decorative art ignores pointer input and assistive technology. Pending
+state drives a small figure lean, spotlight change and paper pose; both reduced-motion controls
+disable animation and transitions. Narrow containers retain the pane switch and use a compact
+portrait/table header above dialogue. Question focus and scratch/manual-edit ownership stay with
+their existing owners.
+
+The isolated fixture was restarted for this source as Bun PID 51816 at
+`http://127.0.0.1:18731/#table-read`, with provider port 18732. The old PID above is historical.
+`scenic-ui-tests` passed 19 tests and 75 assertions. `scenic-bundle-explicit` passed 3 tests and
+9 assertions: actual development and production-minified browser bundles contain the complete
+original PNG data URLs and parse as JavaScript. `scenic-bundle-tests` separately passed the ten
+existing server-static tests with 45 assertions; its bare script path did not select the script
+suite, hence the explicit rerun. These browser-bundle checks do not claim a compiled native binary.
+The final combined explicit run, `scenic-bundle-final`, passed 13 tests and 54 assertions. A
+non-mutating baseline probe (`png-baseline-proof.ts` in the isolated task profile, log
+`scenic-png-baseline`) built the real app without the plugin: Bun emitted two separate PNG artifacts,
+and the existing CSS fold produced JavaScript that failed parsing. This reproduces the asset-plumbing
+failure without disabling the fix in the running preview or altering repository source.
+
+`scenic-typecheck-direct` passed local TypeScript with no emit; the first `bunx tsc` invocation was
+stopped after stalling. Scoped ESLint, line cap, color, part, theme-key and stage-boundary checks
+passed. Logs use the existing isolated task profile. The earlier full suite above was not repeated
+for this presentational follow-up and is not evidence for the new scene source.
+
+The independent advisor accepted the desktop composition after fixing the scene art at a stable
+43rem height, raising the silhouette beside the question, and placing the review actions on a solid
+theme surface. In an actual four-second pending fixture, the figure transform and spotlight changed;
+the accepted second question arrived, pending cleared and the real Personality field showed Updated.
+The art had `aria-hidden="true"` and computed `pointer-events: none`.
+
+At 390px in Paper, the advisor accepted the complete compact figure/table header, readable controls,
+both loaded original PNGs and no horizontal overflow. Screenshot:
+`C:/Users/chiev/table-read-scene-paper-mobile.png` (outside Git). Both operating-system reduced motion
+and the actual Settings Reduce Motion control were checked live: figure transition was 0s and paper
+animation was none. The advisor independently repeated the actual dev/production browser-bundle and
+server-static checks with 13 tests and 54 assertions passing. This establishes the scene's live UI
+and browser-bundle behavior, not a native executable or deployed release.
+
+The normal staged precommit passed. All 143 documentation pages have current independent approvals;
+the generated summary queue and page index were regenerated after their freshness checks exposed
+stale projections. `scenic-summary-global-final` and `scenic-doc-index-final` both exited 0, and the
+parts documentation check passed. Existing corpus summary warnings remain unchanged. No hooks were
+bypassed, full backend suite repeated, push performed or deployment attempted.

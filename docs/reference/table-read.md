@@ -14,7 +14,13 @@ offers it beside blank character creation. Its selected Living Card design keeps
 canonical draft together, with a pane switch in narrow containers. Controls and tokens come from the
 existing UI families; there is no separate theme or character model.
 
-The centered layout is bounded at 88rem with a three-to-two question-stage/card-rail split. A keyed
+The centered layout is bounded at 88rem with a seven-to-three interview/card-rail split. Generated
+transparent PNG artwork places the Understudy on the left beside dialogue and a manuscript table
+across the foreground. The figure leans, the spotlight dims and a paper shifts during a pending
+request; narrow containers use a compact scene header above the dialogue. Decorative art is hidden
+from assistive technology and receives no pointer input. The shared build-only app PNG plugin embeds
+the source images as data URLs in both development and packaged browser bundles, without a new asset
+route. A keyed
 question entrance and the existing Card choice controls establish the interview hierarchy; brief and
 history use Disclosure controls. Field excerpts expand without remounting open edits. The local
 `useFieldUpdates` owner compares accepted field values within a session and draft-store lifetime,

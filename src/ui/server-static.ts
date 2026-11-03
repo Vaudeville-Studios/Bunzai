@@ -13,6 +13,7 @@ import { watch as watchFs } from "node:fs";
 import { ICON_FILES, studioWebManifest, type PackagedAssets } from "./assets";
 import { err, textResponse } from "./server-security";
 import { REACT_EXTERNALS, VENDOR_SPECS } from "./vendor/specs";
+import { appAssetPlugin } from "./app-asset-plugin";
 
 export interface DiscoveredModule {
   id: string;
@@ -100,6 +101,7 @@ export async function bundleModule(mod: DiscoveredModule): Promise<string> {
     target: "browser",
     format: "esm",
     external: REACT_EXTERNALS,
+    plugins: [appAssetPlugin],
     ...prodBuildOpts,
   });
   if (!built.success || built.outputs.length === 0) {
@@ -154,7 +156,7 @@ export function startDevWatch(): void {
     // Only real source files reload the page; editor lockfiles, swap files, and Windows watcher
     // noise do not. A null filename (Windows sometimes omits it) is allowed through - losing a
     // legitimate reload is worse than an extra one.
-    if (filename !== null && !/\.(ts|tsx|css|html)$/i.test(String(filename))) return;
+    if (filename !== null && !/\.(ts|tsx|css|html|png)$/i.test(String(filename))) return;
     // Test files never ship in a bundle; editing one must not reload open pages.
     if (filename !== null && /\.test\.tsx?$/i.test(String(filename))) return;
     // Invalidate the dev-bundle memo the instant a source file changes - not debounced with the

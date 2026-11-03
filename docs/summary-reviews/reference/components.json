@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:6c96cdf63f3e38be2480222422b8226a3d0426291b5b3a1b675cd14c03d006d4",
-  "semanticSummaryHash": "sha256:38ee64144164ddc383f4d103f1d29f82ef9c5203ff9b7b1eb8000f20dd6c4e9d",
+  "sourceHash": "sha256:952621c874ab33270201fe6deb9774cdb4289524ee06bbda6045d21f57c61987",
+  "semanticSummaryHash": "sha256:f107cacfd53adb0ff7c639d5806fbcdc2c770e8c2ab4ede143e17ee72e0109b8",
   "verdict": "APPROVE",
   "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read the four discovered Table Read component rows and current draft-owner props alongside the affected semantic page and section summaries; the catalog remains discovery metadata with behavior owned by source.",
-  "reviewedAt": "2026-11-03T09:28:21.794Z"
+  "notes": "Root independently read the generated InterviewScene catalog row and corresponding export-name additions to page and section summaries.",
+  "reviewedAt": "2026-11-03T20:28:19.110Z"
 }

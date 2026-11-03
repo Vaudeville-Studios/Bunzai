@@ -5,6 +5,7 @@
  * React pass `opts` explicitly (scripts/build-desktop.ts).
  */
 import { REACT_EXTERNALS, VENDOR_SPECS } from "../src/ui/vendor/specs";
+import { appAssetPlugin } from "../src/ui/app-asset-plugin";
 export { REACT_EXTERNALS, VENDOR_SPECS };
 
 /** `Bun.build`'s `define`, set when a bundle should compile away React's dev-only branches (dead
@@ -43,6 +44,7 @@ export async function bundleBrowser(
     target: "browser",
     format: "esm",
     external,
+    plugins: [appAssetPlugin],
     minify: opts.minify,
     define: opts.define,
   });

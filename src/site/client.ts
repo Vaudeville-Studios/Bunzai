@@ -1,6 +1,6 @@
 /**
  * The website's only script: fetch the public release list from GitHub once, then fill every
- * [data-version] with the latest tag and every [data-news] list with releases in plain words. Built
+ * [data-version] with the latest tag, [data-news] with plain release notes, and app download cards. Built
  * with DOM text nodes only, so release text can never become markup. Offline or rate-limited, the
  * lists say so and point at GitHub. Also marks the visitor's platform on the download page and runs
  * the home page's reel: one act at a time, advancing on a timer that pauses on hover, on focus, off
@@ -13,6 +13,7 @@ import { runPremiere } from './premiere';
 import { runSceneExamples } from './scene-example';
 import { runScreening } from './screening';
 import { runDocsSearch } from "./docs-search";
+import { fillAppDownloads } from "./downloads";
 
 const REPO = "https://github.com/Vaudeville-Studios/Bunzai";
 
@@ -65,18 +66,20 @@ function offline(list: Element, noPublishedReleases: boolean): void {
 async function fillReleases(): Promise<void> {
   const lists = document.querySelectorAll<HTMLElement>("[data-news]");
   const versions = document.querySelectorAll<HTMLElement>("[data-version]");
-  if (lists.length === 0 && versions.length === 0) return;
+  if (lists.length === 0 && versions.length === 0 && !document.querySelector("[data-app-download]")) return;
   let releases: ReleaseInfo[] = [];
+  let raw: unknown = null;
   let reachable = false;
   try {
     const res = await fetch("https://api.github.com/repos/Vaudeville-Studios/Bunzai/releases?per_page=20", {
       headers: { Accept: "application/vnd.github+json" },
     });
-    if (res.ok) { releases = readReleasesList(await res.json()); reachable = true; }
+    if (res.ok) { raw = await res.json(); releases = readReleasesList(raw); reachable = true; }
   } catch {
     releases = [];
   }
   const latest = releases[0];
+  fillAppDownloads(document, raw, latest?.version);
   if (latest) for (const v of versions) v.textContent = latest.version;
   else for (const v of versions) v.textContent = "No release yet";
   for (const list of lists) {

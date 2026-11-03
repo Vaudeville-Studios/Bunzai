@@ -81,8 +81,8 @@ const ticket = (up: string): string => `<div class="ticket">
 <h3>Bunzai</h3>
 <p>Free and open source. No account needed.</p>
 <div class="tear"></div>
-<p class="ticket-status">No public release is available yet. The source checkout is ready to use.</p>
-<a class="btn" href="${up}docs/guide/installation.html">Read the installation guide</a>
+<p class="ticket-status">One app download for your computer. Your studio stays local.</p>
+<a class="btn" href="${up}download.html">Choose your download</a>
 </div>`;
 
 function home(): Page {
@@ -96,9 +96,15 @@ function info(): Page {
 function download(): Page {
   const body = `<div class="wrap page">
 <div class="act"><b>Act IV</b> &middot; your ticket</div>
-<h1>Run Bunzai from source.</h1>
-<p class="lede">There are no published release assets at the moment. The source checkout is the available installation path; the guide explains the exact steps and what to expect on each platform.</p>
-${ticket("")}
+<h1>Your computer. Your stage.</h1>
+<p class="lede">Choose your operating system. These links use the files actually published in the latest release, <span data-version>checking GitHub</span>.</p>
+<div class="app-downloads">
+<section class="os-block" data-os="windows"><div class="act">Desktop app</div><h2>Windows</h2><p>For 64-bit Windows. Download the app and open it.</p><a class="btn" data-app-download="windows" aria-disabled="true">Checking releases...</a><code data-download-name="windows"></code></section>
+<section class="os-block" data-os="linux"><div class="act">Local browser app</div><h2>Linux</h2><p>For Intel and AMD 64-bit computers. Make the file executable, then run it.</p><a class="btn" data-app-download="linux" aria-disabled="true">Checking releases...</a><code data-download-name="linux"></code><p>Older files named <code>bunzai-cli-linux-x64</code> need the <code>ui</code> command.</p></section>
+<section class="os-block" data-os="mac"><div class="act">Not available yet</div><h2>macOS</h2><p>macOS downloads are currently unavailable while the platform build is repaired.</p><span class="btn ghost" aria-disabled="true">Download unavailable</span><p>The source checkout remains available below.</p></section>
+</div>
+<p class="note">New app builds include the remote-access helper. You do not need a separate sidecar download. Older releases may still offer the verified helper download in Settings.</p>
+<p><a class="more" href="${REPO}/releases">Releases and SHA256SUMS on GitHub</a> &middot; <a class="more" href="docs/guide/installation.html">Illustrated installation guide</a></p>
 <section class="s tight"><h2>Source install</h2>
 <p class="lede">Install <a class="more" href="https://bun.sh">Bun</a> at the <a href="${REPO}/blob/Mainstage/.bun-version">version pinned by the project</a>, then clone Bunzai with its rp-core submodule:</p>
 <pre class="source"><code>git clone --recurse-submodules ${REPO}.git
@@ -107,9 +113,9 @@ cd Bunzai</code></pre>
 bun run dev</code></pre>
 <p>The server prints the loopback address to open in your browser. If port 8321 is busy, Bunzai selects another free port and prints that address.</p>
 <p><a class="more" href="docs/guide/installation.html">Full illustrated installation guide</a></p></section>
-<section class="s tight"><h2>What each build is for</h2><p>The release workflow defines a Windows desktop executable, cross-platform CLI builds, and optional remote helpers. Those files are not downloadable until a GitHub release is published. The <a class="more" href="${REPO}/releases">release page</a> is the source of truth for current files; do not use an old or guessed download link.</p><p>The <a href="studio/">Browser Studio</a> is a temporary browser session for trying import, editing, and export. Its data does not persist after reload, and playing scenes requires the installed application.</p></section>
+<section class="s tight"><details><summary>Advanced: terminal use, ARM and older releases</summary><p>The app download is enough for ordinary use. CLI commands support automation, and Linux ARM64 builds are useful on ARM devices and servers. Those workflows remain available from source; the <a href="docs/guide/installation.html">installation guide</a> explains the difference. Old release assets stay in place for existing installations and recovery links.</p></details><p>The <a href="studio/">Browser Studio</a> is a temporary browser session for trying import, editing, and export. Its data does not persist after reload, and playing scenes requires the installed application.</p></section>
 </div>`;
-  return { path: "download.html", html: frame({ title: "Install Bunzai", description: "Install Bunzai from source and choose the right platform build when releases are available.", up: "", section: "download", body }) };
+  return { path: "download.html", html: frame({ title: "Download Bunzai", description: "Choose Bunzai for Windows or Linux. macOS downloads are currently unavailable. One app, with the remote helper included.", up: "", section: "download", body }) };
 }
 
 function news(): Page {

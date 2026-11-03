@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:3ac44baa5a78e80ccb04f7389c54c3f392af7e1671804f6741a46bdbfc48ed58",
-  "semanticSummaryHash": "sha256:7955de69ca09bb9c3ed01f9c92f5ea0b6dd2b6b1152b8a76e0ff9793f8beead6",
+  "sourceHash": "sha256:e18018465d8127984bfc1e6f9425eb8c64adb024ee43fffdf46061a50cc2565c",
+  "semanticSummaryHash": "sha256:260d56eb0e961034f995a350fa95aaa98c6853a142f216f9dd7e22d5685b6368",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root independently reviewed installation source and semantic summary against target-specific embedded helper packaging, older-build recovery and explicit remote-enable behavior.",
-  "reviewedAt": "2026-11-03T03:22:51.949Z"
+  "notes": "Recorded after explicit independent root review of source, naming compatibility, release publication, bounded atomic updates and live download-card behavior; Linux runtime and macOS release availability are not claimed.",
+  "reviewedAt": "2026-11-03T04:03:57.787Z"
 }

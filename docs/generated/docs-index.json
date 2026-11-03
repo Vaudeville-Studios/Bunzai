@@ -2293,7 +2293,7 @@
         "guide/troubleshooting",
         "reference/ui"
       ],
-      "semanticSummary": "Check GitHub Releases for Windows desktop, Windows x64 CLI and Linux x64/ARM64 CLI downloads; macOS binaries remain held back. New supported app builds include their matching remote helper in the same executable and prepare a verified local copy automatically without a second download. Mesh stays off until enabled in Settings. Separate helper assets serve source setups, older builds and recovery; older installed apps need replacement or the verified Settings download. The guide covers pinned Bun, recursive RP-Core checkout, local Studio launch, first-run choices, Library import, provider setup, encrypted-library backups, source updates and startup troubleshooting. The browser preview is temporary, and Kit remains source-only. Use the printed local address and keep recovery material separate from the computer.",
+      "semanticSummary": "The download page offers Windows and Linux choices from actual published release assets, while macOS remains unavailable until its build is repaired. New normal releases contain Bunzai.exe, Bunzai-Linux for x64, and SHA256SUMS. Both apps include the remote helper; preparation never enables mesh access. Linux no-argument launch starts Studio and opens the browser after the file is made executable. Older Linux CLI files require the ui command. Existing helper and CLI release files remain for recovery. Advanced automation and ARM64 users can run or build from source. The guide covers pinned Bun, recursive RP-Core checkout, setup, providers, encrypted-library backups, source updates and startup troubleshooting. Browser Studio is temporary and Kit remains source-only.",
       "topics": [
         "source install and pinned Bun",
         "recursive RP-Core submodule",
@@ -2307,15 +2307,14 @@
           "text": "What is available today",
           "slug": "what-is-available-today",
           "level": 2,
-          "summary": "GitHub Releases is the authority for packaged Windows desktop, Windows x64 CLI and Linux x64/ARM64 CLI files; macOS binaries are held back. New supported app builds contain the remote helper and prepare a verified local copy automatically without another download. Remote access remains off until the owner enables it in Settings. Separate helper files support source setups, older builds and recovery and should not be opened directly. An older installed executable does not gain embedded bytes from updating source: replace the app or use its verified Settings download. Source remains the usable path when no release exists. The browser preview loses tab data on reload; Kit remains source-only, and scene play requires the installed app.",
+          "summary": "Use the download page to select Windows or Linux from actual GitHub assets; macOS is marked unavailable until repaired. New normal releases publish Bunzai.exe, Bunzai-Linux for x64 and SHA256SUMS. The checksum list verifies the apps, while automatic source archives are for development. Open the Windows executable directly. On Linux, chmod the file executable and run it without arguments to start Studio and open the browser; keep its terminal open. Older bunzai-cli-linux-x64 files need the ui command. New apps include their helper and prepare a verified copy without another download or enabling remote access. Old helper files stay on prior releases for recovery. Updating source does not add bundled bytes to an older installed executable. Browser Studio loses tab data on reload; Kit is source-only.",
           "topics": [
-            "conditional release downloads",
-            "Windows and Linux release assets",
-            "macOS binaries held back",
-            "source checkout",
-            "temporary browser preview",
+            "Windows and Linux primary apps",
+            "actual published assets",
+            "macOS unavailable",
             "included remote helper",
-            "older-build recovery"
+            "old release compatibility",
+            "checksums and source archives"
           ],
           "children": []
         },
@@ -2329,7 +2328,21 @@
             "recursive submodule clone",
             "local loopback Studio"
           ],
-          "children": []
+          "children": [
+            {
+              "text": "Advanced: CLI and Linux ARM64",
+              "slug": "advanced-cli-and-linux-arm64",
+              "level": 3,
+              "summary": "Automation and bulk conversion use CLI commands from a source checkout, with help available through bun run src/cli.ts help. ARM64 devices can use the same source workflow. Compiling a Linux ARM64 executable requires Go to build the matching helper with sidecar/build.ts, followed by build-desktop.ts with no desktop and the bun-linux-arm64 CLI target. The resulting dist/bunzai-cli-linux-arm64 starts Studio with its ui command. Ordinary users do not need that extra build or the internal Windows CLI used for release verification.",
+              "topics": [
+                "CLI automation",
+                "ARM64 source workflow",
+                "matching helper build",
+                "advanced executable"
+              ],
+              "children": []
+            }
+          ]
         },
         {
           "text": "First launch",
@@ -16429,7 +16442,7 @@
       "summary": "uses. Optional remote listeners are separately enabled and gated. One engine, two shells - no format logic exists in the UI layer.",
       "tags": [],
       "related": [],
-      "semanticSummary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. The rp-core wing renders all Director records in virtualized variable-height rows; Memory remains paged in groups of 20. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close.",
+      "semanticSummary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. The rp-core wing renders all Director records in virtualized variable-height rows; Memory remains paged in groups of 20. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close. Normal downloads separate Windows and Linux apps from advanced source workflows; macOS remains unavailable. Published asset links share the release feed.",
       "topics": [
         "Kit conversational terminal",
         "temporary browser Studio",
@@ -16461,7 +16474,7 @@
           "text": "Bottom app navigation",
           "slug": "bottom-app-navigation",
           "level": 2,
-          "summary": "The bottom dock follows RoleCall geometry, with an accent glow and a collapsible edge pill. Every available discovered app appears; unavailable apps are excluded, with Settings and Overlay at the end. Tiles navigate the workspace. The dock sits above apps and below dialogs; its measured bottom reserve clears while hidden. Hidden controls remain inert and outside the tab order. Arrow keys, Home and End move focus. Theme slots remain decorative. Overlay and Ctrl+K or Cmd+K open the temporary overlay with theme and piece counts. The contextual status line holds real messages, failures and reload warnings, disappearing when empty. Narrow shells retain safe-area placement, 44px targets and the selected app in view. Coarse-pointer text focus hides the dock; physical-phone keyboard behavior is unverified.",
+          "summary": "The bottom dock follows RoleCall geometry, with an accent glow and a collapsible edge pill. Every available discovered app appears; unavailable apps are excluded, with Settings and Overlay at the end. Tiles navigate the workspace. The dock sits above apps and below dialogs; its measured bottom reserve clears while hidden. Hidden controls remain inert and outside the tab order. Arrow keys, Home and End move focus. Theme slots remain decorative. Overlay and Ctrl+K or Cmd+K open the temporary overlay with theme and piece counts. The contextual status line holds real messages, failures and reload warnings, disappearing when empty. Narrow shells retain safe-area placement, 44px targets and the selected app in view. Coarse-pointer text focus hides the dock; physical-phone keyboard behavior is unverified. The packaged Linux app defaults to Studio and opens its verified address. Updates allow only same-platform old/new Linux x64 names and bound downloads to 512 MiB. Verified update files use shared atomic publication and owner-executable POSIX permissions.",
           "topics": [
             "bottom dock",
             "RoleCall dock geometry",
@@ -16478,7 +16491,7 @@
           "text": "Browser Studio",
           "slug": "browser-studio",
           "level": 2,
-          "summary": "GitHub Pages serves the public site at its root and Browser Studio under studio/. Browser Studio reuses the React shell, discovered apps, adapters, import/export and documentation with memory-backed data that lasts only for the page load. The reviewed extension runtime is available through Settings > Extensions; packages run in an isolated browser worker and receive only Browser-declared operations against the in-memory store. Provider calls, native file access and persisted rp-core scenes are not available to Browser extensions. This does not enable the standalone script test bench, which still requires the installed app. Export before reload. The public landing, tour pictures, Open Graph metadata, reduced-motion behavior and GitHub links are separate website content.",
+          "summary": "GitHub Pages serves the public site at its root and Browser Studio under studio/. Browser Studio reuses the React shell, discovered apps, adapters, import/export and documentation with memory-backed data that lasts only for the page load. The reviewed extension runtime is available through Settings > Extensions; packages run in an isolated browser worker and receive only Browser-declared operations against the in-memory store. Provider calls, native file access and persisted rp-core scenes are not available to Browser extensions. This does not enable the standalone script test bench, which still requires the installed app. Export before reload. The public landing, tour pictures, Open Graph metadata, reduced-motion behavior and GitHub links are separate website content. The download page shows Windows, Linux and unavailable macOS choices, sharing the release-feed request. Only actual compatible latest-release assets become direct links; offline or missing states retain GitHub and source links. New public releases contain two apps and checksums, while old recovery assets stay available.",
           "topics": [
             "GitHub Pages Studio",
             "shared app and adapter bundles",

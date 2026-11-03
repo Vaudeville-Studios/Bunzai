@@ -12,6 +12,13 @@ const ASSETS = [
 ];
 
 describe("resolveAsset", () => {
+  test("Linux updates and rollback accept only the same-architecture old and new app names", () => {
+    expect(resolveAsset(["Bunzai-Linux"], "bunzai-cli-linux-x64")).toBe("Bunzai-Linux");
+    expect(resolveAsset(["bunzai-cli-linux-x64"], "Bunzai-Linux")).toBe("bunzai-cli-linux-x64");
+    expect(resolveAsset(["Bunzai-Linux", "bunzai-cli-linux-x64"], "bunzai-cli-linux-x64")).toBe("bunzai-cli-linux-x64");
+    expect(resolveAsset(["Bunzai-Linux"], "bunzai-cli-linux-arm64")).toBeNull();
+    expect(resolveAsset(["Bunzai.exe"], "bunzai-cli-windows-x64.exe")).toBeNull();
+  });
   test("matches the running binary exactly", () => {
     expect(resolveAsset(ASSETS, "Bunzai.exe")).toBe("Bunzai.exe");
     expect(resolveAsset(ASSETS, "bunzai-cli-linux-x64")).toBe("bunzai-cli-linux-x64");

@@ -10,17 +10,19 @@
  * (no asset for this platform, no checksum, unwritable folder, corrupt download).
  */
 import { basename, dirname, join } from "node:path";
-import { access, mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { isSha256Hex } from "../../core/sha256";
 import { readStreamCapped } from "../../core/stream-bytes";
 import { isAllowedDownloadHost, resolveAsset } from "../_shared/release-download";
 import { openPath } from "../server-security";
 import type { SwitchAction } from "./manager";
+import { writeAtomicReplace } from "../../studio/atomic-file";
 
 const RELEASE_TAG_API = (tag: string): string =>
   `https://api.github.com/repos/Vaudeville-Studios/Bunzai/releases/tags/${tag}`;
-const MAX_DOWNLOAD_BYTES = 250 * 1024 * 1024;
+// Embedded UI, documentation and the helper currently produce apps near 480 MB; keep a bounded margin.
+const MAX_DOWNLOAD_BYTES = 512 * 1024 * 1024;
 const DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000;
 const MAX_REDIRECTS = 5;
 
@@ -84,6 +86,11 @@ function expectedSum(sumsText: string, name: string): string | null {
   return null;
 }
 
+/** Publish only verified app bytes; POSIX staging remains executable and prior files survive failed writes. */
+export async function stagePackagedApp(path: string, bytes: Uint8Array): Promise<void> {
+  await writeAtomicReplace(path, bytes, process.platform === "win32" ? undefined : { mode: 0o700 });
+}
+
 /**
  * Prepare a packaged switch to `tag`: resolve+download+verify+stage the build for this binary. Resolves
  * with a "manual" action (there is nothing to auto-restart, the user runs the downloaded build). Throws a
@@ -126,7 +133,7 @@ export async function packagedSwitch(tag: string, deps: PackagedSwitchDeps): Pro
   }
 
   const staged = join(stageDir, assetName);
-  await writeFile(staged, bytes);
+  await stagePackagedApp(staged, bytes);
   openPath(stageDir);
   return {
     kind: "manual",

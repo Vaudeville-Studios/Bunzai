@@ -11,12 +11,14 @@ related: [guide/getting-started, guide/troubleshooting, reference/ui]
 
 ## What is available today
 
-Check the [GitHub Releases page](https://github.com/Vaudeville-Studios/Bunzai/releases) for available packaged files. Published releases provide the Windows desktop app, Windows x64 CLI, Linux x64 and arm64 CLIs, and optional remote-access helper assets. macOS release binaries are held back, so use a source checkout on macOS. If no release is listed, the source checkout below is the supported usable path; do not download an old or guessed asset URL.
+Use the [download page](https://vaudeville-studios.github.io/Bunzai/download.html) to choose Windows or Linux. It reads the files actually published on GitHub and keeps macOS marked unavailable while its platform build is repaired. New normal releases have one Windows app (`Bunzai.exe`), one Linux x64 app (`Bunzai-Linux`), and `SHA256SUMS`. The checksum file verifies the apps; GitHub's automatic source archives are for development. Older releases can still show more files.
+
+On Windows, open `Bunzai.exe`. On Linux, make the file executable with `chmod +x Bunzai-Linux`, then run `./Bunzai-Linux`. It starts the local Studio and opens the browser; keep the terminal open while using it. Older Linux downloads named `bunzai-cli-linux-x64` need `./bunzai-cli-linux-x64 ui` instead. If no matching download exists, use the source steps below rather than a guessed asset URL.
 
 New supported app builds include the remote-access helper in the same executable. On startup the app
 prepares a verified local copy automatically, with no second download. Remote access stays off until
-you enable it in **Settings > Remote access**. Separate `sidecar-*` release assets are for source
-setups, older builds and recovery; do not open them directly. An already installed older executable
+you enable it in **Settings > Remote access**. Separate `sidecar-*` assets on older releases remain
+for source setups and recovery; new normal releases do not publish them. Do not open them directly. An already installed older executable
 does not gain a bundled helper from a source update: replace it with a release that includes this
 packaging change, or use the verified helper download offered in Settings.
 
@@ -36,6 +38,15 @@ bun run dev
 ```
 
 The recursive clone fetches the pinned RP-Core submodule used by the application. Bun installs the versions recorded in the lockfile. The command starts the Studio server on your computer and prints the address to open; it uses `http://127.0.0.1:8321` by default. If another program owns that port, Bunzai checks the next ten candidate ports and prints the one it bound. Keep the terminal open while you use the Studio; press Ctrl+C there when you are finished.
+
+### Advanced: CLI and Linux ARM64
+
+CLI commands are useful for automation and bulk conversion; use `bun run src/cli.ts help` from the
+checkout. ARM64 computers and servers can run the same source workflow. To compile an ARM64 executable,
+build its matching embedded helper with `bun sidecar/build.ts --target=linux-arm64` (Go is required),
+then run `bun run scripts/build-desktop.ts --no-desktop --cli-targets=bun-linux-arm64`. The result is
+`dist/bunzai-cli-linux-arm64`; launch its Studio with `./bunzai-cli-linux-arm64 ui`. Normal users do not
+need this extra build or the internal Windows CLI used by release verification.
 
 ![Bunzai's first-run setup in the local Studio](../media/installation/setup-wizard.png)
 

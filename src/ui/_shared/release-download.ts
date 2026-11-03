@@ -4,14 +4,18 @@
  * executable, so both fail closed. (safeExternalUrl is the general http/https link check; this is the
  * stricter https + GitHub-host allowlist a binary download demands, a distinct concept.)
  */
+import { APP_ASSET_NAMES } from "../../packaged-app";
 
 /**
  * Which release asset matches the running binary. Exact basename match: the desktop app is "Bunzai.exe",
- * the CLIs are "bunzai-<os>-<arch>[.exe]", and each release ships those exact names. No match (a dev
- * `bun` binary, or an arch with no build) -> null, and the caller fails closed to "download manually".
+ * Old and new Linux x64 app names may match each other when updating or rolling back. No other
+ * architecture or entry point is interchangeable; unknown builds fail closed to a manual download.
  */
 export function resolveAsset(assetNames: readonly string[], execBasename: string): string | null {
-  return assetNames.find((n) => n === execBasename) ?? null;
+  const exact = assetNames.find((name) => name === execBasename);
+  if (exact) return exact;
+  const linuxNames = [APP_ASSET_NAMES.linux, "bunzai-cli-linux-x64"];
+  return linuxNames.includes(execBasename) ? assetNames.find((name) => linuxNames.includes(name)) ?? null : null;
 }
 
 /** GitHub hosts a release download may legitimately come from (the asset URL and every redirect hop). */

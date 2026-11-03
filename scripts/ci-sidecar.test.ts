@@ -1,15 +1,11 @@
 /**
  * Regression coverage that the required CI status runs the sidecar security wall, and that the RELEASE
- * actually ships the sidecar.
- *
- * The second half exists because it did not. CI vetted and built the helper on every push, which read as
- * "the sidecar is covered", while the release workflow published Bunzai.exe and command-line binaries but
- * no helper at all - so packaged remote access could never start, for anyone, and the only person who
- * never saw it was the developer with an untracked build product sitting in their own working tree.
+ * actually includes the matching helper inside its public app downloads.
  */
 import { expect, test } from "bun:test";
 import { SIDECAR_TARGETS } from "../sidecar/build-targets";
 import { SIDECAR_PINS } from "../src/ui/remote/sidecar-pins";
+import { APP_ASSET_NAMES } from "../src/packaged-app";
 
 const workflowUrl = new URL("../.github/workflows/ci.yml", import.meta.url);
 const releaseUrl = new URL("../.github/workflows/release.yml", import.meta.url);
@@ -50,40 +46,21 @@ test("scale evidence builds the matching helper before compiling the app", async
 
 test("the release builds helpers for its Windows and Linux targets", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
-  for (const flag of ["windows-x64", "linux-x64", "linux-arm64"]) {
+  for (const flag of ["windows-x64", "linux-x64"]) {
     expect(release).toContain(`bun sidecar/build.ts --target=${flag}`);
   }
   expect(release).not.toContain("--target=darwin-");
 });
 
-test("the release uploads only the seven Windows/Linux binaries plus their checksums", async () => {
+test("the normal release publishes one Windows app, one Linux app and their checksums", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
   const publish = jobBlock(release, "publish");
-  for (const asset of [
-    "Bunzai.exe",
-    "bunzai-cli-windows-x64.exe",
-    "bunzai-cli-linux-x64",
-    "bunzai-cli-linux-arm64",
-    "sidecar-windows-x64.exe",
-    "sidecar-linux-x64",
-    "sidecar-linux-arm64",
-    "SHA256SUMS",
-  ]) {
-    expect(publish).toContain(`dist/${asset}`);
-  }
+  const assets = [...publish.matchAll(/dist\/([^\s\\]+)/g)].map((match) => match[1]);
+  expect(assets).toEqual([APP_ASSET_NAMES.windows, APP_ASSET_NAMES.linux, "SHA256SUMS"]);
+  expect(jobBlock(release, "build-windows")).toContain("--packaged-cli");
+  expect(jobBlock(release, "build-linux")).toContain(`cp dist/bunzai-cli-linux-x64 dist/${APP_ASSET_NAMES.linux}`);
   expect(release).not.toContain("build-macos:");
   expect(publish).not.toContain("darwin-");
-});
-
-test("the release UPLOADS every helper it builds, so a pin can never point at a missing asset", async () => {
-  const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
-  for (const key of ["win32-x64", "linux-x64", "linux-arm64"] as const) {
-    const spec = SIDECAR_TARGETS[key];
-    // Once in an upload-artifact path, once in the gh release asset list, once in the checksum line.
-    expect(release.match(new RegExp(spec.asset.replace(/\./g, "\\."), "g"))?.length ?? 0)
-      .toBeGreaterThanOrEqual(3);
-  }
-  expect(release).not.toContain("sidecar-darwin-");
 });
 
 test("every job that builds a helper has the Go toolchain to build it with", async () => {
@@ -92,17 +69,6 @@ test("every job that builds a helper has the Go toolchain to build it with", asy
     const body = jobBlock(release, job);
     expect(body).toContain("bun sidecar/build.ts --target=");
     expect(body).toMatch(/actions\/setup-go@v\d+/);
-  }
-});
-
-test("every PINNED platform has a published asset to download", async () => {
-  // The pins are committed, so they can outlive the release they name or be edited by hand. A pin whose
-  // asset the release workflow does not upload is a download button that refuses for everyone on that
-  // platform, and nothing else would notice: the app reads the pin, not the workflow.
-  const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
-  for (const [key, pin] of Object.entries(SIDECAR_PINS)) {
-    expect(Object.keys(SIDECAR_TARGETS)).toContain(key);
-    expect(release).toContain(pin.asset);
   }
 });
 

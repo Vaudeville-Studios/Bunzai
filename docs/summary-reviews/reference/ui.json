@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:36ac58acbcb3189a567d5e9a639a6eef2cda6b7c14a4cbc6f59ec8a71a792b07",
-  "semanticSummaryHash": "sha256:75ff9fe2d91f9fca0186a8dae09d508efb175736a4cb4422c925ba4f2efe15c9",
+  "sourceHash": "sha256:47f2049794b8eadda1a2aa0b146610ca4df8e41c323423cfb178ef72002c7898",
+  "semanticSummaryHash": "sha256:6993ba6c5ad9043f1a25e63ae0b479ff6ebbab5f3c16339bed15314ed327ae68",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Independent root review of exact source and semantic hashes against backdrop staging and preset recovery implementation, preserving specific runtime/mobile evidence and physical-device/packaging limitations.",
-  "reviewedAt": "2026-11-03T00:37:38.677Z"
+  "notes": "Recorded after explicit independent root review of source, naming compatibility, release publication, bounded atomic updates and live download-card behavior; Linux runtime and macOS release availability are not claimed.",
+  "reviewedAt": "2026-11-03T04:03:57.979Z"
 }

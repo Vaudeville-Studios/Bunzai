@@ -27,6 +27,7 @@ import { APP_VERSION as VERSION } from "./version";
 import { resolveDefaultStudioDir } from "./studio/resolve-dir";
 import { validateAdapterOutput } from "./cli-validation";
 import { printEntitySummary } from "./cli-inspect";
+import { packagedAppArgs } from "./packaged-app";
 
 /** Read a file into the shape adapters expect. Which extensions get a decoded view is core's call, so
  *  the CLI and the studio recognise exactly the same files. */
@@ -149,7 +150,9 @@ async function holdConsoleIfClicked(noArguments: boolean): Promise<void> {
 }
 
 async function main(argv: string[]): Promise<number> {
-  const args = argv.slice(2);
+  const given = argv.slice(2);
+  const args = packagedAppArgs(given, PACKAGED_ASSETS !== null, basename(process.execPath));
+  const openApp = given.length === 0 && args[0] === "ui";
   // Safe mode: every theme resolves to core for this launch; nothing is revoked or removed (ui/server-theme-extensions.ts reads the variable).
   const safeAt = args.indexOf("--safe-themes");
   if (safeAt >= 0) { args.splice(safeAt, 1); process.env.BUNZAI_SAFE_THEMES = "1"; }
@@ -294,6 +297,7 @@ async function main(argv: string[]): Promise<number> {
       sandboxUrl ? new URL(sandboxUrl).port : undefined,
     );
     console.log(`\n  Bunzai. is up: ${url}`);
+    if (openApp) (await import("./ui/server-security")).openInBrowser(url);
     const phase = await library.phase();
     const where = opened
       ? `your library is encrypted in library.db there${opened.state === "locked" ? ", and locked" : ""}`

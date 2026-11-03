@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:3ac44baa5a78e80ccb04f7389c54c3f392af7e1671804f6741a46bdbfc48ed58",
-  "summary": "Check GitHub Releases for Windows desktop, Windows x64 CLI and Linux x64/ARM64 CLI downloads; macOS binaries remain held back. New supported app builds include their matching remote helper in the same executable and prepare a verified local copy automatically without a second download. Mesh stays off until enabled in Settings. Separate helper assets serve source setups, older builds and recovery; older installed apps need replacement or the verified Settings download. The guide covers pinned Bun, recursive RP-Core checkout, local Studio launch, first-run choices, Library import, provider setup, encrypted-library backups, source updates and startup troubleshooting. The browser preview is temporary, and Kit remains source-only. Use the printed local address and keep recovery material separate from the computer.",
+  "sourceHash": "sha256:e18018465d8127984bfc1e6f9425eb8c64adb024ee43fffdf46061a50cc2565c",
+  "summary": "The download page offers Windows and Linux choices from actual published release assets, while macOS remains unavailable until its build is repaired. New normal releases contain Bunzai.exe, Bunzai-Linux for x64, and SHA256SUMS. Both apps include the remote helper; preparation never enables mesh access. Linux no-argument launch starts Studio and opens the browser after the file is made executable. Older Linux CLI files require the ui command. Existing helper and CLI release files remain for recovery. Advanced automation and ARM64 users can run or build from source. The guide covers pinned Bun, recursive RP-Core checkout, setup, providers, encrypted-library backups, source updates and startup troubleshooting. Browser Studio is temporary and Kit remains source-only.",
   "topics": [
     "source install and pinned Bun",
     "recursive RP-Core submodule",
@@ -17,16 +17,15 @@
       "slug": "what-is-available-today",
       "title": "What is available today",
       "level": 2,
-      "sourceHash": "sha256:37bfeb5573879f84319e028ce4869bdc3d3d26262fcc7592ce7b1e03d516f8a2",
-      "summary": "GitHub Releases is the authority for packaged Windows desktop, Windows x64 CLI and Linux x64/ARM64 CLI files; macOS binaries are held back. New supported app builds contain the remote helper and prepare a verified local copy automatically without another download. Remote access remains off until the owner enables it in Settings. Separate helper files support source setups, older builds and recovery and should not be opened directly. An older installed executable does not gain embedded bytes from updating source: replace the app or use its verified Settings download. Source remains the usable path when no release exists. The browser preview loses tab data on reload; Kit remains source-only, and scene play requires the installed app.",
+      "sourceHash": "sha256:24a1648892363d4d0c6d3a9d43f7c5544aeef6426e8469df40506db74909e351",
+      "summary": "Use the download page to select Windows or Linux from actual GitHub assets; macOS is marked unavailable until repaired. New normal releases publish Bunzai.exe, Bunzai-Linux for x64 and SHA256SUMS. The checksum list verifies the apps, while automatic source archives are for development. Open the Windows executable directly. On Linux, chmod the file executable and run it without arguments to start Studio and open the browser; keep its terminal open. Older bunzai-cli-linux-x64 files need the ui command. New apps include their helper and prepare a verified copy without another download or enabling remote access. Old helper files stay on prior releases for recovery. Updating source does not add bundled bytes to an older installed executable. Browser Studio loses tab data on reload; Kit is source-only.",
       "topics": [
-        "conditional release downloads",
-        "Windows and Linux release assets",
-        "macOS binaries held back",
-        "source checkout",
-        "temporary browser preview",
+        "Windows and Linux primary apps",
+        "actual published assets",
+        "macOS unavailable",
         "included remote helper",
-        "older-build recovery"
+        "old release compatibility",
+        "checksums and source archives"
       ],
       "children": []
     },
@@ -34,14 +33,29 @@
       "slug": "run-from-source",
       "title": "Run from source",
       "level": 2,
-      "sourceHash": "sha256:c328a3f7aa4d3d674a4123618e3c8ba5953fcda832d9d311e1f8937ddc835cab",
+      "sourceHash": "sha256:3898c64f3735c81bcb8ed70c4f0d18067a620862814d1fbd51ecae7678354248",
       "summary": "This checkout pins Bun 1.4.2. Install Bun using its official platform instructions, open a new terminal, and confirm the version with bun --version. Clone the repository with --recurse-submodules so the pinned RP-Core dependency is present, then run bun install --frozen-lockfile and bun run dev. The server normally binds to 127.0.0.1:8321 and prints the address it actually uses. If that port is occupied, it checks nearby local ports. Leave the terminal open while using the Studio and press Ctrl+C when finished.",
       "topics": [
         "Bun 1.4.2",
         "recursive submodule clone",
         "local loopback Studio"
       ],
-      "children": []
+      "children": [
+        {
+          "slug": "advanced-cli-and-linux-arm64",
+          "title": "Advanced: CLI and Linux ARM64",
+          "level": 3,
+          "sourceHash": "sha256:88b8ab5f963672a3561cf30d3a4ed31d0b1278025c3e5ad6c36653df30d1ca07",
+          "children": [],
+          "summary": "Automation and bulk conversion use CLI commands from a source checkout, with help available through bun run src/cli.ts help. ARM64 devices can use the same source workflow. Compiling a Linux ARM64 executable requires Go to build the matching helper with sidecar/build.ts, followed by build-desktop.ts with no desktop and the bun-linux-arm64 CLI target. The resulting dist/bunzai-cli-linux-arm64 starts Studio with its ui command. Ordinary users do not need that extra build or the internal Windows CLI used for release verification.",
+          "topics": [
+            "CLI automation",
+            "ARM64 source workflow",
+            "matching helper build",
+            "advanced executable"
+          ]
+        }
+      ]
     },
     {
       "slug": "first-launch",

@@ -5,13 +5,13 @@ Choose an asset attached to this release for your operating system and processor
 | Platform | Asset | How to start |
 |---|---|---|
 | Windows desktop, x64 | `Bunzai.exe` | Open the app. If its window does not appear, check that the Microsoft WebView2 Runtime is installed. |
-| Windows command line, x64 | `bunzai-cli-windows-x64.exe` | Run it from PowerShell or Command Prompt with a Bunzai command. |
-| Linux, x64 | `bunzai-cli-linux-x64` | In a terminal, run `chmod +x bunzai-cli-linux-x64`, then `./bunzai-cli-linux-x64 ui`. |
-| Linux, arm64 | `bunzai-cli-linux-arm64` | In a terminal, run `chmod +x bunzai-cli-linux-arm64`, then `./bunzai-cli-linux-arm64 ui`. |
+| Linux, x64 | `Bunzai-Linux` | In a terminal, run `chmod +x Bunzai-Linux`, then `./Bunzai-Linux`. It starts the local Studio and opens your browser. Keep the terminal open while using it. |
 
 macOS release binaries are currently held back. Use a source checkout on macOS until a macOS release is published.
 
-The CLI prints the local address to open in a browser. Each supported app executable includes its matching remote-access helper and prepares a verified local copy automatically, without a second download. Remote access stays off until you enable it in Settings. Separate `sidecar-*` files remain available for source setups and recovery; do not open them directly. Kit is available from a source checkout for development and is not included in release downloads.
+Each app includes its matching remote-access helper and prepares a verified local copy automatically, without a second download. Remote access stays off until you enable it in Settings. You do not need a separate sidecar file. `SHA256SUMS` is the integrity list, not another app to run. GitHub's source archives are for development.
+
+Advanced CLI commands and Linux ARM64 builds remain available from a source checkout. Older releases retain their separate helpers and CLI files for existing installations and recovery links. Kit is available from source and is not included in release downloads.
 
 This release includes `SHA256SUMS`. Compare the checksum for the exact asset you downloaded before opening it. A Windows reputation warning does not tell you whether a file is safe; verify the release source and checksum, or cancel if you cannot establish that you trust the file. Do not treat the warning itself as a reason to bypass Windows protections.
 

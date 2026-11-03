@@ -47,10 +47,14 @@ test('the auditorium links to a separate info page with product details and exis
   expect(home).toContain('property="og:url" content="https://vaudeville-studios.github.io/Bunzai/"');
 });
 
-test("installation page does not advertise assets when no release is available", () => {
+test("installation presents three OS choices without guessing unpublished download URLs", () => {
   const pages = sitePages([]);
   const download = pages.find((page) => page.path === "download.html")!.html;
-  expect(download).toContain("There are no published release assets at the moment.");
+  for (const os of ["windows", "linux", "mac"]) expect(download).toContain(`data-os="${os}"`);
+  expect(download).toContain("macOS downloads are currently unavailable");
+  expect(download).toContain("data-app-download=\"windows\"");
+  expect(download).toContain("data-app-download=\"linux\"");
+  expect(download).not.toContain("There are no published release assets at the moment.");
   expect(download).toContain("git clone --recurse-submodules");
   expect(download).not.toContain("releases/latest/download");
 });

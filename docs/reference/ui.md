@@ -89,6 +89,14 @@ messages, library-read failures, the Browser Studio export-before-reload warning
 
 Launchers identify this product using the explicit product field from `/api/version`; another app or a generic version server is not reused. A new bind is accepted only when its public per-server instance ID matches; this ID is independent of the private session bearer. Default launches search ports 8321-8330. Browser launchers open only the actual positively identified address within a shared twelve-second readiness deadline. The native desktop accepts `BUNZAI_PORT` as an isolated explicit port from 1024 to 65535; an occupied override fails rather than attaching to another session. Failed native creation is reported as a window failure, not a normal close; the owned Studio server remains available and opens its verified URL in the browser.
 
+The normal Linux x64 download is `Bunzai-Linux`. Its packaged no-argument launch selects the existing
+`ui` command and opens the verified local address in the browser. Explicit commands and source/CLI
+defaults are unchanged. Packaged updates match exact filenames first and accept only the old/new
+Linux x64 aliases for update or rollback; ARM64 and Windows CLI builds are never treated as equivalent.
+Release downloads remain streamed under a 512 MiB cap, which accommodates the current embedded app
+size without removing oversize cancellation or checksum verification. Verified update files are
+published with the shared atomic writer and owner-executable POSIX permissions.
+
 ## Browser Studio
 
 The GitHub Pages build (`scripts/build-pages.ts`) publishes two things. At the root is the public
@@ -99,6 +107,12 @@ adapters, editors, import flow, Press, and indexed documentation as a static sit
 account and sends no Studio data to a Bunzai server. A browser runtime supplies the existing
 `/api/*` client contract from in-process stores and the shared inspect/export engine; it does not
 fork the canonical model or maintain a second set of format conversions.
+
+The download page has Windows, Linux and unavailable macOS choices. It shares the existing release-feed
+request, enabling direct app links only for actual compatible assets in the latest published release.
+The initial, offline and missing-asset states retain release/source links without guessed download URLs.
+New normal releases publish only the Windows desktop app, Linux x64 app and checksums; technical CLI,
+ARM and source workflows are explained separately. Old release assets remain for existing recovery pins.
 
 The public website opens on a static Bunzai title, `All the worlds: your stage`, inside an
 illustrated movie auditorium (`src/site/auditorium.ts`). Its owner-requested cutout-style room artwork is

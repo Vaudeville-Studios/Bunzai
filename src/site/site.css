@@ -172,6 +172,13 @@ section.s.tight { padding-top: 0; }
 .steps li { counter-increment: s; padding: 12px 0 12px 44px; position: relative; border-top: 1px solid var(--line); color: var(--fg2); }
 .steps li::before { content: counter(s); position: absolute; left: 0; top: 10px; width: 28px; height: 28px; display: grid; place-items: center; background: var(--c, var(--peach)); color: var(--ink); font: 700 .9rem var(--body); }
 .os-block + .os-block { margin-top: 44px; }
+.app-downloads { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 20px; margin: 36px 0 24px; }
+.app-downloads .os-block { margin: 0; padding: 24px; background: var(--bg2); border-top: 3px solid var(--pink); }
+.app-downloads p { color: var(--fg2); margin: 16px 0; }
+.app-downloads .btn { width: 100%; margin-top: 8px; }
+.app-downloads code { display: block; margin-top: 12px; }
+.app-downloads p code { display: inline; }
+.btn[aria-disabled="true"] { opacity: .65; cursor: default; pointer-events: none; }
 .os-block h2 { font-size: 1.8rem; }
 .os-block.mine h2::after { content: "your computer"; margin-left: 12px; font: 500 12px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: var(--mint); padding: 3px 8px; vertical-align: middle; }
 .source { margin-top: 18px; background: var(--bg2); padding: 16px; overflow-x: auto; box-shadow: inset 3px 0 0 var(--mint); }

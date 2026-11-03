@@ -35,11 +35,14 @@ proposals as turns finish; it does not pretend to stream fields before they can 
 The Understudy sits at a manuscript table beside the numbered question and answer cards. The scene
 changes pose while the interviewer works; reduced-motion preferences disable those transitions.
 **Your starting idea** and the accepted
-answer history fold away when you want room to think. Beside the question, the living card counts
-filled fields, not character quality. Expand a field to read its full text. **Updated** briefly marks
+answer history fold away when you want room to think. Beside the question, the character uses the same
+Identity, Description, Personality, Scenario, First Message and Examples sections as the Workbench.
+Prose starts in **Source** mode; use its toggle to view rendered text or **Expand** to write fullscreen.
+**Updated** briefly marks
 fields whose accepted values changed; unchanged refreshes do not restart that feedback.
 
-Choose **Edit** beside any card field, change it, then **Keep edit**. The field is marked **Your edit**
+Type in a field, then choose **Keep edit**. Until you keep or cancel that edit, the other fields wait
+so your local text cannot be replaced. **Cancel edit** returns to the latest accepted value. A kept field is marked **Your edit**
 and later model proposals cannot replace it. You can deliberately keep a field blank. Text still
 inside an open field editor has not been kept yet; finish or cancel that edit before saving or
 discarding the interview.

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:952621c874ab33270201fe6deb9774cdb4289524ee06bbda6045d21f57c61987",
-  "semanticSummaryHash": "sha256:f107cacfd53adb0ff7c639d5806fbcdc2c770e8c2ab4ede143e17ee72e0109b8",
+  "sourceHash": "sha256:4b1b67fcbfb3f46a766b0d8cab47371486e082fb759bda7bc67b6b6d2e5a312d",
+  "semanticSummaryHash": "sha256:d584960f148cefbc422bbc8868446b0d27a1ed34f883ff6eb8e74f1244e1e679",
   "verdict": "APPROVE",
   "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read the generated InterviewScene catalog row and corresponding export-name additions to page and section summaries.",
-  "reviewedAt": "2026-11-03T20:28:19.110Z"
+  "notes": "Root independently read the generated shared CharacterTextControl catalog entry and semantic additions; Workbench defaults and source control behavior remain with their existing owners.",
+  "reviewedAt": "2026-11-03T21:29:33.395Z"
 }

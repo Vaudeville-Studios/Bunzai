@@ -22,11 +22,22 @@ from assistive technology and receives no pointer input. The shared build-only a
 the source images as data URLs in both development and packaged browser bundles, without a new asset
 route. A keyed
 question entrance and the existing Card choice controls establish the interview hierarchy; brief and
-history use Disclosure controls. Field excerpts expand without remounting open edits. The local
+history use Disclosure controls. The character rail uses the Workbench's actual BentoCard sections
+for Identity, Description, Personality, Scenario, First Message and Examples. FIELD_MODULES supplies
+labels and control metadata; EditorField and the shared CharacterTextControl reuse Workbench input
+styles, RenderBox and ExpandTextarea. Table Read starts prose in source mode, with the normal
+rendered/source toggle and fullscreen editor available. It embeds presentation only, without loading
+a saved entity, media context or Workbench save lifecycle. The local
 `useFieldUpdates` owner compares accepted field values within a session and draft-store lifetime,
 using shared `useFlash` timing. Initial views, identical polls and restored lifetimes stay quiet;
-actual changes briefly show Updated. The filled-field count is factual, not a quality score. New
+actual changes briefly show Updated. New
 motion honors reduced-motion preferences, and pointer answers do not force heading focus.
+
+Focusing a control selects the existing local scratch field; typing does not write to the server or
+claim manual ownership. One dirty field disables the other field controls until explicit Keep edit
+or Cancel edit. Keep validates and persists the edit, including an intentional blank. Scratch survives
+accepted proposals and fullscreen editing. Frozen sessions expose any retained unkept text separately
+for copy/discard recovery.
 
 ## Ownership
 

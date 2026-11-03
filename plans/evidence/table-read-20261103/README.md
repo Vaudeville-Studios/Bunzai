@@ -208,3 +208,49 @@ the generated summary queue and page index were regenerated after their freshnes
 stale projections. `scenic-summary-global-final` and `scenic-doc-index-final` both exited 0, and the
 parts documentation check passed. Existing corpus summary warnings remain unchanged. No hooks were
 bypassed, full backend suite repeated, push performed or deployment attempted.
+
+## Workbench character controls in the interview rail
+
+The owner-directed follow-up from `65d2717` supersedes the earlier custom rail presentation. The rail
+uses the actual BentoCard sections Identity, Description, Personality, Scenario, First Message and
+Examples, EditorField anatomy, FIELD_MODULES labels and Workbench field styles. The existing
+text/prose construction was extracted into `workbench/controls/character-text-control.tsx`, used by
+both Workbench makeControlFor and Table Read. It retains RenderBox, ExpandTextarea, spellcheck,
+character counts and the mono treatment of first messages/examples. Workbench keeps its rendered
+default and receives no new length restriction; Table Read starts in Source and applies its existing
+20,000-character limit. The full saved-character editor lifecycle is not mounted.
+
+Focusing a control selects local scratch; only explicit Keep persists manual ownership. One dirty
+field holds the existing scratch authority until Keep or Cancel. Frozen unkept text retains its
+copy/discard recovery. The accepted scene source and generated art remain unchanged.
+
+The first focused run exposed empty source prose disappearing after its first typed character under
+the rendered default. Explicit Source initialization fixed that failure; the tests remain strong.
+`editor-rail-focused-green` passed 49 tests and 186 assertions across the three Table Read suites,
+EditorLayout and the ExpandBox/grow suites. `editor-rail-regression` then passed 25 tests and
+114 assertions, with one existing todo, across Table Read and adjacent Workbench activity/conflict/
+editor checks. Its new public-control regression proves zero typing writes, one dirty field,
+fullscreen textarea identity and scratch retention through an accepted proposal, and Cancel restoring
+the latest accepted value. Existing unsuccessful-edit, blank/manual, navigation, lock/reset and
+concurrent saved-state recovery assertions remain covered through the real field controls.
+
+`editor-rail-builds` passed the actual development/production browser-bundle and server-static checks:
+13 tests and 54 assertions. Typecheck and scoped lint passed. Normal staged precommit and affected
+structural/style/clone/list, line, color, part and boundary checks were run. Guide/reference/catalog
+sidecars received the actual independent root review, recorded as `root-table-read-advisor` through
+the standard review command. No full backend-suite rerun or native binary is claimed.
+
+The independent advisor accepted the final live UI. At Paper 390px, the card pane contained seven
+actual EditorFields without horizontal overflow. A Tagline scratch edit survived Library navigation
+and return; Cancel restored the accepted value. At RoleCall 1440px, the scene and source controls
+were visually accepted, both generated images were complete, and there was no horizontal overflow.
+The advisor recorded zero console errors and zero warnings on the final journey. Actual prose
+fullscreen editing retained 55 characters and the 20,000-character limit; collapsing kept the text,
+question three advancing to four preserved the unkept Personality text, Keep displayed Your edit,
+and Source/Rendered/Source retained the same value. The independent Table Read rerun passed
+20 tests and 86 assertions, exit 0.
+
+Final screenshots outside Git: `C:/Users/chiev/table-read-existing-editor-final.png` and
+`C:/Users/chiev/table-read-existing-editor-paper-mobile.png`. Preview remains on the isolated
+PID 51816 at `http://127.0.0.1:18731/#table-read`. The normal staged precommit, global documentation
+summary/index freshness checks and all affected guards passed with inspected exit codes of 0.

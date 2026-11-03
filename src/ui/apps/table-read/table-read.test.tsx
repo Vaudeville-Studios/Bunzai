@@ -57,6 +57,14 @@ function fill(field: HTMLInputElement | HTMLTextAreaElement, value: string): voi
   field.dispatchEvent(new win.Event("input", { bubbles: true }));
 }
 
+async function focusField(doc: Document, field: string): Promise<void> {
+  const id = `table-read-field-${field}`;
+  const section = doc.querySelector(`label[for="${id}"]`)!.closest('[data-part="table-read.card.field"]')!;
+  const rendered = [...section.querySelectorAll("button")].find((item) => item.textContent?.trim() === "Rendered");
+  if (rendered) await act(async () => rendered.click());
+  await act(async () => doc.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`)!.focus());
+}
+
 test("setup exposes real modes and opens Connections instead of pretending a model exists", async () => {
   const { doc, button, opened } = await mount({ revision: -1, session: null, running: false });
   expect(doc.body.textContent).toContain("Cold Read");
@@ -106,8 +114,9 @@ test("a freeform answer stays literal and is sent against the visible draft revi
 test("an unsuccessful manual edit keeps the user's text and prevents saving the unkept draft", async () => {
   const session = { ...interview(), phase: "review" as const, question: null };
   const { doc, button, calls } = await mount({ revision: 9, session, running: false }, async () => { throw new Error("Library is busy; try again."); });
-  await act(async () => button("Edit Personality").click());
+  await focusField(doc, "personality");
   await act(async () => fill(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!, "Ruthless, except when no one is looking."));
+  expect(calls).toEqual([]);
   expect(button("Save character").disabled).toBe(true);
   await act(async () => button("Keep edit").click());
   expect(calls).toEqual([{ action: "edit", revision: 9, field: "personality", value: "Ruthless, except when no one is looking." }]);
@@ -115,11 +124,35 @@ test("an unsuccessful manual edit keeps the user's text and prevents saving the 
   expect(doc.body.textContent).toContain("Library is busy; try again.");
 });
 
+test("Workbench controls keep one local scratch through fullscreen and an accepted proposal", async () => {
+  const session = interview();
+  const { doc, button, calls, setReadView } = await mount({ revision: 2, session, running: false });
+  expect(doc.querySelectorAll('[data-part="table-read.card"] [data-part="editor.field"]').length).toBe(7);
+  await focusField(doc, "personality");
+  await act(async () => fill(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!, "Private scratch"));
+  expect(calls).toEqual([]);
+  expect(doc.querySelector<HTMLTextAreaElement>("#table-read-field-description")!.disabled).toBe(true);
+  expect(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!.maxLength).toBe(20_000);
+  await act(async () => button("Expand Personality").click());
+  const expanded = doc.querySelector<HTMLTextAreaElement>('[role="dialog"] #table-read-field-personality')!;
+  expect(expanded.value).toBe("Private scratch");
+  setReadView({ revision: 3, session: { ...session, body: setCharacterField(session.body, "personality", "Accepted proposal") }, running: false });
+  await act(async () => installed!.dom.window.dispatchEvent(new installed!.dom.window.Event("focus")));
+  expect(doc.querySelector('[role="dialog"] #table-read-field-personality')).toBe(expanded);
+  expect(expanded.value).toBe("Private scratch");
+  await act(async () => button("Collapse Personality").click());
+  expect(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!.value).toBe("Private scratch");
+  await act(async () => button("Cancel edit").click());
+  expect(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!.value).toBe("Accepted proposal");
+  expect(doc.querySelector<HTMLTextAreaElement>("#table-read-field-description")!.disabled).toBe(false);
+  expect(calls).toEqual([]);
+});
+
 test("a committing session exposes neither editable fields nor discard", async () => {
   const session = { ...interview(), phase: "committing" as const, question: null, commit: { token: "save", owner: "owner", expires: Date.now() + 120_000 } };
   const { doc, button } = await mount({ revision: 10, session, running: false });
   expect(button("Discard interview").disabled).toBe(true);
-  expect(doc.querySelector('[aria-label="Edit Personality"]')).toBeNull();
+  expect(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!.disabled).toBe(true);
   expect(doc.body.textContent).toContain("Keeping your reviewed character");
   expect(button("Retry saving this character")).toBeDefined();
 });
@@ -127,8 +160,8 @@ test("a committing session exposes neither editable fields nor discard", async (
 test("manual field editing stays available during generation, and explicitly resumes afterward", async () => {
   const session = { ...interview(), question: null, retryKind: "start" as const, pending: { token: "generating", owner: "owner", kind: "start" as const, expires: Date.now() + 120_000 } };
   const next = { ...session, pending: null, manual: ["description" as const], body: setCharacterField(session.body, "description", "") };
-  const { button, calls } = await mount({ revision: 3, session, running: true }, async () => ({ revision: 4, session: next, running: false }));
-  await act(async () => button("Edit Description").click());
+  const { doc, button, calls } = await mount({ revision: 3, session, running: true }, async () => ({ revision: 4, session: next, running: false }));
+  await focusField(doc, "description");
   await act(async () => button("Keep edit").click());
   expect(calls).toEqual([{ action: "edit", revision: 3, field: "description", value: "" }]);
   expect(button("Continue the interview")).toBeDefined();
@@ -147,7 +180,7 @@ test("an unavailable provider does not block reviewing and saving the retained m
     return { revision: ++revision, session, running: false };
   });
   expect(doc.body.textContent).toContain("The saved model is no longer available.");
-  await act(async () => button("Edit Name").click());
+  await focusField(doc, "name");
   await act(async () => fill(doc.querySelector<HTMLInputElement>("#table-read-field-name")!, "Vesper"));
   await act(async () => button("Keep edit").click());
   await act(async () => button("Review current draft").click());
@@ -166,7 +199,7 @@ test("leaving and returning retains an unsent answer and an unkept living-card e
   installed!.dom.window.dispatchEvent(answerUnload);
   expect(answerUnload.defaultPrevented).toBe(true);
   await act(async () => fill(doc.querySelector<HTMLTextAreaElement>("#table-read-answer")!, ""));
-  await act(async () => button("Edit Personality").click());
+  await focusField(doc, "personality");
   await act(async () => fill(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!, "Mercy embarrasses her."));
   const editUnload = new installed!.dom.window.Event("beforeunload", { cancelable: true });
   installed!.dom.window.dispatchEvent(editUnload);
@@ -229,14 +262,14 @@ test("finishing the Rapid Fire choices waits for an explicit review or model req
 test("locking the library clears unsent scratch text before the room is reopened", async () => {
   const { doc, button, pieces, leaveRoom, returnToRoom } = await mount({ revision: 2, session: interview(), running: false });
   await act(async () => fill(doc.querySelector<HTMLTextAreaElement>("#table-read-answer")!, "Private unsent answer"));
-  await act(async () => button("Edit Personality").click());
+  await focusField(doc, "personality");
   await act(async () => fill(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!, "Private unkept edit"));
   await act(async () => pieces.setLock("locked"));
   await leaveRoom();
   await act(async () => pieces.setLock("unlocked"));
   await returnToRoom();
   expect(doc.querySelector<HTMLTextAreaElement>("#table-read-answer")!.value).toBe("");
-  expect(doc.querySelector("#table-read-field-personality")).toBeNull();
+  expect(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!.value).toBe("");
   expect(doc.body.textContent).not.toContain("Private unkept edit");
 });
 
@@ -249,17 +282,16 @@ test("a restored lower revision replaces the old library view and rejects an old
   setReadView({ revision: 0, session: restored, running: false });
   await act(async () => { pieces.setLock("locked"); });
   await act(async () => { pieces.setLock("unlocked"); });
-  await waitFor(flushSync, () => doc.body.textContent?.includes("Restored Vesper"), "restored lower-revision interview");
+  await waitFor(flushSync, () => doc.querySelector<HTMLInputElement>("#table-read-field-name")?.value === "Restored Vesper", "restored lower-revision interview");
   await act(async () => finish({ revision: 81, session: { ...old, body: setCharacterField(old.body, "name", "Stale completion") }, running: false }));
-  expect(doc.body.textContent).toContain("Restored Vesper");
-  expect(doc.body.textContent).not.toContain("Stale completion");
+  expect(doc.querySelector<HTMLInputElement>("#table-read-field-name")!.value).toBe("Restored Vesper");
   expect(button("She pays it herself").disabled).toBe(false);
 });
 
 test("an unkept field stays selectable and discardable when another client commits and saves", async () => {
   const session = interview();
   const { doc, button, calls, setReadView } = await mount({ revision: 4, session, running: false });
-  await act(async () => button("Edit Personality").click());
+  await focusField(doc, "personality");
   await act(async () => fill(doc.querySelector<HTMLTextAreaElement>("#table-read-field-personality")!, "Mercy embarrasses her."));
   const committing: TableReadSession = { ...session, phase: "committing", commit: { token: "save", owner: "other-client", expires: Date.now() + 120_000 } };
   setReadView({ revision: 5, session: committing, running: true });
@@ -287,9 +319,9 @@ test("a different PieceStore can load while an old owner with the same numeric l
   const restored = { ...interview(), id: "other-library", body: setCharacterField(interview().body, "name", "Different library") };
   const replacement = { ...ctx, pieces: new PieceStore(), api: { ...ctx.api, getTableRead: async () => ({ revision: 0, session: restored, running: false }) } };
   await act(async () => root!.render(<TableRead ctx={replacement} />));
-  expect(doc.body.textContent).toContain("Different library");
+  expect(doc.querySelector<HTMLInputElement>("#table-read-field-name")!.value).toBe("Different library");
   await act(async () => finishOld({ revision: 8, session: interview(), running: false }));
-  expect(doc.body.textContent).toContain("Different library");
+  expect(doc.querySelector<HTMLInputElement>("#table-read-field-name")!.value).toBe("Different library");
 });
 
 test("keyboard choices focus the new question without moving pointer choices to the heading", async () => {

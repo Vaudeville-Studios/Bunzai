@@ -19,12 +19,10 @@ import { FIELD_MODULES, type FieldModule } from "../fields";
 import { compositeControlFor } from "./field-control-composites";
 import type { FieldCtx, FieldControlApi } from "./field-control-ctx";
 import { recOr, strArray } from "../../../../core/guards";
+import { CharacterTextControl } from "./character-text-control";
 
 export type { FieldCtx, FieldControlApi } from "./field-control-ctx";
 
-const PROSE_MONO = new Set(["firstMes", "mesExample"]);
-/** the sheet's caption for a field id, so a fullscreen prose editor is titled the way the sheet titles it */
-const proseLabel = (id: string): string => FIELD_MODULES.find((m) => m.id === id)?.sheetLabel ?? id;
 const SPOTLIGHT_FIELDS: ReadonlyArray<readonly [key: string, label: string]> = [
   ["description", "Description"],
   ["personality", "Personality"],
@@ -104,23 +102,7 @@ export function makeControlFor(ctx: FieldCtx): FieldControlApi {
     const value = text(path);
     return (
       <>
-        <RenderBox value={value} format="markdown">
-          <ExpandTextarea
-            grow
-            label={proseLabel(id)}
-            className={`${styles.in} ${styles.ta}${PROSE_MONO.has(id) ? ` ${styles.mono}` : ""}`}
-            /**
-             * SPELLCHECKED, because this is PROSE - somebody's character description, written by
-             * hand and read by a stranger. It was off, which is right for an id or a regex and
-             * wrong here. The honest way to add a spellchecker is to stop switching off the one
-             * every browser already ships, dictionary and right-click corrections included.
-             */
-            spellCheck
-            value={value}
-            onChange={(e) => setField(path, e.target.value)}
-          />
-          <span className={styles.cnt}>{`${value.length} chars`}</span>
-        </RenderBox>
+        <CharacterTextControl field={FIELD_MODULES.find((m) => m.id === id) ?? { id, kind: "prose", sheetLabel: id }} value={value} onChange={(next) => setField(path, next)} styles={styles} />
         {baseBtn(path)}
       </>
     );
@@ -226,12 +208,7 @@ export function makeControlFor(ctx: FieldCtx): FieldControlApi {
       case "text":
         return (
           <>
-            <input
-              className={styles.in}
-              placeholder={m.placeholder}
-              value={text(m.path)}
-              onChange={(e) => setField(m.path, e.target.value)}
-            />
+            <CharacterTextControl field={m} value={text(m.path)} onChange={(value) => setField(m.path, value)} styles={styles} />
             {baseBtn(m.path)}
           </>
         );

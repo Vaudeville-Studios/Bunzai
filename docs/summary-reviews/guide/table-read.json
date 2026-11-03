@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/table-read",
   "sourcePath": "docs/guide/table-read.md",
-  "sourceHash": "sha256:fa2391e130b6c4c4e009ec32218bd486333fae85da299baefd35a401219550d4",
-  "semanticSummaryHash": "sha256:059fae8e43ca54bbd0dcf5de2a69d56147fc44dbdd8f2785415bb7d5131d5915",
+  "sourceHash": "sha256:a3b7b2cd623095fb176e4a7529a6aa3908815ca1f39242c728633b9a2370db83",
+  "semanticSummaryHash": "sha256:e2d34818d22dbf36d7e0cf2ce37a52eab0856f490315c1fde01ea5c4e3bb24cb",
   "verdict": "APPROVE",
   "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read the changed guide and condensed semantic summary; scene wording matches implemented behavior.",
-  "reviewedAt": "2026-11-03T20:28:18.804Z"
+  "notes": "Root independently read the Workbench-control user instructions and condensed semantic summary; staged Keep/Cancel and fullscreen behavior accurately described.",
+  "reviewedAt": "2026-11-03T21:29:33.103Z"
 }

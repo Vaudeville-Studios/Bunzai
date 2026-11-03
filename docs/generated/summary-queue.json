@@ -2,7 +2,7 @@
   "generated": "2026-11-03",
   "targetChars": 90000,
   "totalPages": 143,
-  "totalSourceChars": 1746975,
+  "totalSourceChars": 1748294,
   "batches": [
     {
       "id": "batch-001",
@@ -282,7 +282,7 @@
     },
     {
       "id": "batch-003",
-      "sourceChars": 87295,
+      "sourceChars": 87557,
       "pages": [
         {
           "docId": "guide/platforms/marinara",
@@ -369,7 +369,7 @@
           "sourcePath": "docs/guide/table-read.md",
           "sidecarPath": "docs/summaries/guide/table-read.json",
           "sectionCount": 4,
-          "sourceChars": 4431,
+          "sourceChars": 4693,
           "status": "APPROVED"
         },
         {
@@ -422,14 +422,14 @@
     },
     {
       "id": "batch-005",
-      "sourceChars": 175959,
+      "sourceChars": 176173,
       "pages": [
         {
           "docId": "reference/components",
           "sourcePath": "docs/reference/components.md",
           "sidecarPath": "docs/summaries/reference/components.json",
           "sectionCount": 3,
-          "sourceChars": 175959,
+          "sourceChars": 176173,
           "status": "APPROVED"
         }
       ]
@@ -1198,7 +1198,7 @@
     },
     {
       "id": "batch-017",
-      "sourceChars": 62618,
+      "sourceChars": 63461,
       "pages": [
         {
           "docId": "reference/security/secrets-and-keys",
@@ -1221,7 +1221,7 @@
           "sourcePath": "docs/reference/table-read.md",
           "sidecarPath": "docs/summaries/reference/table-read.json",
           "sectionCount": 5,
-          "sourceChars": 8383,
+          "sourceChars": 9226,
           "status": "APPROVED"
         },
         {

@@ -16,7 +16,7 @@
 .workspace { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); gap: 1.25rem; align-items: start; }
 .interviewPane, .cardPane { min-width: 0; }
 .conversation, .living { min-width: 0; }
-.living { padding: 1.25rem; }
+.living { display: flex; flex-direction: column; gap: .75rem; }
 .interviewPane > .conversation { padding: 0; }
 .conversation { display: flex; flex-direction: column; gap: .85rem; }
 .interviewTools { display: flex; flex-wrap: wrap; gap: .75rem; }
@@ -44,18 +44,9 @@
 .direction { margin: 0; padding-left: 1rem; border-left: 2px solid var(--premiere-gold); color: var(--text-soft); font-style: italic; line-height: 1.7; white-space: pre-wrap; }
 .reviewNote { display: grid; gap: 1rem; line-height: 1.7; }
 .reviewNote p { margin: 0; }
-.cardMasthead { display: grid; gap: .5rem; padding-bottom: 1rem; border-bottom: 3px solid var(--deck-character); }
-.cardName { margin: 0; font: 700 clamp(1.8rem, 3.5cqi, 3rem)/1.1 var(--font-fancy); overflow-wrap: anywhere; }
-.cardTagline { margin: 0; color: var(--text-soft); font: italic 1rem/1.5 var(--font-body); }
-.fields { margin-top: .5rem; }
-.field { padding: .6rem .5rem; border-bottom: 1px solid var(--edge); border-left: 3px solid transparent; transition: background-color var(--bk-dur-base) var(--bk-ease-move), border-color var(--bk-dur-base) var(--bk-ease-move); }
+.field { border-left: 3px solid transparent; transition: background-color var(--bk-dur-base) var(--bk-ease-move), border-color var(--bk-dur-base) var(--bk-ease-move); }
 .field[data-updated="true"] { border-left-color: var(--deck-character); background: var(--panel); animation: fieldEnter var(--bk-dur-base) var(--bk-ease-move); }
-.fieldHead { display: flex; align-items: center; gap: .5rem; margin-bottom: .35rem; }
-.fieldHeading { flex: 1; min-width: 0; }
 .fieldMeta { display: flex; flex-wrap: wrap; gap: .5rem; color: var(--text-dim); font: .75rem/1.5 var(--font-mono); }
-.fieldText { margin: 0; color: var(--text); font-size: .9375rem; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
-.fieldText:not([data-expanded="true"]) { /* clone-ok: standard line-clamp idiom; this expandable field document owns its disclosure state independently of the Library preview. */ display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-.placeholder { margin: 0; color: var(--text-dim); font-size: .875rem; line-height: 1.6; font-style: italic; }
 .historyList { max-height: 22rem; overflow-y: auto; margin-top: .75rem; }
 .exchange { padding: .75rem 0; border-top: 1px solid var(--edge); }
 .exchange p { margin: 0 0 .75rem; color: var(--text-soft); font-size: .875rem; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }

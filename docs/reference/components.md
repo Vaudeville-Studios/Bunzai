@@ -156,6 +156,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | CharacterForm | src/ui/apps/scenes/cast/cast-character-tab.tsx | ({ ctx, id, chatId, chat, editor, summary, art, version, variants, variantId, busy, onVariant }: { ctx: AppContext; i... | The Character tab: the card's fields in RoleCall's order, the look strip, and the pinned Save. |  |
 | CharacterHero | src/ui/apps/scenes/messenger/settings/character-stats.tsx | ({ a }: { a: WingArgs }) |  |  |
 | CharacterLibrary | src/ui/apps/scenes/booth-navigator.tsx | ({ ctx, currentId, onClose, onStarted }: { ctx: AppContext; currentId: string; onClose(): void; onStarted?(): void }) | `onStarted` runs once the new scene exists, just before the page moves to it (the Messenger drops its cached scene list there). |  |
+| CharacterTextControl | src/ui/apps/workbench/controls/character-text-control.tsx | ({ field, value, onChange, styles, id, disabled, readOnly, maxLength, onFocus, defaultRendered }: { field: Pick<Field... |  |  |
 | ChatLayoutRow | src/ui/apps/settings/sections/chat-layout-row.tsx | ({ prefs }: { prefs: { get(key: string): unknown; set(key: string, value: unknown): void } }) |  | .grid |
 | Check | src/ui/apps/scenes/final-cut/fc-controls.tsx | ({ label, checked, onChange }: { label: string; checked: boolean; onChange(next: boolean): void }) |  |  |
 | Checkbox | src/ui/components/rc-controls/index.tsx | ({ className, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) |  | .sr-only .field .area .chip .check .tipWrap .tip |

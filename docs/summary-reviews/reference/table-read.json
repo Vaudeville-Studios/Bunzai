@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/table-read",
   "sourcePath": "docs/reference/table-read.md",
-  "sourceHash": "sha256:93d6cca9b0a9b1fa22af9e76aa485196389c8bfb35e5f6e4dd4a49124354d615",
-  "semanticSummaryHash": "sha256:cfdf98a34279f89c56e542836b006c9a929fd8b3cdb5d67c0da007d1006936d3",
+  "sourceHash": "sha256:021a963c2dcd3e8241670cd300ae48eb62ab8b138b19a8e222da00b71060fe68",
+  "semanticSummaryHash": "sha256:a5d85390b279e9496ff40341e5a54a2bc77000e23137ede6605175ff5c7e3679",
   "verdict": "APPROVE",
   "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read the reference, condensed summary, shared PNG plugin and actual bundle assertions; scoped source claims approved.",
-  "reviewedAt": "2026-11-03T20:28:18.964Z"
+  "notes": "Root independently read source, reference and semantic summary: real Workbench presentation, bounded local scratch, manual ownership only on Keep, and retained-edit recovery.",
+  "reviewedAt": "2026-11-03T21:29:33.252Z"
 }

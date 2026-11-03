@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "guide/table-read",
   "sourcePath": "docs/guide/table-read.md",
-  "sourceHash": "sha256:fa2391e130b6c4c4e009ec32218bd486333fae85da299baefd35a401219550d4",
-  "summary": "Table Read creates an ordinary Library character by conversation beside an editable living card. Choose Cold Read, Deep Dive or a timed choices-only Rapid Fire round and an existing saved model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain accepted work. Review current draft works without a model, while Finish with the interviewer requests synthesis. Only Save character creates the Library card, and interrupted saves recover the same identity. Open character hands off to the normal Workbench. Encrypted backups retain interview progress; character exports do not include the conversation. Auxiliary lorebook/persona creation and temporary browser Studio support are excluded. The Understudy sits at a manuscript table beside answer cards, with a pending pose that respects reduced motion. Expandable excerpts and Updated feedback mark accepted field changes.",
+  "sourceHash": "sha256:a3b7b2cd623095fb176e4a7529a6aa3908815ca1f39242c728633b9a2370db83",
+  "summary": "Table Read creates an ordinary Library character by conversation beside an editable living card. Choose Cold Read, Deep Dive or a timed choices-only Rapid Fire round and an existing saved model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain accepted work. Review current draft works without a model, while Finish with the interviewer requests synthesis. Only Save character creates the Library card, and interrupted saves recover the same identity. Open character hands off to the normal Workbench. Encrypted backups retain interview progress; character exports do not include the conversation. Auxiliary lorebook/persona creation and temporary browser Studio support are excluded. The manuscript-table scene changes pose during requests and respects reduced motion. Workbench sections offer source/rendered text and fullscreen writing. Keep or Cancel resolves local edits; Updated marks accepted changes.",
   "topics": [
     "character interview",
     "saved models",
@@ -30,8 +30,8 @@
       "slug": "answer-and-take-the-pen",
       "title": "Answer and take the pen",
       "level": 2,
-      "sourceHash": "sha256:1db8dcb9779718f8c009470d5dd63472283fe17a68e7c4668fe7a8d3c023b60e",
-      "summary": "Cold Read and Deep Dive accept chips or freeform answers. Keep this answer persists the answer before generation. Living fields update only after validation. Edit then Keep edit gives a field persistent manual ownership, including deliberate blanks. An open editor is still unsaved. Narrow screens switch between Interview and Living card panes over the same draft. The manuscript-table pose changes honor reduced motion. The question stage uses answer cards; expand excerpts to read more. Updated marks real field changes briefly.",
+      "sourceHash": "sha256:09ef84f526d9652d327d56416180ebfdfb8720df3228972dea3042c9cb836fef",
+      "summary": "Cold Read and Deep Dive accept chips or freeform answers, kept before generation. Workbench sections show source/rendered prose with fullscreen writing. Typing stays local; Keep edit claims manual ownership, including blanks, while Cancel restores accepted text. Other fields wait during one dirty edit. Narrow screens switch Interview and Living card panes. The manuscript-table pose respects reduced motion; Updated briefly marks accepted changes.",
       "topics": [
         "character interview",
         "saved models",

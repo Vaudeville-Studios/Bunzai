@@ -5,7 +5,6 @@
 import { expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { readdir } from "node:fs/promises";
-
 async function shapeFiles(): Promise<string[]> {
   const entityDirs = (await readdir("src/entities", { withFileTypes: true }))
     .filter((entry) => entry.isDirectory() && !entry.name.startsWith("_"))
@@ -98,6 +97,7 @@ async function shapeFiles(): Promise<string[]> {
     "src/stage/store/sqlite/piece-parts-sql.ts",
     "src/stage/store/sqlite/blob-sql.ts",
     "src/stage/store/sqlite/state-store.ts",
+    "src/stage/contracts/state-store.ts", "src/core/table-read/schema.ts",
     "src/stage/store/sqlite/kit-sessions.ts",
   ];
 }
@@ -488,8 +488,8 @@ async function shapeFiles(): Promise<string[]> {
 // 1-51 remain unchanged; older hosts refuse the unknown schema before writing. Root and engine
 // reviewed and approved this exact additive shape.
 // 2026-11-01: COMPATIBLE Core birth fingerprint v2 adds origin coverage and adopts valid v1 rows; shared uncut timestamp ownership emits identical message SQL. No migration or stored-column change.
-// 2026-11-03: Optional prompt attachments remain readable by new hosts; strict old readers reject them, fenced at v0.1.54 in SCHEMA_BUMPS.
-const PINNED_SHAPE_HASH = "b9a2b9ce232a45b6c53002ec2da1296bb04f87683f7ab634dfad77c8c78b82fc";
+// 2026-11-03: Optional attachments are fenced at v0.1.54. Table Read adds private state without SQL/envelope changes; old known-key writes preserve it, encrypted snapshots restore it, and plain folder exports omit it.
+const PINNED_SHAPE_HASH = "5273a5ff8490c387a54bbb3eb03c366f1d0f4b9672571ccfb605476238df20a4";
 test("storage-shape tripwire: an on-disk shape change must be a deliberate, version-aware act", async () => {
   const h = createHash("sha256");
   const files = await shapeFiles();

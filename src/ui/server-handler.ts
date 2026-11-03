@@ -82,6 +82,7 @@ import { formatMeta, handleInspect, handleInspectArchive, handleExport } from ".
 import { clearAllStagings } from "./server-staging";
 import { stageAssetUpload, discardAssetUploads, adoptLibraryAssets, clearStagedAssets } from "./server-asset-staging";
 import { stageAssetFromUrl } from "./server-asset-fetch";
+import { createTableReadRouteOwner, type TableReadRouteOwner } from "./server-table-read";
 
 // Re-export security surface for tests and sandbox-host.
 export {
@@ -134,6 +135,7 @@ export function createHandler(
   /** One fenced extension runtime, present only on the trusted local handler. */
   extensionService?: ExtensionManagerApi,
   sharedExtensionOwner?: ReturnType<typeof createExtensionRouteOwner>,
+  sharedTableReadOwner?: TableReadRouteOwner,
 ): UiHandler {
   const security = sec ?? createSecurityContext();
   const themeRoute = createThemeRouteOwner(packaged, settings);
@@ -146,6 +148,7 @@ export function createHandler(
   const extensionOwner = sharedExtensionOwner ?? createExtensionRouteOwner(library, resolveSandboxOrigin, packaged,
     createExtensionPromptPreviewer(store, settings, library), createPromptScenesReader(library));
   const reads = readCapability ?? libraryReadCapability(library, packaged, extensionOwner);
+  const tableReadOwner = sharedTableReadOwner ?? createTableReadRouteOwner();
 
   const htmlResponse = (rawHtml: string): Response => {
     let html = injectSessionMeta(rawHtml, security.token);
@@ -414,6 +417,8 @@ export function createHandler(
         return studioErr(e);
       }
     }
+    const tableReadResponse = await tableReadOwner.handle(req, p, store);
+    if (tableReadResponse) return tableReadResponse;
     if (p.startsWith("/api/chats/")) return handleChatRoute(req, url, store, settings, isRemote ? "" : security.token,
       isRemote ? undefined : (payload) => extensionOwner.dispatchSceneEvent(payload),
       isRemote ? undefined : (sceneId, messages, signal) => extensionOwner.applyPromptContributions(sceneId, messages, signal),
@@ -426,5 +431,5 @@ export function createHandler(
     return err("not found", 404);
   };
   // A locked library answers 423 from any route, and activity feeds the idle lock (server-library.ts).
-  return Object.assign(libraryFrontDoor(route, library), { close: () => extensionOwner.close() });
+  return Object.assign(libraryFrontDoor(route, library), { close: async () => { if (!isRemote) await tableReadOwner.close(); await extensionOwner.close(); } });
 }

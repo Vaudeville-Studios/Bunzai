@@ -1,8 +1,8 @@
 {
   "generated": "2026-11-03",
   "targetChars": 90000,
-  "totalPages": 141,
-  "totalSourceChars": 1731116,
+  "totalPages": 143,
+  "totalSourceChars": 1745024,
   "batches": [
     {
       "id": "batch-001",
@@ -282,7 +282,7 @@
     },
     {
       "id": "batch-003",
-      "sourceChars": 82719,
+      "sourceChars": 86744,
       "pages": [
         {
           "docId": "guide/platforms/marinara",
@@ -345,7 +345,7 @@
           "sourcePath": "docs/guide/README.md",
           "sidecarPath": "docs/summaries/guide/README.json",
           "sectionCount": 3,
-          "sourceChars": 4200,
+          "sourceChars": 4345,
           "status": "APPROVED"
         },
         {
@@ -362,6 +362,14 @@
           "sidecarPath": "docs/summaries/guide/security.json",
           "sectionCount": 6,
           "sourceChars": 9098,
+          "status": "APPROVED"
+        },
+        {
+          "docId": "guide/table-read",
+          "sourcePath": "docs/guide/table-read.md",
+          "sidecarPath": "docs/summaries/guide/table-read.json",
+          "sectionCount": 4,
+          "sourceChars": 3880,
           "status": "APPROVED"
         },
         {
@@ -414,14 +422,14 @@
     },
     {
       "id": "batch-005",
-      "sourceChars": 174825,
+      "sourceChars": 175748,
       "pages": [
         {
           "docId": "reference/components",
           "sourcePath": "docs/reference/components.md",
           "sidecarPath": "docs/summaries/reference/components.json",
           "sectionCount": 3,
-          "sourceChars": 174825,
+          "sourceChars": 175748,
           "status": "APPROVED"
         }
       ]
@@ -832,7 +840,7 @@
     },
     {
       "id": "batch-012",
-      "sourceChars": 72478,
+      "sourceChars": 72819,
       "pages": [
         {
           "docId": "reference/formats/rolecall",
@@ -871,7 +879,7 @@
           "sourcePath": "docs/reference/glossary.md",
           "sidecarPath": "docs/summaries/reference/glossary.json",
           "sectionCount": 6,
-          "sourceChars": 14992,
+          "sourceChars": 15333,
           "status": "APPROVED"
         },
         {
@@ -1066,7 +1074,7 @@
     },
     {
       "id": "batch-015",
-      "sourceChars": 79233,
+      "sourceChars": 79368,
       "pages": [
         {
           "docId": "reference/platforms/sillytavern/personas-and-data-bank",
@@ -1121,7 +1129,7 @@
           "sourcePath": "docs/reference/README.md",
           "sidecarPath": "docs/summaries/reference/README.json",
           "sectionCount": 3,
-          "sourceChars": 3320,
+          "sourceChars": 3455,
           "status": "APPROVED"
         },
         {
@@ -1190,7 +1198,7 @@
     },
     {
       "id": "batch-017",
-      "sourceChars": 54235,
+      "sourceChars": 61429,
       "pages": [
         {
           "docId": "reference/security/secrets-and-keys",
@@ -1209,6 +1217,14 @@
           "status": "APPROVED"
         },
         {
+          "docId": "reference/table-read",
+          "sourcePath": "docs/reference/table-read.md",
+          "sidecarPath": "docs/summaries/reference/table-read.json",
+          "sectionCount": 5,
+          "sourceChars": 7194,
+          "status": "APPROVED"
+        },
+        {
           "docId": "reference/token-meter",
           "sourcePath": "docs/reference/token-meter.md",
           "sidecarPath": "docs/summaries/reference/token-meter.json",
@@ -1220,14 +1236,14 @@
     },
     {
       "id": "batch-018",
-      "sourceChars": 302565,
+      "sourceChars": 303855,
       "pages": [
         {
           "docId": "reference/ui",
           "sourcePath": "docs/reference/ui.md",
           "sidecarPath": "docs/summaries/reference/ui.json",
-          "sectionCount": 35,
-          "sourceChars": 302565,
+          "sectionCount": 36,
+          "sourceChars": 303855,
           "status": "APPROVED"
         }
       ]

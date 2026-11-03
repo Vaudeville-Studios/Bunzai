@@ -17,6 +17,9 @@ when a folder directly under `src/` is missing from the table below.
 | `src/formats/` | One folder per platform format (SillyTavern, RisuAI, and others), found by folder name, never registered by hand. |
 | `src/studio/` | The Studio's storage on disk: safe paths, atomic writes, settings, keep-both naming. Not the Studio's screens (those are in `src/ui/`). |
 | `src/ui/` | The Studio app: the local server, the React shell, the apps (rooms), and the desktop window. |
+| `src/core/table-read/` | Pure bounded interview schemas, mode transitions, prompts and canonical character fields. |
+| `src/studio/table-read/` | Encrypted interview lifecycle, provider orchestration and recoverable character creation. |
+| `src/ui/apps/table-read/` | The Living Card interview app; all effects go through its typed API. |
 | `src/ui/components/light-rays/` | Vaudeville OGL spotlights and roiling floor fog: one capped canvas, shaders, and CSS fallback. |
 | `src/ui/components/proscenium/` | Reusable black theater frame with ruby curtains, a hanging sign and an artwork screen. |
 | `src/kit/` | Kit, the terminal agent: its session loop, tools, commands, key vault, and screens. |

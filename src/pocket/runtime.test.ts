@@ -65,6 +65,12 @@ describe("temporary browser studio", () => {
     expect(gateScreen(status, { loadInSeen: false })).toBe("studio");
   });
 
+  test("Table Read explicitly needs the installed app rather than simulating a browser provider", async () => {
+    const response = await fetch("/api/table-read");
+    expect(response.status).toBe(501);
+    expect(await response.text()).toContain("Table Read needs the installed Bunzai app");
+  });
+
   test("theme appearance reads use the unified extension owner; old theme mutation routes are retired", async () => {
     const before = await (await fetch("/api/extensions/revision")).json() as { revision: string };
     const packages = await (await fetch("/api/extensions/list")).json() as { id: string; hostTrusted: boolean }[];

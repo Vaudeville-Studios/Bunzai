@@ -85,6 +85,8 @@ function kindFromQuery(id: string): string {
 }
 
 export const api: AppContext["api"] = {
+  getTableRead: () => apiFetchJson("/api/table-read", { requireToken: false }),
+  changeTableRead: (input, signal) => apiFetchJson("/api/table-read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input), signal }),
   readExtensionThemeAsset: async (packageId, assetId, themeDigest, assetDigest, mediaType, signal) => {
     if (!/^[a-z0-9.-]{1,120}$/u.test(packageId) || !/^[a-z0-9-]{1,48}$/u.test(assetId) || !isSha256Hex(themeDigest) || !isSha256Hex(assetDigest)) throw new Error("Invalid extension theme asset reference.");
     const response = await apiFetch(`/api/themes/assets/${encodeURIComponent(packageId)}/${encodeURIComponent(assetId)}?digest=${encodeURIComponent(themeDigest)}`, { signal });

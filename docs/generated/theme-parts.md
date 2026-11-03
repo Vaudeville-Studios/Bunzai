@@ -123,6 +123,7 @@
 | `library.landing` | `Panel` | `src/ui/apps/library/first-landing.tsx` |
 | `library.main` | `div` | `src/ui/apps/library/index.tsx` |
 | `library.new.compact` | `Button` | `src/ui/apps/library/new-in-deck-button.tsx` |
+| `library.new.interview` | `Button` | `src/ui/apps/library/new-in-deck-button.tsx` |
 | `library.new.tile` | `Tile` | `src/ui/apps/library/new-in-deck-button.tsx` |
 | `library.nomatch` | `Panel` | `src/ui/apps/library/search-bar.tsx` |
 | `library.persona.new` | `Tile` | `src/ui/apps/library/views/persona-shelf.tsx` |
@@ -887,3 +888,30 @@
 | Part | Element | Source |
 | --- | --- | --- |
 | `sprite.ghost` | `Tile` | `src/ui/components/sprite-pack/index.tsx` |
+
+### table-read
+
+| Part | Element | Source |
+| --- | --- | --- |
+| `table-read.answer.choice` | `Chip` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.answer.kept` | `div` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.brief` | `Panel` | `src/ui/apps/table-read/setup.tsx` |
+| `table-read.card` | `Panel` | `src/ui/apps/table-read/living-card.tsx` |
+| `table-read.card.field` | `section` | `src/ui/apps/table-read/living-card.tsx` |
+| `table-read.card.retained-edit` | `section` | `src/ui/apps/table-read/living-card.tsx` |
+| `table-read.conversation` | `Panel` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.direction` | `p` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.error` | `div` | `src/ui/apps/table-read/index.tsx` |
+| `table-read.header` | `RoomHeader` | `src/ui/apps/table-read/index.tsx` |
+| `table-read.history` | `div` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.history.toggle` | `Disclosure` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.panes` | `Segmented` | `src/ui/apps/table-read/index.tsx` |
+| `table-read.question` | `div` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.review` | `div` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.review-current` | `Button` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.room` | `main` | `src/ui/apps/table-read/index.tsx` |
+| `table-read.saved` | `div` | `src/ui/apps/table-read/index.tsx` |
+| `table-read.session` | `div` | `src/ui/apps/table-read/index.tsx` |
+| `table-read.setup` | `div` | `src/ui/apps/table-read/setup.tsx` |
+| `table-read.stop` | `Button` | `src/ui/apps/table-read/conversation.tsx` |
+| `table-read.tempo` | `Card` | `src/ui/apps/table-read/setup.tsx` |

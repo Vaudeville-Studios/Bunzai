@@ -37,6 +37,7 @@ full; this is the fast map.
 | [Import a file](importing.md) | Bring a card, lorebook, persona, or regex set into the Library, and read the receipt before anything is written. |
 | [Browse the Library](library.md) | Filter by deck, switch between Grid, Show, and List, and stage one piece or many for a single send to the Workbench. |
 | [Edit a piece](editing.md) | Open a piece on the Workbench, change it through Grid or Steps, and save your draft. |
+| [Create with the Table Read](table-read.md) | Answer an interview beside a living character card, keep your edits, and review before saving. |
 | [Create and manage personas](personas.md) | Build a persona from identity and sections or flat text, and set where it injects. |
 | [Build a lorebook](lorebooks.md) | Add entries, give each one its trigger keywords, and place it in the assembled prompt. |
 | [Edit a regex set](regex.md) | Write find-and-replace rules, choose where and in what order each one runs, and check what a rule does before you save it. |

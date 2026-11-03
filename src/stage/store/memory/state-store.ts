@@ -8,6 +8,14 @@ import type { ExtensionCommitContext } from "../../contracts/extension-store";
 export function memoryStateStore(options: { authorizeExtensionCommit?: (context: ExtensionCommitContext) => void } = {}): StateStore {
   const docs = new Map<StateKey, string>();
   const revisions = new Map<StateKey, number>();
+  const conditionalWrite = (key: unknown, text: string, expectedRevision: number): "saved" | "stale" => {
+    if (typeof text !== "string" || !Number.isSafeInteger(expectedRevision) || expectedRevision < -1) throw new Error("invalid state compare-and-write");
+    const checked = checkStateKey(key);
+    if ((revisions.get(checked) ?? -1) !== expectedRevision) return "stale";
+    docs.set(checked, text);
+    revisions.set(checked, expectedRevision + 1);
+    return "saved";
+  };
   return {
     async read(key) {
       return docs.get(checkStateKey(key)) ?? null;
@@ -23,14 +31,10 @@ export function memoryStateStore(options: { authorizeExtensionCommit?: (context:
       revisions.set(checked, (revisions.get(checked) ?? -1) + 1);
     },
     async compareAndWrite(key, text, expectedRevision, context) {
-      if (typeof text !== "string" || !Number.isSafeInteger(expectedRevision) || expectedRevision < -1) throw new Error("invalid state compare-and-write");
       if (!options.authorizeExtensionCommit) throw new Error("extension commits are unsupported by this memory StateStore");
       options.authorizeExtensionCommit(context);
-      const checked = checkStateKey(key);
-      if ((revisions.get(checked) ?? -1) !== expectedRevision) return "stale";
-      docs.set(checked, text);
-      revisions.set(checked, expectedRevision + 1);
-      return "saved";
+      return conditionalWrite(key, text, expectedRevision);
     },
+    async writeIfRevision(key, text, expectedRevision) { return conditionalWrite(key, text, expectedRevision); },
   };
 }

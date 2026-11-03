@@ -437,6 +437,7 @@ export function installPocketRuntime(): () => void {
         return new Response(null, { status: 204 });
       }
       if (path === "/api/macro-lab/engines") return json({ engines: [] });
+      if (path === "/api/table-read") return error("Table Read needs the installed Bunzai app and a saved model connection. It is unavailable in the temporary browser studio.", 501);
       if (path.startsWith("/api/")) return error(unavailable, 501);
       return originalFetch(request);
     } catch (reason) {

@@ -19,6 +19,7 @@ import { clearStagedAssets } from "./server-asset-staging";
 import { LVBAK_ARCHIVE_BOUNDS } from "../formats/lumiverse-archive";
 import { createExtensionPromptPreviewer, createPromptScenesReader } from "./server-chats-forecast";
 import type { createHandler as RouteHandler } from "./server-handler";
+import { createTableReadRouteOwner } from "./server-table-read";
 type CreateHandler = typeof RouteHandler;
 /** Boot the visual app. Loopback only: a local forge, never an exposed service. */
 export function startUiWithRoutes(
@@ -42,11 +43,12 @@ export function startUiWithRoutes(
   const sharedExtensionOwner = createExtensionRouteOwner(library, () => sandboxOriginRef.current, packaged,
     createExtensionPromptPreviewer(store, settings, library), createPromptScenesReader(library));
   const readCapability = libraryReadCapability(library, packaged, sharedExtensionOwner);
+  const sharedTableReadOwner = createTableReadRouteOwner();
 
   // Remote access (Tailscale + LAN). The handler factory is injected so server-remote.ts never imports
   // back here; setupRemoteAccess creates the managers, binds the untrusted listener, and resumes on boot.
   const makeHandler: MakeHandler = (o) =>
-    createRouteHandler(store, settings, packaged, sec, sandboxOriginRef, lifecycle, o.remote, o.remoteSecret, o.lanApproved, o.lan, undefined, undefined, readCapability, undefined, sharedExtensionOwner);
+    createRouteHandler(store, settings, packaged, sec, sandboxOriginRef, lifecycle, o.remote, o.remoteSecret, o.lanApproved, o.lan, undefined, undefined, readCapability, undefined, sharedExtensionOwner, sharedTableReadOwner);
   const remoteAccess = setupRemoteAccess({ settings, studioDir, makeHandler, bundledSidecar, packaged: packaged !== undefined, ...(library ? { ready: library.unlocked() } : {}) });
   let closeHandler: (() => Promise<void>) | null = null;
   try {
@@ -70,6 +72,7 @@ export function startUiWithRoutes(
       undefined,
       undefined,
       sharedExtensionOwner,
+      sharedTableReadOwner,
     );
     closeHandler = () => handler.close();
     // idleTimeout: Bun's default 10s killed bulk imports mid-inspect; 120s covers the slowest real

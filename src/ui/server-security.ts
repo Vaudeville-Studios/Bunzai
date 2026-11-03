@@ -184,8 +184,9 @@ export function requireStringField(obj: Record<string, unknown>, key: string): s
 }
 
 /**
- * Refuses a foreign-page GET/HEAD; shared by every /api/* gate below. A mutating method cannot demand
- * the token on GET (an <img src> sends no headers), so any page the person has open, including one on
+ * Refuses a foreign-page API request by browser-declared site. The shared gates use it for reads;
+ * Table Read also uses it for writes. Reads cannot demand the token on GET (an <img src> sends no
+ * headers), so any page the person has open, including one on
  * another 127.0.0.1 port (same-site, not cross-site), could fire blind requests at the Studio while it is
  * unlocked: image-load and timing oracles for what exists (there are no CORS headers, so the body itself
  * is not readable). Sec-Fetch-Site is browser-set and unforgeable from a page, so only "same-origin"
@@ -196,7 +197,7 @@ export function requireStringField(obj: Record<string, unknown>, key: string): s
  * 127.0.0.1. LAN pages are plain http on a non-loopback IP, where browsers send no Sec-Fetch headers at
  * all, so `browsersMustDeclareSite` stays off there.
  */
-function refuseForeignRead(req: Request, browsersMustDeclareSite = false): Response | null {
+export function refuseForeignSite(req: Request, browsersMustDeclareSite = false): Response | null {
   const site = req.headers.get("sec-fetch-site") ?? "";
   if (site !== "" && site !== "same-origin" && site !== "none") return err("forbidden", 403);
   if (browsersMustDeclareSite && site === "" && (req.headers.get("user-agent") ?? "").startsWith("Mozilla/")) {
@@ -224,7 +225,7 @@ export function checkApiRequest(
   const host = req.headers.get("host") ?? "";
   if (!hostAllowed(host, sec.expectedHost)) return err("forbidden", 403);
 
-  if (req.method === "GET" || req.method === "HEAD") return refuseForeignRead(req, true);
+  if (req.method === "GET" || req.method === "HEAD") return refuseForeignSite(req, true);
 
   if (req.method === "POST" || req.method === "PATCH") {
     const origin = req.headers.get("origin");
@@ -269,7 +270,7 @@ export function checkRemoteApiRequest(
   const presented = req.headers.get("x-bunzai-sidecar-secret") ?? "";
   if (!tokensEqual(presented, secret)) return err("forbidden", 403);
 
-  if (req.method === "GET" || req.method === "HEAD") return refuseForeignRead(req);
+  if (req.method === "GET" || req.method === "HEAD") return refuseForeignSite(req);
   if (req.method === "POST" || req.method === "PATCH") return checkToken(req, sec.token);
   return err("method not allowed", 405);
 }
@@ -281,7 +282,7 @@ export function checkRemoteApiRequest(
  */
 export function checkLanApiRequest(req: Request, sec: UiSecurityContext): Response | null {
   if (!sec.token) return err("server not ready", 503);
-  if (req.method === "GET" || req.method === "HEAD") return refuseForeignRead(req);
+  if (req.method === "GET" || req.method === "HEAD") return refuseForeignSite(req);
   if (req.method === "POST" || req.method === "PATCH") return checkToken(req, sec.token);
   return err("method not allowed", 405);
 }

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "docId": "reference/table-read",
+  "sourcePath": "docs/reference/table-read.md",
+  "sourceHash": "sha256:962f08c6d127d2dfc585bd1e841c27b11b47a09b750da842b683179f6d646c02",
+  "summary": "The discovered Table Read app composes a pure bounded interview core, existing saved providers, one encrypted revisioned document and the canonical CharacterBody. Three modes share finite field proposals and persistent manual ownership. Model requests disable tools and enforce context, token, byte and time limits; validated output alone changes the card. Trusted StateStore CAS preserves the separate extension authorization fence. Read-only reload observes pending ownership without inference. Stop, explicit retry and offline review retain work. Save freezes the exact body and ID before absent-only creation, then records a durable receipt; uncertain failures stay frozen and definitive collisions return to review. Approved remote devices reuse existing authentication without LibraryHandle authority. Browser Studio and auxiliary bundles remain unavailable.",
+  "topics": [
+    "pure interview core",
+    "encrypted revisioned session",
+    "bounded providers",
+    "exact-ID save recovery",
+    "approved remote devices"
+  ],
+  "sections": [
+    {
+      "slug": "ownership",
+      "title": "Ownership",
+      "level": 2,
+      "sourceHash": "sha256:42aae8de4c1d02908616a2e429e62d7bca539514edebd70f42939d07dedeee96",
+      "summary": "The pure core owns strict schemas, finite editable character fields, prompts and mode transitions over canonical CharacterBody. Studio orchestration resolves existing saved connections and sends one bounded structured response per normal turn. Requests disable tools and include only this interview. Arbitrary paths and unknown keys are rejected; malformed output retains a retryable draft instead of claiming success.",
+      "topics": [
+        "pure interview core",
+        "encrypted revisioned session",
+        "bounded providers"
+      ],
+      "children": [],
+      "shortSource": true
+    },
+    {
+      "slug": "modes-and-field-ownership",
+      "title": "Modes and field ownership",
+      "level": 2,
+      "sourceHash": "sha256:075abfe9a9019696a29a2a21b62ced28b1ecf84f52f178453916601357e25367",
+      "summary": "Cold Read has an eight-question ceiling; Deep Dive has twenty and one matching follow-up per field. Repeated deflections retire a target. Redundant questions are recoverable failures. Rapid Fire prepares a finite deck before its server deadline, validates stored choices, retains full answers and makes no automatic expiry call. Persistent manual ownership includes blanks and rejects future model replacements.",
+      "topics": [
+        "pure interview core",
+        "encrypted revisioned session",
+        "bounded providers"
+      ],
+      "children": [],
+      "shortSource": true
+    },
+    {
+      "slug": "durable-state-and-operation-lifetime",
+      "title": "Durable state and operation lifetime",
+      "level": 2,
+      "sourceHash": "sha256:01ba3a8af4d4cf21c906b11a52199b74ac9b88582b8229a37ecd86e53f7acebd",
+      "summary": "One versioned document lives encrypted under the closed tableRead key without a SQL migration. Older known-key writes preserve this additive row; encrypted snapshots restore it and its revision, while plain exports omit progress. Host CAS preserves extension transaction authorization. Owner tokens, expiry and revision guards prevent stale completion. Model waits cancel within bounds; accepted storage writes follow the existing safe close contract.",
+      "topics": [
+        "pure interview core",
+        "encrypted revisioned session",
+        "bounded providers"
+      ],
+      "children": [],
+      "shortSource": true
+    },
+    {
+      "slug": "review-and-exact-once-creation",
+      "title": "Review and exact-once creation",
+      "level": 2,
+      "sourceHash": "sha256:0488fe8988c58afadd29b5955ea98ad15fba91a27cd595128434199f3e1616ec",
+      "summary": "Offline review permits partial drafts without another provider request. Explicit Save freezes a stable random ID, body and lease before compareAndCreate. Recovery accepts only a live character with the identical canonical body. Uncertain create or receipt failures remain frozen; positively verified different or retired identities return to review without overwrite or resurrection. Saved cards open in the existing Workbench.",
+      "topics": [
+        "pure interview core",
+        "encrypted revisioned session",
+        "bounded providers"
+      ],
+      "children": [],
+      "shortSource": true
+    },
+    {
+      "slug": "http-and-support-boundaries",
+      "title": "HTTP and support boundaries",
+      "level": 2,
+      "sourceHash": "sha256:65fbbd477b5d0ad4fca6eaad746edb3abedfbf8cf1e167d67a3212978aeed88b",
+      "summary": "Typed GET and POST routes require existing authentication and an open library, strict bounded mutations and the shared foreign-site check. Approved LAN and mesh devices author without receiving LibraryHandle or host-management authority. No arbitrary provider endpoint or extension capability is added. Temporary browser Studio, CLI, auxiliary bundles, alternate persona catalogs and Dark Room are excluded. Scripted live proof measures workflow, not real model quality.",
+      "topics": [
+        "pure interview core",
+        "encrypted revisioned session",
+        "bounded providers"
+      ],
+      "children": [],
+      "shortSource": true
+    }
+  ],
+  "shortSource": true
+}

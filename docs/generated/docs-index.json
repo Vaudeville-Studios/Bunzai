@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-03",
-  "count": 141,
+  "count": 143,
   "docs": [
     {
       "id": "01-VISION",
@@ -3956,7 +3956,7 @@
         "reference/architecture",
         "reference/formats/README"
       ],
-      "semanticSummary": "User guide index for Bunzai, the forge for AI-roleplay content to convert edit and ship any format. Pages walk through using the app itself as opposed to formats or internals in the reference docs. New users start with setup and first import; other pages can be read in task order. The rooms section maps Dock rooms: Workbench for editing as home after first boot, Library for browsing six decks and import door, Press for shipping a staged queue to one target platform, CSS Workshop for token restyling, The Company not open yet as a dimmed tile, and Settings pinned in the dock foot for theme accent home app first deck publish targets and Workbench follow. The pages table links getting-started, importing, library browse, editing, personas, lorebooks, regex, converting, and exporting. Platform notes list per-platform guides for Agnai, Backyard, Chub, Lumiverse, Marinara, NovelAI, Pygmalion, RisuAI, RoleCall, and SillyTavern covering what is read kept and dropped; read Convert a card first for the general rule.",
+      "semanticSummary": "User guide index for Bunzai, the forge for AI-roleplay content to convert edit and ship any format. Pages walk through using the app itself as opposed to formats or internals in the reference docs. New users start with setup and first import; other pages can be read in task order. The rooms section maps Dock rooms: Workbench for editing as home after first boot, Library for browsing six decks and import door, Press for shipping a staged queue to one target platform, CSS Workshop for token restyling, The Company not open yet as a dimmed tile, and Settings pinned in the dock foot for theme accent home app first deck publish targets and Workbench follow. The pages table links getting-started, importing, library browse, editing, personas, lorebooks, regex, converting, and exporting. Platform notes list per-platform guides for Agnai, Backyard, Chub, Lumiverse, Marinara, NovelAI, Pygmalion, RisuAI, RoleCall, and SillyTavern covering what is read kept and dropped; read Convert a card first for the general rule. Table Read adds conversation-led character creation with three modes, an editable living card, encrypted resume and explicit review/save.",
       "topics": [
         "user guide index",
         "Dock rooms map",
@@ -3987,7 +3987,7 @@
           "text": "The pages",
           "slug": "the-pages",
           "level": 2,
-          "summary": "Index of task guide pages. Get started is the start-here page for install, four-question setup wizard, and first import. Import a file brings card lorebook persona or regex into the Library with a receipt before write. Browse the Library covers deck filter, Grid Show List, and staging for Workbench. Edit a piece covers Workbench Grid or Steps and saving draft. Personas covers identity sections or flat text and inject location. Lorebooks covers entries keywords and prompt placement. Regex covers find-replace rules order and check before save. Convert a card covers cross-format shipping and what crosses or stays. Export a piece covers editor Export or Press batch.",
+          "summary": "Index of task guide pages. Get started is the start-here page for install, four-question setup wizard, and first import. Import a file brings card lorebook persona or regex into the Library with a receipt before write. Browse the Library covers deck filter, Grid Show List, and staging for Workbench. Edit a piece covers Workbench Grid or Steps and saving draft. Personas covers identity sections or flat text and inject location. Lorebooks covers entries keywords and prompt placement. Regex covers find-replace rules order and check before save. Convert a card covers cross-format shipping and what crosses or stays. Export a piece covers editor Export or Press batch. Table Read adds conversation-led character creation with three modes, an editable living card, encrypted resume and explicit review/save.",
           "topics": [
             "getting-started first",
             "import library receipt",
@@ -4228,6 +4228,82 @@
             "packaged sandbox proof open",
             "who can open the library",
             "private vulnerability report"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "guide/table-read",
+      "path": "docs/guide/table-read.md",
+      "title": "Create a character with the Table Read",
+      "audience": "user",
+      "summary": "Interview a character into being beside an editable living card, then review and save it to your Library.",
+      "tags": [
+        "character",
+        "table-read",
+        "interview",
+        "creation"
+      ],
+      "related": [
+        "guide/editing",
+        "guide/library",
+        "reference/table-read"
+      ],
+      "semanticSummary": "Table Read creates an ordinary Library character by conversation beside an editable living card. Choose Cold Read, Deep Dive or a timed choices-only Rapid Fire round and an existing saved model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain accepted work. Review current draft works without a model, while Finish with the interviewer requests synthesis. Only Save character creates the Library card, and interrupted saves recover the same identity. Open character hands off to the normal Workbench. Encrypted backups retain interview progress; character exports do not include the conversation. Auxiliary lorebook/persona creation and temporary browser Studio support are excluded.",
+      "topics": [
+        "character interview",
+        "saved models",
+        "manual field ownership",
+        "encrypted resume",
+        "explicit review and save"
+      ],
+      "anchors": [
+        {
+          "text": "Choose the pace and the model",
+          "slug": "choose-the-pace-and-the-model",
+          "level": 2,
+          "summary": "Choose Cold Read for about five questions with an eight-question ceiling, Deep Dive for bounded follow-ups, or Rapid Fire for a 90-second choices-only round whose deck is prepared first. Select a saved model or visit Connections. The idea, answers and card go to that provider, with its normal charges; unrelated Library pieces do not.",
+          "topics": [
+            "character interview",
+            "saved models",
+            "manual field ownership"
+          ],
+          "children": []
+        },
+        {
+          "text": "Answer and take the pen",
+          "slug": "answer-and-take-the-pen",
+          "level": 2,
+          "summary": "Cold Read and Deep Dive accept chips or freeform answers. Keep this answer persists the answer before generation. Living fields update only after validation. Edit then Keep edit gives a field persistent manual ownership, including deliberate blanks. An open editor is still unsaved. Narrow screens switch between Interview and Living card panes over the same draft.",
+          "topics": [
+            "character interview",
+            "saved models",
+            "manual field ownership"
+          ],
+          "children": []
+        },
+        {
+          "text": "Pause, recover and review",
+          "slug": "pause-recover-and-review",
+          "level": 2,
+          "summary": "Accepted answers and kept edits resume from the encrypted library, and reload does not spend model calls. Stop retains work; failures permit explicit retry, editing or offline review. A live operation on another device must stop or expire first. Review current draft uses existing fields, while Finish with the interviewer asks for synthesis. Missing fields remain visible.",
+          "topics": [
+            "character interview",
+            "saved models",
+            "manual field ownership"
+          ],
+          "children": []
+        },
+        {
+          "text": "Save and continue in the Workbench",
+          "slug": "save-and-continue-in-the-workbench",
+          "level": 2,
+          "summary": "Save character requires a name and is the only action that creates a card. Retry saving recovers its identity while unresolved commits stay frozen. Open character uses the regular Workbench for art, editing and export. Starting another interview does not delete the saved character. Encrypted backups preserve progress; ordinary exports carry character fields. This version excludes auxiliary pieces and temporary browser Studio.",
+          "topics": [
+            "character interview",
+            "saved models",
+            "manual field ownership"
           ],
           "children": []
         }
@@ -4991,7 +5067,7 @@
       "summary": "Auto-generated by `scripts/hooks/component-catalog.ts` from exported UI entries under pre-commit gate (`--check`) fails the commit when this file drifts from the real exports.",
       "tags": [],
       "related": [],
-      "semanticSummary": "The component catalog is generated from exported React components under src/ui and selected helpers under src/ui/_shared. Its two tables report source file, signature, optional documentation and styles. Reuse a catalog entry before creating another control; behavior remains owned by the component source and reference/ui. Current extension-related entries include the package manager, bounded guest renderer, settings editor, effect-review surface, and Library/Workbench host-command menu. The command menu reuses the shared virtual-row primitive to bound mounted options while keeping keyboard navigation and an in-flight command reachable. ScenePage also exposes the identifiers used for verified navigation handoff. The catalog is discovery metadata, not a behavior registry or release proof. PromptEditPanel and PhaseEditor signatures include the shared staged attachment lifecycle so preset and Promptbook block controls reuse the same file authoring surface.",
+      "semanticSummary": "The component catalog is generated from exported React components under src/ui and selected helpers under src/ui/_shared. Its two tables report source file, signature, optional documentation and styles. Reuse a catalog entry before creating another control; behavior remains owned by the component source and reference/ui. Current extension-related entries include the package manager, bounded guest renderer, settings editor, effect-review surface, and Library/Workbench host-command menu. The command menu reuses the shared virtual-row primitive to bound mounted options while keeping keyboard navigation and an in-flight command reachable. ScenePage also exposes the identifiers used for verified navigation handoff. The catalog is discovery metadata, not a behavior registry or release proof. PromptEditPanel and PhaseEditor signatures include the shared staged attachment lifecycle so preset and Promptbook block controls reuse the same file authoring surface. Table Read contributes its discovered room, Setup, Conversation and LivingCard exports; their controls reuse existing component families.",
       "topics": [
         "generated component catalog",
         "component-catalog.ts hook",
@@ -5023,7 +5099,7 @@
           "text": "Components (React, `.tsx`)",
           "slug": "components-react-tsx",
           "level": 2,
-          "summary": "The React table lists exported components from the shell, Library, Workbench, Scenes, Settings and shared UI. Extension entries include the manager, guest renderer, settings editor, effect-review panel and host-command menu used in Library and Workbench. The menu uses the existing virtual-row primitive for a bounded DOM window and retains keyboard access to commands. ScenePage exposes navigation-ticket and load identifiers for verified handoff. Scene layout entries include AdditionalLayout, Desktop98, FullChatWings and Storybook; ChatLayoutRow records its .grid style. Rows are generated discovery metadata; consult reference/ui and component source for behavior. Other entries include shared controls, editors, panels and app-specific surfaces. The generated PromptEditPanel and PhaseEditor entries include attachment uploads and their shared staging lifecycle; signatures are discovery metadata rather than independent feature promises.",
+          "summary": "The React table lists exported components from the shell, Library, Workbench, Scenes, Settings and shared UI. Extension entries include the manager, guest renderer, settings editor, effect-review panel and host-command menu used in Library and Workbench. The menu uses the existing virtual-row primitive for a bounded DOM window and retains keyboard access to commands. ScenePage exposes navigation-ticket and load identifiers for verified handoff. Scene layout entries include AdditionalLayout, Desktop98, FullChatWings and Storybook; ChatLayoutRow records its .grid style. Rows are generated discovery metadata; consult reference/ui and component source for behavior. Other entries include shared controls, editors, panels and app-specific surfaces. The generated PromptEditPanel and PhaseEditor entries include attachment uploads and their shared staging lifecycle; signatures are discovery metadata rather than independent feature promises. Table Read contributes its discovered room, Setup, Conversation and LivingCard exports; their controls reuse existing component families.",
           "topics": [
             "React tsx exports",
             "shell Dock App",
@@ -11102,7 +11178,7 @@
       "summary": "Words that mean something particular in Bunzai, and the folder that owns each one. Read this before searching by name: several words here mean two different things, and a few folders are not what their names suggest. For where a specific fi",
       "tags": [],
       "related": [],
-      "semanticSummary": "The glossary explains project vocabulary, folder ownership, and naming traps, then points readers to the generated code map for individual files. Its folder table includes src/shared for cross-domain helpers and describes src/extensions as the package catalog, SDK, approval lifecycle, and bounded QuickJS runtime. It distinguishes Lua and regex test benches from extension JavaScript guest workers; imported script content remains data until its specific supported isolated worker is invoked. The glossary also covers the engine and formats, Studio and Kit, Stage, encryption, Compendium, snapshots, health checks, and documentation process. Its check requires every direct src folder and every named path to remain valid.",
+      "semanticSummary": "The glossary explains project vocabulary, folder ownership, and naming traps, then points readers to the generated code map for individual files. Its folder table includes src/shared for cross-domain helpers and describes src/extensions as the package catalog, SDK, approval lifecycle, and bounded QuickJS runtime. It distinguishes Lua and regex test benches from extension JavaScript guest workers; imported script content remains data until its specific supported isolated worker is invoked. The glossary also covers the engine and formats, Studio and Kit, Stage, encryption, Compendium, snapshots, health checks, and documentation process. Its check requires every direct src folder and every named path to remain valid. Table Read separates pure interview state in core/table-read, encrypted orchestration in studio/table-read and the discovered living-card app in ui/apps/table-read.",
       "topics": [
         "glossary",
         "vocabulary",
@@ -11119,7 +11195,7 @@
           "text": "Where things live",
           "slug": "where-things-live",
           "level": 2,
-          "summary": "One row per top-level folder. core is the pure engine center; entities owns schemas, runtime checks, and capabilities by content kind; formats holds discovered adapters. studio is disk storage, while screens live in ui. kit is the terminal agent; stage is the chat runtime. sandbox contains bounded Lua and regex test benches and extension JavaScript guest workers; imported scripts stay inert until a supported isolated worker runs. shared contains small cross-domain helpers. site is the Pages website; pocket the in-memory browser build; mcp the protocol wire; src/docs checks documentation; generated holds script output; types holds dependency declarations. specs, docs, scripts, and sidecar complete the map. Light-rays owns the capped Vaudeville OGL spotlight and fog renderer and CSS fallback; proscenium owns the reusable theater frame, curtains, sign, and artwork aperture.",
+          "summary": "One row per top-level folder. core is the pure engine center; entities owns schemas, runtime checks, and capabilities by content kind; formats holds discovered adapters. studio is disk storage, while screens live in ui. kit is the terminal agent; stage is the chat runtime. sandbox contains bounded Lua and regex test benches and extension JavaScript guest workers; imported scripts stay inert until a supported isolated worker runs. shared contains small cross-domain helpers. site is the Pages website; pocket the in-memory browser build; mcp the protocol wire; src/docs checks documentation; generated holds script output; types holds dependency declarations. specs, docs, scripts, and sidecar complete the map. Light-rays owns the capped Vaudeville OGL spotlight and fog renderer and CSS fallback; proscenium owns the reusable theater frame, curtains, sign, and artwork aperture. Table Read separates pure interview state in core/table-read, encrypted orchestration in studio/table-read and the discovered living-card app in ui/apps/table-read.",
           "topics": [
             "source tree",
             "folders",
@@ -14900,7 +14976,7 @@
       "summary": "This is the reference documentation for **bunzai**, the Vaudeville Studios converter for AI-roleplay content. It is **docs-as-code**: it lives in the repo, is versioned with the code, and is kept true by",
       "tags": [],
       "related": [],
-      "semanticSummary": "Reference documentation index for bunzai, the Vaudeville Studios converter for AI-roleplay content. Docs-as-code: lives in the repo, versioned with the code, updated in the same change that adds or alters a feature. If a doc and the code disagree the code is right and the doc is a bug to file. The contract: based in truth with claims checked against source field tables detect scores and mapping quirks, planned-but-not-built labeled, updated per feature in the same commit, one concept per file mirroring house code rules. Map routes to architecture engine start page, entities character and lorebook supersets, concepts character-book embed extract, formats README coverage matrix and per-format family pages. How to read the field tables: Field is canonical name in vaud-json output, Type is TypeScript from entities schema, Meaning is roleplay client use, Formats lists producers and consumers; a field with no producer would not exist as a canonical slot per escrow rule in architecture. Schema file is type truth; this doc is meaning truth.",
+      "semanticSummary": "Reference documentation index for bunzai, the Vaudeville Studios converter for AI-roleplay content. Docs-as-code: lives in the repo, versioned with the code, updated in the same change that adds or alters a feature. If a doc and the code disagree the code is right and the doc is a bug to file. The contract: based in truth with claims checked against source field tables detect scores and mapping quirks, planned-but-not-built labeled, updated per feature in the same commit, one concept per file mirroring house code rules. Map routes to architecture engine start page, entities character and lorebook supersets, concepts character-book embed extract, formats README coverage matrix and per-format family pages. How to read the field tables: Field is canonical name in vaud-json output, Type is TypeScript from entities schema, Meaning is roleplay client use, Formats lists producers and consumers; a field with no producer would not exist as a canonical slot per escrow rule in architecture. Schema file is type truth; this doc is meaning truth. Table Read documents the bounded interview core, provider orchestration, encrypted revisioned session and exact-ID character save.",
       "topics": [
         "docs-as-code truth",
         "contract per feature",
@@ -14927,7 +15003,7 @@
           "text": "Map",
           "slug": "map",
           "level": 2,
-          "summary": "Start at architecture for the engine: canonical escrow adapters kinds registry folders bundles CLI. glossary gives project words, traps, owning folders, and the code map. entities character and lorebook document supersets. concepts character-book covers embed extract re-embed. macro-engine covers the ADR-012 closed-world interpreter: parser, bounded evaluator, segment contract. token-meter covers the counter that learns each model from reported usage. formats README is the coverage matrix; formats star pages cover detection maps escrow quirks and sources of truth.",
+          "summary": "Start at architecture for the engine: canonical escrow adapters kinds registry folders bundles CLI. glossary gives project words, traps, owning folders, and the code map. entities character and lorebook document supersets. concepts character-book covers embed extract re-embed. macro-engine covers the ADR-012 closed-world interpreter: parser, bounded evaluator, segment contract. token-meter covers the counter that learns each model from reported usage. formats README is the coverage matrix; formats star pages cover detection maps escrow quirks and sources of truth. Table Read documents the bounded interview core, provider orchestration, encrypted revisioned session and exact-ID character save.",
           "topics": [
             "architecture start here",
             "character lorebook entities",
@@ -16363,6 +16439,95 @@
       ]
     },
     {
+      "id": "reference/table-read",
+      "path": "docs/reference/table-read.md",
+      "title": "Table Read",
+      "audience": "dev",
+      "summary": "A bounded character interview over the canonical character model, saved providers and one encrypted revisioned session.",
+      "tags": [
+        "table-read",
+        "character",
+        "interview",
+        "persistence",
+        "provider"
+      ],
+      "related": [
+        "reference/entities/character",
+        "reference/architecture",
+        "guide/table-read"
+      ],
+      "semanticSummary": "The discovered Table Read app composes a pure bounded interview core, existing saved providers, one encrypted revisioned document and the canonical CharacterBody. Three modes share finite field proposals and persistent manual ownership. Model requests disable tools and enforce context, token, byte and time limits; validated output alone changes the card. Trusted StateStore CAS preserves the separate extension authorization fence. Read-only reload observes pending ownership without inference. Stop, explicit retry and offline review retain work. Save freezes the exact body and ID before absent-only creation, then records a durable receipt; uncertain failures stay frozen and definitive collisions return to review. Approved remote devices reuse existing authentication without LibraryHandle authority. Browser Studio and auxiliary bundles remain unavailable.",
+      "topics": [
+        "pure interview core",
+        "encrypted revisioned session",
+        "bounded providers",
+        "exact-ID save recovery",
+        "approved remote devices"
+      ],
+      "anchors": [
+        {
+          "text": "Ownership",
+          "slug": "ownership",
+          "level": 2,
+          "summary": "The pure core owns strict schemas, finite editable character fields, prompts and mode transitions over canonical CharacterBody. Studio orchestration resolves existing saved connections and sends one bounded structured response per normal turn. Requests disable tools and include only this interview. Arbitrary paths and unknown keys are rejected; malformed output retains a retryable draft instead of claiming success.",
+          "topics": [
+            "pure interview core",
+            "encrypted revisioned session",
+            "bounded providers"
+          ],
+          "children": []
+        },
+        {
+          "text": "Modes and field ownership",
+          "slug": "modes-and-field-ownership",
+          "level": 2,
+          "summary": "Cold Read has an eight-question ceiling; Deep Dive has twenty and one matching follow-up per field. Repeated deflections retire a target. Redundant questions are recoverable failures. Rapid Fire prepares a finite deck before its server deadline, validates stored choices, retains full answers and makes no automatic expiry call. Persistent manual ownership includes blanks and rejects future model replacements.",
+          "topics": [
+            "pure interview core",
+            "encrypted revisioned session",
+            "bounded providers"
+          ],
+          "children": []
+        },
+        {
+          "text": "Durable state and operation lifetime",
+          "slug": "durable-state-and-operation-lifetime",
+          "level": 2,
+          "summary": "One versioned document lives encrypted under the closed tableRead key without a SQL migration. Older known-key writes preserve this additive row; encrypted snapshots restore it and its revision, while plain exports omit progress. Host CAS preserves extension transaction authorization. Owner tokens, expiry and revision guards prevent stale completion. Model waits cancel within bounds; accepted storage writes follow the existing safe close contract.",
+          "topics": [
+            "pure interview core",
+            "encrypted revisioned session",
+            "bounded providers"
+          ],
+          "children": []
+        },
+        {
+          "text": "Review and exact-once creation",
+          "slug": "review-and-exact-once-creation",
+          "level": 2,
+          "summary": "Offline review permits partial drafts without another provider request. Explicit Save freezes a stable random ID, body and lease before compareAndCreate. Recovery accepts only a live character with the identical canonical body. Uncertain create or receipt failures remain frozen; positively verified different or retired identities return to review without overwrite or resurrection. Saved cards open in the existing Workbench.",
+          "topics": [
+            "pure interview core",
+            "encrypted revisioned session",
+            "bounded providers"
+          ],
+          "children": []
+        },
+        {
+          "text": "HTTP and support boundaries",
+          "slug": "http-and-support-boundaries",
+          "level": 2,
+          "summary": "Typed GET and POST routes require existing authentication and an open library, strict bounded mutations and the shared foreign-site check. Approved LAN and mesh devices author without receiving LibraryHandle or host-management authority. No arbitrary provider endpoint or extension capability is added. Temporary browser Studio, CLI, auxiliary bundles, alternate persona catalogs and Dark Room are excluded. Scripted live proof measures workflow, not real model quality.",
+          "topics": [
+            "pure interview core",
+            "encrypted revisioned session",
+            "bounded providers"
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
       "id": "reference/token-meter",
       "path": "docs/reference/token-meter.md",
       "title": "The token meter",
@@ -16443,7 +16608,7 @@
       "summary": "uses. Optional remote listeners are separately enabled and gated. One engine, two shells - no format logic exists in the UI layer.",
       "tags": [],
       "related": [],
-      "semanticSummary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. The rp-core wing renders all Director records in virtualized variable-height rows; Memory remains paged in groups of 20. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close. Normal downloads separate Windows and Linux apps from advanced source workflows; macOS remains unavailable. Published asset links share the release feed.",
+      "semanticSummary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. The rp-core wing renders all Director records in virtualized variable-height rows; Memory remains paged in groups of 20. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close. Normal downloads separate Windows and Linux apps from advanced source workflows; macOS remains unavailable. Published asset links share the release feed. Table Read adds bounded saved-model interviews, manually owned living fields, encrypted resume, offline review and exact-ID saves to ordinary characters.",
       "topics": [
         "Kit conversational terminal",
         "temporary browser Studio",
@@ -16778,6 +16943,19 @@
               "children": []
             }
           ]
+        },
+        {
+          "text": "The Table Read (create by conversation)",
+          "slug": "the-table-read-create-by-conversation",
+          "level": 2,
+          "summary": "The discovered Table Read app is offered beside blank character creation. Cold Read, Deep Dive and Rapid Fire use saved model connections beside an editable canonical card. Accepted answers and manual field ownership persist encrypted. Stop, retry and offline review retain drafts. Rapid Fire starts after preparation and never spends inference on expiry or reload. Explicit Save creates an ordinary character with exact-ID recovery; Workbench opens the result. Temporary browser Studio is unavailable.",
+          "topics": [
+            "living character card",
+            "saved models",
+            "encrypted resume",
+            "explicit review and save"
+          ],
+          "children": []
         },
         {
           "text": "The Press room (batch export - the staged set prints)",

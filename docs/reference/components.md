@@ -197,6 +197,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | ContextWing | src/ui/apps/scenes/context/context-wing.tsx | ({ initialTab, single, ...props }: ContextProps & { initialTab?: string; single?: boolean }) |  |  |
 | Contract | src/ui/apps/scenes/final-cut/fc-contract.tsx | ({ passes, rulebook }: { passes: readonly FinalCutPass[]; rulebook: readonly RulebookEntry[] }) |  |  |
 | ControlsBody | src/ui/apps/scenes/messenger/settings/scene/memory-rows.tsx | ({ env }: { env: SceneEnv }) | How summaries run: automatic or manual, how often, with which model and window, and the manual run. |  |
+| Conversation | src/ui/apps/table-read/conversation.tsx | ({ session, drafts, busy, running, now, change }: { session: TableReadSession; drafts: TableReadDraftStore; busy: boo... |  | .room .setup .tempos .setupBody .setupAside .eyebrow .heading .muted ... |
 | CopyableBand | src/ui/agent/kit-bands.tsx | ({ className, text, onNotice, onClick, children, }: { className: string; text?: string; onNotice?: (message: string) ... | A band with a copy corner. |  |
 | CoreGroup | src/ui/apps/scenes/generation/core-group.tsx | ({ env, params, searching }: { env: GenerationEnv; params: readonly ParamDef[]; searching: boolean }) | The Core cards that match the search (all of them when it is blank). |  |
 | CoreWing | src/ui/apps/scenes/scene-core-wing.tsx | ({ ctx, scene }: { ctx: AppContext; scene: OpenScene }) |  |  |
@@ -458,6 +459,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | LivePreview | src/ui/apps/scenes/cast/cast-injection.tsx | ({ body, character, scan }: { body: PersonaBody; character: CharacterBody; scan: PresetScan }) | RoleCall's Live Preview: the eye, where it lands, the block as sent, and the token count. |  |
 | LivePreview | src/ui/apps/workbench/preset/live-preview.tsx | ({ body, onPatchContent, onSelect }: LivePreviewProps) |  | .wrap .head .headline .module .css .volatile .empty .list ... |
 | LiveSwitch | src/ui/apps/scenes/final-cut/fc-anti-slop.tsx | ({ on, onToggle }: { on: boolean; onToggle(): void }) |  |  |
+| LivingCard | src/ui/apps/table-read/living-card.tsx | ({ session, drafts, change }: { session: TableReadSession; drafts: TableReadDraftStore; change(command: TableReadComm... |  | .room .setup .tempos .setupBody .setupAside .eyebrow .heading .muted ... |
 | LoadoutBanner | src/ui/apps/scenes/loadout/loadout-banner.tsx | ({ receipt, now, working, busy, onUndo }: { receipt: LoadoutReceipt; now: number; working: boolean; busy: boolean; on... |  |  |
 | LoadoutBar | src/ui/apps/scenes/loadout/loadout-bar.tsx | ({ ctx, scene, busy, onSettings, now = Date.now, tickMs = 15_000 }: { ctx: AppContext; scene: OpenScene; busy: boolea... |  |  |
 | LoadoutReview | src/ui/apps/scenes/loadout/loadout-review.tsx | ({ ctx, chatId, loadout, applying, onCancel, onApply }: { ctx: AppContext; chatId: string; loadout: LoadoutRecord; ap... |  |  |
@@ -769,6 +771,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | SettingsSwitch | src/ui/apps/scenes/compendium/tabs/settings/parts.tsx | ({ on, onChange, label }: { on: boolean; onChange(on: boolean): void; label: string }) |  |  |
 | SettingsToggle | src/ui/apps/scenes/compendium/tabs/settings/parts.tsx | ({ on, onChange, label, hint }: { on: boolean; onChange(on: boolean): void; label: string; hint?: string }) |  |  |
 | SettingsWindow | src/ui/apps/scenes/messenger/frames/settings-window.tsx | ({ scope, resolveDeep, initialCategory, onClose, onDeepChange }: SettingsWindowProps) |  |  |
+| Setup | src/ui/apps/table-read/setup.tsx | ({ ctx, drafts, busy, onStart }: { ctx: AppContext; drafts: TableReadDraftStore; busy: boolean; onStart(settings: Tab... |  | .room .setup .tempos .setupBody .setupAside .eyebrow .heading .muted ... |
 | SetupWizard | src/ui/setup/wizard.tsx | ({ ctx, existing, onComplete }: SetupWizardProps) | Renders the wizard; calls onComplete with the draft (all keys filled) when OPEN VAUDE is pressed. |  |
 | SheetSlicePanel | src/ui/components/sprite-pack/dialog-panels.tsx | ({ sheetCols, sheetRows, sheetRef, onCols, onRows, onPick, onFile, }: { sheetCols: number; sheetRows: number; sheetRe... |  | .sheet .bar .lbl .sel .meta .grid .gridViewport .gridSpace ... |
 | ShelfKicker | src/ui/components/ticket-window/index.tsx | ({ children }: { children: string }) | The mono microlabel naming a strip shelf; siblings (variants, expressions) borrow it so every | .sheet .booth .marquee .marqueeTitle .glass .glassDrag .monogram .emptyLine ... |
@@ -837,6 +840,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | SwitchRow | src/ui/apps/scenes/context/memory-controls.tsx | ({ title, description, checked, onChange, icon, disabled = false }: { title: string; description?: ReactNode; checked... |  |  |
 | SwitchRow | src/ui/apps/scenes/stage-controls.tsx | ({ icon, name, on, tone, help, onChange }: { icon: IconName; name: string; on: boolean; tone: string; help?: string; ... | the Toggle row: a tinted icon tile, the name, the switch. `tone` is the row's own token. |  |
 | SystemPromptItem | src/ui/apps/scenes/scene-preset-templates.tsx | ({ field, body, text }: { field: SystemPromptKey; body: PresetBody; text: PresetText }) | The editor for one system prompt, keyed so a reload of the preset shows the text that came in. |  |
+| TableRead | src/ui/apps/table-read/index.tsx | ({ ctx }: { ctx: AppContext }) |  | .room .setup .tempos .setupBody .setupAside .eyebrow .heading .muted ... |
 | Tabs | src/ui/apps/scenes/compendium/storyboards/dossier-parts.tsx | ({ tabs, active, onChange, label }: { tabs: readonly { id: T; label: string; count?: ReactNode }[]; active: T; onChan... |  |  |
 | Tabs | src/ui/apps/scenes/props/trackers/items/item-parts.tsx | ({ tabs, value, onChange }: { tabs: readonly TabDef<T>[]; value: T; onChange(v: T): void }) | The module's tab strip, drawn with the Stats panel's classes. |  |
 | Tabs | src/ui/components/button/index.tsx | ({ items, value, onChange, label, "data-part": part, idPrefix, orientation = "horizontal" }: TabsProps<T>) | Sections of one room or editor: a tablist with arrow-key movement. The caller renders the panel. | .btn .seg .tab .chip .primary .danger .quiet .sm ... |

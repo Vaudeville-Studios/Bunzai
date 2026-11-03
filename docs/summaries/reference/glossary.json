@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/glossary",
   "sourcePath": "docs/reference/glossary.md",
-  "sourceHash": "sha256:4cedfa61c92d02d0833fb64891ad3fb17ca80c385589e28b89e1d6de2073383c",
-  "summary": "The glossary explains project vocabulary, folder ownership, and naming traps, then points readers to the generated code map for individual files. Its folder table includes src/shared for cross-domain helpers and describes src/extensions as the package catalog, SDK, approval lifecycle, and bounded QuickJS runtime. It distinguishes Lua and regex test benches from extension JavaScript guest workers; imported script content remains data until its specific supported isolated worker is invoked. The glossary also covers the engine and formats, Studio and Kit, Stage, encryption, Compendium, snapshots, health checks, and documentation process. Its check requires every direct src folder and every named path to remain valid.",
+  "sourceHash": "sha256:9c4393f6d11c5fb601b82b88944c7854d3506f8242cce83e3cc2cf89b112587f",
+  "summary": "The glossary explains project vocabulary, folder ownership, and naming traps, then points readers to the generated code map for individual files. Its folder table includes src/shared for cross-domain helpers and describes src/extensions as the package catalog, SDK, approval lifecycle, and bounded QuickJS runtime. It distinguishes Lua and regex test benches from extension JavaScript guest workers; imported script content remains data until its specific supported isolated worker is invoked. The glossary also covers the engine and formats, Studio and Kit, Stage, encryption, Compendium, snapshots, health checks, and documentation process. Its check requires every direct src folder and every named path to remain valid. Table Read separates pure interview state in core/table-read, encrypted orchestration in studio/table-read and the discovered living-card app in ui/apps/table-read.",
   "topics": [
     "glossary",
     "vocabulary",
@@ -20,8 +20,8 @@
       "slug": "where-things-live",
       "title": "Where things live",
       "level": 2,
-      "sourceHash": "sha256:bf1def3655587d784580eeac0df7db079a726c7ab3434fb742e343904252708f",
-      "summary": "One row per top-level folder. core is the pure engine center; entities owns schemas, runtime checks, and capabilities by content kind; formats holds discovered adapters. studio is disk storage, while screens live in ui. kit is the terminal agent; stage is the chat runtime. sandbox contains bounded Lua and regex test benches and extension JavaScript guest workers; imported scripts stay inert until a supported isolated worker runs. shared contains small cross-domain helpers. site is the Pages website; pocket the in-memory browser build; mcp the protocol wire; src/docs checks documentation; generated holds script output; types holds dependency declarations. specs, docs, scripts, and sidecar complete the map. Light-rays owns the capped Vaudeville OGL spotlight and fog renderer and CSS fallback; proscenium owns the reusable theater frame, curtains, sign, and artwork aperture.",
+      "sourceHash": "sha256:7ab68db3920518c6106a750f77d615d007cd066a28bcaeac4f1f6c029bedd12a",
+      "summary": "One row per top-level folder. core is the pure engine center; entities owns schemas, runtime checks, and capabilities by content kind; formats holds discovered adapters. studio is disk storage, while screens live in ui. kit is the terminal agent; stage is the chat runtime. sandbox contains bounded Lua and regex test benches and extension JavaScript guest workers; imported scripts stay inert until a supported isolated worker runs. shared contains small cross-domain helpers. site is the Pages website; pocket the in-memory browser build; mcp the protocol wire; src/docs checks documentation; generated holds script output; types holds dependency declarations. specs, docs, scripts, and sidecar complete the map. Light-rays owns the capped Vaudeville OGL spotlight and fog renderer and CSS fallback; proscenium owns the reusable theater frame, curtains, sign, and artwork aperture. Table Read separates pure interview state in core/table-read, encrypted orchestration in studio/table-read and the discovered living-card app in ui/apps/table-read.",
       "topics": [
         "source tree",
         "folders",

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "docId": "guide/table-read",
+  "sourcePath": "docs/guide/table-read.md",
+  "sourceHash": "sha256:3ca9dfef4523150b4903a615d85f38a1be90a46ed7ef106f9f5b63f0c59a9d47",
+  "semanticSummaryHash": "sha256:165c7bcf128d17821e23f82e2544423da61431b6cf46718ab787f1f7dfaafc8d",
+  "verdict": "APPROVE",
+  "reviewer": "root-table-read-advisor",
+  "notes": "Root independently read the source changes, full new guide and reference pages, and affected semantic summaries. Claims distinguish explicit inference, encrypted snapshot support, plain export omissions, manual ownership, exact-ID recovery, workflow evidence and packaged limitations.",
+  "reviewedAt": "2026-11-03T09:17:06.556Z"
+}

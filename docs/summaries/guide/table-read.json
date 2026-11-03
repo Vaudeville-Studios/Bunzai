@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "docId": "guide/table-read",
+  "sourcePath": "docs/guide/table-read.md",
+  "sourceHash": "sha256:3ca9dfef4523150b4903a615d85f38a1be90a46ed7ef106f9f5b63f0c59a9d47",
+  "summary": "Table Read creates an ordinary Library character by conversation beside an editable living card. Choose Cold Read, Deep Dive or a timed choices-only Rapid Fire round and an existing saved model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain accepted work. Review current draft works without a model, while Finish with the interviewer requests synthesis. Only Save character creates the Library card, and interrupted saves recover the same identity. Open character hands off to the normal Workbench. Encrypted backups retain interview progress; character exports do not include the conversation. Auxiliary lorebook/persona creation and temporary browser Studio support are excluded.",
+  "topics": [
+    "character interview",
+    "saved models",
+    "manual field ownership",
+    "encrypted resume",
+    "explicit review and save"
+  ],
+  "sections": [
+    {
+      "slug": "choose-the-pace-and-the-model",
+      "title": "Choose the pace and the model",
+      "level": 2,
+      "sourceHash": "sha256:f2ce0f543552c2c41d423b96b8a9e81f06e82fd9240b24044fe06782bce88a47",
+      "summary": "Choose Cold Read for about five questions with an eight-question ceiling, Deep Dive for bounded follow-ups, or Rapid Fire for a 90-second choices-only round whose deck is prepared first. Select a saved model or visit Connections. The idea, answers and card go to that provider, with its normal charges; unrelated Library pieces do not.",
+      "topics": [
+        "character interview",
+        "saved models",
+        "manual field ownership"
+      ],
+      "children": [],
+      "shortSource": true
+    },
+    {
+      "slug": "answer-and-take-the-pen",
+      "title": "Answer and take the pen",
+      "level": 2,
+      "sourceHash": "sha256:7f2d6d13103a78aabfe9281da539c81e9820a1f21cb198c4d9935f3116dc8548",
+      "summary": "Cold Read and Deep Dive accept chips or freeform answers. Keep this answer persists the answer before generation. Living fields update only after validation. Edit then Keep edit gives a field persistent manual ownership, including deliberate blanks. An open editor is still unsaved. Narrow screens switch between Interview and Living card panes over the same draft.",
+      "topics": [
+        "character interview",
+        "saved models",
+        "manual field ownership"
+      ],
+      "children": [],
+      "shortSource": true
+    },
+    {
+      "slug": "pause-recover-and-review",
+      "title": "Pause, recover and review",
+      "level": 2,
+      "sourceHash": "sha256:43ce9de59ac8a2a5648806d7ed2ef295330086ddee0318980d6619cf11c20d22",
+      "summary": "Accepted answers and kept edits resume from the encrypted library, and reload does not spend model calls. Stop retains work; failures permit explicit retry, editing or offline review. A live operation on another device must stop or expire first. Review current draft uses existing fields, while Finish with the interviewer asks for synthesis. Missing fields remain visible.",
+      "topics": [
+        "character interview",
+        "saved models",
+        "manual field ownership"
+      ],
+      "children": [],
+      "shortSource": true
+    },
+    {
+      "slug": "save-and-continue-in-the-workbench",
+      "title": "Save and continue in the Workbench",
+      "level": 2,
+      "sourceHash": "sha256:9cfc8120eeb2da7d50fd6e6f5cbda3af9079432dd34647fc88cef89c68185a3d",
+      "summary": "Save character requires a name and is the only action that creates a card. Retry saving recovers its identity while unresolved commits stay frozen. Open character uses the regular Workbench for art, editing and export. Starting another interview does not delete the saved character. Encrypted backups preserve progress; ordinary exports carry character fields. This version excludes auxiliary pieces and temporary browser Studio.",
+      "topics": [
+        "character interview",
+        "saved models",
+        "manual field ownership"
+      ],
+      "children": [],
+      "shortSource": true
+    }
+  ],
+  "shortSource": true
+}

@@ -11,6 +11,15 @@ import { requireExtensionCommit } from "./extension-commit-guard";
 
 export function sqliteStateStore(database: StageDatabase, cipher: CellCipher): StateStore {
   const { statement } = database;
+  const conditionalWrite = (key: unknown, text: string, expectedRevision: number): "saved" | "stale" => {
+    const checked = checkStateKey(key);
+    if (typeof text !== "string" || !Number.isSafeInteger(expectedRevision) || expectedRevision < -1) throw new Error("invalid state compare-and-write");
+    const cell = cipher.seal("studio_state.body", text);
+    const result = expectedRevision === -1
+      ? statement("INSERT OR IGNORE INTO studio_state (key, body, updated_at, revision) VALUES (?, ?, ?, 0)").run(checked, cell, Date.now())
+      : statement("UPDATE studio_state SET body = ?, updated_at = ?, revision = revision + 1 WHERE key = ? AND revision = ?").run(cell, Date.now(), checked, expectedRevision);
+    return result.changes === 1 ? "saved" : "stale";
+  };
   return refuseWhileLocked(
     cipher,
     {
@@ -30,19 +39,13 @@ export function sqliteStateStore(database: StageDatabase, cipher: CellCipher): S
         ).run(checkStateKey(key), cipher.seal("studio_state.body", text), Date.now());
       },
       async compareAndWrite(key, text, expectedRevision, context: ExtensionCommitContext) {
-        const checked = checkStateKey(key);
-        if (typeof text !== "string" || !Number.isSafeInteger(expectedRevision) || expectedRevision < -1) throw new Error("invalid state compare-and-write");
         return database.transaction(() => {
           requireExtensionCommit(database, cipher, context);
-          const cell = cipher.seal("studio_state.body", text);
-          if (expectedRevision === -1) {
-            const result = statement("INSERT OR IGNORE INTO studio_state (key, body, updated_at, revision) VALUES (?, ?, ?, 0)").run(checked, cell, Date.now());
-            return result.changes === 1 ? "saved" : "stale";
-          }
-          const result = statement("UPDATE studio_state SET body = ?, updated_at = ?, revision = revision + 1 WHERE key = ? AND revision = ?")
-            .run(cell, Date.now(), checked, expectedRevision);
-          return result.changes === 1 ? "saved" : "stale";
+          return conditionalWrite(key, text, expectedRevision);
         });
+      },
+      async writeIfRevision(key, text, expectedRevision) {
+        return database.transaction(() => conditionalWrite(key, text, expectedRevision));
       },
     } satisfies StateStore,
     database.idle,

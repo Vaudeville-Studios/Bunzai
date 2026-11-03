@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/README",
   "sourcePath": "docs/reference/README.md",
-  "sourceHash": "sha256:7cb0c64d0afe50a29567ca45f33c3c0e468e19092bf19ad7eb9ccfc79f67e6b5",
-  "summary": "Reference documentation index for bunzai, the Vaudeville Studios converter for AI-roleplay content. Docs-as-code: lives in the repo, versioned with the code, updated in the same change that adds or alters a feature. If a doc and the code disagree the code is right and the doc is a bug to file. The contract: based in truth with claims checked against source field tables detect scores and mapping quirks, planned-but-not-built labeled, updated per feature in the same commit, one concept per file mirroring house code rules. Map routes to architecture engine start page, entities character and lorebook supersets, concepts character-book embed extract, formats README coverage matrix and per-format family pages. How to read the field tables: Field is canonical name in vaud-json output, Type is TypeScript from entities schema, Meaning is roleplay client use, Formats lists producers and consumers; a field with no producer would not exist as a canonical slot per escrow rule in architecture. Schema file is type truth; this doc is meaning truth.",
+  "sourceHash": "sha256:a9874cbfc53d0d620163cf07ab70e2e47007228254bfd757a41e15eb92c2c511",
+  "summary": "Reference documentation index for bunzai, the Vaudeville Studios converter for AI-roleplay content. Docs-as-code: lives in the repo, versioned with the code, updated in the same change that adds or alters a feature. If a doc and the code disagree the code is right and the doc is a bug to file. The contract: based in truth with claims checked against source field tables detect scores and mapping quirks, planned-but-not-built labeled, updated per feature in the same commit, one concept per file mirroring house code rules. Map routes to architecture engine start page, entities character and lorebook supersets, concepts character-book embed extract, formats README coverage matrix and per-format family pages. How to read the field tables: Field is canonical name in vaud-json output, Type is TypeScript from entities schema, Meaning is roleplay client use, Formats lists producers and consumers; a field with no producer would not exist as a canonical slot per escrow rule in architecture. Schema file is type truth; this doc is meaning truth. Table Read documents the bounded interview core, provider orchestration, encrypted revisioned session and exact-ID character save.",
   "topics": [
     "docs-as-code truth",
     "contract per feature",
@@ -32,8 +32,8 @@
       "slug": "map",
       "title": "Map",
       "level": 2,
-      "sourceHash": "sha256:e112e3a34b9a935d030880eee6af39150097dca8a81a6d09a8faeb389db10bc3",
-      "summary": "Start at architecture for the engine: canonical escrow adapters kinds registry folders bundles CLI. glossary gives project words, traps, owning folders, and the code map. entities character and lorebook document supersets. concepts character-book covers embed extract re-embed. macro-engine covers the ADR-012 closed-world interpreter: parser, bounded evaluator, segment contract. token-meter covers the counter that learns each model from reported usage. formats README is the coverage matrix; formats star pages cover detection maps escrow quirks and sources of truth.",
+      "sourceHash": "sha256:7b80c6980e934ea6024a79256156526e882720ae4b8521d844e828a77621c3e6",
+      "summary": "Start at architecture for the engine: canonical escrow adapters kinds registry folders bundles CLI. glossary gives project words, traps, owning folders, and the code map. entities character and lorebook document supersets. concepts character-book covers embed extract re-embed. macro-engine covers the ADR-012 closed-world interpreter: parser, bounded evaluator, segment contract. token-meter covers the counter that learns each model from reported usage. formats README is the coverage matrix; formats star pages cover detection maps escrow quirks and sources of truth. Table Read documents the bounded interview core, provider orchestration, encrypted revisioned session and exact-ID character save.",
       "topics": [
         "architecture start here",
         "character lorebook entities",
@@ -43,7 +43,7 @@
         "glossary"
       ],
       "children": [],
-      "shortSource": true
+      "shortSource": false
     },
     {
       "slug": "how-to-read-the-field-tables",

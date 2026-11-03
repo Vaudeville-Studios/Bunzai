@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:47f2049794b8eadda1a2aa0b146610ca4df8e41c323423cfb178ef72002c7898",
-  "summary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. The rp-core wing renders all Director records in virtualized variable-height rows; Memory remains paged in groups of 20. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close. Normal downloads separate Windows and Linux apps from advanced source workflows; macOS remains unavailable. Published asset links share the release feed.",
+  "sourceHash": "sha256:6b50b4de501a2b3daa0e1c4445ed4e5afd75b57173d0fb62f9f5318026d1b3f7",
+  "summary": "This reference maps the installed Studio, Browser Studio, opt-in remote listeners and Kit. The public auditorium landing retains Mainstage's curtain film, Vaudeville title cards and 32 illustrated phrases before the feature pictures. The installed velvet landing retains its Dock, real scene data and capped light/fog behavior. Browser Studio reuses the React shell and canonical adapters with memory-only state, and includes the reviewed extension runtime with only Browser-declared operations. Kit owns providers, tools and staged review. Library, Workbench, Scenes, Press, Settings and shared components retain their existing owners. The rp-core wing renders all Director records in virtualized variable-height rows; Memory remains paged in groups of 20. Verification statements distinguish source, fixture, live-browser and packaged evidence. Launchers require an explicit matching product identity, return the actual bounded fallback port, and apply a twelve-second browser readiness deadline; native explicit ports remain isolated. Newly bound servers require an exact public instance ID independent of the session bearer. Native creation failure retains the owned server and uses the existing browser fallback instead of reporting a normal close. Normal downloads separate Windows and Linux apps from advanced source workflows; macOS remains unavailable. Published asset links share the release feed. Table Read adds bounded saved-model interviews, manually owned living fields, encrypted resume, offline review and exact-ID saves to ordinary characters.",
   "topics": [
     "Kit conversational terminal",
     "temporary browser Studio",
@@ -359,6 +359,21 @@
           "children": []
         }
       ]
+    },
+    {
+      "slug": "the-table-read-create-by-conversation",
+      "title": "The Table Read (create by conversation)",
+      "level": 2,
+      "sourceHash": "sha256:db1b77deb3f7546ae029d5fddaaa65fa0e35bd62a62f41661acc27bcf73c6dc4",
+      "summary": "The discovered Table Read app is offered beside blank character creation. Cold Read, Deep Dive and Rapid Fire use saved model connections beside an editable canonical card. Accepted answers and manual field ownership persist encrypted. Stop, retry and offline review retain drafts. Rapid Fire starts after preparation and never spends inference on expiry or reload. Explicit Save creates an ordinary character with exact-ID recovery; Workbench opens the result. Temporary browser Studio is unavailable.",
+      "topics": [
+        "living character card",
+        "saved models",
+        "encrypted resume",
+        "explicit review and save"
+      ],
+      "children": [],
+      "shortSource": true
     },
     {
       "slug": "the-press-room-batch-export---the-staged-set-prints",

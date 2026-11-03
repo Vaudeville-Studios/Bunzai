@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/glossary",
   "sourcePath": "docs/reference/glossary.md",
-  "sourceHash": "sha256:4cedfa61c92d02d0833fb64891ad3fb17ca80c385589e28b89e1d6de2073383c",
-  "semanticSummaryHash": "sha256:23012c8814bcc55dda9d2a9a8982f30da6b815bba84ded57e6d141d276de1d8e",
+  "sourceHash": "sha256:9c4393f6d11c5fb601b82b88944c7854d3506f8242cce83e3cc2cf89b112587f",
+  "semanticSummaryHash": "sha256:e838861292a322874921d9a8b83d2137868cb238a275a51be5188c6e04ee4d01",
   "verdict": "APPROVE",
-  "reviewer": "integration_review",
-  "notes": "reviewed_kit_source_only_availability",
-  "reviewedAt": "2026-11-02T08:51:48.248Z"
+  "reviewer": "root-table-read-advisor",
+  "notes": "Root independently read the source changes, full new guide and reference pages, and affected semantic summaries. Claims distinguish explicit inference, encrypted snapshot support, plain export omissions, manual ownership, exact-ID recovery, workflow evidence and packaged limitations.",
+  "reviewedAt": "2026-11-03T09:17:07.188Z"
 }

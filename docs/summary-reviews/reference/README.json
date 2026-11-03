@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/README",
   "sourcePath": "docs/reference/README.md",
-  "sourceHash": "sha256:7cb0c64d0afe50a29567ca45f33c3c0e468e19092bf19ad7eb9ccfc79f67e6b5",
-  "semanticSummaryHash": "sha256:c9f6b58f3028eb2893c8831ed832e63a4ddd1818302985606e39a378c24fe3e5",
+  "sourceHash": "sha256:a9874cbfc53d0d620163cf07ab70e2e47007228254bfd757a41e15eb92c2c511",
+  "semanticSummaryHash": "sha256:065e79d07808a760e9078bf59e63f7f68c0531944f83708bcde8becb38c471be",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "rename to Bunzai only",
-  "reviewedAt": "2026-10-29T20:48:07.942Z"
+  "reviewer": "root-table-read-advisor",
+  "notes": "Root independently read the source changes, full new guide and reference pages, and affected semantic summaries. Claims distinguish explicit inference, encrypted snapshot support, plain export omissions, manual ownership, exact-ID recovery, workflow evidence and packaged limitations.",
+  "reviewedAt": "2026-11-03T09:17:07.034Z"
 }

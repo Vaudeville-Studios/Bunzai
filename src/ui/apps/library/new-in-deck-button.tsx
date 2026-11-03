@@ -45,9 +45,9 @@ export function NewInDeckButton({ kind, ctx, onCreated, compact = false, tile = 
   }
   if (compact) {
     return (
-      <Button size="sm" data-part="library.new.compact" onClick={create}>
+      <><Button size="sm" data-part="library.new.compact" onClick={create}>
         + {spec.label}
-      </Button>
+      </Button>{kind === "character" && <Button size="sm" variant="quiet" icon="lucide:message-square" data-part="library.new.interview" onClick={() => ctx.openApp("table-read")}>Table Read</Button>}</>
     );
   }
   return (
@@ -55,6 +55,7 @@ export function NewInDeckButton({ kind, ctx, onCreated, compact = false, tile = 
       <Button variant="primary" onClick={create}>
         {spec.label}
       </Button>
+      {kind === "character" && <Button variant="quiet" icon="lucide:message-square" data-part="library.new.interview" onClick={() => ctx.openApp("table-read")}>Create through a Table Read</Button>}
     </div>
   );
 }

@@ -1496,6 +1496,23 @@ Positions, zoom, layers and the board persist in `workbench.nodes`, saved after 
 something changed; board items that fail to parse are kept and written back untouched. Tidy up lays the
 graph out again; Fit frames everything. Below 768px the canvas is look-only.
 
+## The Table Read (create by conversation)
+
+`src/ui/apps/table-read/` is a discovered app, also offered beside New character in the Library.
+Cold Read, Deep Dive and Rapid Fire use the person's saved model connections. The chosen model and
+idea appear before the first call. The interview sits beside a living canonical character card;
+narrow containers switch between the two panes. Accepted answers and kept edits are saved in the
+encrypted library, with one active interview. Fields explicitly edited, including blanks, stay under
+manual ownership across later model proposals.
+
+Stop, explicit retry and resume retain the draft. Review current draft works without inference;
+Finish with the interviewer asks for synthesis. Rapid Fire starts its 90 seconds after its choices
+are ready and makes no automatic inference call on expiry or reload. Review names missing fields and
+Save character creates an ordinary Library piece through exact-ID recovery. Interrupted saves stay
+frozen until resolved; confirmed identity conflicts return to review without overwriting. Open
+character uses the normal Workbench editor. Blank creation remains unchanged. The temporary browser
+Studio reports Table Read unavailable. See [Table Read](table-read.md) and the [user guide](../guide/table-read.md).
+
 ## The Press room (batch export - the staged set prints)
 
 Installed-host exports share `studio/exports.ts`: each Press run and single-piece export gets a fresh

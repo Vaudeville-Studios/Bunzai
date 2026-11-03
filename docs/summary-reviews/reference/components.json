@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:832e5cd4cb03a78660317a93b566837ced3201783ddc69e03e02e84882777d43",
-  "semanticSummaryHash": "sha256:63f2110181e945703f8d48d6d98bc38a51c753d61870d2bfe1009163f64e5021",
+  "sourceHash": "sha256:6c96cdf63f3e38be2480222422b8226a3d0426291b5b3a1b675cd14c03d006d4",
+  "semanticSummaryHash": "sha256:38ee64144164ddc383f4d103f1d29f82ef9c5203ff9b7b1eb8000f20dd6c4e9d",
   "verdict": "APPROVE",
-  "reviewer": "root",
-  "notes": "Root independently reviewed regenerated ownerKey and helper recovery metadata against source; semantic summary remains accurate.",
-  "reviewedAt": "2026-11-03T03:46:47.696Z"
+  "reviewer": "root-table-read-advisor",
+  "notes": "Root independently read the four discovered Table Read component rows and current draft-owner props alongside the affected semantic page and section summaries; the catalog remains discovery metadata with behavior owned by source.",
+  "reviewedAt": "2026-11-03T09:28:21.794Z"
 }

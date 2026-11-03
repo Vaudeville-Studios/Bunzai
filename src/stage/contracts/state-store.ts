@@ -15,7 +15,7 @@
  * `loadouts` is the saved scene setups and their undo receipts (studio/loadouts.ts), kept like guides.
  * `finalCut` is the person's own Anti-Slop banks and saved Custom Agents (studio/final-cut-library.ts), kept like guides.
  */
-export const STATE_KEYS = ["settings", "collections", "engines", "graveyard", "variables", "meter", "themeExtensions", "guides", "loadouts", "finalCut"] as const;
+export const STATE_KEYS = ["settings", "collections", "engines", "graveyard", "variables", "meter", "themeExtensions", "guides", "loadouts", "finalCut", "tableRead"] as const;
 export type StateKey = (typeof STATE_KEYS)[number];
 
 /** A key every backend accepts, or a throw: an unknown key is a caller bug, never a new document. */
@@ -31,6 +31,8 @@ export interface StateStore {
   readVersioned?(key: StateKey): Promise<{ text: string | null; revision: number }>;
   /** Replaces the text for this key, atomically. */
   write(key: StateKey, text: string): Promise<void>;
+  /** Trusted application compare-and-write; extensions still require their separate fenced method. */
+  writeIfRevision?(key: StateKey, text: string, expectedRevision: number): Promise<"saved" | "stale">;
   /** Extension-only compare-and-write checked against the live package authority in the same transaction. */
   compareAndWrite?(key: StateKey, text: string, expectedRevision: number, context: import("./extension-store").ExtensionCommitContext): Promise<"saved" | "stale">;
 }

@@ -353,6 +353,18 @@ record the same way (`src/core/tokens`, [token-meter.md](token-meter.md)); `pipe
 boundary lint keeps storage from importing engine, entity, or format code. The rebuildable-result
 cache contract is in `src/core/derive/derive.ts`.
 
+Prompt-block files use `PresetPrompt.attachments`, shared by Promptbook phase presets. The host
+request boundary resolves declared canonical media refs into ordered user-role companions while
+preserving the owning instruction's role. Literal text contributes to the text budget; native image
+and PDF parts retain their bytes. `ProviderMessage.attachments` is the shared value-only transport
+contract. The OpenAI-compatible wire builder sends PDF file parts only when its explicit
+`pdfAttachments` capability is enabled by the OpenAI spoke; arbitrary compatible endpoints are not
+assumed to support them. Native Anthropic serializes PDFs as document parts. Ollama supports its
+native image input and refuses PDFs before network egress. These protocol encodings do not guarantee
+that every selected model accepts the type. Provider errors remain errors; there is no retry that
+silently strips files. The [Preset reference](entities/preset.md#prompt-block-attachments) records
+the authoring limits, storage/export contract and current RP-Core boundary.
+
 Chat snapshots use `store/cast-snapshot-codec.ts` outside the opaque backend boundary.
 `store/chat-store.ts` composes the memory backend without importing SQLite;
 `store/sqlite-chat-store.ts` owns desktop composition. Each backend's `chat-store-snapshots.ts`

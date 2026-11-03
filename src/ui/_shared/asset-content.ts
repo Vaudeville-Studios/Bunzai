@@ -1,7 +1,7 @@
 /** One bounded validator shared by staged uploads and the hash-addressed asset response. */
 import { IMAGE_MAX_BYTES } from "../../core/media/image-limit";
-import { ASSET_BATCH_COUNT, ASSET_MAX_BYTES } from "../../core/media/limits";
-import { MIME_BY_EXT } from "../../core/media/mime";
+import { ASSET_BATCH_COUNT, ASSET_MAX_BYTES, PROMPT_TEXT_ATTACHMENT_MAX_BYTES } from "../../core/media/limits";
+import { isInertPromptText, MIME_BY_EXT, promptTextFromBytes } from "../../core/media/mime";
 import { isInertSvg } from "./svg-safety";
 import { isPngBytes, startsWith } from "../../core/bytes";
 
@@ -17,7 +17,7 @@ export function validAssetGrantRefs(value: unknown): value is string[] {
 }
 
 /** The most one upload of this extension may weigh: a picture has the one image limit, video and audio the media cap. */
-export const assetCapFor = (ext: string): number => (MIME_BY_EXT[ext]?.startsWith("image/") ? IMAGE_MAX_BYTES : ASSET_MAX_BYTES);
+export const assetCapFor = (ext: string): number => (["txt", "md", "csv", "json"].includes(ext) ? PROMPT_TEXT_ATTACHMENT_MAX_BYTES : MIME_BY_EXT[ext]?.startsWith("image/") ? IMAGE_MAX_BYTES : ASSET_MAX_BYTES);
 
 const ascii = (bytes: Uint8Array, start: number, end: number): string => new TextDecoder().decode(bytes.subarray(start, end));
 
@@ -54,6 +54,10 @@ function ebmlDocType(bytes: Uint8Array): string | undefined {
   return undefined;
 }
 
+function promptText(bytes: Uint8Array, text: string): boolean {
+  return isInertPromptText(bytes, text);
+}
+
 /** Validates a known extension against its bytes; callers never use a client-supplied MIME as truth. */
 export function mimeFromBytes(bytes: Uint8Array, ext: string, text: string): string | undefined {
   let valid = false;
@@ -83,6 +87,8 @@ export function mimeFromBytes(bytes: Uint8Array, ext: string, text: string): str
     case "woff": valid = ascii(bytes, 0, 4) === "wOFF"; break;
     case "woff2": valid = ascii(bytes, 0, 4) === "wOF2"; break;
     case "css": valid = text.length > 0 && !text.includes("\u0000"); break;
+    case "pdf": valid = ascii(bytes, 0, 5) === "%PDF-"; break;
+    case "txt": case "md": case "csv": case "json": valid = promptText(bytes, text); break;
   }
   return valid ? MIME_BY_EXT[ext] : undefined;
 }
@@ -93,11 +99,23 @@ export function sniffAssetMime(bytes: Uint8Array): string | undefined {
   if (bytes.length <= 4 * 1024 * 1024) {
     try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes); } catch { /* binary formats do not require UTF-8 */ }
   }
-  for (const ext of ["png", "jpg", "gif", "webp", "avif", "bmp", "svg", "mp3", "wav", "ogg", "m4a", "aac", "flac", "mp4", "webm", "mov", "mkv", "ttf", "otf", "woff", "woff2"]) {
+  const binary = ["png", "jpg", "gif", "webp", "avif", "bmp", "svg", "mp3", "wav", "ogg", "m4a", "aac", "flac", "mp4", "webm", "mov", "mkv", "ttf", "otf", "woff", "woff2", "pdf"];
+  for (const ext of binary) {
     try {
       const mime = mimeFromBytes(bytes, ext, text);
       if (mime) return mime;
     } catch { /* invalid UTF-8 is not a supported textual asset */ }
+  }
+  if (bytes.length > 0 && bytes.length <= PROMPT_TEXT_ATTACHMENT_MAX_BYTES) {
+    try {
+      const decoded = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      for (const ext of ["txt", "md", "csv", "json"]) {
+        try {
+          const mime = mimeFromBytes(bytes, ext, decoded);
+          if (mime) return mime;
+        } catch { /* invalid UTF-8 is not a supported textual asset */ }
+      }
+    } catch { /* text files must be valid UTF-8 */ }
   }
   return undefined;
 }
@@ -108,7 +126,7 @@ export function assetBytesResponse(bytes: Uint8Array, sha: string, head = false,
   if (!mime) return null;
   const headers: Record<string, string> = {
     "content-type": mime, "content-length": String(bytes.byteLength), "cache-control": "no-store",
-    "content-disposition": "inline; filename=asset", "x-asset-sha256": sha,
+    "content-disposition": mime === "application/pdf" || (["text/plain", "text/markdown", "text/csv", "application/json"] as string[]).includes(mime) ? "attachment; filename=asset" : "inline; filename=asset", "x-asset-sha256": sha,
     "x-asset-size": size, "x-content-type-options": "nosniff",
   };
   if (mime === "image/svg+xml") headers["content-security-policy"] = "default-src 'none'; sandbox";

@@ -56,6 +56,43 @@ verbatim. Do not hand-edit a cell: improve the schema doc comment and regenerate
   meaning from the schema doc comment. Any richer explanation lives in the prose around a table, never
   inside a cell.
 
+## Prompt block attachments
+
+The Preset editor and each Promptbook phase share the block attachment control. A block may keep
+up to eight files: PNG, JPEG, GIF or WebP images, PDFs, and UTF-8 `.txt`, `.md`, `.csv` or `.json`
+files. The editor shows their names, media types and sizes, with thumbnails for images. Files can
+be removed, saved and reopened with the block. Structural markers and tool-result blocks cannot
+carry attachments. Attachment-only blocks are retained; disabled blocks send no files.
+
+`PresetPrompt.attachments` is an optional list of `{ name, ref }`. Names are display metadata,
+never paths. The same contract is used by `BookPhase.preset`; there is no separate Promptbook
+file store. This is an additive optional field under canonical schema version `1`, like the
+existing optional link fields. Attachment-free records continue to decode without a migration.
+The strict adjacent decoder rejects unsupported references and unknown attachment fields.
+
+Files use the existing encrypted upload staging, session grants and canonical media slots. Native
+Bunzai folder export and import carry their bytes, including attachments in profiles. Foreign
+preset exports currently report attachment loss, including files on disabled blocks and profiles;
+use native JSON to keep them. A filename, local path or URL does not cause the host to read or fetch
+a file. PDFs are transmitted as documents without local OCR or AI extraction.
+
+For an existing host-runtime scene, each file becomes an adjacent user-role companion immediately
+after its owning block, in attachment order. The authored block keeps its own role. Text-file
+contents are literal model input and do not run macros. The Inspector and forecast show file
+metadata; text files contribute to the text estimate, while image and PDF token costs are marked
+as excluded. The estimate therefore does not guarantee that a multimodal request fits.
+
+Limits are eight attachments per block, 32 per request, 16 MiB of combined raw attachment bytes
+per request and 2 MiB per text file. Images retain the shared 10 MiB image cap. The asset store's
+32 MiB per-asset ceiling does not override the lower request limit. Provider/model limits can be
+smaller. See [the provider boundary](../architecture.md) and
+[untrusted files](../security/untrusted-content.md).
+
+New RP-Core-linked scenes do not yet consume Bunzai's canonical Preset/Promptbook attachments.
+Their send and preview paths explicitly refuse a selected setup containing enabled attachments
+before calling a provider. The host-to-Core Preset/Promptbook bridge is separate work; saving a
+file in the editor does not imply support in that runtime.
+
 ## Composition
 
 `PresetBody` has two required fields, `name` and `prompts` (the ordered manuscript of blocks), plus
@@ -105,6 +142,7 @@ id comes back as a plain marker.
 | `id` | `string` | ST, Marinara | Stable block id = the VERBATIM source identifier (ST `identifier`, Marinara section `identifier`). NEVER a fresh vaud-minted id: prompt-order refs, marker resolution, and `isDefault` all key off it, and re-minting would break every round-trip. This field is EXEMPT from the UUID regeneration the other entities apply. |
 | `name` | `string` | - |  |
 | `content` | `string` | - |  |
+| `attachments?` | `PresetAttachment[]` | - | Optional inert files sent beside this block when enabled. |
 | `role` | `PromptRole` | - |  |
 | `enabled` | `boolean` | - |  |
 | `systemPrompt` | `boolean` | ST | ST `system_prompt`: rendered as a system-role prompt-manager entry. |

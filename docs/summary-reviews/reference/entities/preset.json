@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/entities/preset",
   "sourcePath": "docs/reference/entities/preset.md",
-  "sourceHash": "sha256:e60b0ca035b3f5b13b9cba998cecaa380324550655c52d9ba3a73188d74d0950",
-  "semanticSummaryHash": "sha256:4b6591066789b5a25a0038f46afd3a6d8507bf5ef33571efa3e499c958ce07e7",
+  "sourceHash": "sha256:0e2e48a82e1de4b3bb68e8ef19430b0800a91e31a6700f2b59865754f5341f6b",
+  "semanticSummaryHash": "sha256:704a3f8854de2f840c9ffb79361d331e539328c9ec58683e0998c5057043e596",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "rename to Bunzai only",
-  "reviewedAt": "2026-10-29T20:47:44.609Z"
+  "reviewer": "codex-root-attachment-review-20261102",
+  "notes": "Root independently re-reviewed the generated PresetPrompt attachment row and unchanged semantic text, verified the revised source and sidecar hashes, and approved this exact tuple in the task conversation on 2026-11-02.",
+  "reviewedAt": "2026-11-02T20:59:02.762Z"
 }

@@ -38,6 +38,11 @@ test("a request with nothing extra shows no section", async () => {
   expect(await shown(base)).toBeNull();
 });
 
+test("a media-bearing review labels its token count as an incomplete text estimate", async () => {
+  await shown({ ...base, mediaEstimateIncomplete: true, files: [{ message: 0, name: "reference.pdf", kind: "pdf" }] });
+  expect(dom.window.document.body.textContent).toContain("This text estimate excludes image and PDF token costs.");
+});
+
 test("500 messages mount fewer than 60 editable rows", async () => {
   await shown({ ...base, messages: Array.from({ length: 500 }, (_, i) => ({ role: "user" as const, content: `message ${String(i)}` })) });
   const rows = dom.window.document.body.querySelectorAll(".pi-msg").length;

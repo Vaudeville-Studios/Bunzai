@@ -28,7 +28,7 @@ import { thinkingSignature } from "./scene-turn-reasoning";
 import { modelTakesPrefill } from "../core/assembly/request";
 import { modelKey } from "../core/tokens";
 import type { Chat, ChatConnection, ChatStore, Generation, JsonObject, Message } from "../stage/contracts/chat-store";
-import { ProviderError, type Provider, type ProviderEvent, type ProviderRole } from "../stage/contracts/provider";
+import { ProviderError, type Provider, type ProviderEvent, type ProviderMessage, type ProviderRole } from "../stage/contracts/provider";
 import type { StateStore } from "../stage/contracts/state-store";
 import { NoConnectionError, StudioConflictError, StudioNotFoundError, StudioValidationError } from "./errors";
 export { NoConnectionError } from "./errors";
@@ -56,6 +56,8 @@ import { skillDelta } from "../core/skill";
 import { failedAttempt, requestParams, routeOf, splitEntryKey, traceOf, traceOptions, type RouteAttempt } from "./scene-turn-trace";
 import { BookCancelledError, bookTrace, prepareBookReply, runBookPhases, type PhaseRun } from "./book-phase";
 import { replyPhase } from "../core/promptbook";
+import { applyPromptReview, resolvePromptAttachments, traceResolvedPromptMessages } from "./scene-turn-attachments";
+import { hasUnpricedPromptMedia, type PromptAttachmentInfo } from "../core/media/prompt-attachment";
 
 export { splitEntryKey };
 
@@ -80,6 +82,8 @@ export interface TurnDeps {
   connect(connection: ChatConnection, signal?: AbortSignal): Promise<Connected | null>;
   /** The library's current body of the scene's preset (ChatStore rule 19). */
   readPreset: ReadPreset;
+  /** Bounded authoritative library bytes for refs in the current preset; absent hosts refuse attached sends. */
+  readAsset?(sha: string, maxBytes: number): Promise<import("../stage/contracts/content-store").AssetLookup>;
   /** The library's current body of a lorebook the scene reads (2e-d4 plan step 1). */
   readLorebook: ReadLorebook;
   /** The library's current body of a regex set the scene has on (ChatStore rule 42); absent: a scene's regex is not applied. */
@@ -220,15 +224,19 @@ async function runTurnBody(
     }
     let edits: Readonly<Record<number, string>> = {};
     const shape = (forModel: string) => shapeRequest({ chat, loaded, kind: input.kind, original, built, connected }, forModel, edits);
-    let messages = shape(model);
-    const regex = await promptRegex({ runtime: deps.runtime, setIds: chat.regex?.sets, readRegex: deps.readRegex, trace: result.trace, messages, expansion: result.expansion, turnId: turn.id, chatId: chat.id, signal: controller.signal, emit });
+    const shaped = shape(model);
+    const regex = await promptRegex({ runtime: deps.runtime, setIds: chat.regex?.sets, readRegex: deps.readRegex, trace: result.trace, messages: shaped, expansion: result.expansion, turnId: turn.id, chatId: chat.id, signal: controller.signal, emit });
     if (regex.stop) { await dropTurn(); emit(regex.stop); return; }
     const regexEdits = regex.edits;
     edits = regexEdits;
-    const prompted = await deps.applyExtensionPrompts?.(chat.id, shape(model), controller.signal) ?? [];
+    const prompted = await deps.applyExtensionPrompts?.(chat.id, shape(model).map(({ role, content }) => ({ role, content })), controller.signal) ?? [];
     const withExtensions = (forModel: string, currentEdits: Readonly<Record<number, string>>) => appendExtensionPrompts(shape(forModel), recounted(result, currentEdits).trace, prompted);
     let extensionRequest = withExtensions(model, regexEdits);
-    messages = extensionRequest.messages;
+    let resolved = await resolvePromptAttachments(extensionRequest.messages, deps.readAsset);
+    let messages: ProviderMessage[] = resolved.messages;
+    const inspectorEdits = new Map<string, string>();
+    let reviewedShape: ProviderMessage[] | undefined;
+    const traceResult = () => ({ ...recounted(result, regexEdits), trace: traceResolvedPromptMessages(extensionRequest.trace, resolved, messages) });
     const opened = (forModel: string): string | undefined => openedWith({ chat, kind: input.kind, built }, forModel);
     if (opened(model)) emit({ type: "prefill", text: opened(model)! });
     let measured = measurePromptRequest(messages, meter, key, started, window);
@@ -240,29 +248,29 @@ async function runTurnBody(
     // A picked skill whose close rule held this turn (core/skill.ts) is closed with them, as the reply's own write.
     const sharedGlobalDeltas = extensionCommit ? [] : globalDeltas(result.globalWrites, started, () => crypto.randomUUID());
     const deltas = input.kind === "continue" ? [] : [...writes.pending(), ...varsDeltas(result.local, started), ...sharedGlobalDeltas, ...(result.skills ?? []).filter((s) => s.close).map((s) => skillDelta(s.id, false, started))];
-    let trace = (traceOf({ ...recounted(result, regexEdits), trace: extensionRequest.trace }, model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled));
+    let trace = traceOf(traceResult(), model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
     if (loaded.promptbook && input.kind !== "continue") trace["book"] = bookTrace(bookRuns, "running");
     if (input.inspect) {
       // F16: the one pause gate. Cancel and Stop drop the checkpoint, so nothing was written, saved or sent.
-      emit({ type: "review", turnId: turn.id, messages: messages.map((m) => ({ role: m.role, content: m.content })), tokens: estimate.mid, params: requestParams(traceOptions(options, connected.provider.params, model)), ...(sentTools(toolsTurn, connected).length > 0 ? { tools: sentTools(toolsTurn, connected) } : {}) });
+      const reviewShape = messages.map((message) => ({ ...message, ...(message.attachments ? { attachments: message.attachments.map((attachment) => ({ ...attachment })) } : {}) }));
+      emit({ type: "review", turnId: turn.id, messages: messages.map((m) => ({ role: m.role, content: m.content })), files: resolved.files, ...(hasUnpricedPromptMedia(resolved.files) ? { mediaEstimateIncomplete: true } : {}), tokens: estimate.mid, params: requestParams(traceOptions(options, connected.provider.params, model)), ...(sentTools(toolsTurn, connected).length > 0 ? { tools: sentTools(toolsTurn, connected) } : {}) });
       const decision = await awaitReview(deps.runtime, turn.id, chat.id, controller.signal);
       if (decision.kind === "cancel") {
         await dropTurn();
         emit({ type: "stopped", message: null });
         return;
       }
-      edits = { ...regexEdits, ...decision.edits };
-      extensionRequest = withExtensions(model, edits);
-      messages = extensionRequest.messages;
+      reviewedShape = reviewShape;
+      messages = applyPromptReview(messages, resolved.sourceKeys, decision.edits, inspectorEdits);
       measured = measurePromptRequest(messages, meter, key, started, window);
       ({ estimate } = measured);
       if (!measured.fits) { await rejectOversizedPrompt(chats, turn.id, emit, true, extensionCommit); return; }
-      trace = traceOf({ ...recounted(result, edits), trace: extensionRequest.trace }, model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
+      trace = traceOf(traceResult(), model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
       if (loaded.promptbook && input.kind !== "continue") trace["book"] = bookTrace(bookRuns, "running");
     }
     // ChatStore rule 22: the take's latest request text, aligned with the stored trace's blocks
     // (result.messages and result.trace share the same order and length, section 9's own build).
-    const request = { texts: messages.map((m) => m.content) };
+    let request = { texts: messages.map((m) => m.content), ...(resolved.files.length ? { files: resolved.files } : {}) };
     let savedChars = 0;
     let savedAt = deps.now();
     // The save that carries the turn's deltas is awaited, not left to the best-effort chain: a lost one would commit the reply without the variables it wrote. A failure takes the catch below, as the old variable write did.
@@ -316,22 +324,25 @@ async function runTurnBody(
         const eligible = !controller.signal.aborted && !text && reasoningFrom === undefined && toolsTurn.calls.length === 0 && isFallbackWorthy(first) && !(fb?.id === chat.connection!.id && fb.model === model);
         const next = fb && eligible ? await deps.connect(fb, controller.signal).catch(() => null) : null;
         if (!fb || !next) throw first;
-        const before = { connected, model, messages, trace, route };
+        const before = { connected, model, messages, trace, route, extensionRequest, resolved, request };
         route = [failedAttempt(route[0]!, first), { connectionId: fb.id, kind: next.kind, model: fb.model }];
         connected = next;
         model = fb.model;
         extensionRequest = withExtensions(model, regexEdits);
-        messages = extensionRequest.messages;
+        resolved = await resolvePromptAttachments(extensionRequest.messages, deps.readAsset);
+        if (reviewedShape && JSON.stringify(reviewedShape) !== JSON.stringify(resolved.messages)) throw new StudioConflictError("The fallback model changes the reviewed prompt. Review the fallback request before sending.");
+        messages = applyPromptReview(resolved.messages, resolved.sourceKeys, {}, inspectorEdits);
         measured = measurePromptRequest(messages, meter, key, started, window);
         ({ estimate } = measured);
         if (!measured.fits) { await rejectOversizedPrompt(chats, turn.id, emit, false, extensionCommit); return; }
-        trace = traceOf({ ...recounted(result, regexEdits), trace: extensionRequest.trace }, model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
+        request = { texts: messages.map((message) => message.content), ...(resolved.files.length ? { files: resolved.files } : {}) };
+        trace = traceOf(traceResult(), model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
         if (loaded.promptbook && input.kind !== "continue") trace["book"] = bookTrace(bookRuns, "running");
         try {
           completion = await sendReply(connected, { model, messages, options }, { signal: controller.signal, onEvent }, toolsTurn, deps.now);
         } catch (second) {
           if (controller.signal.aborted || text || reasoningFrom !== undefined) throw second;
-          ({ connected, model, messages, trace, route } = before);
+          ({ connected, model, messages, trace, route, extensionRequest, resolved, request } = before);
           throw first;
         }
       }
@@ -448,7 +459,7 @@ async function runTurnBody(
   }
 
   /** Commits guarded by the version the turn began from; a conflict keeps the checkpoint, holding the whole text. */
-  async function commit(result: { content: string; generation: Generation; trace?: JsonObject; request?: { texts: string[] } }, as: "done" | "stopped"): Promise<boolean> {
+  async function commit(result: { content: string; generation: Generation; trace?: JsonObject; request?: { texts: string[]; files?: PromptAttachmentInfo[] } }, as: "done" | "stopped"): Promise<boolean> {
     try {
       // The version being replaced, read before it is: an edit the person made to it while the Director's call was out is carried onto the new one.
       const replaced = director && replacedId ? await chats.getDirector(input.chatId, replacedId).catch(() => null) : null;

@@ -3,6 +3,7 @@ import { defineKind } from "../_shared/kind-descriptor";
 import { emptyPackBody, type PackBody } from "./schema";
 
 export default defineKind<"pack", PackBody>({
+  gallery: true,
   id: "pack", order: 40, singular: "Pack", plural: "Packs", short: "pack", receiptWord: "sprite pack",
   blurb: "Expressions and art", icon: "lucide:package", accent: "var(--deck-pack)", libraryDeck: true,
   searchWords: ["sprite pack", "sprite packs"],

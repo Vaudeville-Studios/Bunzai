@@ -2,14 +2,15 @@
   "schemaVersion": 1,
   "docId": "reference/entities/promptbook",
   "sourcePath": "docs/reference/entities/promptbook.md",
-  "sourceHash": "sha256:18c427995f4525ffcd05e1f21d0ee5576869a5360afd1d1f254ac5879a42987f",
-  "summary": "Promptbooks are ordered workflows built from private, reply and after phases. Each phase owns preset blocks, linked Library cards, optional Agent and model, conditions, budgets and forward hand-offs. Phases, Cards and Board share one revision-checked draft. Runtime composition reuses scene assembly, permission gates, tools, Skill activation and state writes; incomplete workflows fail closed while completed or stopped checkpoints recover. Inspector records phase requests and usage. Native JSON preserves reference IDs without embedding dependencies. Rehearsal checks phase conditions only, Board wires are visual, and attachments, card versions and arbitrary branching remain unbuilt. Evidence is unit and source based; live and packaged verification remain unavailable.",
+  "sourceHash": "sha256:9914c1a72fd25f3a51fa939d067aceaeb22c69373321e470d5bace92abfc7b77",
+  "summary": "Promptbooks are ordered workflows built from private, reply and after phases. Each phase owns preset blocks, linked Library cards, optional Agent and model, conditions, budgets and forward hand-offs. Phases, Cards and Board share one revision-checked draft. Runtime composition reuses scene assembly, Tool Access gates, tools, Skill activation and state writes. Incomplete workflows fail closed while completed or intentionally stopped checkpoints can recover. Inspector records phase requests, file metadata and reported usage. Each phase's prompt blocks share the Preset attachment contract for images, PDFs and literal UTF-8 text. Encrypted save/reopen and native folder interchange preserve those file bytes, including profile data. Native JSON retains linked Library reference IDs without embedding the referenced pieces. Single-platform preset export refuses to discard the workflow. Rehearsal checks conditions without model calls, so it does not establish file delivery. Board wires show relationships rather than editing connections. New RP-Core-linked scenes refuse enabled attachments until the canonical writing bridge exists. Card versions, arbitrary branching and full-workflow rehearsal remain unimplemented. Source tests do not establish packaged behavior.",
   "topics": [
     "promptbook",
     "Library",
     "canonical",
     "revision",
-    "verification"
+    "verification",
+    "prompt block attachments"
   ],
   "sections": []
 }

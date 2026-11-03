@@ -18,8 +18,9 @@ export function chatStoreRequestContract(make: (clock: () => number) => ChatStor
       const { store, main } = await seeded(1);
       expect(await store.lastRequest(main)).toBeNull();
       const turn = await store.beginTurn(main, { kind: "reply" });
-      const m = await store.commitTurn(turn!.id, { content: "r", request: { texts: ["block one", "block two"] } });
-      expect(await store.lastRequest(main)).toEqual({ messageId: m!.id, swipeId: m!.swipes[0]!.id, texts: ["block one", "block two"] });
+      const files = [{ message: 1, name: "brief.pdf", kind: "pdf" as const, owner: "Reference" }];
+      const m = await store.commitTurn(turn!.id, { content: "r", request: { texts: ["block one", "block two"], files } });
+      expect(await store.lastRequest(main)).toEqual({ messageId: m!.id, swipeId: m!.swipes[0]!.id, texts: ["block one", "block two"], files });
     });
 
     test("a swipe's commit names its own new swipe, not the message's first one", async () => {
@@ -91,7 +92,7 @@ export function chatStoreRequestContract(make: (clock: () => number) => ChatStor
     test("anything but texts as an array of text is refused and changes nothing", async () => {
       const { store, main } = await seeded(1);
       const turn = await store.beginTurn(main, { kind: "reply" });
-      const bads: unknown[] = [{ texts: "not an array" }, { texts: [1] }, { texts: null }, { texts: [null] }, { texts: [], extra: 1 }, {}, "a", []];
+      const bads: unknown[] = [{ texts: "not an array" }, { texts: [1] }, { texts: null }, { texts: [null] }, { texts: [], extra: 1 }, { texts: ["x"], files: [{ message: 1, name: "x.pdf", kind: "pdf" }] }, { texts: ["x"], files: [{ message: 0, name: "../x.pdf", kind: "pdf" }] }, { texts: ["x"], files: [{ message: 0, name: "x.pdf", kind: "pdf", extra: true }] }, {}, "a", []];
       for (const bad of bads) {
         await expect(store.commitTurn(turn!.id, { content: "x", request: bad as never })).rejects.toBeInstanceOf(StudioValidationError);
       }

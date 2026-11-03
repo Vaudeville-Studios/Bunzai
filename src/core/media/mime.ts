@@ -1,6 +1,6 @@
 /**
  * The one table of file-extension <-> MIME mappings for media refs (portraits, sprites, archive
- * assets, data URIs). Every format and UI reader that needs to guess a MIME type from a ref string
+ * assets, prompt files and data URIs). Every format and UI reader that needs to guess a MIME type from a ref string
  * reaches for these instead of carrying its own copy of the table (AGENTS.md rule 12).
  */
 
@@ -49,6 +49,11 @@ export const MIME_BY_EXT: Readonly<Record<string, string>> = {
   woff: "font/woff",
   woff2: "font/woff2",
   css: "text/css",
+  pdf: "application/pdf",
+  txt: "text/plain",
+  md: "text/markdown",
+  csv: "text/csv",
+  json: "application/json",
 };
 
 /** Preferred extension for each known MIME type; aliases such as JPEG resolve to `jpg`. */
@@ -75,7 +80,41 @@ const EXT_BY_MIME: Readonly<Record<string, string>> = {
   "font/woff": "woff",
   "font/woff2": "woff2",
   "text/css": "css",
+  "application/pdf": "pdf",
+  "text/plain": "txt",
+  "text/markdown": "md",
+  "text/csv": "csv",
+  "application/json": "json",
 };
+
+/** Exact prompt attachment MIME set; providers do not share an `image/*` capability. */
+export const PROMPT_ATTACHMENT_MIMES = ["image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf", "text/plain", "text/markdown", "text/csv", "application/json"] as const;
+export type PromptAttachmentMime = typeof PROMPT_ATTACHMENT_MIMES[number];
+export type PromptImageMime = Extract<PromptAttachmentMime, `image/${string}`>;
+export type PromptTextMime = Extract<PromptAttachmentMime, `text/${string}` | "application/json">;
+export const isPromptImageMime = (mime: string): mime is PromptImageMime => PROMPT_ATTACHMENT_MIMES.includes(mime as PromptAttachmentMime) && mime.startsWith("image/");
+export const isPromptTextMime = (mime: string): mime is PromptTextMime => PROMPT_ATTACHMENT_MIMES.includes(mime as PromptAttachmentMime) && (mime.startsWith("text/") || mime === "application/json");
+
+/** Fatal, bounded UTF-8 text validation shared by upload sniffing and model-boundary reads. */
+export function promptTextFromBytes(bytes: Uint8Array, maxBytes: number): string | undefined {
+  if (bytes.byteLength > maxBytes) return undefined;
+  let text: string;
+  try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes); } catch { return undefined; }
+  if (!isInertPromptText(bytes, text)) return undefined;
+  return text;
+}
+
+/** Shared control-byte and binary-signature policy for streaming prefix validation and full reads. */
+export function isInertPromptText(prefix: Uint8Array, text: string): boolean {
+  return !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(text)
+    && !(prefix[0] === 0x89 && String.fromCharCode(...prefix.subarray(1, 4)) === "PNG")
+    && !(prefix[0] === 0xff && prefix[1] === 0xd8 && prefix[2] === 0xff)
+    && !/^GIF8[79]a$/u.test(String.fromCharCode(...prefix.subarray(0, 6)))
+    && !(prefix.byteLength >= 4 && String.fromCharCode(...prefix.subarray(0, 4)) === "RIFF")
+    && String.fromCharCode(...prefix.subarray(0, 4)) !== "OggS"
+    && String.fromCharCode(...prefix.subarray(0, 4)) !== "fLaC"
+    && String.fromCharCode(...prefix.subarray(0, 5)) !== "%PDF-";
+}
 
 /** Image extensions with a MIME mapping, shared by media classification and import policies. */
 export const IMAGE_EXTENSIONS: ReadonlySet<string> = new Set(

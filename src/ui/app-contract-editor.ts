@@ -1,5 +1,6 @@
 /** Workbench editor read and save wire shapes. */
 import type { StudioEntitySummary } from "./app-contract";
+import type { PromptAttachmentMime } from "../core/media/mime";
 
 export interface EditableEntity {
   entity: unknown;
@@ -15,7 +16,7 @@ export interface LightEditableEntity {
 
 export interface StagedAssetUpload {
   sha: string;
-  mime: "image/png" | "image/jpeg" | "image/gif" | "image/webp";
+  mime: PromptAttachmentMime;
   bytes: number;
   ref: string;
   asset: string;

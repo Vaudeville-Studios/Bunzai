@@ -58,10 +58,12 @@ export function PromptInspector({ review, onAnswer }: { review: Review; onAnswer
           <span className="pi-chip">Before send</span>
           <IconButton variant="quiet" size="sm" label="Close Prompt Inspector" icon="lucide:x" onClick={later} />
         </header>
+        {review.mediaEstimateIncomplete && <p className="pi-media-note">This text estimate excludes image and PDF token costs.</p>}
         <div className="pi-body">
           <VirtualRows items={review.messages} keyOf={(_, i) => String(i)} estimate={MESSAGE_ROW_PX} gap={10} render={(m, i) => (
             <label className="pi-msg">
               <span>{m.role}</span>
+              {review.files?.filter((file) => file.message === i).map(/* bounded-ok: request projection admits at most 32 prompt files */ (file) => <span key={`${file.kind}:${file.name}`}>{file.owner ? `${file.owner}: ` : ""}{file.name} · {file.kind}</span>)}
               <textarea value={drafts[i]} rows={Math.min(12, Math.max(2, (drafts[i] ?? "").split("\n").length))} disabled={busy} onChange={(e) => setDrafts(drafts.map((d, j) => (j === i ? e.target.value : d)))} />
             </label>
           )} />

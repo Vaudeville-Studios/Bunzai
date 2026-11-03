@@ -10,6 +10,7 @@ import type { ReasoningFormat } from "../reasoning-tags";
 import type { CharacterBody } from "../../entities/character/schema";
 import type { PersonaBody } from "../../entities/persona/schema";
 import type { PresetBody } from "../../entities/preset/schema";
+import type { PresetAttachment } from "../../entities/preset/schema";
 import type { LoreUndo } from "./lore-effects";
 import type { LoreBookInput, LoreFire, LoreHit, LoreRun, LoreVerdict } from "../lore/engine";
 import type { ChatNote } from "../../stage/contracts/chat-settings-types";
@@ -35,6 +36,9 @@ export type AssembledRole = "system" | "user" | "assistant";
 export interface AssembledMessage {
   role: AssembledRole;
   content: string;
+  attachments?: readonly PresetAttachment[];
+  /** Derived prompt block identity, used only for Inspector association and companion wording. */
+  attachmentOwner?: { id: string; name: string };
 }
 
 /** A stored message the prompt may use: the loader passes the current swipe of each live one. */

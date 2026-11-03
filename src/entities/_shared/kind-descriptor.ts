@@ -62,8 +62,10 @@ export interface KindDescriptor<Id extends string = string, Body = unknown> {
   heavy?: boolean;
   /** false: the Library offers no "New" even with a blank (packs are made in the Workbench). */
   libraryNew?: boolean;
-  /** Picture slots, dotted, `#` any index and `*` any key; storage keeps them as media references (media-reference.ts). */
+  /** Binary media slots, dotted, `#` any index and `*` any key; storage keeps them as blob references (media-reference.ts). */
   media?: readonly string[];
+  /** Include this kind's pictures in the image gallery and art command; non-image media slots are not gallery art. */
+  gallery?: true;
   /** The scene field pointing at pieces of this kind; the scene store owns its shape. */
   sceneField?: keyof Chat;
   /** The list in a scene's prompting that links pieces of this kind by id (a tracker's `trackers`, a tool's `tools`); where a piece is linked is read from it. */

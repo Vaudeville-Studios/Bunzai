@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:bed34b1b9a712aab5225aa26c9eb5e660b530daac993f5c0612063569d0f2205",
-  "semanticSummaryHash": "sha256:4633c52827da32d631d0341828c180110d3f3b3cca5f299f8bf8ac9f8fad392f",
+  "sourceHash": "sha256:832e5cd4cb03a78660317a93b566837ced3201783ddc69e03e02e84882777d43",
+  "semanticSummaryHash": "sha256:63f2110181e945703f8d48d6d98bc38a51c753d61870d2bfe1009163f64e5021",
   "verdict": "APPROVE",
-  "reviewer": "integration_review",
-  "notes": "Reviewed added component catalog rows and styles",
-  "reviewedAt": "2026-11-02T09:02:58.627Z"
+  "reviewer": "root",
+  "notes": "Root independently reviewed regenerated ownerKey and helper recovery metadata against source; semantic summary remains accurate.",
+  "reviewedAt": "2026-11-03T03:46:47.696Z"
 }

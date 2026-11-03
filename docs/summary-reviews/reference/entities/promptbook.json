@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/entities/promptbook",
   "sourcePath": "docs/reference/entities/promptbook.md",
-  "sourceHash": "sha256:18c427995f4525ffcd05e1f21d0ee5576869a5360afd1d1f254ac5879a42987f",
-  "semanticSummaryHash": "sha256:c6c7ee28cd8bd08297ed7e23f31a9bbf7da5858383cb25401d1a0f7cd771f4b2",
+  "sourceHash": "sha256:9914c1a72fd25f3a51fa939d067aceaeb22c69373321e470d5bace92abfc7b77",
+  "semanticSummaryHash": "sha256:6e81b03ad035796acb954d5ea5960d5d0ac46bf8154caa592ffc954cb78d8bad",
   "verdict": "APPROVE",
-  "reviewer": "promptbook_runtime_review",
-  "notes": "Reviewed current source and summary. Runtime composition, literal handoffs, fixed Skill placement, cancellation and recovery claims match code. Independent review is code-read only; live UI and packaged behavior remain unverified as documented.",
-  "reviewedAt": "2026-10-30T13:03:59.218Z"
+  "reviewer": "codex-root-attachment-review-20261102",
+  "notes": "Root independently reviewed full sidecar diffs against source and approved the exact source and sidecar hashes in the task conversation on 2026-11-02.",
+  "reviewedAt": "2026-11-02T20:58:15.439Z"
 }

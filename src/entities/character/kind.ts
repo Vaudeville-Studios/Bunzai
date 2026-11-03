@@ -3,6 +3,7 @@ import { defineKind } from "../_shared/kind-descriptor";
 import { emptyCharacterBody, type CharacterBody } from "./schema";
 
 export default defineKind<"character", CharacterBody>({
+  gallery: true,
   id: "character", order: 10, singular: "Character", plural: "Characters", short: "char", receiptWord: "character card",
   blurb: "Your cast", icon: "lucide:user", accent: "var(--deck-character)", libraryDeck: true,
   links: [{ field: "knowledgeRefs", to: "lorebook", label: "Lorebooks", embedded: true }, { field: "behaviorRefs", to: "regex", label: "Behavior" }],

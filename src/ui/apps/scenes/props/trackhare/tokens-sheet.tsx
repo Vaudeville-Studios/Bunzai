@@ -182,6 +182,7 @@ export function TokensSheet({ trace, model, onClose }: { trace: SceneTrace; mode
           </div>
         </aside>
         <div className="tok-main">
+          {trace.files?.length ? <p className="tok-note"><Ic name="lucide:file-text" size={14} /><span>Prompt attachments: {trace.files.map((file) => `${file.owner ? `${file.owner}: ` : ""}${file.name} (${file.kind})`).join("; ")}. Image and PDF token costs are not included in the text estimate.</span></p> : null}
           {!trace.rawAvailable && (
             <p className="tok-note">
               <Ic name="lucide:circle-alert" size={14} />

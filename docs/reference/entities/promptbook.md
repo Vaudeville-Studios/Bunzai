@@ -40,8 +40,14 @@ The Inspector records private and after requests, outputs and reported token usa
 The forecast composes the reply phase and labels its estimate as reply-only; future hand-offs and Dice
 results are unavailable until send. Prompt Inspector pauses before each phase's first request.
 
-Native Bunzai JSON preserves the canonical book, including reference IDs. It does not embed the
-referenced Library pieces; distribute those alongside it. Export to a single platform preset is refused
-because it would discard the workflow. Attachments, card versions, arbitrary branching and full-workflow
-rehearsal remain unimplemented. This implementation has unit/source evidence; live UI verification is
-blocked by browser access, and packaged behavior has not been tested in this change.
+Each phase's preset blocks use the shared [Preset attachment contract](preset.md#prompt-block-attachments),
+including images, PDFs and literal UTF-8 text files. Files stay with their phase through save/reopen
+and native folder interchange. The existing host scene runner resolves each phase's own enabled
+files, keeps their order and includes file metadata in its Inspector trace. Rehearsal still does not
+contact a model or prove file delivery. New RP-Core-linked scenes explicitly refuse enabled prompt
+attachments until the canonical Preset/Promptbook bridge is implemented.
+
+Native Bunzai JSON preserves the canonical book, its attached file bytes and reference IDs. It does
+not embed the referenced Library pieces; distribute those alongside it. Export to a single platform
+preset is refused because it would discard the workflow. Card versions, arbitrary branching and
+full-workflow rehearsal remain unimplemented. Source tests do not establish packaged behavior.

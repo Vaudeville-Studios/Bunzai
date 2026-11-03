@@ -28,6 +28,14 @@ import type { CanonicalEntity } from "../../core/canonical";
 /** OpenAI-standard message role; system/user/assistant are the shared triplet, tool carries tool-call results. */
 export type PromptRole = "system" | "user" | "assistant" | "tool";
 
+/** An inert uploaded file reference kept with one authored prompt block. */
+export interface PresetAttachment {
+  /** Bounded display name only; never a path. */
+  name: string;
+  /** Canonical media slot, sealed by the piece store. */
+  ref: string;
+}
+
 /**
  * Where a block lands in the assembled request. Named OPEN union (the position-picker law: raw
  * vocabulary here, per-platform legality in core/preset/platform-fields.ts, never a UI literal).
@@ -56,6 +64,8 @@ export interface PresetPrompt {
   id: string;
   name: string;
   content: string;
+  /** Optional inert files sent beside this block when enabled. */
+  attachments?: PresetAttachment[];
   role: PromptRole;
   enabled: boolean;
   /** ST `system_prompt`: rendered as a system-role prompt-manager entry. */

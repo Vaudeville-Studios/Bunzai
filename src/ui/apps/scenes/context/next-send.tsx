@@ -57,6 +57,7 @@ export function NextSend({ state }: { state: ForecastState }): JSX.Element {
       {forecast && (
         <div className="ns-foot">
           <p><i />This is an assembly forecast and may change before dispatch. This turn records what was actually sent.</p>
+          {!!forecast.files?.length && <p>Attachments: {forecast.files.map((file) => `${file.owner ? `${file.owner}: ` : ""}${file.name} (${file.kind})`).join("; ")}{forecast.mediaEstimateIncomplete ? ". Image and PDF token costs are not included in the text estimate." : ". Text file contents are included in the text estimate."}</p>}
           {forecast.notes.map(/* bounded-ok: per-turn bounded detail lines */ (n) => <p key={n}>{n}</p>)}
         </div>
       )}

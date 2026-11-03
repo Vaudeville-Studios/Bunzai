@@ -23,10 +23,16 @@ export interface ProviderToolCall {
   thoughtSignature?: string;
 }
 
+/** One reviewed, already byte-validated prompt attachment carried to provider wire builders. */
+export type ProviderAttachment =
+  | { kind: "image"; name: string; mime: "image/png" | "image/jpeg" | "image/gif" | "image/webp"; dataUri: string }
+  | { kind: "pdf"; name: string; base64: string };
+
 export interface ProviderMessage {
   role: ProviderRole;
   content: string;
   images?: string[];
+  attachments?: ProviderAttachment[];
   tool_calls?: ProviderToolCall[];
   tool_call_id?: string;
   name?: string;

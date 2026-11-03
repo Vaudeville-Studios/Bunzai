@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/security/untrusted-content",
   "sourcePath": "docs/reference/security/untrusted-content.md",
-  "sourceHash": "sha256:2cbd8d4a91dfa484ef884fb0a161ca2b9f220addcbd6462b187b4224ba34baf8",
-  "summary": "Layer 1 of the threat model: cards lorebooks regex sets and zip containers charx byaf risum are author-controlled content the user opens never something Bunzai fetches. Guarantee: each file is read by exactly one tolerant parser into the canonical model; nothing on that path evaluates a script; cross-format conversion carries only the portable body so one app scripts never reach another app file. Boundary: this page covers getting content past the door import inspect convert export; deliberate run isolation lives on script-sandbox and running is never automatic. Parsed once into a known type: JSON PNG and zip readers are total functions returning null or empty on bad input never throw or eval; unzipBounded caps archives; risum decode returns null without executing. Two script surfaces neither runs on import: declarative triggers classified as data pure TS runDataTriggers only on Test Bench Run; real Lua opaque text only via runLuaSandboxed on explicit click; privileged lowLevelAccess is warning never trigger with deny-by-absence host. Escrow never blind-copies scripts across formats: only Risu adapter emits body.behavior and export honesty names drops; original twin never crosses. What this page does not claim: regex hang safety sandbox isolation completeness decompression tuning details. Source of truth maps concerns to files.",
+  "sourceHash": "sha256:2d878341dfd3afc519c24988682250ac17a655347d9c08eac9dcef9d17b19d4a",
+  "summary": "Layer 1 of the threat model: cards lorebooks regex sets and zip containers charx byaf risum are author-controlled content the user opens never something Bunzai fetches. Guarantee: each file is read by exactly one tolerant parser into the canonical model; nothing on that path evaluates a script; cross-format conversion carries only the portable body so one app scripts never reach another app file. Boundary: this page covers getting content past the door import inspect convert export; deliberate run isolation lives on script-sandbox and running is never automatic. Parsed once into a known type: JSON PNG and zip readers are total functions returning null or empty on bad input never throw or eval; unzipBounded caps archives; risum decode returns null without executing. Two script surfaces neither runs on import: declarative triggers classified as data pure TS runDataTriggers only on Test Bench Run; real Lua opaque text only via runLuaSandboxed on explicit click; privileged lowLevelAccess is warning never trigger with deny-by-absence host. Escrow never blind-copies scripts across formats: only Risu adapter emits body.behavior and export honesty names drops; original twin never crosses. What this page does not claim: regex hang safety sandbox isolation completeness decompression tuning details. Source of truth maps concerns to files. Prompt-block files reuse encrypted, authenticated staging and save grants. Bounded signature and UTF-8 checks do not constitute full PDF parsing. Literal file text cannot run host macros; native provider requests deliberately receive selected file contents, while Inspector metadata excludes bytes and stored references.",
   "topics": [
     "parse not execute",
     "tolerant total parsers",
@@ -13,7 +13,8 @@
     "escrow original twin",
     "export honesty drops",
     "privileged warning only",
-    "unzipBounded archive caps"
+    "unzipBounded archive caps",
+    "prompt block attachments"
   ],
   "sections": [
     {
@@ -28,6 +29,19 @@
         "PNG safeExtract",
         "unzipBounded ArchiveLimitError",
         "risum null no execute"
+      ],
+      "children": []
+    },
+    {
+      "slug": "prompt-block-files-remain-data",
+      "title": "Prompt block files remain data",
+      "level": 2,
+      "sourceHash": "sha256:cb11a10776bf2faad24978c9e86c80ca326d53439606d1d66460acc176b8636a",
+      "summary": "Prompt files travel through authenticated bounded uploads, encrypted temporary staging, session grants and the canonical encrypted blob store. Filenames remain metadata and do not grant arbitrary path reads or URL fetching. Raster and PDF signatures are checked; text requires bounded fatal UTF-8 decoding and rejects controls and known binary signatures. A PDF signature is not a full parser or a guarantee about embedded features. PDFs are neither executed nor locally extracted, and PDF/text downloads use nosniff. Model-boundary resolution revalidates bytes and aggregate limits. Literal text arrives after host macro processing. Inspector metadata excludes file bytes and references, while selected model requests deliberately transmit contents.",
+      "topics": [
+        "prompt block attachments",
+        "bounded files",
+        "provider transmission"
       ],
       "children": []
     },

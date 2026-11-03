@@ -33,7 +33,7 @@ export interface CoreTurnOwner extends CoreStateLifecycle {
 }
 interface ActiveTurn { actor: CoreTurnActor; kind: CoreTurnStart["kind"]; controller: AbortController; session?: AsyncSessionHandle; turnId?: string; stateBinding?: CoreStateTurnBinding; gateId?: string; done: Promise<unknown> }
 
-export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords, home: string): CoreTurnOwner {
+export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords, home: string, assertSupportedPrompt: (sceneId: string) => Promise<void> = async () => {}): CoreTurnOwner {
   const active = new Map<string, ActiveTurn>();
   const tasks = new Set<Promise<unknown>>();
   let closed = false;
@@ -65,6 +65,7 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
   return {
     async preview(sceneId, draft, signal, apply, hasHooks) {
       if (closed) throw new StudioConflictError("the Core turn owner is closed");
+      await assertSupportedPrompt(sceneId);
       const result = await previewCoreScene(chats, records, home, sceneId, draft, signal, apply, hasHooks);
       return result ? { ...result, label: "RP-Core prompt preview; local only; canonical shaping and budget applied." } : null;
     },
@@ -163,6 +164,7 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
         const linked = await records.sceneFor(input.sceneId);
         const chat = await chats.getChat(input.sceneId);
         if (!linked || linked.sessionId !== input.sessionId || linked.branchId !== chat?.activeBranchId) throw new StudioConflictError("the rp-core scene or active take changed");
+        await assertSupportedPrompt(input.sceneId);
         if (!chat?.connection) throw new StudioConflictError("choose a model before starting a Core turn");
         const branch = (await chats.listBranches(input.sceneId)).find((item) => item.id === linked.branchId);
         if (branch?.version !== input.expectedBranchVersion) throw new StudioConflictError("the scene changed; review the turn again");

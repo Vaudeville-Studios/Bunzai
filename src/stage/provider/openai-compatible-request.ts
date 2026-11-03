@@ -12,6 +12,8 @@ import { applyRequestBody, applyRequestHeaders, parseRequestOverrides } from "./
 
 /** What the backend accepts beyond the minimal body. Everything is off unless named. */
 export interface OpenAICompatibleSupport {
+  /** PDF file parts are enabled only for the known OpenAI API, never inferred for arbitrary compatible servers. */
+  pdfAttachments?: boolean;
   chatTemplateKwargs?: boolean;
   /** How this backend takes Reasoning Effort: `true` as given, `openai` (reasoning models only, levels clamped), `openrouter` (nested `reasoning.effort`) or `gemini` (Gemini models, clamped). Absent: not sent. */
   reasoningEffort?: boolean | "openai" | "openrouter" | "gemini";
@@ -148,6 +150,8 @@ function systemToUserAfterFirstTurn(messages: ProviderMessage[]): ProviderMessag
       (m.role === "user" || m.role === "assistant") &&
       !prev.images?.length &&
       !m.images?.length &&
+      !prev.attachments?.length &&
+      !m.attachments?.length &&
       !prev.tool_calls?.length &&
       !m.tool_calls?.length;
     if (mergeable) merged[merged.length - 1] = { ...prev, content: `${prev.content}\n\n${m.content}` };
@@ -156,22 +160,32 @@ function systemToUserAfterFirstTurn(messages: ProviderMessage[]): ProviderMessag
   return [...messages.slice(0, first), ...merged];
 }
 
-type WirePart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string; detail: "auto" } };
+type WirePart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string; detail: "auto" } } | { type: "file"; file: { filename: string; file_data: string } };
+
+const imageWirePart = (url: string): WirePart => ({ type: "image_url", image_url: { url, detail: "auto" } });
 
 /** RoleCall's toOpenAIMessages, over the contract's message shape. */
 export function toWireMessages(
   messages: readonly ProviderMessage[],
-  context: { connectionId: string; model: string; reasoningEcho?: OpenAICompatibleSupport["reasoningEcho"] },
+  context: { connectionId: string; model: string; reasoningEcho?: OpenAICompatibleSupport["reasoningEcho"]; pdfAttachments?: boolean },
 ): Record<string, unknown>[] {
+  messages.forEach((message, index) => {
+    if (message.attachments?.length && message.role !== "user") throw invalidRequest(`Attachments at message ${index} require a user role.`, "invalid_parameter");
+    if (message.images?.length && message.attachments?.length) throw invalidRequest(`Legacy images and prompt attachments at message ${index} have no shared order.`, "invalid_parameter");
+    if (message.attachments?.some((attachment) => attachment.kind === "pdf") && context.pdfAttachments !== true) throw invalidRequest(`PDF attachments are not declared for this compatible endpoint (message ${index}).`, "invalid_parameter");
+  });
   validateToolProtocol(messages);
   let prepared = mergeLeadingSystem([...messages]);
   if (targetsAnthropic(context.model)) prepared = systemToUserAfterFirstTurn(prepared);
   return prepared.map((m) => {
     const wire: Record<string, unknown> = { role: m.role };
-    if (m.images?.length && m.role === "user") {
+    if ((m.images?.length || m.attachments?.length) && m.role === "user") {
       const parts: WirePart[] = [
-        { type: "text", text: m.content },
-        ...m.images.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "auto" as const } })),
+        ...(m.content.length ? [{ type: "text" as const, text: m.content }] : []),
+        ...(m.images ?? []).map(imageWirePart),
+        ...(m.attachments ?? []).map((attachment): WirePart => attachment.kind === "image"
+          ? imageWirePart(attachment.dataUri)
+          : { type: "file", file: { filename: attachment.name, file_data: `data:application/pdf;base64,${attachment.base64}` } }),
       ];
       wire.content = parts;
     } else {
@@ -220,6 +234,7 @@ export function buildWireRequest(request: ProviderRequest, connection: OpenAICom
     connectionId: connection.id,
     model,
     reasoningEcho: support.reasoningEcho,
+    pdfAttachments: support.pdfAttachments,
   });
 
   const stream = options.stream === true;

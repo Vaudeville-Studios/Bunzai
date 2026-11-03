@@ -18,6 +18,7 @@ import type { Delta, SceneState } from "../../core/scene-state/types";
 import type { ExtensionCommitContext } from "./extension-store";
 import type { CoreMessageProjection } from "./core-record-store";
 import type { CoreStateMessageTarget, CoreStateTurnBinding } from "./core-extension-state";
+import type { PromptAttachmentInfo } from "../../core/media/prompt-attachment";
 import type { ExtensionTurnOwner } from "./extension-turn-owner";
 export type { ExtensionTurnOwner } from "./extension-turn-owner";
 import type { PartText } from "./content-store";
@@ -357,13 +358,13 @@ export interface ChatStore extends ChatStoreSummaries, ChatStoreDirector, ChatSt
    * Stores the reply or swipe with its trace and removes the checkpoint, as one transaction. A stale
    * guard throws StudioConflictError and leaves the checkpoint as it was.
    */
-  commitTurn(turnId: string, result: { content: string; generation?: Generation; trace?: JsonObject; request?: { texts: string[] } }, guard?: WriteGuard, extensionCommit?: ExtensionCommitContext): Promise<Message | null>;
+  commitTurn(turnId: string, result: { content: string; generation?: Generation; trace?: JsonObject; request?: { texts: string[]; files?: PromptAttachmentInfo[] } }, guard?: WriteGuard, extensionCommit?: ExtensionCommitContext): Promise<Message | null>;
   dropTurn(turnId: string, extensionCommit?: ExtensionCommitContext): Promise<boolean>;
   /** Every open checkpoint on a live branch of a live chat, oldest first. */
   resumeIncomplete(): Promise<TurnCheckpoint[]>;
   /** The branch's latest committed reply's request text (rule 22); null when it is absent, or the
    * branch is absent or deleted. */
-  lastRequest(branchId: string): Promise<{ messageId: string; swipeId: string; texts: string[] } | null>;
+  lastRequest(branchId: string): Promise<{ messageId: string; swipeId: string; texts: string[]; files?: PromptAttachmentInfo[] } | null>;
 
   /** Scene state (rule 17): every slot's value after the versions the branch shows, rebuilt from their deltas; the macro variables are the `vars` slot. Every method that changes what is shown rebuilds it in its own transaction. Null when the branch is absent or deleted. */
   sceneState(branchId: string): Promise<SceneState | null>;

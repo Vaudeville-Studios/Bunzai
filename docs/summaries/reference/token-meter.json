@@ -2,16 +2,30 @@
   "schemaVersion": 1,
   "docId": "reference/token-meter",
   "sourcePath": "docs/reference/token-meter.md",
-  "sourceHash": "sha256:b568cca726398c3d40c47ca2859493d95553cc943fc29b4e3e2b1b8e425b6642",
-  "summary": "The token meter in src/core/tokens is a pure counter that learns each model from the usage its replies report. It counts every prompt with gpt-tokenizer's o200k base and fits, per model, how that count maps onto the provider's reported prompt total, cache reads and writes included. It gives a midpoint for display and an upper bound for budgeting. It reads every major usage shape without inventing zeros, predicts provider caching and prices it, and trims history in cache-friendly steps. Nothing feeds it yet; the turn loop will. Its learned numbers are stored as the StateStore's meter document, numbers only.",
+  "sourceHash": "sha256:9cc9d090f3387c6065e772ec4318b89c1c6061601fdc2519574b4f5356855e0e",
+  "summary": "The token meter in src/core/tokens is a pure counter that learns each model from usage its replies report. The scene turn loop supplies committed reply usage, while tool-round requests are skipped because their usage covers more than one request. A gpt-tokenizer base count is calibrated against reported prompt totals, including cache usage, with a display midpoint and an upper budgeting bound. Usage readers avoid invented zeros, cache planning predicts cost, and history trimming preserves cache-friendly boundaries. Learned StateStore data contains numbers rather than prompt content. Prompt-block text files become literal user messages and participate in text counting. Image and PDF bytes are never tokenized as base64 prose; their model-specific costs are locally unknown. Inspector, forecast and recorded-request views label those estimates incomplete, and a text budget passing does not guarantee multimodal context fit. Independent file-count and byte ceilings still apply, and providers can enforce smaller model or request limits. The page also documents calibration, uncertainty, cache behavior and the deterministic source tests supporting those algorithms.",
   "topics": [
     "self-calibrating token counts",
     "usage reader for every provider",
     "cache planning and cost",
     "stepped history trimming",
-    "numbers-only meter document"
+    "numbers-only meter document",
+    "prompt block attachments"
   ],
   "sections": [
+    {
+      "slug": "attached-files",
+      "title": "Attached files",
+      "level": 2,
+      "sourceHash": "sha256:e5709e4934745715e5c59f68e4af9377f5709d06a1e4ddabf943009200169cf0",
+      "summary": "Text-file attachments enter the same request text counter as other literal messages. The meter does not count base64 payloads as prose or invent image/PDF token prices. When native media is present, Inspector, forecast and recorded-request views expose an incomplete-estimate notice. Consequently, a request passing the text budget can still exceed a provider's complete multimodal context. The independent byte and file-count ceilings remain active, and the selected provider or model can reject input under smaller limits. This boundary distinguishes a useful text estimate from a guarantee about total media cost.",
+      "topics": [
+        "prompt block attachments",
+        "bounded files",
+        "provider transmission"
+      ],
+      "children": []
+    },
     {
       "slug": "why-it-learns",
       "title": "Why it learns",

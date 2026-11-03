@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/architecture",
   "sourcePath": "docs/reference/architecture.md",
-  "sourceHash": "sha256:3af8f6331c7c0444a1897d5cbaa3c5bdc2386b408dd8e3c873b87bc605812c7c",
-  "semanticSummaryHash": "sha256:e1a9549fc4ac0d3daf20762338b19c85911776e5df24cb024ca928ee62f836bd",
+  "sourceHash": "sha256:064f5ad494dffe67474d5c33c8bd5c714e1f3447ce862ba1ace35e4f6aa92767",
+  "semanticSummaryHash": "sha256:dfdf19019ba393459de664b0314e4e9656f64085dd243d3759ae998130525d2f",
   "verdict": "APPROVE",
-  "reviewer": "root",
-  "notes": "Root independently approved documentation-summary accuracy for source SHA-256 3af8f6331c7c0444a1897d5cbaa3c5bdc2386b408dd8e3c873b87bc605812c7c. This approval covers documentation accuracy only, not security or release readiness.",
-  "reviewedAt": "2026-10-31T13:40:01.544Z"
+  "reviewer": "codex-root-attachment-review-20261102",
+  "notes": "Root independently reviewed full sidecar diffs against source and approved the exact source and sidecar hashes in the task conversation on 2026-11-02.",
+  "reviewedAt": "2026-11-02T20:58:14.408Z"
 }

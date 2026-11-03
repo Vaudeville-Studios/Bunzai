@@ -51,6 +51,7 @@ interface Working {
   placement: PromptPlacement;
   depth: number;
   order: number;
+  attachments?: PresetPrompt["attachments"];
   /** A feature marker's slot. */
   slot?: FeatureMarkerSlot;
 }
@@ -112,7 +113,7 @@ function activeBlocks(prompts: readonly PresetPrompt[], toggles: Readonly<Record
   const seen = new Set<string>();
   const out: Working[] = [];
   for (const p of prompts) {
-    if (!isOn(p, toggles) || (p.content.trim().length === 0 && !p.marker)) continue;
+    if (!isOn(p, toggles) || (p.content.trim().length === 0 && !p.marker && !p.attachments?.length)) continue;
     if (p.id) {
       if (seen.has(p.id)) continue;
       seen.add(p.id);
@@ -120,7 +121,8 @@ function activeBlocks(prompts: readonly PresetPrompt[], toggles: Readonly<Record
     const label = p.name || p.id;
     if (!PLACEMENTS.has(p.placement)) throw new PresetPlanError(`The preset block "${label}" has a placement this version cannot send (${p.placement}).`);
     if (p.role === "tool") throw new PresetPlanError(`The preset block "${label}" is a tool message, which scenes cannot send yet.`);
-    out.push({ id: p.id, name: label, content: p.content, role: p.role, placement: p.placement, depth: p.injectionDepth, order: p.injectionOrder, ...(p.marker && isFeatureMarkerSlot(p.markerSlot) ? { slot: p.markerSlot } : {}) });
+    if (p.marker && p.attachments?.length) throw new PresetPlanError(`The preset block "${label}" is a feature marker and cannot carry file attachments.`);
+    out.push({ id: p.id, name: label, content: p.content, role: p.role, placement: p.placement, depth: p.injectionDepth, order: p.injectionOrder, ...(p.attachments?.length ? { attachments: p.attachments } : {}), ...(p.marker && isFeatureMarkerSlot(p.markerSlot) ? { slot: p.markerSlot } : {}) });
   }
   return out;
 }
@@ -190,7 +192,7 @@ function fillSlots(blocks: Working[]): void {
   }
 }
 
-const toBlock = (w: Working): Block => ({ role: w.role, content: w.content, source: { kind: "prompt", name: w.name, id: w.id } });
+const toBlock = (w: Working): Block => ({ role: w.role, content: w.content, source: { kind: "prompt", name: w.name, id: w.id }, ...(w.attachments?.length ? { attachments: w.attachments, attachmentOwner: { id: w.id, name: w.name } } : {}) });
 const byOrder = (a: Working, b: Working): number => a.order - b.order;
 
 function layOut(blocks: readonly Working[]): Omit<PresetPlan, "info" | "slots" | "slotNonce"> {

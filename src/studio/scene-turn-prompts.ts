@@ -2,10 +2,9 @@
 import { countText, countPrompt, estimateFor, type Meter } from "../core/tokens";
 import type { AssembledRole, TraceBlock } from "../core/assembly/types";
 import type { ChatStore } from "../stage/contracts/chat-store";
+import type { PromptMessage } from "./scene-turn-attachments";
 import type { ProviderRole } from "../stage/contracts/provider";
 import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
-
-type PromptMessage = { role: ProviderRole; content: string };
 
 export function appendExtensionPrompts(messages: readonly PromptMessage[], trace: readonly TraceBlock[], additions: readonly string[]) {
   const text = additions.filter((item) => item.length > 0).join("\n\n");
@@ -23,7 +22,7 @@ export function appendExtensionPrompts(messages: readonly PromptMessage[], trace
   return { messages: output, trace: [...trace, promptBlock] };
 }
 
-export function measurePromptRequest(messages: readonly PromptMessage[], meter: Meter, key: string, started: number, window: { context: number; reply: number }) {
+export function measurePromptRequest(messages: readonly { role: ProviderRole; content: string }[], meter: Meter, key: string, started: number, window: { context: number; reply: number }) {
   const estimate = estimateFor(meter, key, countPrompt(messages.map((message) => message.content)), started);
   return { estimate, fits: window.context <= 0 || estimate.bound <= Math.max(0, window.context - window.reply) };
 }

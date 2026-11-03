@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/architecture",
   "sourcePath": "docs/reference/architecture.md",
-  "sourceHash": "sha256:3af8f6331c7c0444a1897d5cbaa3c5bdc2386b408dd8e3c873b87bc605812c7c",
-  "summary": "This reference maps Bunzai's canonical conversion engine, scene runtime and host layers. Every external format maps through one canonical superset; escrow retains original source and binary carriers without carrying private or executable payloads across formats. KindAdapter contracts, exhaustive shape parity and strict canonical decoders reject schema drift, while serialization reports describe loss. Detection ranks kind-correct adapters and folder discovery supplies the registry. Bundles extract and re-embed lorebooks. Semantic capabilities cover pure previews, progressive discovery, bounded reads, persistent drafts, result eviction and paging, independently approved documentation, and explicit durable apply with revision checks and re-read verification. Layering reuses the same engine across the CLI, installed Studio and static browser Studio. The encrypted stage separates versioned pieces, Studio documents and chats; folders remain import/export boundaries. Its source map names database, crypto, snapshot, health, asset and search owners. Scale and release claims require bounded, artifact-matched evidence. The reusable roleplay source API keeps the current canonical turn orchestration and injects stores, providers and readers. Its runtime owns live turns, gates, tracker rounds, recovery and accepted host task completion through shutdown. Desktop consumes it; a caller-owned terminal runner is unit-proven. Browser bundling and a scripted Node turn establish source compatibility only. A standalone shared-library terminal command awaits durable cross-process checkpoint ownership; packaged release behavior remains separately unverified.",
+  "sourceHash": "sha256:064f5ad494dffe67474d5c33c8bd5c714e1f3447ce862ba1ace35e4f6aa92767",
+  "summary": "This reference maps Bunzai's canonical conversion engine, scene runtime and host layers. Every external format maps through one canonical superset; escrow retains original source and binary carriers without carrying private or executable payloads across formats. KindAdapter contracts, exhaustive shape parity and strict canonical decoders reject schema drift, while serialization reports describe loss. Detection ranks kind-correct adapters and folder discovery supplies the registry. Bundles extract and re-embed lorebooks. Semantic capabilities cover pure previews, progressive discovery, bounded reads, persistent drafts, result eviction and paging, independently approved documentation, and explicit durable apply with revision checks and re-read verification. Layering reuses the same engine across the CLI, installed Studio and static browser Studio. The encrypted stage separates versioned pieces, Studio documents and chats; folders remain import/export boundaries. Its source map names database, crypto, snapshot, health, asset and search owners. Scale and release claims require bounded, artifact-matched evidence. The reusable roleplay source API keeps the current canonical turn orchestration and injects stores, providers and readers. Its runtime owns live turns, gates, tracker rounds, recovery and accepted host task completion through shutdown. Desktop consumes it; a caller-owned terminal runner is unit-proven. Browser bundling and a scripted Node turn establish source compatibility only. A standalone shared-library terminal command awaits durable cross-process checkpoint ownership; packaged release behavior remains separately unverified. Shared prompt attachments reuse canonical media storage and one model-boundary resolver. Ordered user companions preserve instruction roles, provider serializers encode native image/PDF parts, and PDF capability is explicit rather than inferred for arbitrary compatible endpoints. Unsupported requests fail without stripping files.",
   "topics": [
     "hub and spoke conversion",
     "canonical superset and escrow",
@@ -13,10 +13,10 @@
     "semantic capability boundaries",
     "drafts and bounded result stores",
     "independent summary approval",
-    "durable revision-checked apply",
     "engine and host layering",
     "reusable roleplay runtime",
-    "terminal and release limits"
+    "terminal and release limits",
+    "prompt block attachments"
   ],
   "sections": [
     {
@@ -182,8 +182,8 @@
       "slug": "the-stage-chat-runtime-in-progress",
       "title": "The stage (chat runtime, in progress)",
       "level": 2,
-      "sourceHash": "sha256:b7f76315beb3972bd01d130385958138e94a3dc9c15e5c8f88da37501869e2cc",
-      "summary": "Stage stores encrypted pieces and chats behind contracts; scene turns assemble prompts through Kit providers. A SillyTavern chat imports in one transaction (rule 29); a message can be hidden (rule 30); a turn writes a reply, a version, or a continuation (rule 31); a cut message is purged after 1 day, other trash after 3 (rule 11). Guides and saved scene setups are StateStore documents the folder export carries. Runtime, migrations and packaged proof remain unrun.",
+      "sourceHash": "sha256:ed754cb0e90ab13939eef651a425bc089cba2b6e0b34ac0595465ec00b906dfe",
+      "summary": "Stage stores encrypted pieces and chats behind contracts; scene turns assemble prompts through Kit providers. A SillyTavern chat imports in one transaction (rule 29); a message can be hidden (rule 30); a turn writes a reply, a version, or a continuation (rule 31); a cut message is purged after 1 day, other trash after 3 (rule 11). Guides and saved scene setups are StateStore documents the folder export carries. Runtime, migrations and packaged proof remain unrun. Prompt attachments share PresetPrompt and phase preset ownership. Resolution preserves file order through adjacent user companions and counts literal text while labeling native media costs incomplete. OpenAI PDF parts require explicit capability; Anthropic uses native documents and Ollama refuses PDFs. No fallback silently removes attachments.",
       "topics": [
         "chat runtime",
         "versioned ContentStore",
@@ -194,8 +194,7 @@
         "boundary lint",
         "native Anthropic connection"
       ],
-      "children": [],
-      "shortSource": true
+      "children": []
     },
     {
       "slug": "reusable-roleplay-core",

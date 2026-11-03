@@ -3,6 +3,27 @@
   "source": "src/entities/preset/schema.ts",
   "shapes": [
     {
+      "name": "PresetAttachment",
+      "doc": "An inert uploaded file reference kept with one authored prompt block.",
+      "kind": "interface",
+      "fields": [
+        {
+          "name": "name",
+          "optional": false,
+          "type": "string",
+          "meaning": "Bounded display name only; never a path.",
+          "producers": []
+        },
+        {
+          "name": "ref",
+          "optional": false,
+          "type": "string",
+          "meaning": "Canonical media slot, sealed by the piece store.",
+          "producers": []
+        }
+      ]
+    },
+    {
       "name": "PresetPrompt",
       "doc": "One prompt block - the row in the manuscript.",
       "kind": "interface",
@@ -29,6 +50,13 @@
           "optional": false,
           "type": "string",
           "meaning": "",
+          "producers": []
+        },
+        {
+          "name": "attachments",
+          "optional": true,
+          "type": "PresetAttachment[]",
+          "meaning": "Optional inert files sent beside this block when enabled.",
           "producers": []
         },
         {

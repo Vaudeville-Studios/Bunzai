@@ -35,11 +35,13 @@ import { NoConnectionError, type Connected, type TurnDeps } from "./scene-turn";
 import { loadCast, loadTurn, readGlobals, type TurnReader } from "./scene-turn-load";
 import { measureFor, readMeter } from "./scene-turn-meter";
 import { promptBudget, promptDeadline } from "./scene-turn-build";
+import { resolvePromptAttachments } from "./scene-turn-attachments";
+import type { PromptMessage } from "./scene-turn-attachments";
 
 /** A draft's reply is at most this long (RoleCall's impersonate cap), whatever the preset allows a reply. */
 export const DRAFT_MAX_TOKENS = 2000;
 
-export interface DraftDeps extends Pick<TurnDeps, "connect" | "readPreset" | "readLorebook" | "readLibrary" | "choiceDefaults" | "promptBudgetMs" | "clock" | "now" | "randomSeed"> {
+export interface DraftDeps extends Pick<TurnDeps, "connect" | "readPreset" | "readAsset" | "readLorebook" | "readLibrary" | "choiceDefaults" | "promptBudgetMs" | "clock" | "now" | "randomSeed"> {
   chats: TurnReader;
   state: Pick<StateStore, "read">;
 }
@@ -55,7 +57,7 @@ export type DraftInput = { chatId: string } & (
 );
 
 interface Request {
-  messages: ProviderMessage[];
+  messages: PromptMessage[];
   options: ProviderOptions;
   /** How the model marks its reasoning, so it is cut from the answer. */
   reasoning?: Parameters<typeof splitReasoning>[1];
@@ -155,7 +157,8 @@ export async function runDraft(deps: DraftDeps, input: DraftInput, signal?: Abor
   const model = cfg?.connection?.model ?? chat.connection.model;
   const request = input.kind === "impersonate" ? await impersonate(deps, input, connected, model) : await edit(deps, input);
   const options = { ...request.options, ...(cfg?.temperature !== undefined ? { temperature: cfg.temperature } : {}), ...(cfg?.maxTokens !== undefined ? { max_tokens: cfg.maxTokens } : {}) };
-  const completion = await using.provider.send({ model, messages: request.messages, options }, signal ? { signal } : {});
+  const resolved = await resolvePromptAttachments(request.messages, deps.readAsset);
+  const completion = await using.provider.send({ model, messages: resolved.messages, options }, signal ? { signal } : {});
   const reply = splitReasoning(completion.content, request.reasoning).reply;
   const text = input.kind === "rewrite" ? cleanReplacement(reply) : reply.trim();
   if (!text) throw new ProviderError("The model sent back nothing.", { category: "api_error", code: "backend_error", status: 502 });

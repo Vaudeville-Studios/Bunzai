@@ -16,6 +16,15 @@ import { partNames } from "../../../../entities/piece-parts";
 import { useEditorGuards } from "../use-editor-guards";
 import { useReseedOnReread } from "../use-reseed";
 import { pieceProblem } from "./piece-problem";
+import { historyContainsAssetRef, referencedAssetUploads } from "../../../_shared/asset-upload";
+import type { StagedAssetUpload } from "../../../app-contract-editor";
+
+interface PieceAssetLifecycle {
+  uploads: StagedAssetUpload[];
+  accept(refs: readonly string[]): void;
+  unpin(refs: readonly string[]): void;
+  discardUnused(refs: readonly string[], currentDraft: unknown, retained?: (grant: StagedAssetUpload) => boolean): Promise<string[]>;
+}
 
 export interface PieceSession<B> {
   body: B;
@@ -30,16 +39,36 @@ export interface PieceSession<B> {
   takeTheirs(): Promise<void>;
 }
 
-export function usePieceEditor<B extends { name: string }>({ kind, entity, revision, ctx, piece, check }: {
+export function usePieceEditor<B extends { name: string }>({ kind, entity, revision, ctx, piece, check, assetUploads }: {
   kind: ParsedCanonicalEntity["kind"]; entity: unknown; revision: string; ctx: AppContext; piece: StudioEntitySummary;
   /** A further reason, beyond the decoder's, the draft cannot be saved (a prompt line whose macros fail), in plain words, or null. */
   check?: (body: B) => string | null;
+  /** Optional staged media owner for piece editors whose body has declared media slots. */
+  assetUploads?: PieceAssetLifecycle;
 }): PieceSession<B> {
   const revisionRef = useRef(revision);
   // the entity has passed the canonical decoder on its way here
   const initial = useMemo(() => recOr(entity).body as unknown as B, [entity]);
-  const { body, baseline, dirty, edit, capturePatchState, commit, reseed, canUndo, canRedo, undo, redo } = useEditorRevision(initial, { kind, id: piece.id });
-  useEditorHistoryKeys(canUndo, canRedo, undo, redo, ctx.setStatus, kind);
+  const { body, baseline, dirty, edit: editRaw, capturePatchState, commit, reseed, canUndo, canRedo, historyHas, undo, redo } = useEditorRevision(initial, { kind, id: piece.id });
+  const assetState = useRef(assetUploads);
+  assetState.current = assetUploads;
+  const historyState = useRef(historyHas);
+  historyState.current = historyHas;
+  const pruneUploads = useCallback((draft: unknown): void => {
+    const owner = assetState.current;
+    if (!owner) return;
+    const refs = owner.uploads.map((upload) => upload.ref);
+    owner.unpin(refs);
+    void owner.discardUnused(refs, draft, (upload) => historyState.current((change) => historyContainsAssetRef(change, upload.asset)));
+  }, []);
+  const edit = useCallback((update: (body: B) => B): void => {
+    let next = body;
+    editRaw((current) => { next = update(current); return next; });
+    pruneUploads(next);
+  }, [body, editRaw, pruneUploads]);
+  const undoAndPrune = useCallback(() => { const next = undo(); if (next !== undefined) pruneUploads(next); }, [undo, pruneUploads]);
+  const redoAndPrune = useCallback(() => { const next = redo(); if (next !== undefined) pruneUploads(next); }, [redo, pruneUploads]);
+  useEditorHistoryKeys(canUndo, canRedo, undoAndPrune, redoAndPrune, ctx.setStatus, kind);
   const baseEntity = useMemo(() => ({ ...recOr(entity), schemaVersion: CANONICAL_SCHEMA_VERSION, kind, id: piece.id, body: baseline }) as unknown as ParsedCanonicalEntity, [entity, baseline, kind, piece.id]);
   const bodyOf = (from: unknown): B => recOr(from).body as unknown as B;
   const saveState = useEditorSave({
@@ -56,12 +85,22 @@ export function usePieceEditor<B extends { name: string }>({ kind, entity, revis
     buildPatch: (base, submitted) => buildPiecePatch(base, { ...base, body: submitted } as ParsedCanonicalEntity),
     itemNames: partNames,
     applyPatch: applyPiecePatch,
-    patch: (expected, patch, intent) => ctx.api.patchEditedEntity(kind, piece.id, expected, patch, undefined, intent),
+    patch: async (expected, patch, intent) => {
+      const used = referencedAssetUploads(patch, assetUploads?.uploads ?? []);
+      const saved = await ctx.api.patchEditedEntity(kind, piece.id, expected, patch, used.map((upload) => upload.ref), intent);
+      assetUploads?.accept(used.map((upload) => upload.ref));
+      return saved;
+    },
     commit: (submitted, atRev, savedRevision) => { revisionRef.current = savedRevision; commit(submitted, atRev); },
     commitPartial: (saved, atRev, savedRevision) => { revisionRef.current = savedRevision; commit(bodyOf(saved), atRev); },
-    takeTheirs: (fresh, freshRevision) => { revisionRef.current = freshRevision; reseed(bodyOf(fresh)); },
+    takeTheirs: (fresh, freshRevision) => {
+      revisionRef.current = freshRevision;
+      const next = bodyOf(fresh);
+      reseed(next);
+      pruneUploads(next);
+    },
     isConflict: (error) => apiStatusIs(error, 409),
-    onSave: (submitted, mode) => ctx.setStatus(`${mode === "keepMine" ? "overwrote" : "saved"} ${kind} · ${submitted.name}`),
+    onSave: (submitted, mode) => { pruneUploads(submitted); ctx.setStatus(`${mode === "keepMine" ? "overwrote" : "saved"} ${kind} · ${submitted.name}`); },
     onError: (error, mode) => ctx.setStatus(toErrorMessage(error, mode === "takeTheirs" ? `could not reload the ${kind}` : `could not save the ${kind}`)),
   });
   const { saving, conflict, save: saveWith, keepMine, takeTheirs, invalidate } = saveState;

@@ -63,6 +63,27 @@ fail to a known empty value. None of them throw on bad input and none of them ev
   view for lossless export, so a failed structural decode never loses the source file
   (`src/formats/risu/index.ts:115-128`).
 
+## Prompt block files remain data
+
+Prompt attachments use the existing bounded, authenticated asset-upload path
+(`src/ui/server-asset-staging.ts`). Temporary uploads are encrypted, session grants authorize
+adoption on save, and declared media slots keep saved bytes in the library's encrypted blob store.
+Supported types and request bounds are listed in the [Preset contract](../entities/preset.md#prompt-block-attachments).
+Names are display metadata, never filesystem paths; these controls do not add a URL-fetch or
+local-path-read capability.
+
+The upload path checks raster/PDF signatures and validates text with fatal UTF-8 decoding, byte
+bounds and rejection of control bytes and known binary signatures. A PDF signature check is not a
+complete PDF parser or a guarantee about every embedded PDF feature. Bunzai does not execute or
+extract PDF contents; supported provider APIs receive the document bytes. PDF and text asset
+responses are downloads with `nosniff`; existing image-serving rules remain separate.
+
+Before a model request, `src/studio/scene-turn-attachments.ts` revalidates the authoritative bytes
+and enforces aggregate file/count limits. Text files enter the request literally, after authored
+macro processing, so macro-looking text cannot change host variables. File metadata shown to the
+Inspector contains no stored blob reference or file bytes. Selecting attachments deliberately
+sends their contents to the chosen model provider; local encryption does not keep that request local.
+
 ## Two script surfaces, neither runs on import
 
 A card can carry two different kinds of authored script, and bunzai treats both the same way at the door:

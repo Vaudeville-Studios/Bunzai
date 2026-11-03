@@ -107,6 +107,41 @@ describe("wire messages (RoleCall's toOpenAIMessages)", () => {
     ]);
   });
 
+  test("prompt images and PDFs become native user content parts in attachment order", () => {
+    const [message] = toWireMessages([{
+      role: "user", content: "Inspect these.", attachments: [
+        { kind: "image", name: "cover.png", mime: "image/png", dataUri: "data:image/png;base64,AA" },
+        { kind: "pdf", name: "notes.pdf", base64: "UEZERg==" },
+      ],
+    }], { ...ctx, pdfAttachments: true });
+    expect(message!.content).toEqual([
+      { type: "text", text: "Inspect these." },
+      { type: "image_url", image_url: { url: "data:image/png;base64,AA", detail: "auto" } },
+      { type: "file", file: { filename: "notes.pdf", file_data: "data:application/pdf;base64,UEZERg==" } },
+    ]);
+  });
+
+  test("PDF needs an explicit compatible-endpoint capability", () => {
+    rejects(() => toWireMessages([{ role: "user", content: "read", attachments: [{ kind: "pdf", name: "a.pdf", base64: "UEZERg==" }] }], ctx), "invalid_parameter");
+  });
+
+  test("ambiguous mixed image sources and non-user attachments fail before wire construction", () => {
+    rejects(() => toWireMessages([{ role: "user", content: "x", images: ["data:image/png;base64,AA"], attachments: [{ kind: "pdf", name: "a.pdf", base64: "UEZERg==" }] }], ctx), "invalid_parameter");
+    rejects(() => toWireMessages([{ role: "system", content: "x", attachments: [{ kind: "pdf", name: "a.pdf", base64: "UEZERg==" }] }], ctx), "invalid_parameter");
+  });
+
+  test("Claude's same-role rewrite never merges away an attachment", () => {
+    const out = toWireMessages([
+      { role: "user", content: "Read this.", attachments: [{ kind: "pdf", name: "a.pdf", base64: "UEZERg==" }] },
+      { role: "system", content: "Keep it concise." },
+    ], { connectionId: "a", model: "anthropic/claude-x", pdfAttachments: true });
+    expect(out[0]!.content).toEqual([
+      { type: "text", text: "Read this." },
+      { type: "file", file: { filename: "a.pdf", file_data: "data:application/pdf;base64,UEZERg==" } },
+    ]);
+    expect(out[1]).toEqual({ role: "user", content: "Keep it concise." });
+  });
+
   test("a tool-only assistant turn sends null content, and the tool result keeps its id", () => {
     const out = toWireMessages(
       [

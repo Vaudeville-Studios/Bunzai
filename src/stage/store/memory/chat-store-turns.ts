@@ -13,6 +13,7 @@ import { checkRerun, traceWithRerun } from "../final-cut-rules";
 import { publicMessage, type ChatRecord, type MessageRecord } from "./chat-records";
 import type { MemoryState } from "./chat-store-state";
 import type { ExtensionCommitContext } from "../../contracts/extension-store";
+import type { PromptAttachmentInfo } from "../../../core/media/prompt-attachment";
 import { requireCommitResource } from "../extension-commit-access";
 import { checkExtensionDeltas } from "../scene-state-rules";
 import { extensionTurnOwnerOf, sameExtensionTurnOwner } from "../extension-turn-owner";
@@ -39,7 +40,7 @@ type TurnMethods = Pick<
 export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: string): boolean; branchTurnOpen(branchId: string): boolean } {
   const checkpoints = new Map<string, TurnCheckpoint>();
   /** The branch's latest committed reply's request text (rule 22); replaced whole on each commit. */
-  const lastRequestOf = new Map<string, { messageId: string; swipeId: string; texts: string[] }>();
+  const lastRequestOf = new Map<string, { messageId: string; swipeId: string; texts: string[]; files?: PromptAttachmentInfo[] }>();
   /** A checkpoint a caller may see or touch: its branch and chat are live (rule 16). */
   const open = (turnId: string): TurnCheckpoint | null => {
     const c = checkpoints.get(turnId);
@@ -169,7 +170,7 @@ export function turnMethods(d: TurnDeps): TurnMethods & { turnOpen(chatId: strin
         d.state.stamp(message.swipes[message.current]!.id, c.deltas ?? []);
         d.state.refresh(c.branchId, message.seq);
       }
-      if (request && c.kind !== "continue") lastRequestOf.set(c.branchId, { messageId: message.id, swipeId: message.swipes[message.current]!.id, texts: request.texts });
+      if (request && c.kind !== "continue") lastRequestOf.set(c.branchId, { messageId: message.id, swipeId: message.swipes[message.current]!.id, texts: request.texts, ...(request.files ? { files: request.files } : {}) });
       checkpoints.delete(turnId);
       return publicMessage(message);
     },

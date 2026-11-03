@@ -48,6 +48,25 @@ describe("forecastRequest", () => {
     expect(forecast.messages.at(-1)).toMatchObject({ role: "user", content: "Any storms?" });
   });
 
+  test("the forecast lists attached files and states that image and PDF token cost is omitted", async () => {
+    const s = await scene();
+    const uri = (mime: string, bytes: Uint8Array) => `data:${mime};base64,${Buffer.from(bytes).toString("base64")}`;
+    const preset = { name: "Files", samplers: {}, prompts: [{
+      id: "files", name: "Files", content: "Review the material.", role: "system" as const, enabled: true, systemPrompt: true, marker: false,
+      placement: "append_preset", injectionDepth: 4, injectionOrder: 100, forbidOverrides: false,
+      attachments: [
+        { name: "cover.png", ref: uri("image/png", Uint8Array.of(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) },
+        { name: "notes.txt", ref: uri("text/plain", new TextEncoder().encode("Keep the coat blue.")) },
+        { name: "brief.pdf", ref: uri("application/pdf", new TextEncoder().encode("%PDF-1.7\nbrief")) },
+      ],
+    }] };
+    await s.chats.setPreset(s.chat.id, { kind: "preset", id: "files", toggles: {}, samplers: {} });
+    const forecast = await forecastRequest({ ...s.deps, readPreset: async () => preset }, { chatId: s.chat.id, draft: "Any storms?" });
+    expect(forecast.files.map((file) => [file.name, file.kind])).toEqual([["cover.png", "image"], ["notes.txt", "text"], ["brief.pdf", "pdf"]]);
+    expect(forecast.mediaEstimateIncomplete).toBe(true);
+    expect(forecast.messages.some((message) => message.content.includes("Keep the coat blue."))).toBe(true);
+  });
+
   test("the same holds with the scene's prompting on: a note, Start Reply With, last message as user", async () => {
     const s = await scene();
     await s.chats.setPrompting(s.chat.id, { note: { text: "Keep it tense.", position: "after_scenario", depth: 0, frequency: 1 }, prefill: "The lamp", lastAsUser: true });

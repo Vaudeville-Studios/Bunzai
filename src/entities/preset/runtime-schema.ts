@@ -11,6 +11,7 @@ import type {
   PresetGroup,
   PresetMedia,
   PresetPrompt,
+  PresetAttachment,
   PresetReasoning,
   PresetSamplers,
   PresetSystemPrompts,
@@ -18,14 +19,29 @@ import type {
   CanonicalPreset,
 } from "./schema";
 import { entityShape } from "../_shared/envelope";
+import { PROMPT_ATTACHMENT_MIMES } from "../../core/media/mime";
+import { promptAttachmentNameSchema } from "../../core/media/prompt-attachment";
+import { PROMPT_ATTACHMENT_BLOCK_COUNT } from "../../core/media/limits";
+import { ASSET_MAX_BYTES } from "../../core/media/limits";
+import { isEmbeddedMediaDataUri, parseUploadedRef } from "../piece-parts-blob";
 
 const stringArray = z.array(z.string());
 const unknownRecord = z.record(z.string(), z.unknown());
+const promptAttachmentRef = z.string().refine((ref) => {
+  if (ref.length > Math.ceil(ASSET_MAX_BYTES * 4 / 3) + 128) return false;
+  const uploaded = parseUploadedRef(ref);
+  if (uploaded) return (PROMPT_ATTACHMENT_MIMES as readonly string[]).includes(uploaded.mime);
+  if (!isEmbeddedMediaDataUri(ref)) return false;
+  const mime = /^data:([^;,]+)/u.exec(ref)?.[1];
+  return typeof mime === "string" && (PROMPT_ATTACHMENT_MIMES as readonly string[]).includes(mime);
+}, "attachment must be an uploaded or embedded supported media reference");
+const attachmentSchema = z.strictObject(defineExhaustiveShape<PresetAttachment>()({ name: promptAttachmentNameSchema, ref: promptAttachmentRef }));
 
 const promptShape = defineExhaustiveShape<PresetPrompt>()({
   id: z.string(),
   name: z.string(),
   content: z.string(),
+  attachments: z.array(attachmentSchema).max(PROMPT_ATTACHMENT_BLOCK_COUNT).optional(),
   role: z.enum(["system", "user", "assistant", "tool"]),
   enabled: z.boolean(),
   systemPrompt: z.boolean(),
@@ -44,7 +60,9 @@ const promptShape = defineExhaustiveShape<PresetPrompt>()({
 });
 /** Exported for the patch path (S5): validating one changed prompt block costs this schema alone,
  * never the whole preset's. */
-export const promptSchema = z.strictObject(promptShape);
+export const promptSchema = z.strictObject(promptShape).superRefine((prompt, context) => {
+  if (prompt.marker && prompt.attachments?.length) context.addIssue({ code: "custom", message: "feature markers cannot carry file attachments", path: ["attachments"] });
+});
 
 const groupShape = defineExhaustiveShape<PresetGroup>()({
   id: z.string(),

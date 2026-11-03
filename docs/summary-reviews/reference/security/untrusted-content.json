@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/security/untrusted-content",
   "sourcePath": "docs/reference/security/untrusted-content.md",
-  "sourceHash": "sha256:2cbd8d4a91dfa484ef884fb0a161ca2b9f220addcbd6462b187b4224ba34baf8",
-  "semanticSummaryHash": "sha256:5298879721e89a580745ec4e2f96120efccf6c8b559e9967b8a132221916977d",
+  "sourceHash": "sha256:2d878341dfd3afc519c24988682250ac17a655347d9c08eac9dcef9d17b19d4a",
+  "semanticSummaryHash": "sha256:3ee7b8deaeee145043b31ed503fcf4a51b38b8d859e624142f6df4542cd2b546",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "rename to Bunzai only",
-  "reviewedAt": "2026-10-29T20:48:00.201Z"
+  "reviewer": "codex-root-attachment-review-20261102",
+  "notes": "Root independently reviewed full sidecar diffs against source and approved the exact source and sidecar hashes in the task conversation on 2026-11-02.",
+  "reviewedAt": "2026-11-02T20:58:15.926Z"
 }

@@ -1,5 +1,5 @@
 /** The Promptbook's three views share one revision-checked draft; rehearsal never sends a model request. */
-import { useState, type JSX } from "react";
+import { useRef, useState, type JSX } from "react";
 import type { PromptbookBody, BookPhase } from "../../../../entities/promptbook/schema";
 import { bookRecipe, newBookPhase, phaseVerdict } from "../../../../core/promptbook";
 import type { LoreScan } from "../../../../core/lore/engine";
@@ -15,10 +15,16 @@ import { BookCards } from "./book-cards";
 import { promptbookBodySchema } from "../../../../entities/promptbook/runtime-schema";
 import { Select } from "../../../components/rc-controls";
 import s from "./promptbook.module.css";
+import { useAssetUploads } from "../../../_shared/asset-upload";
+import { toErrorMessage } from "../../../_shared/error-message";
+import type { PresetAttachment } from "../../../../entities/preset/schema";
 
 export function PromptbookEditor({ entity, revision, ctx, piece, topRight }: KindEditorProps): JSX.Element {
-  const session = usePieceEditor<PromptbookBody>({ kind: "promptbook", entity, revision, ctx, piece });
+  const media = useAssetUploads(ctx.api.uploadAsset, ctx.api.discardAssetUploads, (error) => ctx.setStatus(toErrorMessage(error, "could not stage prompt attachment")));
+  const session = usePieceEditor<PromptbookBody>({ kind: "promptbook", entity, revision, ctx, piece, assetUploads: media });
   const { body, edit } = session;
+  const bodyRef = useRef(body);
+  bodyRef.current = body;
   const [view, setView] = useState<"phases" | "cards" | "board">("phases");
   const [selected, select] = useState(body.phases[0]!.id);
   const [line, setLine] = useState("");
@@ -26,6 +32,30 @@ export function PromptbookEditor({ entity, revision, ctx, piece, topRight }: Kin
   const [setupName, setSetupName] = useState("");
   const phase = body.phases.find((p) => p.id === selected) ?? body.phases[0]!;
   const update = (next: BookPhase) => edit((b) => ({ ...b, phases: b.phases.map((p) => p.id === next.id ? next : p) }));
+  const updatePromptAttachment = (phaseId: string, promptId: string, attachment: PresetAttachment | string, occurrence?: number): boolean => {
+    let next = bodyRef.current;
+    let changed = false;
+    edit((current) => {
+      const phaseAt = current.phases.findIndex((p) => p.id === phaseId);
+      const phase = current.phases[phaseAt];
+      const promptAt = phase?.preset.prompts.findIndex((prompt) => prompt.id === promptId) ?? -1;
+      const prompt = phase?.preset.prompts[promptAt];
+      if (!phase || !prompt) return current;
+      const attachments = prompt.attachments ?? [];
+      const removeAt = typeof attachment === "string" ? (occurrence ?? attachments.findIndex((item) => item.ref === attachment)) : -1;
+      if (typeof attachment === "string" && (removeAt < 0 || attachments[removeAt]?.ref !== attachment)) return current;
+      if (typeof attachment !== "string" && attachments.some((item) => item.ref === attachment.ref)) return current;
+      const prompts = [...phase.preset.prompts];
+      prompts[promptAt] = { ...prompt, attachments: typeof attachment === "string" ? attachments.filter((_item, index) => index !== removeAt) : [...attachments, attachment] };
+      const phases = [...current.phases];
+      phases[phaseAt] = { ...phase, preset: { ...phase.preset, prompts } };
+      next = { ...current, phases };
+      changed = true;
+      return next;
+    });
+    bodyRef.current = next;
+    return changed;
+  };
   const scan: LoreScan = { messages: [{ role: "user", content: sample ?? "" }], messageCount: 1, character: { name: "", description: "", personality: "", scenario: "", tags: [] }, persona: "", variables: {}, generationType: "normal", now: 0 };
   const add = (role: "private" | "after") => {
     const made = newBookPhase(crypto.randomUUID(), role === "private" ? "Think" : "Tidy up", role);
@@ -53,7 +83,7 @@ export function PromptbookEditor({ entity, revision, ctx, piece, topRight }: Kin
       <div className={s.layout}>
         <section className={s.main}>
           {view === "board" ? <BookBoard phases={body.phases} selected={phase.id} onSelect={select} onChange={update} ctx={ctx} bookId={piece.id} /> : view === "cards" ? <VirtualShelf items={body.phases} keyOf={(p) => p.id} rowClass={s.columns!} estimate={420} render={(p) => <section className={s.phaseColumn}><Button block aria-pressed={p.id === phase.id} onClick={() => select(p.id)}>{p.name} · {p.role}</Button><BookCards phase={p} ctx={ctx} onChange={update} expanded /></section>} /> : <nav className={s.phaseList} aria-label="Phases"><VirtualRows items={body.phases} keyOf={(p) => p.id} estimate={74} render={(p, i) => <Button block variant={p.id === phase.id ? "primary" : "quiet"} aria-pressed={p.id === phase.id} onClick={() => select(p.id)}>{i + 1}. {p.name} · {p.role === "reply" ? "The reply" : p.role}{sample !== null ? ` · ${phaseVerdict(p, scan).on ? "Runs" : "Skipped"}` : ""}</Button>} /></nav>}
-          <PhaseEditor phase={phase} earlier={body.phases.slice(0, body.phases.indexOf(phase))} ctx={ctx} onChange={update} cards={view === "cards"} onRemove={() => remove(phase.id)} />
+          <PhaseEditor phase={phase} earlier={body.phases.slice(0, body.phases.indexOf(phase))} ctx={ctx} onChange={update} cards={view === "cards"} onRemove={() => remove(phase.id)} uploads={media.uploads} stageAsset={media.stageAsset} pinUploads={media.pin} discardUploads={media.discard} onAddAttachment={(promptId, attachment) => updatePromptAttachment(phase.id, promptId, attachment)} onRemoveAttachment={(promptId, ref, occurrence) => updatePromptAttachment(phase.id, promptId, ref, occurrence)} />
         </section>
         <aside className={s.rehearsal} data-part="promptbook.rehearsal"><h2>Try a line</h2><p>Check phase conditions. No model calls or saved scene changes. Library skills still use their own conditions.</p><Input aria-label="Rehearsal line" value={line} onChange={(e) => setLine(e.target.value)} /><Button onClick={() => rehearse(line)}>Try</Button>
           {sample !== null && <VirtualRows items={body.phases} keyOf={(p) => p.id} estimate={82} render={(p) => { const verdict = phaseVerdict(p, scan); return <article className={s.trace} data-on={verdict.on}><strong>{p.name}: {verdict.on ? "Runs" : "Skipped"}</strong><p>{verdict.why}</p>{p.reads.length > 0 && <small>Reads: {p.reads.map((id) => body.phases.find((from) => from.id === id)?.name).join(", ")}</small>}</article>; }} />}

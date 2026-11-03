@@ -12,6 +12,7 @@ import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CANONICAL_SCHEMA_VERSION } from "../core/canonical";
+import { sheetAsPreset } from "../core/preset/script-sheet";
 import { emptyLoreEntry, emptyLorebookBody } from "../core/lore/empty-book";
 import type { LorebookEntry } from "../entities/lorebook/schema";
 import { emptyPresetBody } from "../entities/preset/schema";
@@ -353,23 +354,23 @@ afterAll(async () => {
 
 test("the real server answers a real turn's trace at GET /api/chats/trace", async () => {
   const { store, handler, post } = await rig();
-  await store.save({
-    schemaVersion: CANONICAL_SCHEMA_VERSION,
-    kind: "character",
-    id: "vera",
-    body: { identity: { name: "Vera" }, persona: {}, prompts: {}, greetings: { firstMessage: "Evening." }, examples: {}, media: {}, attribution: {}, discovery: {} },
-  });
+  await store.save({ schemaVersion: CANONICAL_SCHEMA_VERSION, kind: "character", id: "vera", body: { identity: { name: "Vera" }, persona: {}, prompts: {}, greetings: { firstMessage: "Evening." }, examples: {}, media: {}, attribution: {}, discovery: {} } });
   const chat = (await (await post("/api/chats/start", { characterId: "vera" })).json()) as { id: string };
+  const preset = sheetAsPreset({ name: "Attached", content: "Use the attached note." });
+  preset.prompts[0]!.attachments = [{ name: "notes.txt", ref: "data:text/plain;base64,SGVsbG8gZnJvbSB0cmFjZS4=" }];
+  await store.save({ schemaVersion: CANONICAL_SCHEMA_VERSION, kind: "preset", id: "attached", body: preset });
+  await post("/api/chats/preset", { chatId: chat.id, preset: { kind: "preset", id: "attached", toggles: {}, samplers: {} } });
   const sent = (await (await post("/api/chats/send", { chatId: chat.id, content: "Any storms?", greetingIndex: 0, expectedVersion: 1 })).json()) as { branchVersion: number };
   await post("/api/chats/connection", { chatId: chat.id, connection: { id: localId, model: "qwen3" } });
   await (await post("/api/chats/turn", { chatId: chat.id, kind: "reply", expectedVersion: sent.branchVersion })).text();
-
   const res = await handler(apiReq(`/api/chats/trace?chatId=${chat.id}`));
   expect(res.status).toBe(200);
   const body = (await res.json()) as SceneTrace;
   expect(body.reply.model).toBe("qwen3");
   expect(body.blocks.length).toBeGreaterThan(0);
   expect(body.rawAvailable).toBe(true);
+  expect(body.files?.map((file) => [file.name, file.kind])).toEqual([["notes.txt", "text"]]);
+  expect(body.blocks.some((block) => block.text?.includes("[Attached text: notes.txt]") && block.text.includes("Hello from trace."))).toBe(true);
 });
 
 test("a guided re-roll's two added messages are labelled rows, with their text when it is the latest reply", async () => {

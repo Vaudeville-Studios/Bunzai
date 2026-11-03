@@ -312,7 +312,7 @@ export function assemble(input: AssemblyInput): AssemblyResult {
   blocks = blocks.map((b) => ({ ...b, content: b.historical ? macros.historical(b.content) : macros.write(b.content) }));
   let region = { start: -1, end: -1 };
   blocks = blocks.flatMap((b) => {
-    if (b.role === "user" && b.content === "") return [];
+    if (b.role === "user" && b.content === "" && !b.attachments?.length) return [];
     if (!b.content.includes(HISTORY_MARKER)) return [b];
     const [before = "", after = ""] = b.content.split(HISTORY_MARKER);
     return [
@@ -360,7 +360,7 @@ export function assemble(input: AssemblyInput): AssemblyResult {
   // Section 12: the final macro pass, the strip of anything unresolved, and empty messages dropped.
   blocks = blocks
     .map((b) => ({ ...b, content: b.source.kind === "prompt" && b.source.id && Object.hasOwn(input.literalPrompts ?? {}, b.source.id) ? input.literalPrompts![b.source.id]! : stripUnresolvedMacros(b.historical ? macros.historical(b.content) : macros.write(b.content), HISTORY_MARKER) }))
-    .filter((b) => b.content.length > 0);
+    .filter((b) => b.content.length > 0 || Boolean(b.attachments?.length));
 
   // The recaps ride in front of the history that is left (after the greeting), as data like recall's text; the budget only ever drops history.
   if (recapBlocks.length > 0) {
@@ -460,7 +460,7 @@ export function assemble(input: AssemblyInput): AssemblyResult {
   };
 }
 
-const toMessage = (b: Block): AssembledMessage => ({ role: b.role, content: b.content });
+const toMessage = (b: Block): AssembledMessage => ({ role: b.role, content: b.content, ...(b.attachments?.length ? { attachments: b.attachments, attachmentOwner: b.attachmentOwner } : {}) });
 
 const toLoreHitTrace = ({ entryKey, title, reason, matched, tokens, position }: LoreHit): AssemblyLoreHit => ({ entryKey, title, reason, matched, tokens, position });
 

@@ -84,6 +84,41 @@ test("Inspector cancellation before the private phase sends nothing and commits 
   expect(f.sent).toHaveLength(0);
   expect((await f.chats.readMessages(f.chat.activeBranchId, { limit: 20 })).messages).toHaveLength(2);
 });
+test("an inspected book phase identifies that image and PDF token costs are not estimated", async () => {
+  const f = await fixture();
+  f.book.phases[0]!.preset.prompts[0]!.attachments = [{ name: "brief.pdf", ref: "data:application/pdf;base64,JVBERi0xLjcK" }];
+  const running = f.run(true);
+  const review = await f.review.promise;
+  expect(review.files?.map((file) => file.name)).toContain("brief.pdf");
+  expect(review.mediaEstimateIncomplete).toBe(true);
+  expect(answerReview(f.deps.runtime, f.chat.id, review.turnId, { kind: "cancel" })).toBe(true);
+  await running;
+});
+test("each enabled book phase sends only its own attachments and keeps attached text literal", async () => {
+  const f = await fixture();
+  const payloads = [
+    "{{setglobalvar::attachmentMacro::ran}}Private clue.",
+    "Writer reference.",
+    "Afterword reference.",
+  ];
+  f.book.phases.forEach((phase, index) => {
+    phase.preset.prompts[0]!.attachments = [{ name: `${phase.id}.txt`, ref: `data:text/plain;base64,${Buffer.from(payloads[index]!).toString("base64")}` }];
+  });
+  await f.run();
+  const requests = f.sent.map((request) => request.messages.map((message) => message.content).join("\n"));
+  expect(requests).toHaveLength(3);
+  expect(requests[0]).toContain("[Attached text: think.txt]");
+  expect(requests[0]).toContain("{{setglobalvar::attachmentMacro::ran}}");
+  expect(requests[1]).toContain("[Attached text: write.txt]");
+  expect(requests[2]).toContain("[Attached text: tidy.txt]");
+  expect(requests[0]).not.toContain("write.txt");
+  expect(requests[0]).not.toContain("tidy.txt");
+  expect(requests[1]).not.toContain("think.txt");
+  expect(requests[1]).not.toContain("tidy.txt");
+  expect(requests[2]).not.toContain("think.txt");
+  expect(requests[2]).not.toContain("write.txt");
+  expect(await f.chats.globalOps()).toHaveLength(0);
+});
 test("authored global writes are available to the writer and committed once", async () => {
   const f = await fixture();
   f.book.phases[0]!.preset.prompts[0]!.content = "{{setglobalvar::clues::7}}Plan.";

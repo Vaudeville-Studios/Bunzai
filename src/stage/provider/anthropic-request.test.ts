@@ -81,6 +81,28 @@ describe("toAnthropicWire: system placement and depth notes (matches RoleCall's 
     });
   });
 
+  test("prompt images and PDFs become native user content blocks in attachment order", () => {
+    const wire = toAnthropicWire([{
+      role: "user", content: "Inspect these.", attachments: [
+        { kind: "image", name: "cover.png", mime: "image/png", dataUri: "data:image/png;base64,AA" },
+        { kind: "pdf", name: "notes.pdf", base64: "UEZERg==" },
+      ],
+    }]);
+    expect(wire.messages).toEqual([{
+      role: "user",
+      content: [
+        { type: "text", text: "Inspect these." },
+        { type: "image", source: { type: "base64", media_type: "image/png", data: "AA" } },
+        { type: "document", source: { type: "base64", media_type: "application/pdf", data: "UEZERg==" }, title: "notes.pdf" },
+      ],
+    }]);
+  });
+
+  test("ambiguous mixed image sources and non-user attachments fail before wire construction", () => {
+    expect(() => toAnthropicWire([{ role: "user", content: "x", images: ["data:image/png;base64,AA"], attachments: [{ kind: "pdf", name: "a.pdf", base64: "UEZERg==" }] }])).toThrow(ProviderError);
+    expect(() => toAnthropicWire([{ role: "assistant", content: "x", attachments: [{ kind: "pdf", name: "a.pdf", base64: "UEZERg==" }] }])).toThrow(ProviderError);
+  });
+
   test("reasoning from a different provider is not echoed back as Anthropic thinking", () => {
     const wire = toAnthropicWire([
       { role: "user", content: "hi" },

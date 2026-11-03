@@ -5,6 +5,7 @@
  * A real preset is laid out by preset.ts into the same shape.
  */
 import type { PresetPlan } from "./preset";
+import type { PresetAttachment } from "../../entities/preset/schema";
 import type { AssembledRole, BlockSource } from "./types";
 
 /** A message while it is being assembled: where it came from, and whether macros may write from it. */
@@ -12,6 +13,9 @@ export interface Block {
   role: AssembledRole;
   content: string;
   source: BlockSource;
+  /** Authored prompt files follow the block through depth placement and appends. */
+  attachments?: readonly PresetAttachment[];
+  attachmentOwner?: { id: string; name: string };
   /** Stored history: its macros run read-only, so an old {{setvar}} never fires again. */
   historical?: boolean;
 }
@@ -113,7 +117,7 @@ export function appendAtDepth(
   for (let i = end - 1; i >= start; i--) {
     if (out[i]!.role !== role) continue;
     if (seen === at) {
-      out[i] = { ...out[i]!, content: `${out[i]!.content}\n${item.content}` };
+      out[i] = { ...out[i]!, content: `${out[i]!.content}\n${item.content}`, ...(item.attachments?.length ? { attachments: [...(out[i]!.attachments ?? []), ...item.attachments] } : {}) };
       return { blocks: out, inserted: false };
     }
     seen++;

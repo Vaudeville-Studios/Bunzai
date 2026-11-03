@@ -3,6 +3,8 @@ import { useState, type JSX } from "react";
 import type { BookPhase } from "../../../../entities/promptbook/schema";
 import { emptySkillBody } from "../../../../entities/skill/schema";
 import type { PresetPrompt } from "../../../../entities/preset/schema";
+import type { PresetAttachment } from "../../../../entities/preset/schema";
+import type { StagedAssetUpload } from "../../../app-contract-editor";
 import type { AppContext } from "../../../app-contract";
 import { Button, Toggle } from "../../../components/button";
 import { Input, Textarea, Select, Checkbox } from "../../../components/rc-controls";
@@ -17,7 +19,7 @@ import { PromptEditPanel } from "../preset/prompt-edit-panel";
 import s from "./promptbook.module.css";
 import { SkillConditionEditor } from "../pieces/skill-condition";
 
-export function PhaseEditor({ phase, earlier, ctx, onChange, cards, onRemove }: { phase: BookPhase; earlier: BookPhase[]; ctx: AppContext; onChange(p: BookPhase): void; cards: boolean; onRemove(): void }): JSX.Element {
+export function PhaseEditor({ phase, earlier, ctx, onChange, cards, onRemove, uploads, stageAsset, pinUploads, discardUploads, onAddAttachment, onRemoveAttachment }: { phase: BookPhase; earlier: BookPhase[]; ctx: AppContext; onChange(p: BookPhase): void; cards: boolean; onRemove(): void; uploads: readonly StagedAssetUpload[]; stageAsset(file: File, signal?: AbortSignal): Promise<StagedAssetUpload>; pinUploads(refs: readonly string[]): void; discardUploads(refs: readonly string[]): Promise<void>; onAddAttachment(promptId: string, attachment: PresetAttachment, receipt: string): boolean; onRemoveAttachment(promptId: string, ref: string, occurrence: number): void }): JSX.Element {
   const patch = (over: Partial<BookPhase>) => onChange({ ...phase, ...over });
   const prompt = (id: string, over: Partial<PresetPrompt>) => patch({ preset: { ...phase.preset, prompts: phase.preset.prompts.map((p) => p.id === id ? { ...p, ...over } : p) } });
   const condition = phase.condition;
@@ -37,6 +39,6 @@ export function PhaseEditor({ phase, earlier, ctx, onChange, cards, onRemove }: 
     <h3>Prompt blocks</h3><p>These use the preset's placement and grouping rules. Context markers stay in the same ordered stack.</p>
     <Button size="sm" onClick={() => patch({ preset: addBlock(phase.preset) })}>Add prompt block</Button>
     <VirtualRows items={ordered} keyOf={(p) => p.id} estimate={120} render={(p, i) => <article className={s.block}><div className={s.toolbar}><Input aria-label={`Block ${i + 1} name`} value={p.name} onChange={(e) => prompt(p.id, { name: e.target.value })} /><Toggle label={`Use ${p.name}`} on={p.enabled} onChange={(enabled) => prompt(p.id, { enabled })} /><Button size="sm" disabled={i === 0} onClick={() => { const preset = reorderBlock(phase.preset, p.id, ordered[i - 1]!.id); if (reorderChangesBuild(phase.preset, preset)) patch({ preset }); else ctx.setStatus("These blocks have different placement or order values. Change their settings to move them in the built prompt."); }}>Move up</Button><Button size="sm" onClick={() => selectBlock(p.id)}>Settings</Button><Button size="sm" variant="quiet" onClick={() => patch({ preset: deleteBlock(phase.preset, p.id) })}>Remove block</Button></div>{p.marker ? <p>Context: {p.markerSlot ?? p.id}</p> : <Textarea aria-label={`${p.name} instructions`} rows={4} value={p.content} onChange={(e) => prompt(p.id, { content: e.target.value })} />}</article>} />
-    {selectedBlock && <PromptEditPanel block={phase.preset.prompts.find((p) => p.id === selectedBlock) ?? null} stops={placementsForProfile("full")} writeFor="full" groups={phase.preset.groups ?? []} onSetGroup={(groupId) => prompt(selectedBlock, { groupId: groupId ?? undefined })} onClose={() => selectBlock(null)} onPatch={(over) => prompt(selectedBlock, over)} />}
+    {selectedBlock && <PromptEditPanel ownerKey={phase.id} block={phase.preset.prompts.find((p) => p.id === selectedBlock) ?? null} stops={placementsForProfile("full")} writeFor="full" groups={phase.preset.groups ?? []} uploads={uploads} stageAsset={stageAsset} pinUploads={pinUploads} discardUploads={discardUploads} onAddAttachment={(attachment, receipt) => onAddAttachment(selectedBlock, attachment, receipt)} onRemoveAttachment={(ref, occurrence) => onRemoveAttachment(selectedBlock, ref, occurrence)} onSetGroup={(groupId) => prompt(selectedBlock, { groupId: groupId ?? undefined })} onClose={() => selectBlock(null)} onPatch={(over) => prompt(selectedBlock, over)} />}
   </section>;
 }

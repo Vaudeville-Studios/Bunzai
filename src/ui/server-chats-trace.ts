@@ -24,6 +24,7 @@ import { macrosOf, routeOfTrace, variablesOf } from "./server-chats-trace-report
 import { WHOLE_BRANCH } from "../studio/scene-branch";
 import { plural } from "../core/text";
 import { readBookRun } from "../core/promptbook-run";
+import type { PromptAttachmentInfo } from "../core/media/prompt-attachment";
 
 const num = (v: unknown, fallback = 0): number => (typeof v === "number" ? v : fallback);
 
@@ -92,7 +93,7 @@ async function buildTrace(
   message: Message,
   swipeId: string,
   trace: JsonObject,
-  request: { messageId: string; swipeId: string; texts: string[] } | null,
+  request: { messageId: string; swipeId: string; texts: string[]; files?: PromptAttachmentInfo[] } | null,
   take: string,
   presetName: string | undefined,
 ): Promise<SceneTrace> {
@@ -152,6 +153,7 @@ async function buildTrace(
     ...(book ? { book } : {}),
     reply: { messageId: message.id, swipeId, number: numberOf.get(message.id)!, model: str(requestRec["model"]), take },
     blocks,
+    ...(request?.messageId === message.id && request.swipeId === swipeId && request.files?.length ? { files: request.files } : {}),
     window: windowView,
     trimmed,
     ...(summarized.length > 0 ? { summarized } : {}),

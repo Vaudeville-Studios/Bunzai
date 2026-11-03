@@ -40,8 +40,18 @@ function argsObject(text: string): Record<string, unknown> {
 export function toOllamaMessages(messages: readonly ProviderMessage[]): Record<string, unknown>[] {
   const names = new Map<string, string>();
   return messages.map((m) => {
+    if (m.attachments?.some((attachment) => attachment.kind === "pdf")) {
+      throw new ProviderError("Ollama does not support PDF prompt attachments. Remove the PDF or choose a provider that accepts PDF input.", { category: "invalid_request_error", code: "invalid_parameter", status: 400 });
+    }
+    if (m.attachments?.length && m.role !== "user") {
+      throw new ProviderError("Prompt attachments require a user message for Ollama.", { category: "invalid_request_error", code: "invalid_parameter", status: 400 });
+    }
+    if (m.images?.length && m.attachments?.length) {
+      throw new ProviderError("Legacy images and prompt attachments have no shared order. Remove one set before sending.", { category: "invalid_request_error", code: "invalid_parameter", status: 400 });
+    }
     const wire: Record<string, unknown> = { role: m.role, content: m.content };
-    if (m.role === "user" && m.images?.length) wire.images = m.images.map((url) => url.replace(/^data:[^,]*;base64,/, ""));
+    const images = [...(m.images ?? []), ...(m.attachments ?? []).flatMap((attachment) => attachment.kind === "image" ? [attachment.dataUri] : [])];
+    if (m.role === "user" && images.length) wire.images = images.map((url) => url.replace(/^data:[^,]*;base64,/, ""));
     for (const call of m.tool_calls ?? []) names.set(call.id, call.function.name);
     if (m.role === "assistant" && m.tool_calls?.length) {
       wire.tool_calls = m.tool_calls.map((c) => ({ id: c.id, function: { name: c.function.name, arguments: argsObject(c.function.arguments) } }));

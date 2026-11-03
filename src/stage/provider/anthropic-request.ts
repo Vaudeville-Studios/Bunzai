@@ -40,7 +40,8 @@ type RedactedThinkingBlock = { type: "redacted_thinking"; data: string };
 type ToolUseBlock = { type: "tool_use"; id: string; name: string; input: Record<string, unknown>; cache_control?: CacheControl };
 type ToolResultBlock = { type: "tool_result"; tool_use_id: string; content: string; cache_control?: CacheControl };
 type ImageBlock = { type: "image"; source: { type: "base64"; media_type: string; data: string } | { type: "url"; url: string }; cache_control?: CacheControl };
-export type AnthropicContentPart = TextBlock | ThinkingBlock | RedactedThinkingBlock | ToolUseBlock | ToolResultBlock | ImageBlock;
+type DocumentBlock = { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string }; title: string };
+export type AnthropicContentPart = TextBlock | ThinkingBlock | RedactedThinkingBlock | ToolUseBlock | ToolResultBlock | ImageBlock | DocumentBlock;
 export interface AnthropicWireMessage {
   role: "user" | "assistant";
   content: string | AnthropicContentPart[];
@@ -88,8 +89,8 @@ function toolUseParts(message: ProviderMessage): AnthropicContentPart[] {
 /** Two content values of a role Anthropic is about to merge, combined into one. */
 function mergeContent(a: string | AnthropicContentPart[], b: string | AnthropicContentPart[]): string | AnthropicContentPart[] {
   if (typeof a === "string" && typeof b === "string") return `${a}\n\n${b}`;
-  const left = typeof a === "string" ? [{ type: "text" as const, text: a }] : a;
-  const right = typeof b === "string" ? [{ type: "text" as const, text: b }] : b;
+  const left = typeof a === "string" ? (a ? [{ type: "text" as const, text: a }] : []) : a;
+  const right = typeof b === "string" ? (b ? [{ type: "text" as const, text: b }] : []) : b;
   return [...left, ...right];
 }
 
@@ -104,6 +105,10 @@ function mergeContent(a: string | AnthropicContentPart[], b: string | AnthropicC
  * a reply that would not open with `user` gets one inserted, both required by the API.
  */
 export function toAnthropicWire(messages: readonly ProviderMessage[]): { system: TextBlock[]; messages: AnthropicWireMessage[] } {
+  messages.forEach((message, index) => {
+    if (message.attachments?.length && message.role !== "user") throw invalidRequest(`Attachments at message ${index} require a user role.`, "invalid_parameter");
+    if (message.images?.length && message.attachments?.length) throw invalidRequest(`Legacy images and prompt attachments at message ${index} have no shared order.`, "invalid_parameter");
+  });
   validateToolProtocol(messages);
   let firstTurn = 0;
   while (firstTurn < messages.length && messages[firstTurn]!.role === "system") firstTurn++;
@@ -125,8 +130,15 @@ export function toAnthropicWire(messages: readonly ProviderMessage[]): { system:
       const parts: AnthropicContentPart[] = [{ type: "thinking", thinking: raw.reasoning.text, signature: raw.reasoning.signature }];
       if (raw.content) parts.push({ type: "text", text: raw.content });
       turns.push({ role, content: parts });
-    } else if (raw.images?.length && role === "user") {
-      turns.push({ role, content: [{ type: "text", text: raw.content }, ...raw.images.map(imagePart)] });
+    } else if ((raw.images?.length || raw.attachments?.length) && role === "user") {
+      const parts: AnthropicContentPart[] = [
+        ...(raw.content.length ? [{ type: "text" as const, text: raw.content }] : []),
+        ...(raw.images ?? []).map(imagePart),
+        ...(raw.attachments ?? []).map((attachment): AnthropicContentPart => attachment.kind === "image"
+          ? imagePart(attachment.dataUri)
+          : { type: "document", source: { type: "base64", media_type: "application/pdf", data: attachment.base64 }, title: attachment.name }),
+      ];
+      turns.push({ role, content: parts });
     } else {
       turns.push({ role, content: raw.content });
     }

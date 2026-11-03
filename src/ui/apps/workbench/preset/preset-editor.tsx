@@ -1,6 +1,5 @@
 /**
- * PresetEditorView. Transcribes the top
- * of design/vs-preset-hybrid.html: the shared EditorEhead (spine + WriteForStrip + Save) over the
+ * PresetEditorView transcribes design/vs-preset-hybrid.html: EditorEhead (spine + WriteForStrip + Save) over the
  * block manuscript. The settings card, the row expansion, the toolbar and the right rail land in
  * the following P4 slices; this one makes a real, editable preset where the P1 stub was.
  */
@@ -40,6 +39,7 @@ import { Panel } from "../../../components/panel";
 import { useReseedOnReread } from "../use-reseed";
 import { EditorConflict } from "../editor-conflict";
 import { apiStatusIs } from "../../../_shared/api-fetch";
+import { historyContainsAssetRef, referencedAssetUploads, useAssetUploads } from "../../../_shared/asset-upload";
 import { AUTOSAVE_TRIES, autosaveStoppedNote } from "../autosave-core";
 import {
   addBlock,
@@ -93,8 +93,21 @@ export function PresetEditorView({ entity, revision, ctx, piece, topRight }: Pre
   const revisionRef = useRef(revision);
   const initBody = useMemo(() => bodyFromEntity(entity), [entity]);
   const historyConfig = useMemo(() => ({ kind: "preset" as const, id: piece.id }), [piece.id]);
-  const { body, baseline, dirty, edit: editRawBody, reseed, capturePatchState, commit, canUndo, canRedo, undo: undoBody, redo: redoBody }
+  const { body, baseline, dirty, edit: editRawBody, reseed, capturePatchState, commit, canUndo, canRedo, historyHas, undo: undoBody, redo: redoBody }
     = useEditorRevision(initBody, historyConfig);
+  const { uploads, stageAsset, accept, discard, pin, unpin, discardUnused } = useAssetUploads(
+    ctx.api.uploadAsset,
+    ctx.api.discardAssetUploads,
+    (error) => ctx.setStatus(toErrorMessage(error, "could not stage prompt attachment")),
+  );
+  const uploadState = useRef({ uploads, unpin, discardUnused, historyHas });
+  uploadState.current = { uploads, unpin, discardUnused, historyHas };
+  const pruneUploads = useCallback((draft: unknown): void => {
+    const current = uploadState.current;
+    const refs = current.uploads.map((upload) => upload.ref);
+    current.unpin(refs);
+    void current.discardUnused(refs, draft, (upload) => current.historyHas((change) => historyContainsAssetRef(change, upload.asset)));
+  }, []);
   const bodyRef = useRef(body);
   bodyRef.current = body;
   const promptIndex = useRef(new OccurrenceIndex<PresetPrompt>());
@@ -109,7 +122,8 @@ export function PresetEditorView({ entity, revision, ctx, piece, topRight }: Pre
     editRawBody(() => next, touch);
     bodyRef.current = next;
     if (!touch && next !== current) promptIndex.current.rebuild(next.prompts, (prompt) => prompt.id);
-  }, [editRawBody]);
+    pruneUploads(next);
+  }, [editRawBody, pruneUploads]);
   const reseedPreset = useCallback((fresh: PresetBody): void => {
     reseed(fresh);
     bodyRef.current = fresh;
@@ -120,8 +134,9 @@ export function PresetEditorView({ entity, revision, ctx, piece, topRight }: Pre
     if (fresh) {
       bodyRef.current = fresh;
       promptIndex.current.rebuild(fresh.prompts, (prompt) => prompt.id);
+      pruneUploads(fresh);
     }
-  }, []);
+  }, [pruneUploads]);
   const undo = useCallback(() => restorePreset(undoBody), [restorePreset, undoBody]);
   const redo = useCallback(() => restorePreset(redoBody), [restorePreset, redoBody]);
   const [writeFor, setWriteForState] = useState<PresetWriteForProfile>(() =>
@@ -164,7 +179,12 @@ export function PresetEditorView({ entity, revision, ctx, piece, topRight }: Pre
     },
     itemNames: partNames,
     applyPatch: applyPiecePatch,
-    patch: (expected, patch, intent) => ctx.api.patchEditedEntity("preset", piece.id, expected, patch, undefined, intent),
+    patch: async (expected, patch, intent) => {
+      const used = referencedAssetUploads(patch, uploads);
+      const saved = await ctx.api.patchEditedEntity("preset", piece.id, expected, patch, used.map((upload) => upload.ref), intent);
+      accept(used.map((upload) => upload.ref));
+      return saved;
+    },
     commit: (submitted, atRev, savedRevision) => {
       revisionRef.current = savedRevision;
       commit(submitted, atRev);
@@ -176,9 +196,11 @@ export function PresetEditorView({ entity, revision, ctx, piece, topRight }: Pre
     takeTheirs: (fresh, nextRevision) => {
       revisionRef.current = nextRevision;
       reseedPreset(bodyFromEntity(fresh));
+      pruneUploads(bodyFromEntity(fresh));
     },
     isConflict: (error) => apiStatusIs(error, 409),
     onSave: (submitted, mode) => {
+      pruneUploads(submitted);
       ctx.setStatus(`${mode === "keepMine" ? "overwrote" : "saved"} preset · ${submitted.name}`);
     },
     onError: (error) => ctx.setStatus(toErrorMessage(error, "could not save the preset")),
@@ -372,6 +394,7 @@ export function PresetEditorView({ entity, revision, ctx, piece, topRight }: Pre
 
     {rail === "edit" ? (
       <PromptEditPanel
+        ownerKey={piece.id}
         block={selectedBlock}
         stops={stops}
         writeFor={writeFor}
@@ -380,6 +403,24 @@ export function PresetEditorView({ entity, revision, ctx, piece, topRight }: Pre
           if (selectedId) editPreset((b) => setBlockGroup(b, selectedId, groupId), promptTouch(selectedId, promptIndex.current));
         }}
         onClose={() => setSelectedId(null)}
+        uploads={uploads}
+        stageAsset={stageAsset}
+        pinUploads={pin}
+        discardUploads={discard}
+        onAddAttachment={(attachment, receipt) => {
+          if (!selectedId) return false;
+          const current = bodyRef.current.prompts.find((prompt) => prompt.id === selectedId);
+          if (!current || current.attachments?.some((item) => item.ref === attachment.ref)) return false;
+          editPreset((b) => patchBlock(b, selectedId, { attachments: [...(b.prompts.find((prompt) => prompt.id === selectedId)?.attachments ?? []), attachment] }), promptTouch(selectedId, promptIndex.current));
+          return true;
+        }}
+        onRemoveAttachment={(ref, occurrence) => {
+          if (!selectedId) return;
+          editPreset((b) => {
+            const current = b.prompts.find((prompt) => prompt.id === selectedId);
+            return current ? patchBlock(b, selectedId, { attachments: current.attachments?.filter((attachment, index) => index !== occurrence || attachment.ref !== ref) }) : b;
+          }, promptTouch(selectedId, promptIndex.current));
+        }}
         onPatch={(patch) => {
           if (selectedId) editPreset((b) => patchBlock(b, selectedId, patch), promptTouch(selectedId, promptIndex.current));
         }}

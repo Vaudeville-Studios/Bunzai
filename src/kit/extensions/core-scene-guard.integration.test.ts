@@ -16,6 +16,7 @@ import { testCharacter } from "../../studio/test-character";
 import { createHandler } from "../../ui/server-handler";
 import { StudioStore } from "../../studio/store";
 import { SettingsStore } from "../../studio/settings";
+import { sheetAsPreset } from "../../core/preset/script-sheet";
 import { apiReq, filledSec } from "../../ui/server-test-rig";
 
 const handles: LibraryHandle[] = [], roots: string[] = [];
@@ -32,12 +33,39 @@ test("real Core links use Core preview and append paths while legacy scenes rema
   const stores = libraryFor(root);
   if (!stores?.core || stores.chats !== opened.chats) throw new Error("SQLite Core scene records are unavailable");
   await opened.content.create(testCharacter("fixture-character", [], { name: "Fixture", firstMessage: "Welcome." }));
+  const preset = sheetAsPreset({ name: "Preset with file", content: "" });
+  preset.prompts[0]!.attachments = [{ name: "notes.txt", ref: "data:text/plain;base64,eA==" }];
+  await opened.content.create({ schemaVersion: "1", kind: "preset", id: "preset-with-file", body: preset });
   const cast = { character: { id: "fixture-character", version: 1 } };
   const snapshot = { character: { kind: "character", id: "fixture-character", body: { identity: { name: "Fixture" }, persona: {}, prompts: {}, greetings: {}, examples: {}, media: {}, attribution: {}, discovery: {} } } };
   if (!opened.chats.createCoreChat) throw new Error("SQLite ChatStore lacks Core-first creation");
   const coreChat = await opened.chats.createCoreChat({ title: "Core linked", cast, snapshot });
   await opened.chats.setConnection(coreChat.id, { id: "no-provider", model: "offline-fixture" });
   await createCoreSceneSession(opened.chats, stores.core, join(root, "core-home"), coreChat.id);
+  await opened.chats.setPreset(coreChat.id, { kind: "preset", id: "preset-with-file", toggles: {}, samplers: {} });
+  const turns = stores.coreTurns;
+  if (!turns) throw new Error("the library Core turn owner is unavailable");
+  const beforeBlockedTurn = await turns.inspect(coreChat.id);
+  if (!beforeBlockedTurn) throw new Error("the linked Core scene is unavailable");
+  let previewApplied = 0, turnEvents = 0;
+  const originalRead = opened.content.read.bind(opened.content), originalLight = opened.content.readLight.bind(opened.content);
+  let fullReads = 0, lightReads = 0;
+  opened.content.read = async (...args) => { fullReads++; return originalRead(...args); };
+  opened.content.readLight = async (...args) => { lightReads++; return originalLight(...args); };
+  try {
+    await expect(turns.preview(coreChat.id, "preview", new AbortController().signal, async () => { previewApplied++; return []; }, async () => false))
+      .rejects.toThrow("cannot send prompt-block attachments");
+    await expect(turns.run({ sceneId: coreChat.id, sessionId: beforeBlockedTurn.sessionId, kind: "reply", expectedBranchVersion: beforeBlockedTurn.branchVersion, actor: { kind: "host" } }, () => { turnEvents++; }))
+      .rejects.toThrow("cannot send prompt-block attachments");
+  } finally {
+    opened.content.read = originalRead;
+    opened.content.readLight = originalLight;
+  }
+  expect(fullReads).toBe(0);
+  expect(lightReads).toBeGreaterThan(0);
+  expect(previewApplied).toBe(0);
+  expect(turnEvents).toBe(0);
+  await opened.chats.setPreset(coreChat.id, null);
   const legacyChat = await opened.chats.createChat({ title: "Legacy scene", cast, snapshot });
   const coreTake = (await opened.chats.listBranches(coreChat.id))[0]!;
   const legacyTake = (await opened.chats.listBranches(legacyChat.id))[0]!;

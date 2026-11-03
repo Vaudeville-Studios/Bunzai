@@ -12,6 +12,7 @@ import { checkGeneration } from "./generation-rules";
 import { SANITY_LIST } from "../../entities/_shared/sanity";
 import { checkDeltas } from "./scene-state-rules";
 import type { Delta } from "../../core/scene-state/types";
+import { promptAttachmentInfoListSchema, type PromptAttachmentInfo } from "../../core/media/prompt-attachment";
 
 export { checkGeneration, fail, isJson };
 import type {
@@ -291,15 +292,19 @@ export function checkProgress(value: unknown): { content: string; trace: JsonObj
 
 /** The take's latest request text (rule 22): absent, or exactly a list of texts, one per stored
  * trace block. Empty is allowed (a reply whose trace has no blocks). */
-export function checkTurnRequest(value: unknown): { texts: string[] } | undefined {
+export function checkTurnRequest(value: unknown): { texts: string[]; files?: PromptAttachmentInfo[] } | undefined {
   if (value === undefined) return undefined;
-  const r = onlyKeys(value, ["texts"], "request");
+  const r = onlyKeys(value, ["texts", "files"], "request");
   if (!Array.isArray(r.texts)) fail("request texts must be a list");
-  return { texts: r.texts.map((t) => checkText(t, "request text")) };
+  const request = { texts: r.texts.map((t) => checkText(t, "request text")) };
+  if (r.files === undefined) return request;
+  const files = promptAttachmentInfoListSchema.safeParse(r.files);
+  if (!files.success || files.data.some((file) => file.message >= request.texts.length)) fail("request files are invalid");
+  return { ...request, files: files.data };
 }
 
 /** A turn's result (rule 16, plus rule 22's request). */
-export function checkTurnResult(value: unknown): { content: string; generation: Generation | undefined; trace: JsonObject | undefined; request: { texts: string[] } | undefined } {
+export function checkTurnResult(value: unknown): { content: string; generation: Generation | undefined; trace: JsonObject | undefined; request: { texts: string[]; files?: PromptAttachmentInfo[] } | undefined } {
   const r = onlyKeys(value, ["content", "generation", "trace", "request"], "turn result");
   return { content: checkText(r.content, "content"), generation: checkGeneration(r.generation), trace: checkTrace(r.trace), request: checkTurnRequest(r.request) };
 }

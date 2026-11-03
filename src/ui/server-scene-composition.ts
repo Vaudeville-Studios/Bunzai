@@ -19,10 +19,13 @@ import type { ExtensionCommitContext } from "../stage/contracts/extension-store"
 import type { ProviderRequestGuard } from "../rp-core";
 import { guardedProviderConnect } from "../studio/guarded-provider-connect";
 
-export function createSceneCore(chats: ChatStore, state: StateStore, readPreset: ReadPreset, readLorebook: ReadLorebook, studio?: Pick<StudioStoreLike, "read">, settings?: SettingsStoreLike, compendium?: CompendiumDeps | null, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: "system" | "user" | "assistant" | "tool"; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, connectProvider: typeof connect = connect) {
-  const readLibrary = studio ? (kind: string, id: string) => studio.read(kind, id) : undefined;
+export function createSceneCore(chats: ChatStore, state: StateStore, readPreset: ReadPreset, readLorebook: ReadLorebook, studio?: Pick<StudioStoreLike, "read" | "readLight" | "readAsset">, settings?: SettingsStoreLike, compendium?: CompendiumDeps | null, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: "system" | "user" | "assistant" | "tool"; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, connectProvider: typeof connect = connect) {
+  const readLibrary = !studio ? undefined : studio.readLight
+    ? async (kind: string, id: string) => (await studio.readLight!(kind, id))?.entity ?? null
+    : (kind: string, id: string) => studio.read(kind, id);
   return createRoleplayCore({
     chats, state, connect: connectProvider, readPreset, readLorebook, readLibrary,
+    ...(studio?.readAsset ? { readAsset: (sha: string, maxBytes: number) => studio.readAsset!(sha, maxBytes) } : {}),
     narratorTools: narratorTools(readLibrary), finalCutBanks: () => finalCutBanksOf(state),
     ...(applyExtensionPrompts ? { applyExtensionPrompts } : {}),
     ...sceneReaders(studio, settings), now: Date.now, randomSeed: () => Math.floor(Math.random() * 2 ** 31),

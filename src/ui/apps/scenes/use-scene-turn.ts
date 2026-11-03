@@ -14,6 +14,7 @@ import type { AppContext } from "../../app-contract";
 import { toErrorMessage } from "../../_shared/error-message";
 import type { TurnEvent } from "../../../studio/scene-turn";
 import type { RequestParams } from "../../../studio/scene-turn-trace";
+import type { PromptAttachmentInfo } from "../../../core/media/prompt-attachment";
 import { FALLBACK_KEY, readFallback } from "./fallback-model";
 import { INSPECTOR_KEY, readInspector } from "./inspector-core";
 import { carryOpenChoices } from "./scene-reasoning-core";
@@ -37,7 +38,7 @@ export interface LiveTurn {
 }
 
 /** A turn paused by the Prompt Inspector: the exact request, waiting for Send or Cancel. */
-export interface Review { turnId: string; messages: { role: string; content: string }[]; tokens: number; /** The tool definitions the request carries, shown read-only. */ tools?: { name: string; description: string; parameters: unknown }[]; /** The generation parameters the request sends and leaves out. */ params?: RequestParams }
+export interface Review { turnId: string; messages: { role: string; content: string }[]; files?: PromptAttachmentInfo[]; mediaEstimateIncomplete?: boolean; tokens: number; /** The tool definitions the request carries, shown read-only. */ tools?: { name: string; description: string; parameters: unknown }[]; /** The generation parameters the request sends and leaves out. */ params?: RequestParams }
 
 export type HeldTurn =
   /** `anchor` is the message the failed turn was for: the one it answered, or the reply it re-wrote. */
@@ -89,7 +90,7 @@ export function useSceneTurn(ctx: AppContext, chatId: string, reload: () => void
     };
     const onEvent = (e: TurnEvent): void => {
       if (e.type === "regex") { void answerPromptRegex(e, (answer) => ctx.api.answerSceneRegex(chatId, e.turnId, answer)); return; }
-      if (e.type === "review") setReview({ turnId: e.turnId, messages: e.messages, tokens: e.tokens, ...(e.tools ? { tools: e.tools } : {}), ...(e.params ? { params: e.params } : {}) });
+      if (e.type === "review") setReview({ turnId: e.turnId, messages: e.messages, ...(e.files ? { files: e.files } : {}), tokens: e.tokens, ...(e.tools ? { tools: e.tools } : {}), ...(e.params ? { params: e.params } : {}) });
       else if (e.type === "text" || e.type === "failed" || e.type === "done" || e.type === "stopped" || e.type === "conflict") setReview(null);
       if (e.type === "start") {
         turn.turnId = e.turnId;

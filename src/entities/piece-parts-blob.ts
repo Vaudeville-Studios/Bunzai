@@ -87,6 +87,14 @@ function canonicalBase64Bytes(s: string): Uint8Array | undefined {
   return bytesToBase64(bytes) === s ? bytes : undefined;
 }
 
+/** Canonical embedded bytes, when the exact data-URI media slot contains valid base64. */
+export function embeddedMediaBytes(value: string): { mime: string; bytes: Uint8Array } | undefined {
+  const uri = matchDataUri(value);
+  if (!uri) return undefined;
+  const bytes = canonicalBase64Bytes(uri.payload);
+  return bytes ? { mime: uri.mime, bytes } : undefined;
+}
+
 /**
  * What a patch may already point at without carrying the bytes: payload-carrying blobs (this session's
  * uploads, text blobs a part needs) and plain content hashes of blobs the piece already holds. A media

@@ -7,6 +7,7 @@ export type {
   PromptRole,
   PromptPlacement,
   PresetPrompt,
+  PresetAttachment,
   PresetGroup,
   PresetSamplers,
   PresetSystemPrompts,

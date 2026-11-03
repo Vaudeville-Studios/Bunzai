@@ -19,7 +19,7 @@ const openai: ProviderSpoke = {
     return openAICompatModels(baseURL ?? "https://api.openai.com/v1", apiKey, fetch);
   },
   // platform.openai.com chat create.
-  scene: { params: OPENAI_PARAMS, base: (c) => c.baseURL ?? "https://api.openai.com/v1", support: { streamUsage: true, reasoningEffort: "openai" } },
+  scene: { params: OPENAI_PARAMS, base: (c) => c.baseURL ?? "https://api.openai.com/v1", support: { streamUsage: true, reasoningEffort: "openai", pdfAttachments: true } },
 };
 
 export default openai;

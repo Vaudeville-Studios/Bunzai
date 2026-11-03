@@ -13,6 +13,7 @@ import type { StateStore } from "../stage/contracts/state-store";
 import type { ContentStore } from "../stage/contracts/content-store";
 import type { ChatStore } from "../stage/contracts/chat-store";
 import { assertStudioEntityKind } from "./path-policy";
+import { safeParseCanonicalEntity, type ParsedCanonicalEntity } from "../entities/runtime-schema";
 import { StudioConflictError, StudioNotFoundError } from "./errors";
 
 import { NoConnectionError, type TurnDeps } from "./scene-turn";
@@ -25,8 +26,10 @@ import { replyPhase } from "../core/promptbook";
 import { MAX_EXTENSION_PROMPT_SCENES, MAX_VALUE_BYTES } from "../extensions/contracts/limits";
 import { presetReader } from "./scene-turn-load";
 import { lorebookReader } from "./scene-lore";
+import { resolvePromptAttachments } from "./scene-turn-attachments";
+import { hasUnpricedPromptMedia, type PromptAttachmentInfo } from "../core/media/prompt-attachment";
 
-export interface ForecastDeps extends Pick<TurnDeps, "connect" | "readPreset" | "readLorebook" | "readLibrary" | "choiceDefaults" | "promptBudgetMs" | "clock" | "narratorTools" | "toolBudgetMs" | "now" | "randomSeed"> {
+export interface ForecastDeps extends Pick<TurnDeps, "connect" | "readPreset" | "readAsset" | "readLorebook" | "readLibrary" | "choiceDefaults" | "promptBudgetMs" | "clock" | "narratorTools" | "toolBudgetMs" | "now" | "randomSeed"> {
   chats: TurnReader;
   state: Pick<StateStore, "read">;
 }
@@ -39,6 +42,8 @@ export type ExtensionPromptPreviewDeps = Pick<ForecastDeps, "readPreset" | "read
 export interface Forecast {
   /** The request as the provider would get it, each message with the assembler's own count. */
   messages: { role: ProviderRole; content: string; tokens: number }[];
+  files: PromptAttachmentInfo[];
+  mediaEstimateIncomplete: boolean;
   /** The turn's own estimate for the whole request: the number the Prompt Inspector's pause shows as "about N tokens". */
   tokens: number;
   window: { context: number; reply: number; stated: boolean };
@@ -72,8 +77,13 @@ async function readScene(deps: Pick<ExtensionPromptPreviewDeps, "chats" | "readP
 }
 
 /** Builds a Browser/Terminal preview adapter from their canonical stores without requiring a provider owner. */
-export function createContentExtensionPromptPreviewer(chats: ChatStore, state: Pick<StateStore, "read">, content: Pick<ContentStore, "read">): (sceneId: string, draft: string) => Promise<ContentExtensionPromptPreview> {
-  const read = async (kind: string, id: string) => (await content.read(assertStudioEntityKind(kind), id))?.entity ?? null;
+export function createContentExtensionPromptPreviewer(chats: ChatStore, state: Pick<StateStore, "read">, content: Pick<ContentStore, "readLight">): (sceneId: string, draft: string) => Promise<ContentExtensionPromptPreview> {
+  const read = async (kind: string, id: string): Promise<ParsedCanonicalEntity | null> => {
+    const entity = (await content.readLight(assertStudioEntityKind(kind), id))?.entity;
+    if (entity === undefined) return null;
+    const parsed = safeParseCanonicalEntity(entity);
+    return parsed.ok ? parsed.entity : null;
+  };
   const reader = { read };
   const deps: ExtensionPromptPreviewDeps = {
     chats, state, readPreset: presetReader(reader), readLorebook: lorebookReader(reader), readLibrary: read,
@@ -124,18 +134,21 @@ async function draftedTurn(deps: ForecastDeps, input: { chatId: string; draft: s
 
 export async function forecastRequest(deps: ForecastDeps, input: { chatId: string; draft: string }): Promise<Forecast> {
   const { chat, loaded, prep, built, connected, model, started } = await draftedTurn(deps, input);
-  const sent = shapeRequest({ chat, loaded, kind: "reply", original: "", built, connected }, model, {});
+  const sent = await resolvePromptAttachments(shapeRequest({ chat, loaded, kind: "reply", original: "", built, connected }, model, {}), deps.readAsset);
   const trace = built.result.trace;
-  const messages = sent.map((m, i) => ({ role: m.role, content: m.content, tokens: i < trace.length && built.asked[i]?.content === m.content ? trace[i]!.tokens : countText(m.content) }));
+  const messages = sent.messages.map((m, i) => ({ role: m.role, content: m.content, tokens: i < trace.length && built.asked[i]?.content === m.content ? trace[i]!.tokens : countText(m.content) }));
   const compendium = resolveCompendium(chat.compendium);
   const notes = [
     ...(loaded.promptbook ? [`Promptbook: ${loaded.promptbook.phases.filter((p) => p.enabled).length} enabled phases. This forecast estimates the reply only; earlier phase outputs and dice rolls are generated when you send.`] : []),
     ...(compendium.on && compendium.recall.on ? ["The Compendium's recall is not run for a forecast; its entries are added when you send."] : []),
     ...((chat.regex?.sets?.length ?? 0) > 0 ? ["Prompt regex runs when you send; this forecast shows the request before it."] : []),
+    ...(sent.files.some((file) => file.kind === "image" || file.kind === "pdf") ? ["The estimate counts attached text files but not image or PDF media tokens, so the provider may count more than shown."] : []),
   ];
   return {
     messages,
-    tokens: estimateFor(prep.meter, prep.key, countPrompt(sent.map((m) => m.content)), started).mid,
+    files: sent.files,
+    mediaEstimateIncomplete: hasUnpricedPromptMedia(sent.files),
+    tokens: estimateFor(prep.meter, prep.key, countPrompt(sent.messages.map((m) => m.content)), started).mid,
     window: { context: prep.window.context, reply: prep.window.reply, stated: prep.window.stated },
     model,
     notes,

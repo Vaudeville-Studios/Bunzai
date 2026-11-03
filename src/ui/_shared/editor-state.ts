@@ -258,6 +258,7 @@ export interface EditorRevision<T> {
   commit(submitted: T, atRev: number): void;
   canUndo: boolean;
   canRedo: boolean;
+  historyHas(predicate: (change: EditorHistoryChange<T>) => boolean): boolean;
   undo(): T | undefined;
   redo(): T | undefined;
 }
@@ -411,6 +412,7 @@ export function useEditorRevision<T>(
     body, baseline, dirty, edit, reseed, discard, captureRevision, capturePatchState, releaseSubmission, commit,
     canUndo: Boolean(history) && ledger.history.canUndo,
     canRedo: Boolean(history) && ledger.history.canRedo,
+    historyHas: (predicate: (change: EditorHistoryChange<T>) => boolean) => ledger.history.some(predicate),
     undo, redo,
   };
 }

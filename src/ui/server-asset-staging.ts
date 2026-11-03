@@ -111,7 +111,7 @@ export async function stageAssetStream(body: ReadableStream<Uint8Array> | null, 
   let prefix = new Uint8Array(0);
   let text = "";
   let decoder: TextDecoder | undefined;
-  if (ext === "svg" || ext === "css") decoder = new TextDecoder("utf-8", { fatal: true });
+  if (["svg", "css", "txt", "md", "csv", "json"].includes(ext)) decoder = new TextDecoder("utf-8", { fatal: true });
   try {
     stillLive(uploadGeneration, controller.signal);
     if (!(await isUnlocked())) throw new AssetStageError(423, "the library is locked");
@@ -133,7 +133,7 @@ export async function stageAssetStream(body: ReadableStream<Uint8Array> | null, 
           } catch {
             throw new AssetStageError(415, "text NamedAsset must be valid UTF-8");
           }
-          if ((ext === "svg" && bytes > 4 * 1024 * 1024) || (ext === "css" && bytes > 2 * 1024 * 1024)) throw new AssetStageError(413, "text NamedAsset exceeds its size limit");
+          if ((ext === "svg" && bytes > 4 * 1024 * 1024) || (["css", "txt", "md", "csv", "json"].includes(ext) && bytes > 2 * 1024 * 1024)) throw new AssetStageError(413, "text media exceeds its size limit");
         }
         return sealed.write(chunk);
       },

@@ -8,6 +8,15 @@ reported. A turn that used tool rounds is skipped, because its usage covers more
 would be taught it against. What exists is the engine, its tests, and the places it connects: the provider's usage, the
 turn loop, and the library document it is stored in.
 
+## Attached files
+
+Prompt-block text attachments are resolved into literal user messages and counted with the rest
+of the request text. Image and PDF bytes are never counted as base64 prose. Their model-specific
+token costs are not estimated locally: Inspector, forecast and recorded-request views explicitly
+label the text estimate incomplete when these files are present. A passing text budget is not a
+guarantee that the complete multimodal request fits the provider's context window. File byte and
+count limits still apply, and a provider can reject a file or a request under its own limits.
+
 ## Why it learns
 
 No local tokenizer is exact for most models. Anthropic's current models use a tokenizer with no

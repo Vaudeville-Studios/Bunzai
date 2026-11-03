@@ -53,6 +53,18 @@ describe("Next send", () => {
     expect(m.host.textContent).toContain("Prompt regex runs when you send");
     m.done();
   });
+  test("attached files remain named and an incomplete image/PDF estimate is explicit", async () => {
+    const m = await mountView({ forecast: { ...forecast, files: [
+      { message: 1, name: "notes.txt", kind: "text", owner: "Reference" },
+      { message: 2, name: "cover.png", kind: "image", owner: "Reference" },
+      { message: 3, name: "brief.pdf", kind: "pdf", owner: "Reference" },
+    ], mediaEstimateIncomplete: true }, loading: false, error: null });
+    expect(m.host.textContent).toContain("Reference: notes.txt (text)");
+    expect(m.host.textContent).toContain("Reference: cover.png (image)");
+    expect(m.host.textContent).toContain("Reference: brief.pdf (pdf)");
+    expect(m.host.textContent).toContain("Image and PDF token costs are not included in the text estimate.");
+    m.done();
+  });
   test("500 messages mount fewer than 60 blocks", async () => {
     const messages = Array.from({ length: 500 }, (_, i) => ({ role: "user" as const, content: `message ${String(i)}`, tokens: 3 }));
     const m = await mountView({ forecast: { ...forecast, messages }, loading: false, error: null });

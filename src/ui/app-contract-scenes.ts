@@ -7,6 +7,7 @@ import type { AgentRecord, BankRecord } from "../studio/final-cut-library";
 import type { GuideInput, GuideRecord } from "../core/guide-record";
 import type { MacroChange, MacroReport } from "../core/assembly/types";
 import type { RouteAttempt } from "../studio/scene-turn-trace";
+import type { PromptAttachmentInfo } from "../core/media/prompt-attachment";
 import type { LoadoutReceipt, LoadoutRecord } from "../studio/loadout-record";
 import type { SummarySettingsPatch, Chat, ChatBackdrop, ChatCompendiumPatch, ChatConnection, JsonValue, ChatPreset, ChatPromptingPatch, ChatFinalCutPatch, ChatRegexPatch, ChatTrackerPatch, TrackerModule, Message, MessageAtPage, MessageSwipePage, SceneFolder } from "../stage/contracts/chat-store";
 import type { DraftInput } from "../studio/scene-draft";
@@ -283,6 +284,8 @@ export type ChatSummaryState = SummaryState;
 /** The Next send forecast: the request as the provider would get it, with the assembler's own counts, the turn's estimate for the whole, and what a forecast leaves out. */
 export interface SceneForecast {
   messages: { role: "system" | "user" | "assistant"; content: string; tokens: number }[];
+  files?: PromptAttachmentInfo[];
+  mediaEstimateIncomplete?: boolean;
   tokens: number;
   window: { context: number; reply: number; stated: boolean };
   model: string;
@@ -422,6 +425,8 @@ export interface SceneTrace {
    * as the scene's take pill shows it ("Director's Cut" for the original, else the branch name) */
   reply: { messageId: string; swipeId: string; number: number; model: string; take: string };
   blocks: TraceBlockView[];
+  /** File metadata from the final committed request; payload bytes and storage refs are never retained here. */
+  files?: PromptAttachmentInfo[];
   window: { context: number; reply: number; stated: boolean };
   /** messages the budget left out for space */
   trimmed: number;

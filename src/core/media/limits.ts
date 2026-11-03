@@ -19,6 +19,15 @@ export const ASSET_BATCH_COUNT = 8;
 /** Most a staged batch may weigh in all, for the same reason as `ASSET_BATCH_COUNT`: staged bytes are held in memory. */
 export const ASSET_BATCH_BYTES = 128 * 1024 * 1024;
 
+/** A prompt block may name at most one staged media batch; request projection has its own lower wire budget. */
+export const PROMPT_ATTACHMENT_BLOCK_COUNT = ASSET_BATCH_COUNT;
+/** An aggregate request has a small independent file-count cap as well as its byte cap. */
+export const PROMPT_ATTACHMENT_REQUEST_COUNT = 32;
+/** Largest raw attachment payload combined into one model request; leaves headroom for base64 and authored prompt text. */
+export const PROMPT_ATTACHMENT_REQUEST_BYTES = 16 * 1024 * 1024;
+/** Text attachments are decoded as UTF-8 and copied into the literal model request. */
+export const PROMPT_TEXT_ATTACHMENT_MAX_BYTES = 2 * 1024 * 1024;
+
 /**
  * Most a JSON request body may weigh. It is read whole and parsed whole, and a turn or an import can carry a picture
  * as base64, which is a third larger than the picture's own limit.

@@ -43,6 +43,28 @@ test("a picture streams in sealed, and only its own session can open it, byte-ex
   expect([...(opened!.payload as { bytes: Uint8Array }).bytes]).toEqual([...bytes]);
 });
 
+test("PDF and UTF-8 prompt text stage as sealed bytes with byte-verified MIME", async () => {
+  const cases = [
+    { name: "guide.pdf", bytes: new TextEncoder().encode("%PDF-1.7\n%%EOF"), mime: "application/pdf" },
+    { name: "notes.md", bytes: new TextEncoder().encode("{{setvar::mood::calm}} literal notes"), mime: "text/markdown" },
+  ];
+  for (const item of cases) {
+    const response = await stageAssetStream(new Blob([item.bytes]).stream(), { filename: item.name, signal: new AbortController().signal }, "s1", unlocked);
+    expect(response.status).toBe(200);
+    const receipt = await response.json() as { mime: string; ref: string };
+    expect(receipt.mime).toBe(item.mime);
+    const [blob] = await openSessionUploads([receipt.ref], "s1");
+    expect((blob!.payload as { bytes: Uint8Array }).bytes).toEqual(item.bytes);
+  }
+});
+
+test("text extensions refuse invalid UTF-8 and known binary signatures", async () => {
+  for (const bytes of [Uint8Array.of(0xff, 0xfe), png(16)]) {
+    const response = await stageAssetStream(new Blob([Uint8Array.from(bytes).buffer]).stream(), { filename: "notes.txt", signal: new AbortController().signal }, "s1", unlocked);
+    expect(response.status).toBe(415);
+  }
+});
+
 test("a picture over the image limit is cut off mid-stream, cancelled upstream, and leaves nothing on disk", async () => {
   const before = stagingDirs();
   const { stream, state } = spied(png(1024 * 1024), "forever");

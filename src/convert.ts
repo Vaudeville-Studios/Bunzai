@@ -16,7 +16,7 @@ import type {
   FormatAdapter,
   PresetAdapter,
 } from "./core/adapter";
-import { primaryOriginalRaw, type CanonicalEntity } from "./core/canonical";
+import { primaryOriginalRaw } from "./core/canonical";
 import { buildSerializeReport, serializeReport } from "./core/reports";
 import type { CanonicalCharacter } from "./entities/character/schema";
 import type { CanonicalLorebook } from "./entities/lorebook/schema";
@@ -74,10 +74,25 @@ export function emitBundle(
 /** Attach the required serialize report to a non-character adapter output. */
 function reportedOutput(
   target: FormatAdapter,
-  entity: CanonicalEntity<string, unknown>,
+  entity: ParsedCanonicalEntity,
   out: AdapterOutput,
 ): AdapterOutput {
-  return { ...out, report: out.report ?? buildSerializeReport(entity, target) };
+  const report = out.report ?? buildSerializeReport(entity, target);
+  if (target.native || entity.kind !== "preset") return { ...out, report };
+  // Foreign preset grammars carry instruction text, not Bunzai's block files. Array-level
+  // coverage and codec-owned reports cannot prove that these nested values survived.
+  const paths = (prompts: typeof entity.body.prompts | undefined, prefix: string) =>
+    prompts?.flatMap((prompt, index) => prompt.attachments?.length ? [`${prefix}.${index}.attachments`] : []) ?? [];
+  const dropped = [
+    ...paths(entity.body.prompts, "prompts"),
+    ...Object.entries(entity.profiles ?? {}).flatMap(([profile, body]) => paths(body.prompts, `profiles.${profile}.prompts`)),
+  ];
+  if (!dropped.length) return { ...out, report };
+  return { ...out, report: serializeReport({
+    escrowed: report.escrowed, escrowShadowed: report.escrowShadowed,
+    dropped: [...report.dropped, ...dropped],
+    warnings: [...report.warnings, `${target.id} does not carry prompt block attachments; use native Bunzai JSON to keep the files.`],
+  }, report.coverage) };
 }
 
 /**

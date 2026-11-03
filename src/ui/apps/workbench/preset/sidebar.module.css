@@ -177,3 +177,53 @@
   font: 500 var(--text-meta) var(--font-ui);
   color: var(--text-dim);
 }
+
+.attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid var(--bk-line);
+}
+
+.attachment {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.attachment img {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: cover;
+  border-radius: 0.25rem;
+  background: var(--bk-surface-raised);
+}
+
+.attachmentIcon {
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  color: var(--text-dim);
+  border-radius: 0.25rem;
+  background: var(--bk-surface-raised);
+}
+
+.attachment span {
+  display: grid;
+  min-width: 0;
+}
+
+.attachment strong,
+.attachment small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment small {
+  color: var(--text-dim);
+  font: 500 var(--text-meta) var(--font-ui);
+}

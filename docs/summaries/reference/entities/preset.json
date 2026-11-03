@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "reference/entities/preset",
   "sourcePath": "docs/reference/entities/preset.md",
-  "sourceHash": "sha256:e60b0ca035b3f5b13b9cba998cecaa380324550655c52d9ba3a73188d74d0950",
-  "summary": "Preset entity is the field-meaning authority for CanonicalPreset and PresetBody, the canonical prompt-manager model shared by the SillyTavern, RoleCall, Marinara, and Lumiverse adapters. It covers ordered prompt blocks, system, user, assistant, and tool roles, hierarchical groups, sampler and generation settings, templates, behavior, API and media options, and interactive choices. Generic CLI commands, Library, Workbench, and Kit lifecycle tools operate on the same body. LiveBuild preview orders enabled blocks and estimates tokens without resolving macros, groups, or choices. behaviorRefs links standalone regex sets, while quickReplyRefs links standalone quick-reply sets; Press resolves both by kind and id when exporting a preset bundle. Escrow remains reserved for source-wire details that editors do not author. Other SillyTavern preset files land here when Bunzai can use them: KoboldAI, TextGen and NovelAI sampler sets onto samplers with a samplerSet flag, system prompts as the main block, and reasoning templates as a reasoning field the scene transcript uses; each is seeded with ST's stock prompt order. Instruct and context templates are the separate promptformat piece. A preset is a writing setup with the Script Sheet: separate kinds read one way through asPreset.",
+  "sourceHash": "sha256:0e2e48a82e1de4b3bb68e8ef19430b0800a91e31a6700f2b59865754f5341f6b",
+  "summary": "Preset entity defines CanonicalPreset and PresetBody, the prompt-manager model shared by SillyTavern, RoleCall, Marinara and Lumiverse adapters. Ordered blocks retain source identifiers, authored roles, placement, groups, choices, sampler settings and platform escrow. Script Sheets and presets share the writing setup projection. Each block may hold optional name/ref attachments: PNG, JPEG, GIF, WebP, PDF and bounded UTF-8 text. The shared Preset and Promptbook editors use encrypted staging and save grants, show file metadata and preserve files through native folder export/import, including profiles. Foreign preset exports explicitly report attachment loss even for disabled blocks. Existing host-runtime sends place one user companion per file after its instruction, preserving order and literal text without executing file macros. Structural markers and tool results reject files. Limits are eight per block, 32 per request, 16 MiB combined request bytes, 2 MiB per text file and the shared image cap. Image/PDF token costs remain excluded from text estimates. RP-Core-linked scenes refuse enabled attachments until the separate canonical writing bridge exists. The optional attachment field is additive under schema version one; attachment-free pieces need no migration.",
   "topics": [
     "CanonicalPreset prompt manager",
     "PresetPrompt blocks",
@@ -15,7 +15,8 @@
     "src/entities/preset",
     "samplerSet flag",
     "reasoning markers",
-    "stock prompt order"
+    "stock prompt order",
+    "prompt block attachments"
   ],
   "sections": [
     {
@@ -31,6 +32,19 @@
       ],
       "children": [],
       "shortSource": true
+    },
+    {
+      "slug": "prompt-block-attachments",
+      "title": "Prompt block attachments",
+      "level": 2,
+      "sourceHash": "sha256:0c03bc443e4210785b870a5d0ba1525c5adf182d2ba12e427d40a22ab52c982a",
+      "summary": "Prompt blocks accept eight optional name/ref files using one contract shared with Promptbook phases and existing encrypted asset staging. PNG, JPEG, GIF, WebP, PDF and UTF-8 txt/md/csv/json are supported; markers and tool-result blocks reject files. Empty-text blocks remain active and disabled blocks send nothing. Each file becomes an ordered user companion after the owning authored instruction, whose role stays intact. Uploaded text bypasses macros. Inspector and forecast expose metadata and count text content, while explicitly excluding image/PDF token costs. Aggregate limits are 32 files and 16 MiB raw bytes per request, with 2 MiB text and 10 MiB image ceilings. Native folder interchange preserves bytes and profiles; foreign preset output reports loss. Schema version one gains an optional field without migrating old pieces. Local paths, URLs and extraction are not supported. Core-linked sends/previews refuse enabled files until a separate bridge exists.",
+      "topics": [
+        "prompt block attachments",
+        "bounded files",
+        "provider transmission"
+      ],
+      "children": []
     },
     {
       "slug": "composition",
@@ -51,7 +65,7 @@
       "slug": "prompt-blocks-and-groups",
       "title": "Prompt blocks and groups",
       "level": 2,
-      "sourceHash": "sha256:8d42183786a84349a1b7fb454b687f284ea308ba2495329cbaabfe470a73089f",
+      "sourceHash": "sha256:dda63541c403710982c96467f9740ffdaec52ffafab88ebe1659da4867b62fea",
       "summary": "PresetPrompt is one manuscript row mapping directly to SillyTavern, RoleCall, or Marinara sections. id remains the verbatim source identifier because ordering, references, markers, and isDefault depend on it. role accepts system, user, assistant, or tool; adapters must preserve a supported tool role or report its loss instead of silently coercing it. Per-block systemPrompt differs from preset-level systemPrompts. placement uses the shared position-picker union, while marker blocks use markerSlot; the feature markers trackers, linkedTrackers, storyboards and skills put that feature's messages where the block stands with its role (an append marker becomes its own message at that depth, the block's own text is not sent), and a preset without one keeps the feature's own spot. SillyTavern import reads the slot from the id, so only a marker whose id is its slot survives that round trip. Injection, grouping, XML wrapping, trigger, default, and extras fields complete the block. PresetGroup first-classes authored folders; SillyTavern derives divider ids for native drafts and escrows original divider ids only for imported groups.",
       "topics": [
         "verbatim prompt id",

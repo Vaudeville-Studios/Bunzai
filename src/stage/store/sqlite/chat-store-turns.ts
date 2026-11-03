@@ -22,6 +22,7 @@ import { checkOpening } from "../opening-rules";
 import { checkBackdrop } from "../backdrop-rules";
 import { checkPrompting, mergePrompting } from "../prompting-rules";
 import { continuedGeneration } from "../continue-rules";
+import type { PromptAttachmentInfo } from "../../../core/media/prompt-attachment";
 import { checkRerun, traceWithRerun } from "../final-cut-rules";
 import type { ChatSqlKit } from "./chat-store-cuts";
 import { appendSwipe } from "./swipe-sql";
@@ -259,7 +260,7 @@ export function turnMethods(k: TurnSqlKit): TurnMethods {
           k.state.refresh(c.branch_id, k.one<{ seq: number }>("SELECT seq FROM messages WHERE id = ?", messageId)!.seq);
           if (request) k.run(
             "UPDATE branches SET last_request_json = ? WHERE id = ?",
-            cipher.seal("branches.last_request_json", JSON.stringify({ messageId, swipeId, texts: request.texts })),
+            cipher.seal("branches.last_request_json", JSON.stringify({ messageId, swipeId, texts: request.texts, ...(request.files ? { files: request.files } : {}) })),
             c.branch_id,
           );
         }
@@ -348,7 +349,7 @@ export function turnMethods(k: TurnSqlKit): TurnMethods {
     async lastRequest(branchId) {
       if (!k.writableBranch(branchId)) return null;
       const r = k.one<{ last_request_json: string | null }>("SELECT last_request_json FROM branches WHERE id = ?", branchId)!;
-      return r.last_request_json === null ? null : (JSON.parse(cipher.open("branches.last_request_json", r.last_request_json)) as { messageId: string; swipeId: string; texts: string[] });
+      return r.last_request_json === null ? null : (JSON.parse(cipher.open("branches.last_request_json", r.last_request_json)) as { messageId: string; swipeId: string; texts: string[]; files?: PromptAttachmentInfo[] });
     },
   };
 }

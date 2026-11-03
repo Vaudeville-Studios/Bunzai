@@ -17,6 +17,7 @@ import { resolveReasoning } from "../core/reasoning-capture";
 import { readKey, type Meter } from "../core/tokens";
 import type { Chat, ChatStore, Message, NarratorDirective } from "../stage/contracts/chat-store";
 import type { ProviderOptions, ProviderRole } from "../stage/contracts/provider";
+import type { PromptMessage } from "./scene-turn-attachments";
 import type { StateStore } from "../stage/contracts/state-store";
 import { selectedGuides } from "./guides";
 import type { RecallRun } from "./compendium-recall";
@@ -131,7 +132,7 @@ export function shapeRequest(
   a: { chat: Chat; loaded: LoadedTurn; kind: TurnKind; original: string; built: Built; connected: Connected | null },
   forModel: string,
   edits: Readonly<Record<number, string>>,
-): { role: ProviderRole; content: string }[] {
+): PromptMessage[] {
   const { chat, loaded, kind, built, connected } = a;
   const out = withPrefill(built.asked, built.result.prefill, forModel, kind === "continue" ? "assistant" : chat.prompting?.prefillRole);
   // Rule 13: a model that refuses the reply as a final assistant turn is shown it as an assistant turn and then

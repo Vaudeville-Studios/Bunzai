@@ -11,6 +11,7 @@ export default defineKind<"promptbook", PromptbookBody>({
   editor: { id: "promptbook", label: "Promptbook editor", load: "light" },
   asPreset: (book) => ({ ...replyPhase(book).preset, name: book.name }),
   presetExports: false,
+  media: ["body.phases.#.preset.prompts.#.attachments.#.ref", "profiles.*.phases.#.preset.prompts.#.attachments.#.ref"],
   links: [...BOOK_CARD_KINDS.map((kind) => ({ field: `cards:${kind}`, to: kind, label: kind, embedded: true, read: (body: unknown) => bookCardIds(body, kind) })), { field: "phaseAgents", to: "agent", label: "Agents", embedded: true, read: bookAgentIds }],
   renameLinks: renameBookLinks,
   describe: (book) => [`name     ${book.name}`, `phases   ${book.phases.length}`],

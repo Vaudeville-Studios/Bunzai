@@ -32,6 +32,8 @@ import { readBookRun, type PhaseRun } from "../core/promptbook-run";
 import { slotNonce, slotPlaceholder } from "../core/assembly/feature-slots";
 import { sendProblem } from "../core/writing";
 import { splitReasoning } from "../core/reasoning-tags";
+import { resolvePromptAttachments } from "./scene-turn-attachments";
+import { hasUnpricedPromptMedia } from "../core/media/prompt-attachment";
 
 export type { PhaseRun } from "../core/promptbook-run";
 export class BookCancelledError extends Error {}
@@ -109,12 +111,14 @@ export async function runBookPhases(a: { deps: TurnDeps; chat: Chat; loaded: Loa
     const built = await assembleRequest(deps, { chat: prepared.chat, loaded: prepared.loaded, prep, started, kind: "reply", original: "", guidance: "", reserved: sentTools(tools, connected).map((t) => JSON.stringify(t)) });
     if (built.result.budget.overflow) throw new StudioValidationError(`${phase.name}: ${overflowMessage(built.result)}`);
     tools.macros.context = built.result.expansion.context;
-    let messages = shapeRequest({ chat: prepared.chat, loaded: prepared.loaded, kind: "reply", original: "", built, connected }, connection.model, {});
-    const regex = await promptRegex({ runtime: deps.runtime, setIds: prepared.regex, readRegex: deps.readRegex, trace: built.result.trace, messages, expansion: built.result.expansion, turnId: a.turnId, chatId: chat.id, signal, emit: a.emit });
+    const shaped = shapeRequest({ chat: prepared.chat, loaded: prepared.loaded, kind: "reply", original: "", built, connected }, connection.model, {});
+    const regex = await promptRegex({ runtime: deps.runtime, setIds: prepared.regex, readRegex: deps.readRegex, trace: built.result.trace, messages: shaped, expansion: built.result.expansion, turnId: a.turnId, chatId: chat.id, signal, emit: a.emit });
     if (regex.stop) throw new StudioValidationError(`${phase.name}: the regex pass was cancelled.`);
-    messages = shapeRequest({ chat: prepared.chat, loaded: prepared.loaded, kind: "reply", original: "", built, connected }, connection.model, regex.edits);
+    const finalShape = shapeRequest({ chat: prepared.chat, loaded: prepared.loaded, kind: "reply", original: "", built, connected }, connection.model, regex.edits);
+    const resolved = await resolvePromptAttachments(finalShape, deps.readAsset);
+    let messages = resolved.messages;
     if (a.inspect) {
-      a.emit({ type: "review", turnId: a.turnId, messages: messages.map((m) => ({ role: m.role, content: m.content })), tokens: countPrompt(messages.map((m) => m.content)).total, tools: sentTools(tools, connected) });
+      a.emit({ type: "review", turnId: a.turnId, messages: messages.map((m) => ({ role: m.role, content: m.content })), files: resolved.files, ...(hasUnpricedPromptMedia(resolved.files) ? { mediaEstimateIncomplete: true } : {}), tokens: countPrompt(messages.map((m) => m.content)).total, tools: sentTools(tools, connected) });
       const decision = await awaitReview(deps.runtime, a.turnId, chat.id, signal);
       if (decision.kind === "cancel") throw new BookCancelledError();
       messages = applyEdits(messages, decision.edits);
@@ -124,10 +128,10 @@ export async function runBookPhases(a: { deps: TurnDeps; chat: Chat; loaded: Loa
     writes.open(deltas, (all) => deps.chats.saveCheckpoint(a.turnId, { content: a.content ?? "", deltas: all }));
     const completion = await sendReply(connected, { model: connection.model, messages, options: prep.options }, { signal, onEvent: () => undefined }, tools, deps.now);
     signal.throwIfAborted();
-    const request = withToolCalls(tools, {}, { texts: messages.map((m) => m.content) }).request.texts;
+    const request = withToolCalls(tools, {}, { texts: messages.map((m) => m.content), ...(resolved.files.length ? { files: resolved.files } : {}) }).request;
     const promptTokens = tools.rounds > 0 ? tools.tokens.prompt : completion.usage?.promptTotal;
     const outputTokens = tools.rounds > 0 ? tools.tokens.output : completion.usage?.output;
-    runs.push({ id: phase.id, name: phase.name, role: phase.role, status: "ran", why: verdict.why, text: splitReasoning(completion.content, prep.reasoningFormat).reply, request, model: completion.model ?? connection.model, ms: deps.now() - started, ...(promptTokens !== undefined ? { promptTokens } : {}), ...(outputTokens !== undefined ? { outputTokens } : {}) });
+    runs.push({ id: phase.id, name: phase.name, role: phase.role, status: "ran", why: verdict.why, text: splitReasoning(completion.content, prep.reasoningFormat).reply, request: request.texts, ...(request.files ? { files: request.files } : {}), model: completion.model ?? connection.model, ms: deps.now() - started, ...(promptTokens !== undefined ? { promptTokens } : {}), ...(outputTokens !== undefined ? { outputTokens } : {}) });
   }
 }
 export const bookTrace = (runs: readonly PhaseRun[], status: "running" | "complete" | "stopped" = "complete"): JsonObject => JSON.parse(JSON.stringify({ status, phases: runs })) as JsonObject;

@@ -27,6 +27,17 @@ export function referencedAssetUploads(value: unknown, uploads: readonly StagedA
   return uploads.filter((upload) => refs.has(upload.asset));
 }
 
+export function historyContainsAssetRef(value: unknown, asset: string): boolean {
+  const seen = new Set<object>();
+  const visit = (part: unknown): boolean => {
+    if (part === asset) return true;
+    if (part === null || typeof part !== "object" || seen.has(part)) return false;
+    seen.add(part);
+    return Object.values(part).some(visit);
+  };
+  return visit(value);
+}
+
 export function useAssetUploads(
   stage: (file: File, signal?: AbortSignal) => Promise<StagedAssetUpload>,
   discardRemote: (refs: readonly string[]) => Promise<void>,

@@ -56,3 +56,10 @@ describe("the preset's own switches, as macros see them", () => {
     expect(out).toContain("system:style=true dark=false");
   });
 });
+
+test("an enabled attachment-only block survives assembly", () => {
+  const file = { name: "notes.txt", ref: "\u0000b:u:text/plain:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" };
+  const attachmentOnly = { ...block("file", "", { role: "user" }), attachments: [file] } as PresetPrompt;
+  const result = assemble(input({ preset: preset(attachmentOnly) }));
+  expect(result.messages).toContainEqual(expect.objectContaining({ role: "user", attachments: [file] }));
+});

@@ -4,7 +4,7 @@
  * the shared custom header and body rules. No network.
  */
 import { describe, expect, test } from "bun:test";
-import type { ProviderMessage, ProviderRequest, ProviderToolDefinition } from "../contracts/provider";
+import { ProviderError, type ProviderMessage, type ProviderRequest, type ProviderToolDefinition } from "../contracts/provider";
 import { OLLAMA_PARAMS } from "../params/dialects";
 import { sentParams } from "../params/wire";
 import { buildOllamaRequest, type OllamaConnection } from "./ollama-request";
@@ -71,6 +71,16 @@ describe("messages", () => {
   test("a user message's images go as bare base64, the data-URI prefix removed", () => {
     const messages: ProviderMessage[] = [{ role: "user", content: "look", images: ["data:image/png;base64,iVBORw0KGgo=", "data:image/jpeg;base64,/9j/4AAQ"] }];
     expect(body(req({}, messages)).messages).toEqual([{ role: "user", content: "look", images: ["iVBORw0KGgo=", "/9j/4AAQ"] }]);
+  });
+
+  test("prompt image attachments use Ollama's native user images field", () => {
+    const messages: ProviderMessage[] = [{ role: "user", content: "look", attachments: [{ kind: "image", name: "cover.png", mime: "image/png", dataUri: "data:image/png;base64,iVBORw0KGgo=" }] }];
+    expect(body(req({}, messages)).messages).toEqual([{ role: "user", content: "look", images: ["iVBORw0KGgo="] }]);
+  });
+
+  test("PDF attachments and non-user attachment placements fail before wire construction", () => {
+    expect(() => body(req({}, [{ role: "user", content: "read", attachments: [{ kind: "pdf", name: "notes.pdf", base64: "UEZERg==" }] }]))).toThrow(ProviderError);
+    expect(() => body(req({}, [{ role: "system", content: "read", attachments: [{ kind: "image", name: "cover.png", mime: "image/png", dataUri: "data:image/png;base64,AA" }] }]))).toThrow(ProviderError);
   });
 
   test("an assistant's tool calls go with object arguments ({} when unreadable) and a tool result carries its tool name", () => {

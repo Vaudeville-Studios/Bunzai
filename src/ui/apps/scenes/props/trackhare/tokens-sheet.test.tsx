@@ -147,6 +147,13 @@ describe("no raw text", () => {
   });
 });
 
+test("the stored This Turn view names files and marks image and PDF costs as excluded from the text estimate", async () => {
+  await mount(trace({ files: [{ message: 2, name: "reference.pdf", kind: "pdf" }] }), () => undefined);
+  expect(host.textContent).toContain("reference.pdf (pdf)");
+  expect(host.textContent).toContain("Image and PDF token costs are not included in the text estimate.");
+  unmount();
+});
+
 describe("exports", () => {
   test("Export .json calls the download helper with the right name and the whole trace", async () => {
     downloadCalls.length = 0;

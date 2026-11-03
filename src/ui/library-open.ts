@@ -27,6 +27,8 @@ import { sqliteStateStore } from "../stage/store/sqlite/state-store";
 import { sqliteExtensionStore } from "../stage/store/sqlite/extension-store";
 import { sqliteCoreRecordStore } from "../stage/store/sqlite/core-record-store";
 import { createCoreTurnOwner } from "../studio/core-turn-owner";
+import { assertNoCorePromptAttachments } from "../studio/core-prompt-attachments";
+import { assertStudioEntityKind } from "../studio/path-policy";
 import { sqliteChatStore } from "../stage/store/sqlite-chat-store";
 import type { ContentStore, DocumentBackend } from "../stage/contracts/content-store";
 import type { StateStore } from "../stage/contracts/state-store";
@@ -96,9 +98,16 @@ const storesOf = (database: StageDatabase, cipher: CellCipher, file: string, stu
   const backend = sqliteDocumentBackend(database, cipher);
   const coldReads = createColdReadService({ database, path: file, cipher, keyring });
   const chats = sqliteChatStore(database, cipher);
+  const content = createContentStore(backend, Date.now, { coldFill: coldReads.fill });
   const core = coreSceneIntegration ? sqliteCoreRecordStore(database, cipher) : undefined;
+  const coreTurns = core ? createCoreTurnOwner(chats, core, studioDir, async (sceneId) => {
+    const chat = await chats.getChat(sceneId);
+    if (!chat?.preset) return;
+    const entity = await content.readLight(assertStudioEntityKind(chat.preset.kind), chat.preset.id);
+    if (entity) assertNoCorePromptAttachments(entity.entity, chat.preset.toggles);
+  }) : undefined;
   return {
-    content: createContentStore(backend, Date.now, { coldFill: coldReads.fill }), state: sqliteStateStore(database, cipher), chats, ...(core ? { core, coreTurns: createCoreTurnOwner(chats, core, studioDir) } : {}),
+    content, state: sqliteStateStore(database, cipher), chats, ...(core ? { core, coreTurns: coreTurns! } : {}),
     importCompleted: async (pieceCount) => { if (pieceCount > 1000) await database.optimize(); },
     backend, extensionStore: sqliteExtensionStore(database, cipher), closeColdReads: coldReads.close,
   };

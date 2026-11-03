@@ -9,6 +9,7 @@ export default defineKind<"preset", PresetBody>({
   links: [{ field: "behaviorRefs", to: "regex", label: "Behavior", embedded: true }, { field: "quickReplyRefs", to: "quickreply", label: "Quick replies" }],
   blank: () => emptyPresetBody("Untitled preset"), blankId: "preset",
   editor: { id: "preset", label: "Preset editor", load: "light" },
+  media: ["body.prompts.#.attachments.#.ref", "profiles.*.prompts.#.attachments.#.ref"],
   deckTitle: "Writing", deckBlurb: "Presets, Script Sheets and Promptbooks",
   asPreset: (b) => b,
   describe: (b) => [

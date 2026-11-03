@@ -1,5 +1,5 @@
 /**
- * Canonical media slots shared by part encoding and light-read projection. Each kind declares where it keeps pictures
+ * Canonical media slots shared by part encoding and light-read projection. Each kind declares where it keeps binary assets
  * in its kind.ts (`media`, dotted paths with `#` for an array index and `*` for any key); every kind's escrowed source
  * picture (original.<format>.sourceMedia.b64) is one too. A hot path, so the patterns are split once, here.
  */
@@ -17,5 +17,5 @@ export function isCanonicalMediaReference(kind: string, path: readonly (string |
   return (PATTERNS.get(kind) ?? [SOURCE_MEDIA]).some((pattern) => matches(pattern, p));
 }
 
-/** The kinds that carry pictures (Kit's gallery and art tools offer exactly these). */
-export const ART_KINDS = KINDS.filter((k) => (k.media?.length ?? 0) > 0).map((k) => k.id);
+/** The kinds whose image slots belong in Kit's gallery and art tools; document attachments are not gallery art. */
+export const ART_KINDS = KINDS.filter((k) => k.gallery === true).map((k) => k.id);

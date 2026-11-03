@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/token-meter",
   "sourcePath": "docs/reference/token-meter.md",
-  "sourceHash": "sha256:b568cca726398c3d40c47ca2859493d95553cc943fc29b4e3e2b1b8e425b6642",
-  "semanticSummaryHash": "sha256:982b0f9f38fc72dfa03dd7dc6fa0a14094876d39572f717e07f956f66aae5740",
+  "sourceHash": "sha256:9cc9d090f3387c6065e772ec4318b89c1c6061601fdc2519574b4f5356855e0e",
+  "semanticSummaryHash": "sha256:ea1e6f2090bd547721a1befb9468f07a92ff105568ff7c02c478707c0de59241",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "Tool-round skip caveat now stated and matches the rounds === 0 guard at scene-turn.ts:382; sidecar fresh, scans clean.",
-  "reviewedAt": "2026-10-25T01:26:40.652Z"
+  "reviewer": "codex-root-attachment-review-20261102",
+  "notes": "Root independently reviewed full sidecar diffs against source and approved the exact source and sidecar hashes in the task conversation on 2026-11-02.",
+  "reviewedAt": "2026-11-02T20:58:16.412Z"
 }

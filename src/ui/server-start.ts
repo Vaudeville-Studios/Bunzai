@@ -47,7 +47,7 @@ export function startUiWithRoutes(
   // back here; setupRemoteAccess creates the managers, binds the untrusted listener, and resumes on boot.
   const makeHandler: MakeHandler = (o) =>
     createRouteHandler(store, settings, packaged, sec, sandboxOriginRef, lifecycle, o.remote, o.remoteSecret, o.lanApproved, o.lan, undefined, undefined, readCapability, undefined, sharedExtensionOwner);
-  const remoteAccess = setupRemoteAccess({ settings, studioDir, makeHandler, bundledSidecar, ...(library ? { ready: library.unlocked() } : {}) });
+  const remoteAccess = setupRemoteAccess({ settings, studioDir, makeHandler, bundledSidecar, packaged: packaged !== undefined, ...(library ? { ready: library.unlocked() } : {}) });
   let closeHandler: (() => Promise<void>) | null = null;
   try {
 

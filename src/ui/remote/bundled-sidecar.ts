@@ -28,10 +28,7 @@ export async function prepareBundledSidecar(
   const target = join(dir, platform.startsWith("win32-") ? "sidecar.exe" : "sidecar");
   const cached = Bun.file(target);
   if (await cached.exists()) {
-    if (cached.size > MAX_AUX_BYTES || sha256Hex(new Uint8Array(await cached.arrayBuffer())) !== helper.sha256) {
-      throw new Error("The cached remote-access helper is damaged. Remove its bundled cache folder and restart Bunzai.");
-    }
-    return target;
+    if (cached.size <= MAX_AUX_BYTES && sha256Hex(new Uint8Array(await cached.arrayBuffer())) === helper.sha256) return target;
   }
   await mkdir(dir, { recursive: true });
   await writeAtomicReplace(target, bytes, platform.startsWith("win32-") ? undefined : { mode: 0o700 });

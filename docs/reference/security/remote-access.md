@@ -148,34 +148,42 @@ Before starting the Studio, the desktop and CLI entrypoints prepare the embedded
 network request or process start (`src/ui/remote/bundled-sidecar.ts`). They check its target, size and
 SHA-256, then atomically extract it into the product's per-user support directory at
 `sidecar/bundled/<sha256>/sidecar` (`sidecar.exe` on Windows). Existing cached bytes must match before
-reuse. Each digest has its own path, so an app update does not overwrite an older running helper.
+reuse; a damaged cache is atomically repaired from the already verified embedded bytes. Each digest
+has its own path, so an app update does not overwrite an older running helper.
 Preparation does not enable remote access or change its saved setting. A failed preparation leaves the
 local Studio usable and does not hand an unverified path to the sidecar manager.
 
-The resolver checks these locations in order (`src/ui/server-remote.ts`):
+Packaged apps use **only** the verified path returned by preparation. They do not search the source
+tree, neighboring `sidecar/` folders, PATH, or the optional download cache. This remains true if
+preparation fails: an extracted archive beside the app cannot silently supply executable code.
+If preparation cannot complete, the panel gives repair guidance and LAN remains available. The
+packaged helper-download endpoint is refused because a separate download is not its helper authority.
+
+Source runs retain these developer locations in order (`src/ui/server-remote.ts`):
 
 1. the repository's own `sidecar/` folder, where `bun sidecar/build.ts` writes it - the from-source path;
 2. a `sidecar/` folder beside the running executable, for anyone who places one there deliberately;
-3. the verified bundled helper path returned by preparation, when present;
-4. the aux-package cache under the per-user support directory, where a requested download installs it.
+3. the aux-package cache under the per-user support directory, where a requested download installs it.
 
 None present means the mesh path reports **`unavailable`**, its own `RemotePhase`, distinct from both `off`
 and `error`. `off` is a switch the owner can flip and `error` invites a retry; a build with no helper can do
 neither, so the panel states that up front and offers no Enable control rather than spawning a path that is
 not there. LAN mode is unaffected and needs no helper at all.
 
-> The second candidate is load-bearing. Deriving the path from `import.meta.url` alone is correct from
-> source and meaningless once compiled - inside a standalone Bun executable it resolves onto the virtual
-> filesystem (`B:\sidecar\sidecar.exe`), which cannot exist. Every packaged studio therefore failed to start
-> remote access regardless of what was installed beside it, and the failure surfaced as a raw `uv_spawn`
-> `ENOENT` in the settings panel. Pinned by `src/ui/server-remote.test.ts`.
+The source-location tests remain in `src/ui/server-remote.test.ts`. Packaged selection and failed
+preparation refusals are covered through real startup wiring with mocked spawn in
+`src/ui/server-remote-selection.test.ts`; no arbitrary helper is executed by those regressions.
 
 ## The aux package: fetching the helper on request
 
 Separate helper release assets remain available for source checkouts, older apps and recovery. Current
-supported app builds already carry the helper; they do not need this extra download. The optional
+supported app builds already carry the helper and do not offer this extra download. The source-only
 host action is a download-and-execute path and is built as one
 (`src/ui/remote/aux-download.ts`, `aux-install.ts`):
+
+New normal releases publish only the app executables and checksums, not separate helper files. The
+committed recovery pins continue to name the older v0.1.53 assets. Those published files are retained;
+removing them or retargeting their pins to a new app-only release would break older installations.
 
 - **A SHA-256 pin is the integrity control, and it is COMMITTED** (`src/ui/remote/sidecar-pins.ts`), pinned
   like a dependency. `bun scripts/pin-sidecar.ts <tag>` reads that release's published `SHA256SUMS`,

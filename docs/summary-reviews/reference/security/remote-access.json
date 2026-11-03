@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/security/remote-access",
   "sourcePath": "docs/reference/security/remote-access.md",
-  "sourceHash": "sha256:f2206c24388b8b927ce6cc8fd7e4295acc1ea545480ec636f8fb7c45790da61c",
-  "semanticSummaryHash": "sha256:7114aec5fad20ef51b50f57bf262506c63f4fede9cbb8bf071410b7e91645e2d",
+  "sourceHash": "sha256:3bc5d7617d5517345d2c64505879c041b76eae5f614fe3751fdb9838a6bd8b7c",
+  "semanticSummaryHash": "sha256:cfbb83ccc94128f852fa13aa0e9bd143abbcb1d6cc62ec60a0aa2f30930421a1",
   "verdict": "APPROVE",
   "reviewer": "root",
-  "notes": "Root independently reviewed embedded helper extraction and lookup precedence, committed recovery-download pins, availability-only provenance and source verification limits.",
-  "reviewedAt": "2026-11-03T03:22:52.202Z"
+  "notes": "Root independently reviewed exact hashes, packaged helper authority, failed-preparation refusal, atomic cache repair, source recovery and retained older assets.",
+  "reviewedAt": "2026-11-03T04:04:03.470Z"
 }

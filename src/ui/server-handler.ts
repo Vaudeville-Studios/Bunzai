@@ -307,7 +307,7 @@ export function createHandler(
     }
     // Remote access control plane (Tailscale + LAN). The /api gate above already enforced trusted-origin
     // auth, and host-only routes were refused for remote/LAN devices, so only the local owner reaches it.
-    const remoteResp = await handleRemoteRoutes(req, p, { remote, lan, settings });
+    const remoteResp = await handleRemoteRoutes(req, p, { remote, lan, settings, packaged: packaged !== undefined });
     if (remoteResp) return remoteResp;
 
     if (p === "/api/update-check") return handleUpdateCheck();

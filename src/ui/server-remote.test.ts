@@ -43,11 +43,8 @@ async function withDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
 }
 
 describe("locating the sidecar binary", () => {
-  // THE regression guard for the packaged-remote-access bug. The old single-candidate version derived
-  // the path from import.meta.url alone, which inside a standalone Bun executable points at the virtual
-  // filesystem: it resolved to `B:\sidecar\sidecar.exe`, a path that can never exist, so no packaged
-  // studio could ever start remote access no matter what was installed beside it. Deleting the
-  // execPath-relative candidate would silently re-break every packaged install, so it is pinned here.
+  // Developer/source lookup remains separate from packaged authority. Packaged apps use only the
+  // verified startup path; server-remote-selection.test.ts proves sibling files cannot replace it.
   const name = process.platform === "win32" ? "sidecar.exe" : "sidecar";
 
   test("looks beside the running executable, not only in the source tree", () => {

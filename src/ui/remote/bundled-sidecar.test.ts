@@ -30,7 +30,7 @@ test("included helper is extracted once, keeps old versions and remains off", as
   expect(await prepareBundledSidecar(next, join(dir, "cache"), helper.platform)).not.toBe(path);
   expect(new Uint8Array(await readFile(path!))).toEqual(bytes);
   let spawned = 0;
-  const handle = setupRemoteAccess({ settings: new SettingsStore(dir), studioDir: dir, bundledSidecar: path!,
+  const handle = setupRemoteAccess({ settings: new SettingsStore(dir), studioDir: dir, bundledSidecar: path!, packaged: true,
     makeHandler: () => async () => new Response("fixture"),
     createSidecar: (options) => createSidecarManager({ ...options, spawn: (() => { spawned++; throw new Error("must stay off"); }) as typeof Bun.spawn }),
   });
@@ -44,15 +44,15 @@ test("included helper is extracted once, keeps old versions and remains off", as
   finally { handle.stop(); }
 });
 
-test("wrong target, corrupt included bytes and corrupt cache are refused", async () => {
+test("wrong target and corrupt included bytes are refused; corrupt cache is repaired from verified included bytes", async () => {
   const { dir, helper } = await fixture();
   const attempt = (value = helper, platform = helper.platform) => prepareBundledSidecar(value, join(dir, "cache"), platform).then(() => null, (error: unknown) => error);
   expect(await attempt(helper, "linux-x64")).toBeInstanceOf(Error);
   expect(await attempt({ ...helper, sha256: "a".repeat(64) })).toBeInstanceOf(Error);
   const path = await prepareBundledSidecar(helper, join(dir, "cache"), helper.platform);
   await writeFile(path!, "broken");
-  expect(await attempt()).toBeInstanceOf(Error);
-  expect(await readFile(path!, "utf8")).toBe("broken");
+  expect(await prepareBundledSidecar(helper, join(dir, "cache"), helper.platform)).toBe(path);
+  expect(new Uint8Array(await readFile(path!))).toEqual(new Uint8Array([1, 2, 3]));
   expect(await prepareBundledSidecar(null, dir)).toBeNull();
 });
 

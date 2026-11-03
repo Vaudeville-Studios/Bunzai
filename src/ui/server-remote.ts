@@ -30,8 +30,8 @@ const LAN_PORT = 8790;
 /**
  * Locate the Tailscale sidecar binary, or null when this build does not carry one.
  *
- * Source, sibling and downloaded candidates. Startup inserts its verified bundled path between the
- * deliberate sibling override and downloaded fallback. `import.meta.url` is correct from source (the
+ * Source-only developer candidates. Packaged apps use their verified startup path exclusively.
+ * `import.meta.url` is correct from source (the
  * repo's own sidecar/ folder, where `bun sidecar/build.ts` puts the binary) and USELESS once compiled:
  * inside a standalone Bun executable it points at the virtual filesystem, so the old single-candidate
  * version resolved to `B:\sidecar\sidecar.exe` and could never hit. Every packaged studio therefore
@@ -46,18 +46,17 @@ export function sidecarCandidates(execPath: string = process.execPath): string[]
   return [
     // from source: the authoritative location, and the one a developer just built into
     fileURLToPath(new URL(`../../sidecar/${name}`, import.meta.url)),
-    // packaged: beside the executable the user actually launched
+    // source-only local developer override, never a packaged app's helper authority
     join(dirname(execPath), "sidecar", name),
     // downloaded on request through the aux-package button, verified against a baked hash before it was
-    // written. Last, so a helper someone deliberately placed beside the exe still wins.
+    // written. This fallback is for source runs and older applications, not new packaged apps.
     auxSidecarPath(),
   ];
 }
 
-function resolveSidecarBin(bundledSidecar?: string): string | null {
-  const candidates = sidecarCandidates();
-  if (bundledSidecar) candidates.splice(2, 0, bundledSidecar);
-  return candidates.find((p) => existsSync(p)) ?? null;
+function resolveSidecarBin(packaged: boolean, bundledSidecar?: string): string | null {
+  if (packaged) return bundledSidecar && existsSync(bundledSidecar) ? bundledSidecar : null;
+  return sidecarCandidates().find((p) => existsSync(p)) ?? null;
 }
 
 /** Routes that are HOST-ONLY: remote-access management, version updates, plus host/app control. Refused to
@@ -177,6 +176,8 @@ async function downloadHelper(): Promise<Response> {
 }
 
 export interface RemoteRouteDeps {
+  /** Packaged apps only use the verified helper included in their executable. */
+  packaged?: boolean;
   /** remote-access sidecar manager; absent in tests and when the binary is missing */
   remote?: SidecarManager;
   /** LAN manager, present only on the trusted handler (LAN management is host-only) */
@@ -226,9 +227,11 @@ export async function handleRemoteRoutes(
   // guest can never make the host machine download and install an executable.
   if (p === "/api/remote/helper/status") {
     const status = auxHelperStatus();
+    if (deps.packaged) return json({ ...status, offered: false, installed: Boolean(remote && remote.getState().phase !== "unavailable"), installedTag: undefined });
     return json(remote && remote.getState().phase !== "unavailable" ? { ...status, installed: true, installedTag: undefined } : status);
   }
   if (p === "/api/remote/helper/download" && req.method === "POST") {
+    if (deps.packaged) return err("This app uses its included helper. Restart Bunzai or replace it with a verified app download if preparation failed.", 409);
     return await downloadHelper();
   }
   if (p === "/api/remote/kick" && req.method === "POST") {
@@ -314,6 +317,8 @@ export function setupRemoteAccess(deps: {
   createSidecar?: typeof createSidecarManager;
   /** Verified helper materialized by this executable before the server starts. */
   bundledSidecar?: string;
+  /** Remains true after failed preparation, so unsigned local fallbacks cannot become executable. */
+  packaged?: boolean;
   /** Resolves when the library first unlocks; absent means the settings are readable now. */
   ready?: Promise<unknown>;
 }): RemoteAccessHandle {
@@ -335,9 +340,10 @@ export function setupRemoteAccess(deps: {
   }
   try {
     const remote = (deps.createSidecar ?? createSidecarManager)({
-      resolveBin: () => resolveSidecarBin(deps.bundledSidecar),
+      resolveBin: () => resolveSidecarBin(deps.packaged === true, deps.bundledSidecar),
       untrustedUpstream: untrustedServer ? `127.0.0.1:${untrustedServer.port}` : null,
-      unavailableDetail: untrustedServer ? undefined : "The private-mesh listener could not start. Restart the studio to retry. LAN mode remains available.",
+      unavailableDetail: !untrustedServer ? "The private-mesh listener could not start. Restart the studio to retry. LAN mode remains available."
+        : deps.packaged ? "The included remote helper could not be prepared. Check Bunzai's support-folder access and restart, or replace the app with a verified download. LAN mode remains available." : undefined,
       sharedSecret,
       openUrl: openInBrowser,
     });

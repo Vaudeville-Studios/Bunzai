@@ -7,7 +7,7 @@ const packageJson = await Bun.file(new URL("../package.json", import.meta.url)).
 
 test("the supported test command discovers both authored test trees", () => {
   const command = packageJson.scripts?.test ?? "";
-  expect(command).toMatch(/^bun test\s+\.\/src\s+\.\/scripts(?:\s|$)/);
+  expect(command).toBe("bun run scripts/test-run.ts ./src ./scripts --timeout 120000");
 });
 
 test("the React lint command covers Studio and Kit", () => {

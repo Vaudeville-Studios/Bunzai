@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { auxSidecarDir } from "../../app-data";
 import { writeAtomicReplace } from "../../studio/atomic-file";
+import { isSha256Hex } from "../../core/sha256";
 import { MAX_AUX_BYTES, platformKey, sha256Hex } from "./aux-download";
 import { PACKAGED_SIDECAR } from "../../generated/packaged-sidecar";
 
@@ -19,7 +20,7 @@ export async function prepareBundledSidecar(
   platform = platformKey(),
 ): Promise<string | null> {
   if (!helper) return null;
-  if (helper.platform !== platform || !/^[a-f0-9]{64}$/.test(helper.sha256)) throw new Error("The included remote-access helper does not match this app.");
+  if (helper.platform !== platform || !isSha256Hex(helper.sha256)) throw new Error("The included remote-access helper does not match this app.");
   const source = Bun.file(helper.file);
   if (source.size === 0 || source.size > MAX_AUX_BYTES) throw new Error("The included remote-access helper has an invalid size.");
   const bytes = new Uint8Array(await source.arrayBuffer());

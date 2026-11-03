@@ -1,5 +1,5 @@
-/** The Living Card layout: themed panels, a quiet interview column and a readable editable character sheet. */
-.room { container-type: inline-size; flex: 1; min-width: 0; min-height: 0; padding: 1rem 1.5rem 2rem; overflow-y: auto; color: var(--text); font-family: var(--font-body); }
+/** A bounded question stage and compact character document, with motion tied to accepted changes. */
+.room { container-type: inline-size; flex: 1; width: 100%; max-width: 88rem; margin-inline: auto; box-sizing: border-box; min-width: 0; min-height: 0; padding: 1rem 1.5rem 2rem; overflow-y: auto; color: var(--text); font-family: var(--font-body); }
 .setup { display: grid; gap: 1.5rem; max-width: 85rem; margin: 0 auto; }
 .tempos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
 .setupBody { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 1fr); gap: 2rem; padding: 1.5rem; }
@@ -13,18 +13,23 @@
 .empty { padding: 1rem; border-left: 3px solid var(--stage-warn); line-height: 1.6; }
 .empty p { margin: .5rem 0 1rem; }
 .sessionLine { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; color: var(--text-dim); font: .75rem/1.5 var(--font-mono); }
-.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.workspace { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 2rem; align-items: start; }
 .interviewPane, .cardPane { min-width: 0; }
-.conversation, .living { padding: 1.25rem; min-width: 0; }
-.conversation { display: flex; flex-direction: column; gap: 1.25rem; }
+.conversation, .living { padding: 1.5rem; min-width: 0; }
+.conversation { display: flex; flex-direction: column; gap: .85rem; }
+.interviewTools { display: flex; flex-wrap: wrap; gap: .75rem; }
+.briefDisclosure, .history { flex: 1; min-width: 9rem; }
 .panelTop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; }
-.panelTop .heading { margin-bottom: 0; }
 .status { color: var(--text-dim); font: .75rem/1.5 var(--font-mono); }
 .brief { margin: 0; padding: 1rem 0; border-top: 1px solid var(--edge); border-bottom: 1px solid var(--edge); color: var(--text-soft); font-size: .9375rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
 .questionArea { display: flex; flex-direction: column; gap: 1rem; }
-.question { margin: 0; font: 600 clamp(1.25rem, 2.5cqi, 1.8rem)/1.45 var(--font-fancy); color: var(--text); overflow-wrap: anywhere; }
+.questionStage { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; padding: .5rem 0 1rem; animation: questionEnter var(--bk-dur-slow) var(--bk-ease-move) both; }
+.questionStage::after { content: ""; position: absolute; inset: auto 0 0; height: 3px; background: var(--deck-character); transform-origin: left; animation: questionReveal var(--bk-dur-slow) var(--bk-ease-move) both; }
+.questionSerial { font: 700 clamp(3.5rem, 5cqi, 4rem)/.95 var(--font-mono); color: var(--deck-character); letter-spacing: -.08em; }
+.questionPrompt { display: grid; gap: .5rem; }
+.question { margin: 0; font: 600 clamp(1.65rem, 2.6cqi, 2.15rem)/1.2 var(--font-fancy); color: var(--text); overflow-wrap: anywhere; }
 .question:focus-visible { outline: 2px solid var(--bk-focus-color); outline-offset: .35rem; }
-.choices { display: flex; flex-wrap: wrap; gap: .65rem; align-items: flex-start; }
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; align-items: stretch; }
 .answerForm, .editForm { display: grid; gap: .65rem; }
 .answerForm .label { margin-top: .25rem; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
@@ -34,16 +39,18 @@
 .direction { margin: 0; padding-left: 1rem; border-left: 2px solid var(--premiere-gold); color: var(--text-soft); font-style: italic; line-height: 1.7; white-space: pre-wrap; }
 .reviewNote { display: grid; gap: 1rem; line-height: 1.7; }
 .reviewNote p { margin: 0; }
-.cardName { margin: 0; font: 700 clamp(1.4rem, 3cqi, 2.2rem)/1.2 var(--font-fancy); overflow-wrap: anywhere; }
-.living > .muted { margin-top: .75rem; }
-.fields { margin-top: 1.5rem; }
-.field { padding: 1rem 0; border-top: 1px solid var(--edge); }
-.fieldHead { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-bottom: .65rem; }
-.fieldHead h3 { flex: 1; margin: 0; font: 700 .875rem/1.5 var(--font-body); }
-.fieldMeta { color: var(--text-dim); font: .75rem/1.5 var(--font-mono); }
-.fieldText { margin: 0; color: var(--text); font-size: .9375rem; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cardMasthead { display: grid; gap: .5rem; padding-bottom: 1rem; border-bottom: 3px solid var(--deck-character); }
+.cardName { margin: 0; font: 700 clamp(1.8rem, 3.5cqi, 3rem)/1.1 var(--font-fancy); overflow-wrap: anywhere; }
+.cardTagline { margin: 0; color: var(--text-soft); font: italic 1rem/1.5 var(--font-body); }
+.fields { margin-top: .5rem; }
+.field { padding: .6rem .5rem; border-bottom: 1px solid var(--edge); border-left: 3px solid transparent; transition: background-color var(--bk-dur-base) var(--bk-ease-move), border-color var(--bk-dur-base) var(--bk-ease-move); }
+.field[data-updated="true"] { border-left-color: var(--deck-character); background: var(--panel); animation: fieldEnter var(--bk-dur-base) var(--bk-ease-move); }
+.fieldHead { display: flex; align-items: center; gap: .5rem; margin-bottom: .35rem; }
+.fieldHeading { flex: 1; min-width: 0; }
+.fieldMeta { display: flex; flex-wrap: wrap; gap: .5rem; color: var(--text-dim); font: .75rem/1.5 var(--font-mono); }
+.fieldText { margin: 0; color: var(--text); font-size: .9375rem; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fieldText:not([data-expanded="true"]) { /* clone-ok: standard line-clamp idiom; this expandable field document owns its disclosure state independently of the Library preview. */ display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .placeholder { margin: 0; color: var(--text-dim); font-size: .875rem; line-height: 1.6; font-style: italic; }
-.history { border-bottom: 1px solid var(--edge); padding-bottom: .5rem; }
 .historyList { max-height: 22rem; overflow-y: auto; margin-top: .75rem; }
 .exchange { padding: .75rem 0; border-top: 1px solid var(--edge); }
 .exchange p { margin: 0 0 .75rem; color: var(--text-soft); font-size: .875rem; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -56,6 +63,11 @@
 .unsaved { border-left: 3px solid var(--stage-warn); padding-left: 1rem; color: var(--text-soft); font-size: .875rem; line-height: 1.6; }
 .paneSwitch { display: none; margin-bottom: 1rem; }
 @container (max-width: 56rem) { .workspace { grid-template-columns: minmax(0, 1fr); } .paneSwitch { display: block; } .interviewPane[data-active="false"], .cardPane[data-active="false"] { display: none; } .setupBody { grid-template-columns: minmax(0, 1fr); } }
-@container (max-width: 36rem) { .tempos { grid-template-columns: minmax(0, 1fr); gap: .75rem; } .setupBody, .conversation, .living { padding: 1rem; } }
+@container (max-width: 36rem) { .tempos, .choices { grid-template-columns: minmax(0, 1fr); gap: .75rem; } .setupBody, .conversation, .living { padding: 1rem; } .questionStage { gap: .6rem; } .questionSerial { font-size: 2rem; } .question { font-size: 1.5rem; } }
+@keyframes questionEnter { from { opacity: 0; transform: translateY(.7rem); } to { opacity: 1; transform: translateY(0); } }
+@keyframes questionReveal { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes fieldEnter { from { transform: translateX(.3rem); } to { transform: translateX(0); } }
 @keyframes breathe { 50% { opacity: .4; } }
-@media (prefers-reduced-motion: reduce) { .busyMark { animation: none; } }
+:global(:root[data-reduce-motion]) .busyMark, :global(:root[data-reduce-motion]) .questionStage, :global(:root[data-reduce-motion]) .questionStage::after, :global(:root[data-reduce-motion]) .field[data-updated="true"] { animation: none; }
+:global(:root[data-reduce-motion]) .field { transition: none; }
+@media (prefers-reduced-motion: reduce) { .busyMark, .questionStage, .questionStage::after, .field[data-updated="true"] { animation: none; } .field { transition: none; } }

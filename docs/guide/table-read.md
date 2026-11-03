@@ -32,9 +32,15 @@ In Cold Read and Deep Dive you can choose a quick answer or write your own. **Ke
 stores it before the interviewer works on the next question. The living card updates with validated
 proposals as turns finish; it does not pretend to stream fields before they can be read safely.
 
+The numbered question and answer cards lead the interview. **Your starting idea** and the accepted
+answer history fold away when you want room to think. Beside the question, the living card counts
+filled fields, not character quality. Expand a field to read its full text. **Updated** briefly marks
+fields whose accepted values changed; unchanged refreshes do not restart that feedback.
+
 Choose **Edit** beside any card field, change it, then **Keep edit**. The field is marked **Your edit**
 and later model proposals cannot replace it. You can deliberately keep a field blank. Text still
-inside an open field editor has not been kept yet; finish or cancel that edit before leaving.
+inside an open field editor has not been kept yet; finish or cancel that edit before saving or
+discarding the interview.
 
 On a narrow screen, use **Interview** and **Living card** to switch panes. Both show the same draft.
 

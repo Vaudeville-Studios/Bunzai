@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "guide/table-read",
   "sourcePath": "docs/guide/table-read.md",
-  "sourceHash": "sha256:3ca9dfef4523150b4903a615d85f38a1be90a46ed7ef106f9f5b63f0c59a9d47",
-  "summary": "Table Read creates an ordinary Library character by conversation beside an editable living card. Choose Cold Read, Deep Dive or a timed choices-only Rapid Fire round and an existing saved model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain accepted work. Review current draft works without a model, while Finish with the interviewer requests synthesis. Only Save character creates the Library card, and interrupted saves recover the same identity. Open character hands off to the normal Workbench. Encrypted backups retain interview progress; character exports do not include the conversation. Auxiliary lorebook/persona creation and temporary browser Studio support are excluded.",
+  "sourceHash": "sha256:e2dd3a68383a6b9ff050938a22b0a5bdf0fb7d8a7186687079d6867ae00cd649",
+  "summary": "Table Read creates an ordinary Library character by conversation beside an editable living card. Choose Cold Read, Deep Dive or a timed choices-only Rapid Fire round and an existing saved model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain accepted work. Review current draft works without a model, while Finish with the interviewer requests synthesis. Only Save character creates the Library card, and interrupted saves recover the same identity. Open character hands off to the normal Workbench. Encrypted backups retain interview progress; character exports do not include the conversation. Auxiliary lorebook/persona creation and temporary browser Studio support are excluded. The composed question stage uses answer cards, expandable excerpts and brief Updated feedback for actual accepted field changes.",
   "topics": [
     "character interview",
     "saved models",
@@ -30,8 +30,8 @@
       "slug": "answer-and-take-the-pen",
       "title": "Answer and take the pen",
       "level": 2,
-      "sourceHash": "sha256:7f2d6d13103a78aabfe9281da539c81e9820a1f21cb198c4d9935f3116dc8548",
-      "summary": "Cold Read and Deep Dive accept chips or freeform answers. Keep this answer persists the answer before generation. Living fields update only after validation. Edit then Keep edit gives a field persistent manual ownership, including deliberate blanks. An open editor is still unsaved. Narrow screens switch between Interview and Living card panes over the same draft.",
+      "sourceHash": "sha256:48d6e31ac67ba590ea7acbaf7d746ad0a64012b36f7dd596eb22bfc3669b526f",
+      "summary": "Cold Read and Deep Dive accept chips or freeform answers. Keep this answer persists the answer before generation. Living fields update only after validation. Edit then Keep edit gives a field persistent manual ownership, including deliberate blanks. An open editor is still unsaved. Narrow screens switch between Interview and Living card panes over the same draft. The question stage uses answer cards; expand excerpts to read more. Updated marks real field changes briefly.",
       "topics": [
         "character interview",
         "saved models",

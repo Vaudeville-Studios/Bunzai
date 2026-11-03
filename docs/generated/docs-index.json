@@ -4250,7 +4250,7 @@
         "guide/library",
         "reference/table-read"
       ],
-      "semanticSummary": "Table Read creates an ordinary Library character by conversation beside an editable living card. Choose Cold Read, Deep Dive or a timed choices-only Rapid Fire round and an existing saved model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain accepted work. Review current draft works without a model, while Finish with the interviewer requests synthesis. Only Save character creates the Library card, and interrupted saves recover the same identity. Open character hands off to the normal Workbench. Encrypted backups retain interview progress; character exports do not include the conversation. Auxiliary lorebook/persona creation and temporary browser Studio support are excluded.",
+      "semanticSummary": "Table Read creates an ordinary Library character by conversation beside an editable living card. Choose Cold Read, Deep Dive or a timed choices-only Rapid Fire round and an existing saved model. Accepted answers and kept edits persist in the encrypted library; manually kept fields stay yours. Stop and retry retain accepted work. Review current draft works without a model, while Finish with the interviewer requests synthesis. Only Save character creates the Library card, and interrupted saves recover the same identity. Open character hands off to the normal Workbench. Encrypted backups retain interview progress; character exports do not include the conversation. Auxiliary lorebook/persona creation and temporary browser Studio support are excluded. The composed question stage uses answer cards, expandable excerpts and brief Updated feedback for actual accepted field changes.",
       "topics": [
         "character interview",
         "saved models",
@@ -4275,7 +4275,7 @@
           "text": "Answer and take the pen",
           "slug": "answer-and-take-the-pen",
           "level": 2,
-          "summary": "Cold Read and Deep Dive accept chips or freeform answers. Keep this answer persists the answer before generation. Living fields update only after validation. Edit then Keep edit gives a field persistent manual ownership, including deliberate blanks. An open editor is still unsaved. Narrow screens switch between Interview and Living card panes over the same draft.",
+          "summary": "Cold Read and Deep Dive accept chips or freeform answers. Keep this answer persists the answer before generation. Living fields update only after validation. Edit then Keep edit gives a field persistent manual ownership, including deliberate blanks. An open editor is still unsaved. Narrow screens switch between Interview and Living card panes over the same draft. The question stage uses answer cards; expand excerpts to read more. Updated marks real field changes briefly.",
           "topics": [
             "character interview",
             "saved models",
@@ -16456,7 +16456,7 @@
         "reference/architecture",
         "guide/table-read"
       ],
-      "semanticSummary": "The discovered Table Read app composes a pure bounded interview core, existing saved providers, one encrypted revisioned document and the canonical CharacterBody. Three modes share finite field proposals and persistent manual ownership. Model requests disable tools and enforce context, token, byte and time limits; validated output alone changes the card. Trusted StateStore CAS preserves the separate extension authorization fence. Read-only reload observes pending ownership without inference. Stop, explicit retry and offline review retain work. Save freezes the exact body and ID before absent-only creation, then records a durable receipt; uncertain failures stay frozen and definitive collisions return to review. Approved remote devices reuse existing authentication without LibraryHandle authority. Browser Studio and auxiliary bundles remain unavailable.",
+      "semanticSummary": "The discovered Table Read app composes a pure bounded interview core, existing saved providers, one encrypted revisioned document and the canonical CharacterBody. Three modes share finite field proposals and persistent manual ownership. Model requests disable tools and enforce context, token, byte and time limits; validated output alone changes the card. Trusted StateStore CAS preserves the separate extension authorization fence. Read-only reload observes pending ownership without inference. Stop, explicit retry and offline review retain work. Save freezes the exact body and ID before absent-only creation, then records a durable receipt; uncertain failures stay frozen and definitive collisions return to review. Approved remote devices reuse existing authentication without LibraryHandle authority. Browser Studio and auxiliary bundles remain unavailable. The composed question stage uses answer cards, expandable excerpts and brief Updated feedback for actual accepted field changes.",
       "topics": [
         "pure interview core",
         "encrypted revisioned session",

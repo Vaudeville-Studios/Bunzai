@@ -43,7 +43,7 @@ was rejected as feature evidence.
   were emitted. `reasoning-final-green` passes the three generation tests after applying the same
   combined content/reasoning byte cap to the final completion.
 
-The final UI checks pass 17 tests and 65 assertions across the room suite and required pure-core
+The initial feature UI checks pass 17 tests and 65 assertions across the room suite and required pure-core
 sibling. They include unsent setup/answer/edit retention, unload protection, lower-revision restore,
 late old-library responses, equal-numeric-lifetime polling, first-paint countdown and frozen local
 edit recovery. Scoped ESLint and the final typecheck pass. Normal staged precommit passes structural,
@@ -122,3 +122,34 @@ Screenshots remain outside Git: `C:/Users/chiev/table-read-final-desktop.png` (1
 `C:/Users/chiev/table-read-paper-card-mobile.png` (390 by 844). This implementation is source-, unit-
 and live-workflow-proven. Packaged release behavior, external deployment and real model prose quality
 are not claimed. No push, merge or deployment is authorized by this implementation task.
+
+## Visual refinement after the first preview
+
+The follow-up changes only Table Read presentation and its truthful documentation, based on
+`49b6f5dc28859bfb907c4b4b4b31e3db9e8c49ed`. Backend, provider, persistence and save contracts remain
+unchanged. The content is centered within 88rem, with a three-to-two question-stage/card-rail split.
+Numbered questions have a short keyed entrance; answers use the existing Card choice controls.
+Brief and history disclosures share a compact toolbar. The card has a name/tagline masthead, a
+factual filled-field count, expandable text excerpts and inline field editing.
+
+Actual accepted field changes briefly show Updated using the existing `useFlash` owner. Initial
+load, identical polls, restored draft-store lifetimes and new sessions do not create false updates.
+No edit form is remounted by this feedback. New motion uses the shared duration/easing tokens;
+both operating-system reduced motion and the in-app root attribute disable animation while leaving
+the Updated text available. Pointer answers do not force heading focus; keyboard answers focus the
+new question with `preventScroll`, without pulling focus out of a card edit.
+
+Focused verification passes **19 tests and 75 assertions**, including deterministic feedback expiry,
+poll stability, scope/session reset and keyboard-versus-pointer focus. Typecheck, scoped ESLint,
+line/theme/color/style/part/boundary checks pass. The documentation additions and summaries were
+independently reviewed. The earlier complete-suite result above remains evidence for the initial
+feature source; the full suite was deliberately not repeated for this scoped visual revision.
+
+The advisor verified the revised running UI: all interview actions remain visible at 1440 by 1100;
+a 2488px viewport keeps the room at 1408px without overflow; Paper at 390px has no horizontal
+overflow. Actual next-question and field-update feedback work, unchanged initial data stays quiet,
+feedback expires, pointer input avoids heading focus, keyboard Enter focuses the next heading without
+scrolling, and manual scratch survives generation. Reduced-motion computation was checked in the
+browser. Final screenshots are `C:/Users/chiev/table-read-redesign-final.png` and
+`C:/Users/chiev/table-read-redesign-paper-mobile.png`, outside Git. The existing scripted preview
+remains on Deep Dive question three with two answers and a manually kept personality field.

@@ -53,7 +53,7 @@ export function TableRead({ ctx }: { ctx: AppContext }): JSX.Element {
   </div> : undefined;
 
   return <main className={styles.room} data-part="table-read.room">
-    <RoomHeader kicker="Creation by conversation" title="The Table Read" lede="One good idea. A few revealing questions. A character with a voice of their own." actions={actions} data-part="table-read.header" />
+    <RoomHeader title="The Table Read" actions={actions} data-part="table-read.header" />
     {error && <div className={styles.error} role="alert" data-part="table-read.error"><span>{error}</span><Button variant="quiet" size="sm" onClick={() => { void refresh(); }}>Reload draft</Button></div>}
     {loading && !view ? <p className={styles.loading} role="status">Opening your Table Read...</p> : !view ? <div className={styles.empty}><p>Your interview could not be opened.</p><Button onClick={() => { void refresh(); }}>Try again</Button></div> : !session ? <Setup ctx={ctx} drafts={drafts} busy={busy} onStart={(settings) => { void change({ action: "start", settings }); }} /> : <>
       <div className={styles.sessionLine} data-part="table-read.session">

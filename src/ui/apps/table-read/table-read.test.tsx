@@ -291,3 +291,24 @@ test("a different PieceStore can load while an old owner with the same numeric l
   await act(async () => finishOld({ revision: 8, session: interview(), running: false }));
   expect(doc.body.textContent).toContain("Different library");
 });
+
+test("keyboard choices focus the new question without moving pointer choices to the heading", async () => {
+  const session = interview();
+  let turn = 0;
+  const { doc, button } = await mount({ revision: 1, session, running: false }, async () => {
+    turn++;
+    return { revision: turn + 1, session: { ...session, turn, question: { ...session.question!, id: `next-${turn}`, text: `A more revealing question ${turn}` } }, running: false };
+  });
+  await act(async () => {
+    const choice = button("She pays it herself"); choice.focus();
+    choice.dispatchEvent(new installed!.dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    choice.click();
+  });
+  expect(doc.activeElement?.textContent).toBe("A more revealing question 1");
+  await act(async () => {
+    const choice = button("She pays it herself");
+    choice.dispatchEvent(new installed!.dom.window.Event("pointerdown", { bubbles: true }));
+    choice.click();
+  });
+  expect(doc.activeElement?.textContent).not.toBe("A more revealing question 2");
+});

@@ -14,6 +14,14 @@ offers it beside blank character creation. Its selected Living Card design keeps
 canonical draft together, with a pane switch in narrow containers. Controls and tokens come from the
 existing UI families; there is no separate theme or character model.
 
+The centered layout is bounded at 88rem with a three-to-two question-stage/card-rail split. A keyed
+question entrance and the existing Card choice controls establish the interview hierarchy; brief and
+history use Disclosure controls. Field excerpts expand without remounting open edits. The local
+`useFieldUpdates` owner compares accepted field values within a session and draft-store lifetime,
+using shared `useFlash` timing. Initial views, identical polls and restored lifetimes stay quiet;
+actual changes briefly show Updated. The filled-field count is factual, not a quality score. New
+motion honors reduced-motion preferences, and pointer answers do not force heading focus.
+
 ## Ownership
 
 `src/core/table-read/` owns strict value schemas, the finite editable field surface, prompts and pure

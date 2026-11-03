@@ -351,8 +351,8 @@
       "status": "APPROVED",
       "verdict": "APPROVE",
       "reviewer": "root-table-read-advisor",
-      "sourceHash": "sha256:3ca9dfef4523150b4903a615d85f38a1be90a46ed7ef106f9f5b63f0c59a9d47",
-      "semanticSummaryHash": "sha256:165c7bcf128d17821e23f82e2544423da61431b6cf46718ab787f1f7dfaafc8d"
+      "sourceHash": "sha256:e2dd3a68383a6b9ff050938a22b0a5bdf0fb7d8a7186687079d6867ae00cd649",
+      "semanticSummaryHash": "sha256:a3af1213810eab6fdf5d2af6ace4c86f6525820dcda32081f22f698d55a0f63d"
     },
     {
       "docId": "guide/troubleshooting",
@@ -1119,8 +1119,8 @@
       "status": "APPROVED",
       "verdict": "APPROVE",
       "reviewer": "root-table-read-advisor",
-      "sourceHash": "sha256:962f08c6d127d2dfc585bd1e841c27b11b47a09b750da842b683179f6d646c02",
-      "semanticSummaryHash": "sha256:1314a798587b07c0ff59265bd485a183b34ca61a6dd0f56afc621fa29637002a"
+      "sourceHash": "sha256:68a6ede65dc7c51364b4fde197893538740d88f0a34ca41afa94c51c94fa959f",
+      "semanticSummaryHash": "sha256:bd68581e2f8ed341e10f93ae8319b2d024d654e694f16469a170d4e2ca418f96"
     },
     {
       "docId": "reference/token-meter",

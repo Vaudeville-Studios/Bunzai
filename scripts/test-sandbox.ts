@@ -1,12 +1,18 @@
 /**
  * The test sandbox, preloaded before every `bun test` run (bunfig.toml): per-user paths point at
- * throwaway folders, and the run audits the original Bunzai, app-data, and Studio locations for leaks.
+ * throwaway folders, Git fixtures inherit no caller repository, and the run audits original data paths.
  */
 import { afterAll } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { appDataDir } from "../src/app-data";
+import { testGitEnvironment } from "./test-git-env";
+
+// Hooks export repository-local overrides; cwd alone cannot isolate a child Git fixture.
+// Start clean before Bun boots: deleting JS env keys alone leaves stale native spawn defaults on Windows.
+const gitEnv = testGitEnvironment();
+if (Object.keys(process.env).some((name) => !(name in gitEnv))) throw new Error("test sandbox: inherited Git context is unsafe; use bun run test so fixtures start without caller repository authority");
 
 // Read the real locations before pointing anything elsewhere.
 const realBunzai = join(process.env["BUNZAI_HOME"] ?? homedir(), ".bunzai");

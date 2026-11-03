@@ -21,7 +21,9 @@ not an idealized future toolchain.
 
 ## Tests
 
-- Use `bun test`. `bun run test` discovers every test under the authored `src/` and `scripts/` trees.
+- Use `bun run test` for the full suite under the authored `src/` and `scripts/` trees. Its launcher
+  removes inherited Git repository overrides before starting Bun, so hook-run fixtures own their Git writes.
+  Direct focused `bun test` remains available outside a Git hook; the preload refuses inherited repository overrides.
 - Start bug fixes with a public-boundary test that fails against the reported behavior.
 - Same-format adapter fixtures must prove parse, serialize, and reparse without semantic loss.
 - Tests are deterministic: no live network, uncontrolled clock, or unseeded randomness.

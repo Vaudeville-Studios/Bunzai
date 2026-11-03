@@ -18,7 +18,7 @@ of the work even though commit messages do not require special trailers.
 | staged-ui-lint | pre-commit | staged live UI TSX has an ESLint error or warning | fix the staged files |
 | green | pre-push, Stop | `bun run test` is red | fix the supported suite |
 | typecheck | pre-push | `bun run typecheck` is red | fix the types |
-| test sandbox | every `bun test` run (bunfig.toml preload) | the run added anything to the real `~/.bunzai`, the real app-data folder, or created the default studio folder | point the test at a temporary folder |
+| test sandbox | every `bun test` run (bunfig.toml preload) | inherited Git repository overrides, or writes into real user-data folders | use `bun run test` to clear hook Git context before Bun starts; keep fixture data temporary |
 
 ## Two surfaces
 

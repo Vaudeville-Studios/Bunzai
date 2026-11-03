@@ -13,7 +13,7 @@
     "bunzai": "bun run src/cli.ts",
     "kit": "bun run src/kit/index.tsx",
     "dev": "bun run src/cli.ts ui 8321",
-    "test": "bun test ./src ./scripts --timeout 120000",
+    "test": "bun run scripts/test-run.ts ./src ./scripts --timeout 120000",
     "test:m0": "bun test src/m0.smoke.test.ts src/formats/sillytavern/sillytavern.test.ts src/core --timeout 60000",
     "test:m1": "bun test src/m1.convert.smoke.test.ts src/convert.test.ts --timeout 60000",
     "test:node-core": "bun run scripts/node-core-smoke.ts",

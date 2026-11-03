@@ -5,7 +5,7 @@ if [ $? -ne 0 ]; then
   echo "GUARDRAIL BLOCK (typecheck): tsc is red. Fix types before pushing." >&2
   exit 1
 fi
-bun run extensions:catalog:check && bun run extensions:sdk:check && bun test ./scripts/extension-required-families.test.ts
+bun run extensions:catalog:check && bun run extensions:sdk:check && bun run scripts/test-run.ts ./scripts/extension-required-families.test.ts
 if [ $? -ne 0 ]; then
   echo "GUARDRAIL BLOCK (extensions): catalog, SDK, or required-family checks are red. Fix extension sources before pushing." >&2
   exit 1

@@ -37,6 +37,7 @@ const WRITES: Record<string, string> = {
   "src/kit/mcp/config.ts": "MCP server settings",
   "src/kit/tools/safety/gate-store.ts": "Kit's safety mode setting",
   "src/ui/remote/aux-install.ts": "the downloaded remote-access helper",
+  "src/ui/remote/bundled-sidecar.ts": "public embedded program bytes, verified before atomic writes to a digest-versioned helper cache; no library content",
   "src/ui/switch/packaged-engine.ts": "a downloaded app version",
   // Build and test tooling, never shipped as a runtime path.
   "src/stage/store/sqlite/snapshots.ts": "snapshots: zeroes a crashed run's leftover partial copies before removing them",

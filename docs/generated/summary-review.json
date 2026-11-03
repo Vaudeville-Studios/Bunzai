@@ -23,8 +23,8 @@
       "status": "APPROVED",
       "verdict": "APPROVE",
       "reviewer": "root",
-      "sourceHash": "sha256:6926c168391d6190648f338727a1b8de5ebdc2acb3e81fc4849a7a31ace6e4d6",
-      "semanticSummaryHash": "sha256:c3afc234214c40e3f38612ac04d82bced3f443ac174a3aab4b55dab2088db953"
+      "sourceHash": "sha256:9d13f37b1b9893e5d9cc1c1a6323b5998ddd475ecb265689747de6ab7d54dfab",
+      "semanticSummaryHash": "sha256:3b47c32217596aab792fb3ee40cb2488f6b11afd9b472c13755dc2c88a25da98"
     },
     {
       "docId": "decisions/ADR-001-runtime",
@@ -1126,9 +1126,9 @@
       "docId": "reference/updates",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "gpt-6.1-sol:/root/implementation_review",
-      "sourceHash": "sha256:3caf2c50b40106d69d7802f4eb627d91e20403877bee8c9682883b22121919f0",
-      "semanticSummaryHash": "sha256:771d0996768f0ab7b055e42b1237b3edccac079f76c2ef23e5e435b9550a81a8"
+      "reviewer": "root",
+      "sourceHash": "sha256:a79620245c3ab056442c1c5d7932614153c1590bba6a69237936d83b9432611e",
+      "semanticSummaryHash": "sha256:1b3bcb6d55c26cac7dd950a40ad0b1cdca118b5bbaedf53133ab8f89236bbc95"
     }
   ]
 }

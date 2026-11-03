@@ -230,7 +230,7 @@ async function runTurnBody(
     const regexEdits = regex.edits;
     edits = regexEdits;
     const prompted = await deps.applyExtensionPrompts?.(chat.id, shape(model).map(({ role, content }) => ({ role, content })), controller.signal) ?? [];
-    const withExtensions = (forModel: string, currentEdits: Readonly<Record<number, string>>) => appendExtensionPrompts(shape(forModel), recounted(result, currentEdits).trace, prompted);
+    const withExtensions = (forModel: string, currentEdits: Readonly<Record<number, string>>) => appendExtensionPrompts(shape(forModel), [...recounted(result, currentEdits).trace, ...guided], prompted);
     let extensionRequest = withExtensions(model, regexEdits);
     let resolved = await resolvePromptAttachments(extensionRequest.messages, deps.readAsset);
     let messages: ProviderMessage[] = resolved.messages;
@@ -248,7 +248,7 @@ async function runTurnBody(
     // A picked skill whose close rule held this turn (core/skill.ts) is closed with them, as the reply's own write.
     const sharedGlobalDeltas = extensionCommit ? [] : globalDeltas(result.globalWrites, started, () => crypto.randomUUID());
     const deltas = input.kind === "continue" ? [] : [...writes.pending(), ...varsDeltas(result.local, started), ...sharedGlobalDeltas, ...(result.skills ?? []).filter((s) => s.close).map((s) => skillDelta(s.id, false, started))];
-    let trace = traceOf(traceResult(), model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
+    let trace = traceOf(traceResult(), model, window, estimate, traceOptions(options, connected.provider.params, model), [], recalled);
     if (loaded.promptbook && input.kind !== "continue") trace["book"] = bookTrace(bookRuns, "running");
     if (input.inspect) {
       // F16: the one pause gate. Cancel and Stop drop the checkpoint, so nothing was written, saved or sent.
@@ -265,7 +265,7 @@ async function runTurnBody(
       measured = measurePromptRequest(messages, meter, key, started, window);
       ({ estimate } = measured);
       if (!measured.fits) { await rejectOversizedPrompt(chats, turn.id, emit, true, extensionCommit); return; }
-      trace = traceOf(traceResult(), model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
+      trace = traceOf(traceResult(), model, window, estimate, traceOptions(options, connected.provider.params, model), [], recalled);
       if (loaded.promptbook && input.kind !== "continue") trace["book"] = bookTrace(bookRuns, "running");
     }
     // ChatStore rule 22: the take's latest request text, aligned with the stored trace's blocks
@@ -336,7 +336,7 @@ async function runTurnBody(
         ({ estimate } = measured);
         if (!measured.fits) { await rejectOversizedPrompt(chats, turn.id, emit, false, extensionCommit); return; }
         request = { texts: messages.map((message) => message.content), ...(resolved.files.length ? { files: resolved.files } : {}) };
-        trace = traceOf(traceResult(), model, window, estimate, traceOptions(options, connected.provider.params, model), guided, recalled);
+        trace = traceOf(traceResult(), model, window, estimate, traceOptions(options, connected.provider.params, model), [], recalled);
         if (loaded.promptbook && input.kind !== "continue") trace["book"] = bookTrace(bookRuns, "running");
         try {
           completion = await sendReply(connected, { model, messages, options }, { signal: controller.signal, onEvent }, toolsTurn, deps.now);

@@ -152,7 +152,7 @@ describe("the Writing Tools tab", () => {
 
   test("is the fourth tab with no meta, opens on RoleCall's heading, and lists the tools that are built", async () => {
     const flushSync = await mount();
-    expect([...host.querySelectorAll(".tabs button")].map((b) => b.textContent)).toEqual(["PresetNone chosen", "Guides0 active", "Scene NoteOngoing direction", "Writing Tools"]);
+    expect([...host.querySelectorAll(".tabs button")].map((b) => b.textContent)).toEqual(["PresetNot loaded", "Guides0 active", "Scene NoteOngoing direction", "Writing Tools"]);
     await press(flushSync, tab());
     expect(text()).toContain("Your turn helpers");
     expect(text()).toContain("Every tool that rewrites a reply or drafts yours, with the prompt it uses. The \"+\" menu and message menu run these same tools.");

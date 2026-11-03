@@ -1,6 +1,7 @@
 /** Next send on the scene page (rc-parity 08): what is typed in the composer is forecast while the wing's Next send tab shows, and only then. */
 import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { click, endsOnReply, installRigDom, mount, resetRig, rig, settle, type, unmount } from "../fake-scene-page-rig";
+import { waitFor } from "../../../_shared/test-dom";
 
 beforeAll(installRigDom);
 beforeEach(resetRig);
@@ -17,12 +18,12 @@ describe("ScenePage: Context > Next send", () => {
     await settle(flushSync, 450);
     expect(rig.forecasts).toEqual([]);
     click(flushSync, tab("Next send"));
-    await settle(flushSync, 450);
+    await waitFor(flushSync, () => doc.querySelector(".ns-msg.user pre")?.textContent === "Any storms?", "the forecast of the current draft");
     expect(rig.forecasts).toEqual(["Any storms?"]);
     expect(doc.querySelector(".ns-hd p")?.textContent).toBe("1 message | ~3 tokens");
     expect(doc.querySelector(".ns-msg.user pre")?.textContent).toBe("Any storms?");
     type(flushSync, "Any storms tonight?");
-    await settle(flushSync, 450);
+    await waitFor(flushSync, () => doc.querySelector(".ns-msg.user pre")?.textContent === "Any storms tonight?", "the updated forecast");
     expect(rig.forecasts.at(-1)).toBe("Any storms tonight?");
     unmount(flushSync);
   });

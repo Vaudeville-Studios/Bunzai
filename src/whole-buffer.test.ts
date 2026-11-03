@@ -29,7 +29,7 @@ const ALLOWED: Record<string, Entry> = {
   "src/formats/lumiverse/modules.ts": { count: 2, ceiling: 96, reason: "module picture to a data URI and back, inside the charx card bound" },
   "src/formats/risu/index.ts": { count: 5, ceiling: 96, reason: "risu charx container: zipSync on export, base64 of the module and each asset in the twin" },
   "src/formats/lumiverse-archive/characters.ts": { count: 1, ceiling: 96, reason: "zipSync of one character's export inside the backup importer" },
-  "src/formats/image-pack/index.ts": { count: 3, ceiling: 48, reason: "picture-zip codec: unzipBounded listing, base64 decode per picture, zipSync export (rows 4, 5)" },
+  "src/formats/image-pack/index.ts": { count: 4, ceiling: 48, reason: "picture-zip codec: bounded listing, per-picture decode, zip export; raw-picture base64 encode only after the 10 MiB image limit" },
   "src/core/media/zip-import.ts": { count: 2, ceiling: 48, reason: "picture zip to pack entity: unzipBounded then base64 per picture (rows 4, 5)" },
   "src/core/media/resolve-ref.ts": { count: 3, ceiling: 48, reason: "one picture to a data URI at a time" },
   // Pictures as base64 (rows 5, 9).
@@ -69,6 +69,7 @@ const ALLOWED: Record<string, Entry> = {
   "src/stage/crypto/crypto.ts": { count: 1, ceiling: "codec", reason: "cell seal: iv, tag and ciphertext joined once per cell" },
   "src/stage/crypto/device-vault.ts": { count: 2, ceiling: 1, reason: "this computer's id and its sealed check" },
   "src/ui/remote/aux-install.ts": { count: 1, ceiling: 1, reason: "a marker file for the remote-access helper" },
+  "src/ui/remote/bundled-sidecar.ts": { count: 4, ceiling: 96, reason: "embedded helper bytes and digest-cache reads are size-gated at 96 MiB and SHA-verified before use" },
   "src/ui/remote/lan-server.ts": { count: 3, ceiling: 1, reason: "certificate, key and a process output" },
   "src/ui/switch/git-runner.ts": { count: 2, ceiling: 1, reason: "stdout and stderr of a git child process" },
   "src/stage/provider/provider-send.ts": { count: 2, ceiling: "unverified", reason: "a provider's non-stream answer or error body read whole" },

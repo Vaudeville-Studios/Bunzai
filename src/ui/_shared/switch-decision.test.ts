@@ -11,6 +11,10 @@ describe("switchKind", () => {
 });
 
 describe("classifyDataChange", () => {
+  test("prompt attachments fence older readers, but later builds can return to their first reader", () => {
+    expect(classifyDataChange("v0.1.54", "v0.1.53")).toBe(true);
+    expect(classifyDataChange("v0.1.55", "v0.1.54")).toBe(false);
+  });
   test("no bumps configured -> never a data change", () => {
     expect(classifyDataChange("v0.2.0", "v0.1.0", [])).toBe(false);
   });

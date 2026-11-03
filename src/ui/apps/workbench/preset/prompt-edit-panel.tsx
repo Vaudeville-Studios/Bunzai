@@ -17,8 +17,7 @@ import { useEffect, useMemo, useRef, useState, type JSX } from "react";
 import type { PresetAttachment, PresetGroup, PresetPrompt, PromptRole } from "../../../../entities/preset";
 import type { StagedAssetUpload } from "../../../app-contract-editor";
 import { PROMPT_ATTACHMENT_BLOCK_COUNT } from "../../../../core/media/limits";
-import { useArtSrc } from "../../../_shared/art-cache";
-import { apiFetch } from "../../../_shared/api-fetch";
+import { readAssetSize, useArtSrc } from "../../../_shared/art-cache";
 import { embeddedMediaBytes, parseUploadedRef } from "../../../../entities/piece-parts-blob";
 import {
   blockTokens,
@@ -329,11 +328,7 @@ function AttachmentRow({ attachment, uploads, onRemove }: { attachment: PresetAt
     setBytes(null);
     if (!sha) return;
     const controller = new AbortController();
-    void apiFetch(`/api/asset/${sha}`, { method: "HEAD", requireToken: false, signal: controller.signal })
-      .then((response) => {
-        const value = Number(response.headers.get("content-length"));
-        if (response.ok && Number.isSafeInteger(value) && value >= 0) setBytes(value);
-      }).catch(() => undefined);
+    void readAssetSize(`/api/asset/${sha}`, controller.signal).then(setBytes).catch(() => undefined);
     return () => controller.abort();
   }, [sha, staged, embeddedSize]);
   return <div className={s.attachment}>

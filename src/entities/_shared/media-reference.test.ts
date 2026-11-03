@@ -1,4 +1,4 @@
-/** Picture slots come from each kind's `media` in its kind.ts; these are the slots storage has always treated as media. */
+/** Binary slots come from each kind's `media` in its kind.ts; gallery art remains an explicit subset. */
 import { expect, test } from "bun:test";
 import { KINDS } from "../../generated/kinds";
 import { ART_KINDS, isCanonicalMediaReference as is } from "./media-reference";
@@ -32,6 +32,8 @@ test("the declared slots are exactly these: storage treats them as media, so a n
     ],
     persona: ["body.media.portrait.ref", "body.presentation.imageUrl"],
     pack: ["body.pack.items.#.ref", "body.groups.*.items.#.ref"],
+    preset: ["body.prompts.#.attachments.#.ref", "profiles.*.prompts.#.attachments.#.ref"],
+    promptbook: ["body.phases.#.preset.prompts.#.attachments.#.ref", "profiles.*.phases.#.preset.prompts.#.attachments.#.ref"],
   });
 });
 

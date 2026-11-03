@@ -42,8 +42,8 @@ export async function handleUpdatesRoutes(
     const kind = switchKind(installed, version);
     if (kind === "current") return err("you are already on this version", 400);
     // Fail-closed tripwire: a rollback that crosses a storage-changing release is refused until the
-    // backup + at-risk preview exists (SCHEMA_BUMPS is empty today, so this never fires yet, but the
-    // guard is here so the day a bump lands, the dangerous rollback is blocked rather than silent).
+    // backup + at-risk preview exists. SCHEMA_BUMPS identifies releases whose older readers cannot
+    // safely read newer data; the guard blocks a dangerous rollback rather than losing it silently.
     if (kind === "rollback" && classifyDataChange(installed, version)) {
       return err(
         "this rollback crosses a version that changed how your studio is stored; it is not yet supported safely",

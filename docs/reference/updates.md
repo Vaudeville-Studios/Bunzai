@@ -57,6 +57,9 @@ not yet live-provable: it can only run once the feature exists inside a shipped 
   (`classifyDataChange` + `SCHEMA_BUMPS` in `src/ui/_shared/switch-decision.ts`). `SCHEMA_BUMPS` lists
   each release that changed how the library is stored; a rollback across one is refused, because the
   older build cannot read what the newer one wrote.
+- Version `v0.1.54` fences prompt attachments: newer readers accept older attachment-free prompts,
+  but older strict prompt readers reject the added fields. Returning from a later version to
+  `v0.1.54` does not cross this fence; returning from it to `v0.1.53` does.
 - A storage-shape tripwire test (`src/ui/switch/storage-shape-tripwire.test.ts`) pins a hash of the files
   that define the on-disk shape (the entity schemas, the database's migrations, and the library's storage), so a storage change cannot ship without a deliberate schema bump or a
   `SCHEMA_BUMPS` entry.

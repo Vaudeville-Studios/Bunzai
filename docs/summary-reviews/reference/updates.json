@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/updates",
   "sourcePath": "docs/reference/updates.md",
-  "sourceHash": "sha256:3caf2c50b40106d69d7802f4eb627d91e20403877bee8c9682883b22121919f0",
-  "semanticSummaryHash": "sha256:771d0996768f0ab7b055e42b1237b3edccac079f76c2ef23e5e435b9550a81a8",
+  "sourceHash": "sha256:a79620245c3ab056442c1c5d7932614153c1590bba6a69237936d83b9432611e",
+  "semanticSummaryHash": "sha256:1b3bcb6d55c26cac7dd950a40ad0b1cdca118b5bbaedf53133ab8f89236bbc95",
   "verdict": "APPROVE",
-  "reviewer": "gpt-6.1-sol:/root/implementation_review",
-  "notes": "Markdown and sidecar match shared capped request parsing, GitHub fetch policy, staged verified downloads and storage rollback refusal. Historical proof labels and the absence of full live/packaged apply proof remain distinguished; no fresh verification is granted. Source-only review.",
-  "reviewedAt": "2026-10-02T01:04:45.911Z"
+  "reviewer": "root",
+  "notes": "Root independently reviewed the exact source and summary hashes; v0.1.54 fences strict old prompt readers while new readers accept attachment-free prompts.",
+  "reviewedAt": "2026-11-03T05:20:36.225Z"
 }

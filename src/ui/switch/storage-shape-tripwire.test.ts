@@ -488,8 +488,8 @@ async function shapeFiles(): Promise<string[]> {
 // 1-51 remain unchanged; older hosts refuse the unknown schema before writing. Root and engine
 // reviewed and approved this exact additive shape.
 // 2026-11-01: COMPATIBLE Core birth fingerprint v2 adds origin coverage and adopts valid v1 rows; shared uncut timestamp ownership emits identical message SQL. No migration or stored-column change.
-const PINNED_SHAPE_HASH = "556c09498d8feac7e5fdc869874e48d9bdbea2b3152b85e36eaa307287442595";
-
+// 2026-11-03: Optional prompt attachments remain readable by new hosts; strict old readers reject them, fenced at v0.1.54 in SCHEMA_BUMPS.
+const PINNED_SHAPE_HASH = "b9a2b9ce232a45b6c53002ec2da1296bb04f87683f7ab634dfad77c8c78b82fc";
 test("storage-shape tripwire: an on-disk shape change must be a deliberate, version-aware act", async () => {
   const h = createHash("sha256");
   const files = await shapeFiles();

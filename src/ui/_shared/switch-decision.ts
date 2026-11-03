@@ -16,6 +16,8 @@ export const SCHEMA_BUMPS: readonly string[] = [
   // The library moved from plain files into the encrypted library.db:
   // an older build would read the stale folder and never see anything written since.
   "v0.1.42",
+  // Older strict prompt readers reject attachments; new readers still accept attachment-free prompts.
+  "v0.1.54",
 ];
 
 /**

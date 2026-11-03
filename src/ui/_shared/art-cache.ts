@@ -63,6 +63,16 @@ export interface ArtCache {
 const statusError = (message: string, status: number): Error => Object.assign(new Error(message), { status });
 const definitive = (error: unknown): boolean => [404, 410].includes((error as { status?: unknown } | null)?.status as number);
 
+/** Read validated size metadata for one local uploaded asset without loading its body. */
+export async function readAssetSize(url: string, signal: AbortSignal): Promise<number> {
+  if (assetRouteSha(url.split("?")[0]!) === null) throw new Error("asset size lookup requires a local asset path");
+  const head = await apiFetch(url, { method: "HEAD", requireToken: false, signal });
+  if (!head.ok) throw statusError(`asset size lookup failed (${String(head.status)})`, head.status);
+  const size = head.headers.get("content-length");
+  if (size === null || !/^\d+$/.test(size) || !Number.isSafeInteger(Number(size))) throw new Error("asset size header is invalid");
+  return Number(size);
+}
+
 const defaultDeps = {
   fetchBlob: async (url) => {
     const res = await apiFetch(url, { requireToken: false });
@@ -73,11 +83,7 @@ const defaultDeps = {
   fetchAsset: async (url, signal, admit) => {
     const hashAsset = assetRouteSha(url.split("?")[0]!) !== null;
     if (hashAsset) {
-      const head = await apiFetch(url, { method: "HEAD", requireToken: false, signal });
-      if (!head.ok) throw statusError(`asset size lookup failed (${String(head.status)})`, head.status);
-      const size = head.headers.get("content-length");
-      if (size === null || !/^\d+$/.test(size)) throw new Error("asset size header is invalid");
-      if (Number(size) > ASSET_MAX_BYTES) throw new DirectAssetError(url);
+      if (await readAssetSize(url, signal) > ASSET_MAX_BYTES) throw new DirectAssetError(url);
     }
     const res = await apiFetch(url, { requireToken: false, signal });
     if (!res.ok) throw statusError(`asset fetch failed (${String(res.status)})`, res.status);

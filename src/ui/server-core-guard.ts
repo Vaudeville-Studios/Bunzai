@@ -4,7 +4,8 @@ import type { CoreSceneRecords } from "../stage/store/sqlite/core-record-store";
 import { INCOMPLETE_CORE_SCENE_MESSAGE } from "../studio/core-scene";
 import { err } from "./server-security";
 
-const ALLOWED = new Set(["start", "send", "turn", "stop", "review", "connection", "search", "rename", "delete", "favorite", "folder", "core-settings"]);
+// Backdrop is persisted presentation state on the host chat, outside the RP-Core session journal/config.
+const ALLOWED = new Set(["start", "send", "turn", "stop", "review", "connection", "search", "rename", "delete", "favorite", "folder", "core-settings", "backdrop"]);
 export async function coreWriteGuard(path: string, body: Record<string, unknown>, records?: CoreSceneRecords): Promise<Response | null> {
   if (!records || !path.startsWith("/api/chats/")) return null;
   const ids = [str(body.chatId), str(body.sceneId), str(body.id)];

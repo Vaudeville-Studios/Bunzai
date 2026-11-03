@@ -152,5 +152,5 @@
 - [Vision](docs/01-VISION.md): Simple for simple folk, an absolute unit for power users. Concretely, four people:
 - [Architecture](docs/02-ARCHITECTURE.md): Bunzai is a Bun and TypeScript application rooted in `src/`. The canonical engine is shared by three surfaces: the command-line interface, the loopback React Studio, and Kit's terminal interface. No surface owns a private format conversion
 - [Conventions](docs/03-CONVENTIONS.md): These are the repository's binding implementation rules. They describe current enforced practice, not an idealized future toolchain.
-- [Format support matrix](docs/FORMAT-SUPPORT.md): Auto-generated from live adapters (`bun run scripts/format-matrix.ts`). Canonical schema version: **1**. Generated: 2026-10-30.
+- [Format support matrix](docs/FORMAT-SUPPORT.md): Auto-generated from live adapters (`bun run scripts/format-matrix.ts`). Canonical schema version: **1**. Generated: 2026-11-03.
 - [Documentation](docs/README.md): Where every Bunzai document lives, from user guides and current references to accepted decisions, future specifications, and generated navigation.

@@ -30,7 +30,7 @@ export interface ReadFile {
 }
 
 /** Extensions any adapter could possibly eat; everything else is triaged out before the wire. */
-const CANDIDATE_EXTENSIONS = new Set(["json", "png", "charx", "risum", "jsonl", "zip"]);
+const CANDIDATE_EXTENSIONS = new Set(["json", "png", "jpg", "jpeg", "gif", "webp", "charx", "risum", "jsonl", "zip"]);
 
 /**
  * Sort a drop into files worth inspecting and files we can refuse by name alone. The server's

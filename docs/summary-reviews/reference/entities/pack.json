@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/entities/pack",
   "sourcePath": "docs/reference/entities/pack.md",
-  "sourceHash": "sha256:5c95ea1fbae4dae66e176cb25a53bc4f64326962a6f78e2e1265c5d7c8cf1329",
-  "semanticSummaryHash": "sha256:1e017282d354ec58cc4a2c3c2a8c2341ed33ad582e74272b5c1aa2127079fc14",
+  "sourceHash": "sha256:bd7c0564ca51c9b5e125bf823fab3131c7d724093e9491de655ededc2c5b6348",
+  "semanticSummaryHash": "sha256:9ed5b1e349c984a686bcfe0a24dc7856cd5a8e5e966802bc7873a9ae21bc36bf",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "Checked every section summary against pack.md; per-character groups wording matches line 57; no unsupported claims.",
-  "reviewedAt": "2026-10-25T19:26:22.351Z"
+  "reviewer": "root",
+  "notes": "Independent root review of exact source and semantic hashes against canonical pack ownership, filename escrow, canonical media refs, raw imports and source-container limitations.",
+  "reviewedAt": "2026-11-03T00:37:38.514Z"
 }

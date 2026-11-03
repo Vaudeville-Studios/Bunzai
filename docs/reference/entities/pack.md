@@ -13,11 +13,11 @@ A `CanonicalPack` is `CanonicalEntity<"pack", PackBody>`: the same stable canoni
 [architecture.md](../architecture.md)) every entity uses, around a `PackBody`. `src/entities/pack/schema.ts`
 is the source of truth for the `PackBody` type; this page is the source of truth for what each field means.
 
-Pack differs from character, lorebook, persona, and regex in one load-bearing way: it has no format
-adapter. No `toCanonical`/`fromCanonical` pair reads or writes a pack (see architecture.md, "The adapter
-contract"), and it does not appear in the formats coverage matrix ([formats/README.md](../formats/README.md)).
-A pack is authored directly in the studio, stored at `studio/pack/<id>.json`, and exists to hold one
-reusable expression/sprite pack so it can be attached to more than one character.
+Pack is also the canonical target of the `image-pack` adapter. It reads a ZIP of supported pictures and
+sounds, or a single supported raster image, into one reusable pack. A pack is stored at
+`studio/pack/<id>.json` and can be attached to more than one character. The adapter does not define
+external pack fields in the formats coverage matrix ([formats/README.md](../formats/README.md)); its
+input is normalized directly into the canonical pack shape.
 
 ## How to read the field table
 
@@ -26,9 +26,9 @@ verbatim. Do not hand-edit a cell: improve the schema doc comment and regenerate
 
 - **Field** is the canonical name. A trailing `?` marks an optional field.
 - **Type** is the TypeScript type in the schema.
-- **Producers** are the source formats named in the field's schema doc comment. Pack has no adapter, so
-  every Producers cell on this page reads `-`: the field is authored in the studio, not carried in from
-  a wire format.
+- **Producers** are the source formats named in the field's schema doc comment. A `-` means the schema
+  does not list a field-specific producer; the `image-pack` adapter still creates a canonical pack
+  from its supported import files.
 - **Meaning** is what the field is for. A blank Meaning cell is a self-evident primitive named by its own
   field; none occur on this page. Any richer explanation lives in the prose around the table, never
   inside a cell.
@@ -87,14 +87,12 @@ is the default group.
 
 ## What rides escrow, not a field
 
-Pack is never a `toCanonical`/`fromCanonical` target, so it never carries a foreign source payload to
-round-trip against. Every save path (the `PackEditor` room, the Workbench's "New pack", and "Save as
-library pack" from a character's Manage Sprites dialog) writes a bare `CanonicalEntity<"pack", PackBody>`
-with no `original` entry: `body` is the whole record.
+The `image-pack` adapter records imported member filenames in its `original` entry. The media bytes
+themselves become canonical item refs; the ZIP container is not retained. Studio-created packs still
+start as a bare `CanonicalEntity<"pack", PackBody>` with no `original` entry.
 
-Rides escrow: nothing. There is no wire format a pack round-trips against, so there is no app-local
-leftover to seal away, and the `original` escrow envelope defined in [architecture.md](../architecture.md)
-never gets populated for a pack entity.
+The only imported escrow is the list of filenames used by the image-pack import. It is descriptive
+metadata, not the source bytes or a promise of byte-identical container output.
 
 Does NOT ride escrow, because there is nothing for it to carry: an item's `ref` (a data URI, or a
 reference into the entity's asset store) is the image itself, authored inline, not a binary carrier kept
@@ -106,5 +104,5 @@ beside a canonical field the way a character's PNG `sourceMedia` carrier is. See
 - [architecture.md](../architecture.md): the canonical model, the adapter contract, escrow.
 - [entities/character.md](character.md): the `Media` section, and the character-attached form of this
   same `SpritePackValue` hub shape.
-- [formats/README.md](../formats/README.md): the coverage matrix; pack has no listed adapter because it
-  is studio-native.
+- [formats/README.md](../formats/README.md): the coverage matrix; pack import normalizes files directly
+  into the studio-native canonical shape rather than claiming external field coverage.

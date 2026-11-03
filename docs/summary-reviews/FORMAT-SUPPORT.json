@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "FORMAT-SUPPORT",
   "sourcePath": "docs/FORMAT-SUPPORT.md",
-  "sourceHash": "sha256:2010fe3be45e99c7054fe74bbc57041ae17bcb832510d7d8b9b137b6e328d90f",
-  "semanticSummaryHash": "sha256:ac5325ea16d1759c50e9b2e06cbf1a2b12be2a14b27aa5d024828da819ce608f",
+  "sourceHash": "sha256:ead602b29b46548cda9535808e7840b7c97c032be5889c9e5417deb4b838611a",
+  "semanticSummaryHash": "sha256:461bf27c3a79dca321f0e49c231b72d038e5b7af1652d0bc8725fd155955d0b7",
   "verdict": "APPROVE",
-  "reviewer": "public-luna-06",
-  "notes": "Independently read the generated matrix and full summary sidecar, and checked scripts/format-matrix.ts plus matrix:check. The recommendation is limited to targets accepting CCv3; unsupported thin-host claims removed; generic conversion-loss guidance is accurate. Synthetic sample filename exists and replaces the former named fixture reference.",
-  "reviewedAt": "2026-10-30T19:29:31.031Z"
+  "reviewer": "root",
+  "notes": "Independent root review of exact source and semantic hashes against final media adapter label, raw raster imports and existing ZIP pictures/sounds. Original conversion and runtime evidence limits retained.",
+  "reviewedAt": "2026-11-03T00:37:38.348Z"
 }

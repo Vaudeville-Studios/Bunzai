@@ -1016,10 +1016,13 @@ gathered on `options.html`). Scenes live in the encrypted library's ChatStore.
   with the reply (`Generation.reasoningMs`, `tagThinkingMs`); an import or an older reply has none and says "Native reasoning" or
   "Thought" with no number. The look is the `scene.reasoning` theme surface (src/ui/apps/scenes/variants/scene.reasoning); the Stage wing's Appearance tab switches its preferences.
 - **The backdrop.** The Stage wing's Backdrop row (where RoleCall keeps its background picker, the Stage settings panel's "The Stage")
-  shows the scene's picture or video and Change, or Pick when it has none; the picker is a dialog with None first, the chosen pack's
+  shows the scene's picture or video. Pick or Change opens the local image chooser; selected files or pictures dropped on the row
+  are saved through the pack's staged upload path and the first successful picture becomes this scene's backdrop. Choose from collection
+  opens the dialog with None first and the chosen pack's
   pictures and videos (a pack choice when the library holds more than one, a name filter), the overlay darkness (0 to 95%, RoleCall's
   "Overlay Darkness", 60% until moved), a blur (0 to 20 px, off until moved; the picture is drawn past the frame so the blurred edge stays covered), a video's speed (0.25x to 2x, RoleCall's "Video Speed") and Add image or video, which puts
-  new files into that pack through the pack editor's own staging (eight to a save). The pack is RoleCall's saved-backgrounds library:
+  new files into that pack through the pack editor's own staging (eight to a save); with no packs, Add image or drop creates one through
+  the same path. The pack is RoleCall's saved-backgrounds library:
   adding to it is "Save to library", removing is the pack editor's Remove. A pick is saved at once to this scene only (ChatStore rule 36:
   a pack, an item, the dim and the rate) and None undoes it. The picture covers the scene and is centered, under the messages and above
   the page's own backdrop; a video loops muted and holds still while the tab is hidden. The overlay is the theme's own surface color
@@ -1040,8 +1043,10 @@ gathered on `options.html`). Scenes live in the encrypted library's ChatStore.
   value; Context Mode (tokens or messages) swaps the context-size slider for Max Messages (0 to 1,000, default 50),
   whose footer reads "~N tokens (K of T)" from the same window function a send uses; prompt text typed here saves to the preset in the library, so every scene using it sends the
   new text on its next turn. A newer save elsewhere wins, and the wing says so and reloads. "Open in
-  Workbench" leads to the full editor. A scene whose preset left the library says so and offers the
-  picker; its turns are refused until another is chosen. Above the prompt list sits a collapsed Templates section, RoleCall's
+  Workbench" leads to the full editor. An unreadable or unsupported selected setup keeps its error
+  visible beside the writing-setup picker; the scene keeps its saved selection until another setup or
+  Run Without Preset is chosen. A scene whose preset left the library says so and offers the picker;
+  its turns are refused until another is chosen. Above the prompt list sits a collapsed Templates section, RoleCall's
   eight system prompts (Impersonation, New Chat, New Group Chat, New Example Chat, Continue Nudge, Group Nudge, Assistant Prefill,
   Assistant Impersonation): always listed, each showing "empty" or its size and opening into a text area that saves to the preset
   like prompt text, searchable with the prompt search. Today a request sends only Assistant Prefill and, for a continue on a model

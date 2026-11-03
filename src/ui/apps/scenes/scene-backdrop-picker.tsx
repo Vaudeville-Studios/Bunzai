@@ -5,7 +5,7 @@
  * image. Picking one hangs it on the scene at once; None undoes it. Differs from RoleCall in one way: RoleCall's
  * choices are presets, a personal library and a URL, while a Bunzai scene picks from a Sprite pack.
  */
-import { useEffect, useMemo, useRef, useState, type JSX } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent, type JSX } from "react";
 import type { AppContext, StudioEntitySummary } from "../../app-contract";
 import { InkDialog } from "../../components/ink-dialog";
 import { Slider } from "../../components/slider";
@@ -15,10 +15,11 @@ import { useDebouncedSave } from "../../_shared/use-debounced-value";
 import type { ChatBackdrop } from "../../../stage/contracts/chat-store";
 import { DEFAULT_DIM, MAX_BLUR, MAX_DIM, MAX_RATE, MIN_RATE, blurOf, dimOf, isVideoRef, rateOf } from "./scene-backdrop-core";
 import { Button, Tile } from "../../components/button";
-import { addImagesToPack, addLinkToPack } from "./scene-backdrop-add";
+import { addImagesToPack, addLinkToPack, createPackWithImages } from "./scene-backdrop-add";
 import { BackdropThumb } from "./scene-backdrop-layer";
 import { useBackdropPack } from "./use-backdrop-pack";
 import { VirtualShelf } from "../../_shared/virtual-list";
+import { isPackPictureName } from "../../../core/media/pack-picture";
 
 const GRID_ROW_PX = 90;
 
@@ -73,14 +74,24 @@ export function BackdropPicker({ ctx, backdrop, onPick, onClose }: {
   }, [shown, query]);
 
   const add = async (files: FileList | null): Promise<void> => {
-    if (!files || files.length === 0 || !packId) return;
+    if (!files || files.length === 0) return;
     setAdding(true);
     setNote(null);
-    const result = await addImagesToPack(ctx, packId, [...files].filter((f) => f.type.startsWith("image/") || f.type.startsWith("video/")));
-    shown.reload();
-    setNote(result.failed.length > 0 ? `Added ${String(result.added)}. Could not add: ${result.failed.join(", ")}.` : `Added ${String(result.added)}.`);
-    setAdding(false);
-    if (file.current) file.current.value = "";
+    try {
+      const accepted = [...files].filter((f) => isPackPictureName(f.name) || ["video/mp4", "video/webm", "video/quicktime"].includes(f.type));
+      const result = packId
+        ? { ...await addImagesToPack(ctx, packId, accepted), pack: undefined }
+        : await createPackWithImages(ctx, accepted);
+      if (!packId && result.pack) { setPacks((current) => [...(current ?? []), result.pack!]); setPackId(result.pack.id); }
+      shown.reload();
+      setNote(result.failed.length > 0 ? `Added ${String(result.added)}. Could not add: ${result.failed.join(", ")}.` : `Added ${String(result.added)}.`);
+    } catch (error) { setNote(`Could not add those files. ${toErrorMessage(error, "")}`.trim()); }
+    finally { setAdding(false); if (file.current) file.current.value = ""; }
+  };
+
+  const dropFiles = (event: DragEvent<HTMLElement>): void => {
+    event.preventDefault();
+    void add(event.dataTransfer.files);
   };
 
   const addLink = async (): Promise<void> => {
@@ -98,7 +109,13 @@ export function BackdropPicker({ ctx, backdrop, onPick, onClose }: {
     <InkDialog onDismiss={onClose} ariaLabel="Pick a backdrop" sheetClassName="bdk">
       <h2>Pick a backdrop</h2>
       {empty ? (
-        <p className="hint">Nothing in your collection to pick from. Make a pack in the Library, or import a zip of images there, then come back and pick one.</p>
+        <>
+          <p className="hint">Nothing in your collection to pick from yet. Add pictures here or drop them below to create a backdrop pack.</p>
+          <div className="gscroll" data-local-file-drop onDragOver={(e) => e.preventDefault()} onDrop={dropFiles}>
+            <p className="hint">Drop pictures here</p>
+          </div>
+          {note && <p className="hint" role="status">{note}</p>}
+        </>
       ) : (
         <>
           {packs && packs.length > 1 && packId && (
@@ -108,7 +125,7 @@ export function BackdropPicker({ ctx, backdrop, onPick, onClose }: {
             <input type="search" value={query} placeholder="Filter by name" aria-label="Filter by name" onChange={(e) => setQuery(e.target.value)} />
             <span className="hint">{shown.state === "ready" ? `${String(shown.pack.items.length)} ${shown.pack.items.length === 1 ? "picture" : "pictures"}` : ""}</span>
           </div>
-          <div className="gscroll" role="listbox" aria-label="Backdrops">
+          <div className="gscroll" data-local-file-drop role="listbox" aria-label="Backdrops" onDragOver={(e) => e.preventDefault()} onDrop={dropFiles}>
             <VirtualShelf items={items} keyOf={(i) => i.id} rowClass="grow" estimate={GRID_ROW_PX}
               head={
                 <Tile kind="thumb" size="fill" role="option" aria-selected={!backdrop} selected={!backdrop} label="None" art="None" onClick={() => pickNow(null)} />
@@ -147,12 +164,8 @@ export function BackdropPicker({ ctx, backdrop, onPick, onClose }: {
         </>
       )}
       <div className="actions">
-        {!empty && packId && (
-          <>
-            <input ref={file} type="file" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple hidden onChange={(e) => void add(e.target.files)} />
-            <Button onClick={() => file.current?.click()} disabled={adding}>{adding ? "Adding..." : "Add image or video"}</Button>
-          </>
-        )}
+        <input ref={file} type="file" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple hidden aria-label="Add backdrop media to collection" onChange={(e) => void add(e.target.files)} />
+        <Button onClick={() => file.current?.click()} disabled={adding}>{adding ? "Adding..." : "Add image or video"}</Button>
         <Button variant="primary" onClick={onClose}>Done</Button>
       </div>
     </InkDialog>

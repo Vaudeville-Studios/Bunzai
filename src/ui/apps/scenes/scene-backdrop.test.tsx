@@ -72,6 +72,68 @@ describe("the Stage wing's Backdrop row", () => {
     unmount(flushSync);
   });
 
+  test("Pick opens the local image chooser directly, while collection browsing stays separate", async () => {
+    const flushSync = await mount(makeCtx({ packs: [] }), chatOf());
+    try {
+      const input = host.querySelector<HTMLInputElement>('input[type="file"][aria-label="Add backdrop pictures"]');
+      expect(input).not.toBeNull();
+      let opened = 0;
+      Object.defineProperty(input, "click", { configurable: true, value: () => { opened++; } });
+      flushSync(() => named("Pick")!.click());
+      expect(opened).toBe(1);
+      expect(named("Choose from collection")).toBeDefined();
+      expect(host.querySelector('[aria-label="Pick a backdrop"]')).toBeNull();
+    } finally { unmount(flushSync); }
+  });
+
+  test("picking a local image creates a pack, adopts its staged receipt, and selects its saved item", async () => {
+    const ctx = makeCtx({ packs: [] });
+    const api = ctx.api as unknown as Record<string, (...args: never[]) => unknown>;
+    const upload = { ref: "receipt-one", asset: `\u0000b:u:image/jpeg:${"a".repeat(64)}`, mime: "image/jpeg", bytes: 12 };
+    const adopted: { refs: string[]; body?: unknown }[] = [];
+    api.saveEntity = async () => ({ id: "fresh-pack", kind: "pack", name: "Backdrops", accent: "" });
+    api.uploadAsset = async () => upload;
+    api.getLightEditableEntity = async () => ({ entity: { ...packEntity, id: "fresh-pack", body: { name: "Backdrops", pack: { items: [] } } }, revision: "r1" });
+    api.patchEditedEntity = async (_kind, _id, _rev, patch, refs) => {
+      adopted.push({ refs: refs as string[], body: patch });
+      return { revision: "r2" };
+    };
+    api.deleteEntity = async () => ({ deleted: true });
+    const flushSync = await mount(ctx, chatOf());
+    try {
+      const input = host.querySelector<HTMLInputElement>('input[type="file"][aria-label="Add backdrop pictures"]')!;
+      Object.defineProperty(input, "files", { configurable: true, value: [new dom.window.File(["image"], "Harbor.jpg", { type: "image/jpeg" })] });
+      flushSync(() => input.dispatchEvent(new dom.window.Event("change", { bubbles: true })));
+      await settle(flushSync);
+      expect(adopted).toHaveLength(1);
+      expect(adopted[0]!.refs).toEqual(["receipt-one"]);
+      expect(saved).toHaveLength(1);
+      expect(saved[0]?.pack).toBe("fresh-pack");
+      expect(typeof saved[0]?.item).toBe("string");
+    } finally { unmount(flushSync); }
+  });
+
+  test("a newly created pack is cleaned up if saving the scene backdrop fails", async () => {
+    const ctx = makeCtx({ packs: [] });
+    const api = ctx.api as unknown as Record<string, (...args: never[]) => unknown>;
+    let deleted = "";
+    api.saveEntity = async () => ({ id: "fresh-pack", kind: "pack", name: "Backdrops", accent: "" });
+    api.uploadAsset = async () => ({ ref: "receipt-one", asset: `\u0000b:u:image/jpeg:${"a".repeat(64)}`, mime: "image/jpeg", bytes: 12 });
+    api.getLightEditableEntity = async () => ({ entity: { ...packEntity, id: "fresh-pack", body: { name: "Backdrops", pack: { items: [] } } }, revision: "r1" });
+    api.patchEditedEntity = async () => ({ revision: "r2" });
+    api.deleteEntity = async (_kind, id) => { deleted = id as string; return { deleted: true }; };
+    api.setSceneBackdrop = async () => { throw new Error("host refused the scene setting"); };
+    const flushSync = await mount(ctx, chatOf());
+    try {
+      const input = host.querySelector<HTMLInputElement>('input[type="file"][aria-label="Add backdrop pictures"]')!;
+      Object.defineProperty(input, "files", { configurable: true, value: [new dom.window.File(["image"], "Harbor.jpg", { type: "image/jpeg" })] });
+      flushSync(() => input.dispatchEvent(new dom.window.Event("change", { bubbles: true })));
+      await settle(flushSync);
+      expect(deleted).toBe("fresh-pack");
+      expect(host.textContent).toContain("Could not change the backdrop");
+    } finally { unmount(flushSync); }
+  });
+
   test("a scene whose pack is gone says the theme's own look shows, and offers Change", async () => {
     const gone = makeCtx({ entity: async () => { throw new ApiHttpError(404, "not found"); } });
     const flushSync = await mount(gone, chatOf({ pack: "st", item: "a" }));
@@ -98,7 +160,7 @@ describe("the picker", () => {
     const items = Array.from({ length: 500 }, (_, i) => ({ id: `p${String(i)}`, label: `Picture ${String(i)}`, ref: sentinel(i + 1) }));
     const big = makeCtx({ entity: async () => ({ entity: { ...packEntity, body: { name: "Backdrops", pack: { items } } }, revision: "r1" }) });
     const flushSync = await mount(big, chatOf());
-    flushSync(() => named("Pick")!.click());
+    flushSync(() => named("Choose from collection")!.click());
     await settle(flushSync);
     const tiles = dom.window.document.querySelectorAll('[role="option"]').length;
     expect(tiles).toBeGreaterThan(1);
@@ -108,7 +170,7 @@ describe("the picker", () => {
 
   test("lists None first and the pack's pictures, and a pick is saved at once with its pack and item", async () => {
     const flushSync = await mount(makeCtx(), chatOf());
-    flushSync(() => named("Pick")!.click());
+    flushSync(() => named("Choose from collection")!.click());
     await settle(flushSync);
     const tiles = [...dom.window.document.querySelectorAll('[role="option"]')];
     expect(tiles.map((t) => t.textContent?.trim())).toEqual(["None", "Harbor", "Tavern"]);
@@ -120,7 +182,7 @@ describe("the picker", () => {
 
   test("None forgets the pick", async () => {
     const flushSync = await mount(makeCtx(), chatOf({ pack: "st", item: "a" }));
-    flushSync(() => named("Change")!.click());
+    flushSync(() => named("Choose from collection")!.click());
     await settle(flushSync);
     flushSync(() => (dom.window.document.querySelector('[role="option"]') as HTMLElement).click());
     await settle(flushSync);
@@ -130,9 +192,12 @@ describe("the picker", () => {
 
   test("with no pack in the library it says so instead of showing an empty grid", async () => {
     const flushSync = await mount(makeCtx({ packs: [] }), chatOf());
-    flushSync(() => named("Pick")!.click());
+    flushSync(() => named("Choose from collection")!.click());
     await settle(flushSync);
-    expect(dom.window.document.body.textContent).toContain("Nothing in your collection to pick from.");
+    expect(dom.window.document.body.textContent).toContain("Nothing in your collection to pick from yet.");
+    expect(dom.window.document.querySelector('input[type="file"][aria-label="Add backdrop media to collection"]')).not.toBeNull();
+    expect(all().some((b) => b.textContent?.includes("Add image or video"))).toBe(true);
+    expect(dom.window.document.body.textContent).toContain("Drop pictures here");
     expect(dom.window.document.querySelector('[role="option"]')).toBeNull();
     unmount(flushSync);
   });

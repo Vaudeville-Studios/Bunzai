@@ -37,9 +37,11 @@ const PRESET_ROW_PX = 52;
 
 /** How the tab reads in the fold: "14 of 22 on", or that none is chosen. */
 export function presetTabMeta(chat: Chat, body: PresetBody | null): string {
-  if (!chat.preset || !body) return "None chosen";
+  if (!chat.preset) return "None chosen";
+  const setup = kindOf(chat.preset.kind);
+  if (!body) return "Not loaded";
   // a setup that is not a preset reads as its kind ("Script Sheet"): its blocks are not switched here
-  if (chat.preset.kind !== "preset") return kindOf(chat.preset.kind)?.singular ?? chat.preset.kind;
+  if (chat.preset.kind !== "preset") return setup?.singular ?? chat.preset.kind;
   const groups = toChoiceGroups(body.choices);
   const toggles = effectiveToggles(groups, resolveSelections(groups, chat.regex?.choices?.[chat.preset.id]), chat.preset.toggles);
   const on = body.prompts.filter((p) => toggles[p.id] ?? p.enabled).length;
@@ -115,17 +117,6 @@ export function PresetWing({ ctx, chat, text, onChanged }: { ctx: AppContext; ch
 
   if (loaded.state === "loading") return <div className="wbody pp"><div className="ed-empty">Loading the preset...</div></div>;
 
-  if (loaded.state === "failed") {
-    return (
-      <div className="wbody pp">
-        <div className="pp-top">
-          <header className="hero bad"><span className="hi"><Ic name="mdi:alert-octagon-outline" size={20} /></span><div><div className="eb">Preset Error</div><h2>Could not <em>load</em></h2><p>The preset could not be read: {loaded.why}.</p></div></header>
-          <div className="hero-tools"><IconButton variant="quiet" size="sm" icon="lucide:refresh-cw" label="Try again" onClick={() => void load(chat.preset ?? null)} /></div>
-        </div>
-      </div>
-    );
-  }
-
   if (loaded.state === "ready" && own && !switching && loaded.entity.kind === "scriptsheet") {
     const body = loaded.entity.body;
     const raw = loaded.raw.body as ScriptSheetBody;
@@ -170,10 +161,14 @@ export function PresetWing({ ctx, chat, text, onChanged }: { ctx: AppContext; ch
       <div className="pp-top">
         {loaded.state === "gone" ? (
           <header className="hero bad"><span className="hi"><Ic name="mdi:alert-octagon-outline" size={20} /></span><div><div className="eb">Preset Error</div><h2>Preset <em>Unavailable</em></h2><p>This scene&apos;s preset is no longer in your library. Choose another, or restore it from the Trash.</p></div></header>
+        ) : loaded.state === "failed" ? (
+          <header className="hero bad"><span className="hi"><Ic name="mdi:alert-octagon-outline" size={20} /></span><div><div className="eb">Preset Error</div><h2>Could not <em>load</em></h2><p>The preset could not be read: {loaded.why}. Choose another writing setup below, or run without a preset.</p></div></header>
         ) : (
           <header className="hero"><span className="hi"><Ic name="mdi:tune" size={20} /></span><div><div className="eb">{switching ? "Switch Preset" : "Select Preset"}</div><h2>Choose a <em>Preset</em></h2><p>Pick a recipe from your library to load prompts and sampler defaults for this scene. Without one, the scene sends the card, persona, and history in RoleCall&apos;s default order.</p></div></header>
         )}
-        {switching && <div className="hero-tools"><IconButton variant="quiet" size="sm" icon="lucide:chevron-left" label="Back to editing" onClick={() => void pick(chat.preset ?? null)} /></div>}
+        {(switching || loaded.state === "failed") && <div className="hero-tools">
+          {switching ? <IconButton variant="quiet" size="sm" icon="lucide:chevron-left" label="Back to editing" onClick={() => void pick(chat.preset ?? null)} /> : <IconButton variant="quiet" size="sm" icon="lucide:refresh-cw" label="Try again" onClick={() => void load(chat.preset ?? null)} />}
+        </div>}
       </div>
       {note?.kind === "failed" && <div className="note">{note.text}</div>}
       <div className="picker">

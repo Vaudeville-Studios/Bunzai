@@ -58,7 +58,7 @@ const FRIENDLY: Record<string, string> = {
   "sillytavern-chat": "SillyTavern",
   "lumiverse-persona": "Lumiverse",
   "marinara-persona": "Marinara",
-  "image-pack": "Picture zip",
+  "image-pack": "Media pack",
 };
 
 export const friendlyFormat = (formatId: string): string => FRIENDLY[formatId] ?? formatId;

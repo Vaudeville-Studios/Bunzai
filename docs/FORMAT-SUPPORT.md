@@ -2,7 +2,7 @@
 
 Auto-generated from live adapters (`bun run scripts/format-matrix.ts`).
 Canonical schema version: **1**.
-Generated: 2026-10-30.
+Generated: 2026-11-03.
 
 ## How to use
 
@@ -59,7 +59,7 @@ Portable character format for targets that accept Character Card v3:
 
 | id | kind | writes | label |
 | --- | --- | --- | --- |
-| `image-pack` | pack | .zip | Pack (zip of pictures and sounds) |
+| `image-pack` | pack | .zip | Media pack (ZIP pictures/sounds or raster picture) |
 
 ## Presets (4)
 

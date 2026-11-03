@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "docId": "FORMAT-SUPPORT",
   "sourcePath": "docs/FORMAT-SUPPORT.md",
-  "sourceHash": "sha256:2010fe3be45e99c7054fe74bbc57041ae17bcb832510d7d8b9b137b6e328d90f",
-  "summary": "Auto-generated format support matrix from the live adapter registry, grouped by canonical content kind, in the kind hub's order and names, with adapter id, output extensions, and human label. It documents CLI listing, inspection, conversion, and validation, with SillyTavern CCv3 as a portable format for targets that accept Character Card v3. The current registry has eleven character, nine lorebook, four persona, one pack, four preset, one Script Sheet, five regex-set, one quick-reply and one prompt-format adapter. The pack adapter, image-pack, writes a zip of pictures and sounds. Tools (kind tool), dice (kind dice), formulas (kind formula), trackers (kind tracker), skills (kind skill) and drawings (kind htmldoc) have no import or export format yet, and their sections say so. Notes explain content-sniff detection, fixture-proven same-format round trips, honest cross-format loss reporting, and sample locations. Because the page is generated, counts and rows change only with the registry. Native Bunzai Promptbook and Agent adapters now read and write canonical JSON; these preserve reference IDs rather than embedding linked pieces.",
+  "sourceHash": "sha256:ead602b29b46548cda9535808e7840b7c97c032be5889c9e5417deb4b838611a",
+  "summary": "Auto-generated format support matrix from the live adapter registry, grouped by canonical content kind, in the kind hub's order and names, with adapter id, output extensions, and human label. It documents CLI listing, inspection, conversion, and validation, with SillyTavern CCv3 as a portable format for targets that accept Character Card v3. The current registry has eleven character, nine lorebook, four persona, one pack, four preset, one Script Sheet, five regex-set, one quick-reply and one prompt-format adapter. The pack adapter, image-pack, is labeled Media pack (ZIP pictures/sounds or raster picture) and writes ZIP output. Tools (kind tool), dice (kind dice), formulas (kind formula), trackers (kind tracker), skills (kind skill) and drawings (kind htmldoc) have no import or export format yet, and their sections say so. Notes explain content-sniff detection, fixture-proven same-format round trips, honest cross-format loss reporting, and sample locations. Because the page is generated, counts and rows change only with the registry. Native Bunzai Promptbook and Agent adapters now read and write canonical JSON; these preserve reference IDs rather than embedding linked pieces.",
   "topics": [
     "format support matrix",
     "live adapter registry",
@@ -89,8 +89,8 @@
       "slug": "packs-1",
       "title": "Packs (1)",
       "level": 2,
-      "sourceHash": "sha256:87fed282df49fd02020956374f4d349a75621f961c35d34686758aa7638199cf",
-      "summary": "Packs (1): the live matrix lists one pack adapter, image-pack, kind pack, which writes .zip files and is labeled Pack (zip of pictures and sounds). The row is derived from the registered adapter, so the section count, id, kind, written extension and label change only when the runtime registry changes, as for every section of this generated page.",
+      "sourceHash": "sha256:e5dd4e2852a0959050e9b8d33ad0084ecd448f7e7c39f235015d3a353b341d5b",
+      "summary": "The Packs table lists one registered adapter, image-pack, with canonical kind pack and ZIP output. Its current label is Media pack (ZIP pictures/sounds or raster picture), indicating the import choices while the writes column describes export. The row and count come from the live adapter registry rather than a manually maintained list. This matrix reports format availability; detailed media limits and pack semantics belong to the relevant adapter and entity references.",
       "topics": [
         "image-pack adapter",
         "zip of pictures and sounds",

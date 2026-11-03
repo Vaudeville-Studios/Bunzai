@@ -1287,7 +1287,7 @@ Tests are left out. For what a project word means, see [the glossary](../referen
 
 ## src/formats/image-pack/
 
-- `index.ts`: Image pack codec: a ZIP of pictures (and nothing else) read into a Sprite pack, one item per image, labeled by file name.
+- `index.ts`: Image pack codec: one supported raster image or a ZIP of pictures (and nothing else) reads into a Sprite pack, one item per image, labeled by file name.
 
 ## src/formats/janitor/
 

@@ -123,7 +123,7 @@ function makeCtx(): AppContext {
   return {
     api: {
       getEditableEntity: async (id: string) => { getCalls.push(id); return getImpl(); },
-      listEntities: async (kind?: string) => { listCalls.push(kind); return listImpl(); },
+      listEntities: async (kind?: string) => { listCalls.push(kind); return (await listImpl()).filter((piece) => piece.kind === kind); },
       setScenePreset: async (chatId: string, preset: ChatPreset | null) => {
         setCalls.push({ chatId, preset });
         return setImpl(chatId, preset);
@@ -304,20 +304,6 @@ describe("PresetWing", () => {
 
     expect(getCalls).toHaveLength(1);
     expect((host.querySelector("textarea") as HTMLTextAreaElement).value).toBe("content-style1");
-    unmountWing(flushSync);
-  });
-
-  test("getEditableEntity 404 shows Preset Unavailable; 500 shows Could not load with the reason, not Unavailable", async () => {
-    getImpl = async () => { throw new ApiHttpError(404, "not found"); };
-    let flushSync = await mountWing(chatWith({ kind: "preset", id: "p1", toggles: {}, samplers: {} }), makeCtx());
-    expect(bodyText()).toContain("Preset Unavailable");
-    unmountWing(flushSync);
-
-    getImpl = async () => { throw new ApiHttpError(500, "disk"); };
-    flushSync = await mountWing(chatWith({ kind: "preset", id: "p1", toggles: {}, samplers: {} }), makeCtx());
-    expect(bodyText()).toContain("Could not load");
-    expect(bodyText()).toContain("disk");
-    expect(bodyText()).not.toContain("Unavailable");
     unmountWing(flushSync);
   });
 

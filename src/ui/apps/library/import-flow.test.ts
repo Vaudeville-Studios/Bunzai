@@ -77,6 +77,10 @@ describe("triageFiles: an ST backups folder sorts itself before the wire", () =>
     const files = [
       new File(["{}"], "card.json"),
       new File([""], "portrait.png"),
+      new File([""], "harbor.JPG"),
+      new File([""], "room.jpeg"),
+      new File([""], "lake.webp"),
+      new File([""], "animated.gif"),
       new File([""], "pack.charx"),
       new File([""], "set.risum"),
       new File([""], "chat 1.jsonl"),
@@ -87,7 +91,7 @@ describe("triageFiles: an ST backups folder sorts itself before the wire", () =>
     const big = new File([""], "huge.json");
     Object.defineProperty(big, "size", { value: 65 * 1024 * 1024 });
     const { candidates, skipped } = triageFiles([...files, big]);
-    expect(candidates.map((f) => f.name)).toEqual(["card.json", "portrait.png", "pack.charx", "set.risum", "chat 1.jsonl", "chat 2.jsonl"]);
+    expect(candidates.map((f) => f.name)).toEqual(["card.json", "portrait.png", "harbor.JPG", "room.jpeg", "lake.webp", "animated.gif", "pack.charx", "set.risum", "chat 1.jsonl", "chat 2.jsonl"]);
     const reasons = new Map(skipped.map((s) => [s.filename, s.result.error]));
     expect(reasons.has("chat 1.jsonl")).toBe(false);
     expect(reasons.get("theme.css")).toContain(".css");

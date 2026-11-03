@@ -1,5 +1,7 @@
-/** The image-pack codec: claims a ZIP of pictures only, reads one item per picture, and never claims a card or a backup. */
+/** The image-pack codec: reads raw rasters or picture ZIPs, and never claims a card or a backup. */
 import { beforeAll, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { strToU8, unzipSync, zipSync } from "fflate";
 import { loadFormats } from "../../core";
 import { IMAGE_MAX_BYTES } from "../../core/media/image-limit";
@@ -51,6 +53,54 @@ test("through the import door: a ZIP of pictures inspects as a pack, and a card 
   expect(ok.ok).toBe(true);
   if (ok.ok) { expect(ok.kind).toBe("pack"); expect(ok.formatId).toBe("image-pack"); }
   expect(inspectBytes(zip({ "card.json": strToU8("{}") }), "x.zip").ok).toBe(false);
+});
+
+test("a raw raster image imports as one pack item, while a real PNG card remains a character", () => {
+  const jpeg = new Uint8Array(readFileSync(join(import.meta.dir, "../../../docs/media/chat-layouts/basic.jpg")));
+  const raw = inspectBytes(jpeg, "Harbor.JPG");
+  expect(raw.ok).toBe(true);
+  if (raw.ok) {
+    expect(raw.kind).toBe("pack");
+    expect(raw.formatId).toBe("image-pack");
+    expect((raw.entity as { body: { pack: { items: { label: string; mime?: string; ref: string }[] } } }).body.pack.items[0]).toMatchObject({ label: "Harbor", mime: "image/jpeg", ref: `data:image/jpeg;base64,${Buffer.from(jpeg).toString("base64")}` });
+  }
+  const card = readFileSync(join(import.meta.dir, "../../../samples/sillytavern/characters/synthetic-character.png"));
+  const importedCard = inspectBytes(new Uint8Array(card), "synthetic-character.png");
+  expect(importedCard.ok).toBe(true);
+  if (importedCard.ok) expect(importedCard.kind).toBe("character");
+});
+
+test("plain-image fallback validates complete raster structure and a matching extension", () => {
+  const gif = Uint8Array.from(Buffer.from("R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==", "base64"));
+  const webp = new Uint8Array(readFileSync(join(import.meta.dir, "../../../docs/media/preroll-symbols/alan-wake-v2.webp")));
+  const jpeg = new Uint8Array(readFileSync(join(import.meta.dir, "../../../docs/media/chat-layouts/basic.jpg")));
+  expect(imagePack.detect({ filename: "pixel.gif", bytes: gif })).toBeGreaterThanOrEqual(0.5);
+  expect(imagePack.detect({ filename: "photo.webp", bytes: webp })).toBeGreaterThanOrEqual(0.5);
+  expect(imagePack.detect({ filename: "photo.png", bytes: new Uint8Array([0x89, 0x50, 0x4e, 0x47]) })).toBe(0);
+  expect(imagePack.detect({ filename: "photo.png", bytes: new Uint8Array([0xff, 0xd8, 0xff, 1, 2, 3]) })).toBe(0);
+  expect(imagePack.detect({ filename: "photo.svg", bytes: new Uint8Array([0xff, 0xd8, 0xff, 1, 2, 3]) })).toBe(0);
+  expect(imagePack.detect({ filename: "broken.jpg", bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xda, 0, 8, 1, 2, 3, 4, 0xff, 0xd9]) })).toBe(0);
+  expect(imagePack.detect({ filename: "truncated.jpg", bytes: jpeg.slice(0, -2) })).toBe(0);
+  expect(imagePack.detect({ filename: "truncated.gif", bytes: gif.slice(0, -1) })).toBe(0);
+  expect(imagePack.detect({ filename: "truncated.webp", bytes: webp.slice(0, -1) })).toBe(0);
+  expect(imagePack.detect({ filename: "misnamed.webp", bytes: jpeg })).toBe(0);
+  const headerOnlyWebp = new Uint8Array(30);
+  headerOnlyWebp.set(Buffer.from("RIFF"));
+  new DataView(headerOnlyWebp.buffer).setUint32(4, 22, true);
+  headerOnlyWebp.set(Buffer.from("WEBPVP8X"), 8);
+  new DataView(headerOnlyWebp.buffer).setUint32(16, 10, true);
+  expect(imagePack.detect({ filename: "header-only.webp", bytes: headerOnlyWebp })).toBe(0);
+  const invalidCodeSize = gif.slice();
+  invalidCodeSize[37] = 255;
+  expect(imagePack.detect({ filename: "invalid-code-size.gif", bytes: invalidCodeSize })).toBe(0);
+});
+
+test("a raw image over the shared picture limit is recognized and refused with the limit", () => {
+  const oversized = new Uint8Array(IMAGE_MAX_BYTES + 1);
+  oversized.set([0xff, 0xd8, 0xff, 0xda, 0, 8, 1, 2, 3, 4]);
+  oversized.set([0xff, 0xd9], oversized.length - 2);
+  expect(imagePack.detect({ filename: "huge.jpg", bytes: oversized })).toBeGreaterThanOrEqual(0.5);
+  expect(() => imagePack.toCanonical({ filename: "huge.jpg", bytes: oversized })).toThrow(/too large.*10 MB/i);
 });
 
 test("two pictures that share a name are both read, and both written back as separate files", () => {

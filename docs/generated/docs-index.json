@@ -1425,10 +1425,10 @@
       "path": "docs/FORMAT-SUPPORT.md",
       "title": "Format support matrix",
       "audience": "dev",
-      "summary": "Auto-generated from live adapters (`bun run scripts/format-matrix.ts`). Canonical schema version: **1**. Generated: 2026-10-30.",
+      "summary": "Auto-generated from live adapters (`bun run scripts/format-matrix.ts`). Canonical schema version: **1**. Generated: 2026-11-03.",
       "tags": [],
       "related": [],
-      "semanticSummary": "Auto-generated format support matrix from the live adapter registry, grouped by canonical content kind, in the kind hub's order and names, with adapter id, output extensions, and human label. It documents CLI listing, inspection, conversion, and validation, with SillyTavern CCv3 as a portable format for targets that accept Character Card v3. The current registry has eleven character, nine lorebook, four persona, one pack, four preset, one Script Sheet, five regex-set, one quick-reply and one prompt-format adapter. The pack adapter, image-pack, writes a zip of pictures and sounds. Tools (kind tool), dice (kind dice), formulas (kind formula), trackers (kind tracker), skills (kind skill) and drawings (kind htmldoc) have no import or export format yet, and their sections say so. Notes explain content-sniff detection, fixture-proven same-format round trips, honest cross-format loss reporting, and sample locations. Because the page is generated, counts and rows change only with the registry. Native Bunzai Promptbook and Agent adapters now read and write canonical JSON; these preserve reference IDs rather than embedding linked pieces.",
+      "semanticSummary": "Auto-generated format support matrix from the live adapter registry, grouped by canonical content kind, in the kind hub's order and names, with adapter id, output extensions, and human label. It documents CLI listing, inspection, conversion, and validation, with SillyTavern CCv3 as a portable format for targets that accept Character Card v3. The current registry has eleven character, nine lorebook, four persona, one pack, four preset, one Script Sheet, five regex-set, one quick-reply and one prompt-format adapter. The pack adapter, image-pack, is labeled Media pack (ZIP pictures/sounds or raster picture) and writes ZIP output. Tools (kind tool), dice (kind dice), formulas (kind formula), trackers (kind tracker), skills (kind skill) and drawings (kind htmldoc) have no import or export format yet, and their sections say so. Notes explain content-sniff detection, fixture-proven same-format round trips, honest cross-format loss reporting, and sample locations. Because the page is generated, counts and rows change only with the registry. Native Bunzai Promptbook and Agent adapters now read and write canonical JSON; these preserve reference IDs rather than embedding linked pieces.",
       "topics": [
         "format support matrix",
         "live adapter registry",
@@ -1506,7 +1506,7 @@
           "text": "Packs (1)",
           "slug": "packs-1",
           "level": 2,
-          "summary": "Packs (1): the live matrix lists one pack adapter, image-pack, kind pack, which writes .zip files and is labeled Pack (zip of pictures and sounds). The row is derived from the registered adapter, so the section count, id, kind, written extension and label change only when the runtime registry changes, as for every section of this generated page.",
+          "summary": "The Packs table lists one registered adapter, image-pack, with canonical kind pack and ZIP output. Its current label is Media pack (ZIP pictures/sounds or raster picture), indicating the import choices while the writes column describes export. The row and count come from the live adapter registry rather than a manually maintained list. This matrix reports format availability; detailed media limits and pack semantics belong to the relevant adapter and entity references.",
           "topics": [
             "image-pack adapter",
             "zip of pictures and sounds",
@@ -7021,14 +7021,14 @@
         "reference/architecture",
         "reference/entities/character"
       ],
-      "semanticSummary": "Pack entity is the field-meaning authority for CanonicalPack as CanonicalEntity pack PackBody, a studio-only reusable expression sprite pack with no format adapter, no toCanonical fromCanonical, and no formats matrix row. schema.ts owns the PackBody type; this page owns meanings. How to read the field table notes every Producers cell is dash because fields are studio-authored not wire-imported. Composition is a flat name brief pack and optional groups map with no eight-group CharacterBody layout. Pack body table covers library name shelf brief the main SpritePackValue pack and per-character groups. The sprite pack hub shape defines SpritePackValue and SpritePackItem in core media pack.ts shared with character media.assets role emotion including resolvePackFace defaults. What rides escrow, not a field states packs never carry original escrow. See also links architecture character Media and formats matrix.",
+      "semanticSummary": "A pack is a reusable canonical library entity shared with character sprite assets. PackBody has a library name, optional shelf brief, a SpritePackValue and optional named groups. The schema owns its types, while this reference explains field meaning and embeds generated field tables. The image-pack adapter imports a supported raster image or a ZIP of supported pictures and sounds, and writes ZIP output. Imported filenames are recorded in original metadata; the original ZIP container is not retained. Media lives in canonical item refs, which may be inline data or references to stored assets. Studio-created packs begin without imported escrow. SpritePackValue defines item identities, labels, media references, optional MIME types, a pack-wide enabled flag and a default face. Character media and standalone packs use the same hub shape. Audio items use the larger media cap and bounded Range serving. The page distinguishes canonical media from source-container escrow and avoids claiming byte-identical ZIP output.",
       "topics": [
-        "CanonicalPack studio-only",
+        "CanonicalPack reusable library entity",
         "PackBody fields",
         "SpritePackValue hub",
         "expression sprite pack",
         "groups multi-character",
-        "no format adapter",
+        "image-pack import and ZIP export",
         "studio/pack storage"
       ],
       "anchors": [
@@ -7036,12 +7036,12 @@
           "text": "How to read the field table",
           "slug": "how-to-read-the-field-table",
           "level": 2,
-          "summary": "The field table is generated by scripts/docs-fields.ts and embedded verbatim; never hand-edit a cell, improve the schema doc comment and regenerate. Field is the canonical name with trailing question mark for optional. Type is the schema TypeScript type. Producers are always dash on this page because pack has no adapter and fields are studio-authored not carried from a wire format. Meaning explains purpose; blank meaning cells do not occur here. Richer explanation lives only in surrounding prose never inside a cell.",
+          "summary": "The field table is generated from schema documentation by scripts/docs-fields.ts and embedded verbatim. Changes belong in schema comments followed by regeneration. Field names mark optional entries with a question mark, and types come from TypeScript. Producers names formats declared by each field comment; a dash means no field-specific producer is listed. It does not mean the image-pack adapter cannot create the entity from supported files. Meaning describes each field, while broader explanations remain in surrounding prose. No table cell is maintained independently.",
           "topics": [
             "generated field table",
-            "Producers always dash",
+            "schema-declared field producers",
             "no hand-edit cells",
-            "studio-authored fields"
+            "canonical imported and authored fields"
           ],
           "children": []
         },
@@ -7089,12 +7089,12 @@
           "text": "What rides escrow, not a field",
           "slug": "what-rides-escrow-not-a-field",
           "level": 2,
-          "summary": "Pack is never a toCanonical fromCanonical target so it never carries a foreign source payload. Every save path PackEditor Workbench New pack and Save as library pack from Manage Sprites writes bare CanonicalEntity pack PackBody with no original entry; body is the whole record. Rides escrow nothing because there is no wire format and original never populates. Item refs are authored inline data URIs or asset store references not binary carriers beside fields like character PNG sourceMedia.",
+          "summary": "The image-pack adapter records imported member filenames in the original entry. It converts media bytes into canonical item references and does not retain the ZIP container. Studio-created packs still begin as bare canonical entities without original metadata. Imported escrow is therefore descriptive filename metadata, not a saved source archive or a promise of byte-identical ZIP output. Inline data URIs and asset-store references hold the media itself; they are not separate binary source carriers beside canonical fields. The source filenames describe the import only.",
           "topics": [
-            "no original escrow",
-            "bare CanonicalEntity save",
-            "ref is the image",
-            "no wire round-trip"
+            "imported filename escrow",
+            "studio-created entity without original",
+            "canonical media references",
+            "source ZIP not retained"
           ],
           "children": []
         },
@@ -7102,11 +7102,11 @@
           "text": "See also",
           "slug": "see-also",
           "level": 2,
-          "summary": "Related pages close the pack map. architecture.md covers the canonical model the adapter contract and escrow rules that packs never use. entities/character.md Media section documents the character-attached form of the same SpritePackValue hub shape. formats/README.md is the coverage matrix and notes pack has no listed adapter because it is studio-native only.",
+          "summary": "The architecture reference explains the canonical wrapper, adapter contract and escrow rules. The character entity Media section describes the character-attached form of the same SpritePackValue hub used by standalone packs. The formats reference documents external field coverage; pack import instead normalizes supported files into the canonical studio shape, without claiming a foreign field schema.",
           "topics": [
             "architecture adapter",
             "character Media hub",
-            "formats no adapter row"
+            "canonical pack normalization"
           ],
           "children": []
         }
@@ -16650,7 +16650,7 @@
           "text": "Scenes (the library's chats)",
           "slug": "scenes-the-librarys-chats",
           "level": 2,
-          "summary": "Scenes opens encrypted chats with cast snapshots, takes, cuts and swipes. Full Chat and Messenger reuse wing owners for writing, lore, passes and appearance. Control Booth applies loadouts with receipts and Undo. Tracker state and summaries follow reply versions; rail Props reuse dockable panels. Optional Dramaturg stores a revision-guarded, sealed consultant conversation separate from scene messages. Six read-only tools inspect messages, lore and presets. Shared runtime owns cancellation and shutdown; input estimates and reply caps refuse overflow before egress. Its cache holds four scenes within 32 MiB, clears on lock or app unmount and rejects stale responses. Deterministic-provider UI checks cover tools, reload persistence and floating panels. Narrow scenes use compact portraits and tap actions. Across themes the phone composer uses 16px text and a 5.5rem cap; unchanged drafts refit through a shared inline-size observer. Live browser checks cover 375px RoleCall and Paper, editing and bidirectional resize. Physical phones, installed apps, real models and packaged behavior remain unverified. HTTP refusals cap bodies at 64 KiB, cancelling oversized reads and preserving status. Busy polling pauses in hidden tabs.",
+          "summary": "Scenes provides encrypted chats, frozen cast, takes, cuts and swipes. Full Chat and Messenger reuse wings. Control Booth applies loadouts with receipts and Undo; tracker state follows reply versions. Dramaturg keeps a separate sealed, revision-guarded conversation with six read-only tools. Runtime owns cancellation, shutdown and pre-egress limits; its four-scene, 32 MiB cache clears on lock/unmount and rejects stale responses. Deterministic-provider UI checks cover tools, reload persistence and floating panels. Narrow scenes use compact portraits and tap actions; the composer uses 16px text, a 5.5rem cap and inline-size refitting. Browser checks cover 375px RoleCall/Paper, editing and bidirectional resize. Physical phones, installed apps, real models and packaged behavior remain unverified. HTTP refusals cap bodies at 64 KiB, cancel oversized reads and preserve status; polling pauses in hidden tabs. Backdrop Pick/Change and picture drops use pack staging; collection selection remains separate. Unreadable writing setups retain their saved selection and error beside the picker until another setup or Run Without Preset is chosen.",
           "topics": [
             "Start Scene from a card",
             "World wing, Compendium and Storyboards",

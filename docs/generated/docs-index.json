@@ -4221,7 +4221,7 @@
           "text": "What we do not claim",
           "slug": "what-we-do-not-claim",
           "level": 2,
-          "summary": "The guide avoids reassuring but unsupported claims. The currently configured Windows desktop binary is unsigned, so SmartScreen may warn; macOS release binaries are held back. Users should verify the SHA-256 checksums shipped with releases rather than treating a warning alone as evidence of tampering. The separate Test Bench origin has automated HTTP-layer proof but has not been measured inside the packaged desktop host. Anyone using the computer as the user can open the library, and without a system keyring a stolen disk can too. Kit's portable vault still lacks a settings-driven passphrase setup and unlock flow. Security reports should go privately to chibiconeja@gmail.com, also listed in SECURITY.md.",
+          "summary": "The guide avoids reassuring but unsupported claims. The currently configured Windows desktop binary is unsigned, so SmartScreen may warn; macOS release binaries are held back. The warning is no safety verdict; same-release checksums show a download arrived undamaged, not that it is authentic. The separate Test Bench origin has automated HTTP-layer proof but has not been measured inside the packaged desktop host. Anyone using the computer as the user can open the library, and without a system keyring a stolen disk can too. Kit's portable vault still lacks a settings-driven passphrase setup and unlock flow. Security reports should go privately to chibiconeja@gmail.com, also listed in SECURITY.md.",
           "topics": [
             "unsigned desktop binaries",
             "verify release checksums",

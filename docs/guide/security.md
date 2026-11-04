@@ -97,7 +97,7 @@ never saves it to disk.
 
 ## What we do not claim
 
-- The Windows desktop binary is unsigned, so Windows SmartScreen may warn on first run. macOS release binaries are currently held back. A warning does not prove tampering; verify the SHA-256 checksum shipped with the release.
+- The Windows desktop binary is unsigned, so Windows SmartScreen may warn on first run. macOS release binaries are currently held back. The warning is not a safety verdict either way. The SHA-256 checksums ship in the same release, so they show a download arrived undamaged, not that it is authentic; run the app only if you trust where you downloaded it.
 - The Test Bench origin boundary is not yet measured in the packaged app, as described above.
 - Anyone who can use this computer as you can open your library, and without a system keyring a stolen disk can too, as described above.
 - Kit does not yet expose the passphrase setup and unlock flow needed to use its portable vault

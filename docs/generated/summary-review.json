@@ -342,9 +342,9 @@
       "docId": "guide/security",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "integration_review",
-      "sourceHash": "sha256:0b35d34373357bfbfb9529902e8ab7e5b61691a9ac3a01a5fe41da15c1002a67",
-      "semanticSummaryHash": "sha256:c7ad1fb0c5e73fb64bbea95260fd1e7244473de7aeb551b7f13c11fb6d1de2e3"
+      "reviewer": "sonnet-docs-reviewer",
+      "sourceHash": "sha256:628e7156dc3368f21c440d7deadc41c1ea2f972d5689b2031dfe4d70b480f772",
+      "semanticSummaryHash": "sha256:552256aae82391b3162ba7b3a434dcb3a2eca05c5d0d51be3ef678a7b2e2ceff"
     },
     {
       "docId": "guide/table-read",

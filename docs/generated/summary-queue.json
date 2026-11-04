@@ -2,7 +2,7 @@
   "generated": "2026-11-04",
   "targetChars": 90000,
   "totalPages": 143,
-  "totalSourceChars": 1750100,
+  "totalSourceChars": 1750230,
   "batches": [
     {
       "id": "batch-001",
@@ -282,7 +282,7 @@
     },
     {
       "id": "batch-003",
-      "sourceChars": 87922,
+      "sourceChars": 88052,
       "pages": [
         {
           "docId": "guide/platforms/marinara",
@@ -361,7 +361,7 @@
           "sourcePath": "docs/guide/security.md",
           "sidecarPath": "docs/summaries/guide/security.json",
           "sectionCount": 6,
-          "sourceChars": 9098,
+          "sourceChars": 9228,
           "status": "APPROVED"
         },
         {

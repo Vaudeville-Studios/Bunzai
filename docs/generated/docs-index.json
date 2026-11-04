@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-03",
+  "generated": "2026-11-04",
   "count": 143,
   "docs": [
     {
@@ -11241,7 +11241,7 @@
           "text": "The Stage (the chat runtime)",
           "slug": "the-stage-the-chat-runtime",
           "level": 2,
-          "summary": "Stage is the encrypted chat/library runtime behind contracts and provider/pipeline owners. Cast is the frozen roster, branch/swipe are forks and alternate replies, and turn is a full generation. PieceStore shares accepted summaries without becoming body authority; portable search contracts differ from native worker/persistence owners. Cold fill is bounded reconstruction with logical admission rather than measured RSS. Performance evidence is revision/artifact-bound observations, currently source definitions without measured results. Background lanes and breathers keep expensive work off the UI path. The health check opens every sealed cell on the lane and sets damaged rows aside, never deleting; freeze gate adds perf-gate-health.ts. A loadout is a saved bundle of a scene's own settings kept as one sealed library document rather than a piece, and a loadout receipt is the record of an apply that lets Undo restore the changed settings for 15 minutes; it is not the delete or import receipt. The Compendium is a scene's typed-entry view of its lorebooks, with filing receipts that are not loadout or delete receipts. Tracker is Props or library.",
+          "summary": "Stage is the encrypted chat/library runtime behind contracts and provider/pipeline owners. Cast is the frozen roster, branch/swipe are forks and alternate replies, and turn is a full generation. PieceStore shares accepted summaries without becoming body authority; portable search contracts differ from native worker/persistence owners. Cold fill is bounded reconstruction with logical admission rather than measured RSS. Performance evidence is revision/artifact-bound, owner-run on demand, not a release gate. Background lanes and breathers keep expensive work off the UI path. The health check opens every sealed cell on the lane and sets damaged rows aside, never deleting; freeze gate adds perf-gate-health.ts. A loadout is a saved bundle of a scene's own settings kept as one sealed library document rather than a piece, and a loadout receipt is the record of an apply that lets Undo restore the changed settings for 15 minutes; it is not the delete or import receipt. The Compendium is a scene's typed-entry view of its lorebooks, with filing receipts that are not loadout or delete receipts. Tracker is Props or library.",
           "topics": [
             "Stage",
             "contracts",

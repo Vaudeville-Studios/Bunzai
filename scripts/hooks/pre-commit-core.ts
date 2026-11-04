@@ -30,34 +30,6 @@ export function parseNameStatusZ(raw: string): StagedPath[] {
   return paths;
 }
 
-/** Live staged Studio/Kit TypeScript, normalized, deduplicated, and sorted for lint input. */
-export function stagedUiTypeScript(paths: readonly StagedPath[]): string[] {
-  return [...new Set(paths
-    .filter((entry) => !entry.status.startsWith("D"))
-    .map((entry) => normalize(entry.path))
-    .filter((path) =>
-      (path.startsWith("src/ui/") || path.startsWith("src/kit/")) &&
-      (path.endsWith(".ts") || path.endsWith(".tsx"))))].sort();
-}
-
-const CATALOG_INFRA = new Set([
-  "scripts/hooks/catalog-lib.ts",
-  "scripts/hooks/component-catalog.ts",
-]);
-
-/** Whether any staged addition, edit, rename, or deletion can change the component catalog. */
-export function needsComponentCatalog(paths: readonly StagedPath[]): boolean {
-  const affectsCatalog = (rawPath: string): boolean => {
-    const path = normalize(rawPath);
-    if (path === "docs/reference/components.md" || CATALOG_INFRA.has(path)) return true;
-    if (/^src\/ui\/(components|apps|shell)\/.*\.tsx$/.test(path)) return true;
-    if (/^src\/ui\/(components|apps|shell)\/.*\.module\.css$/.test(path)) return true;
-    return /^src\/ui\/_shared\/[^/]+\.ts$/.test(path);
-  };
-  return paths.some((entry) =>
-    affectsCatalog(entry.path) || (entry.previousPath !== undefined && affectsCatalog(entry.previousPath)));
-}
-
 /**
  * Whether any staged change touches a docs-index corpus file. The generator's corpus is every `.md`
  * under docs/ EXCEPT the generated/ and media/ directories (SKIP_DIRS in scripts/docs-index.ts), so

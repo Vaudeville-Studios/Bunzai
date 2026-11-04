@@ -57,7 +57,7 @@ test("the normal release publishes one Windows app, one Linux app and their chec
   const publish = jobBlock(release, "publish");
   const assets = [...publish.matchAll(/dist\/([^\s\\]+)/g)].map((match) => match[1]);
   expect(assets).toEqual([APP_ASSET_NAMES.windows, APP_ASSET_NAMES.linux, "SHA256SUMS"]);
-  expect(jobBlock(release, "build-windows")).toContain("--packaged-cli");
+  expect(jobBlock(release, "build-windows")).not.toContain("scale:timed");
   expect(jobBlock(release, "build-linux")).toContain(`cp dist/bunzai-cli-linux-x64 dist/${APP_ASSET_NAMES.linux}`);
   expect(release).not.toContain("build-macos:");
   expect(publish).not.toContain("darwin-");

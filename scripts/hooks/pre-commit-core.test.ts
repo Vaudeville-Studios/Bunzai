@@ -2,10 +2,8 @@
 import { expect, test } from "bun:test";
 import {
   needsCodeMap,
-  needsComponentCatalog,
   needsDocsIndex,
   parseNameStatusZ,
-  stagedUiTypeScript,
   type StagedPath,
 } from "./pre-commit-core";
 
@@ -17,46 +15,6 @@ test("parseNameStatusZ reads ordinary paths and keeps rename destinations", () =
     { status: "R091", path: "src/new.tsx", previousPath: "src/old.tsx" },
     staged("D", "src/gone.ts"),
   ]);
-});
-
-test("stagedUiTypeScript selects every live React surface with deterministic unique output", () => {
-  expect(stagedUiTypeScript([
-    staged("M", "docs/ui.md"),
-    staged("D", "src/ui/apps/gone/index.tsx"),
-    staged("D", "src/kit/render/gone.tsx"),
-    staged("M", "src\\ui\\shell\\App.tsx"),
-    staged("M", "src\\ui\\shell\\menus.ts"),
-    staged("M", "src\\kit\\render\\app.tsx"),
-    staged("A", "src/kit/render/notify/use-notify.ts"),
-    staged("A", "src/ui/apps/new/index.tsx"),
-    staged("R100", "src/ui/shell/App.tsx"),
-    staged("M", "src/core/example.tsx"),
-  ])).toEqual([
-    "src/kit/render/app.tsx",
-    "src/kit/render/notify/use-notify.ts",
-    "src/ui/apps/new/index.tsx",
-    "src/ui/shell/App.tsx",
-    "src/ui/shell/menus.ts",
-  ]);
-});
-
-test("needsComponentCatalog ignores unrelated files", () => {
-  expect(needsComponentCatalog([staged("M", "docs/reference/ui.md")])).toBe(false);
-  expect(needsComponentCatalog([staged("M", "src/ui/_shared/nested/widget.ts")])).toBe(false);
-});
-
-test("needsComponentCatalog includes source deletions, output, and generator changes", () => {
-  expect(needsComponentCatalog([staged("D", "src/ui/components/button/index.tsx")])).toBe(true);
-  expect(needsComponentCatalog([staged("A", "src/ui/apps/library/Card.tsx")])).toBe(true);
-  expect(needsComponentCatalog([staged("M", "src/ui/shell/App.tsx")])).toBe(true);
-  expect(needsComponentCatalog([staged("M", "src/ui/shell/App.module.css")])).toBe(true);
-  expect(needsComponentCatalog([staged("M", "src/ui/_shared/widget.ts")])).toBe(true);
-  expect(needsComponentCatalog([staged("D", "docs/reference/components.md")])).toBe(true);
-  expect(needsComponentCatalog([staged("M", "scripts/hooks/component-catalog.ts")])).toBe(true);
-  expect(needsComponentCatalog([staged("M", "scripts/hooks/catalog-lib.ts")])).toBe(true);
-  expect(needsComponentCatalog([
-    { status: "R100", path: "archive/Button.tsx", previousPath: "src/ui/components/button/Button.tsx" },
-  ])).toBe(true);
 });
 
 test("needsDocsIndex matches the generator corpus: docs/**.md except generated/ and media/", () => {

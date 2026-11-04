@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "reference/glossary",
   "sourcePath": "docs/reference/glossary.md",
-  "sourceHash": "sha256:9c4393f6d11c5fb601b82b88944c7854d3506f8242cce83e3cc2cf89b112587f",
+  "sourceHash": "sha256:d039df1c12cf2cafe802c86cbb1bf26cd1e9caaf1cd794dccccfaa0c27e9bc4f",
   "summary": "The glossary explains project vocabulary, folder ownership, and naming traps, then points readers to the generated code map for individual files. Its folder table includes src/shared for cross-domain helpers and describes src/extensions as the package catalog, SDK, approval lifecycle, and bounded QuickJS runtime. It distinguishes Lua and regex test benches from extension JavaScript guest workers; imported script content remains data until its specific supported isolated worker is invoked. The glossary also covers the engine and formats, Studio and Kit, Stage, encryption, Compendium, snapshots, health checks, and documentation process. Its check requires every direct src folder and every named path to remain valid. Table Read separates pure interview state in core/table-read, encrypted orchestration in studio/table-read and the discovered living-card app in ui/apps/table-read.",
   "topics": [
     "glossary",
@@ -69,8 +69,8 @@
       "slug": "the-stage-the-chat-runtime",
       "title": "The Stage (the chat runtime)",
       "level": 2,
-      "sourceHash": "sha256:e67940645791dea9f20ef24f3103a66561d7ba2618c0302398379af268fea52d",
-      "summary": "Stage is the encrypted chat/library runtime behind contracts and provider/pipeline owners. Cast is the frozen roster, branch/swipe are forks and alternate replies, and turn is a full generation. PieceStore shares accepted summaries without becoming body authority; portable search contracts differ from native worker/persistence owners. Cold fill is bounded reconstruction with logical admission rather than measured RSS. Performance evidence is revision/artifact-bound observations, currently source definitions without measured results. Background lanes and breathers keep expensive work off the UI path. The health check opens every sealed cell on the lane and sets damaged rows aside, never deleting; freeze gate adds perf-gate-health.ts. A loadout is a saved bundle of a scene's own settings kept as one sealed library document rather than a piece, and a loadout receipt is the record of an apply that lets Undo restore the changed settings for 15 minutes; it is not the delete or import receipt. The Compendium is a scene's typed-entry view of its lorebooks, with filing receipts that are not loadout or delete receipts. Tracker is Props or library.",
+      "sourceHash": "sha256:f698b70dffbc67a4181bc32dfcac3519f148a06bd07bd513a21a93dae5b33d70",
+      "summary": "Stage is the encrypted chat/library runtime behind contracts and provider/pipeline owners. Cast is the frozen roster, branch/swipe are forks and alternate replies, and turn is a full generation. PieceStore shares accepted summaries without becoming body authority; portable search contracts differ from native worker/persistence owners. Cold fill is bounded reconstruction with logical admission rather than measured RSS. Performance evidence is revision/artifact-bound, owner-run on demand, not a release gate. Background lanes and breathers keep expensive work off the UI path. The health check opens every sealed cell on the lane and sets damaged rows aside, never deleting; freeze gate adds perf-gate-health.ts. A loadout is a saved bundle of a scene's own settings kept as one sealed library document rather than a piece, and a loadout receipt is the record of an apply that lets Undo restore the changed settings for 15 minutes; it is not the delete or import receipt. The Compendium is a scene's typed-entry view of its lorebooks, with filing receipts that are not loadout or delete receipts. Tracker is Props or library.",
       "topics": [
         "Stage",
         "contracts",

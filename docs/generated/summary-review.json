@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-03",
+  "generated": "2026-11-04",
   "count": 143,
   "pages": [
     {
@@ -806,9 +806,9 @@
       "docId": "reference/glossary",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "root-table-read-advisor",
-      "sourceHash": "sha256:9c4393f6d11c5fb601b82b88944c7854d3506f8242cce83e3cc2cf89b112587f",
-      "semanticSummaryHash": "sha256:e838861292a322874921d9a8b83d2137868cb238a275a51be5188c6e04ee4d01"
+      "reviewer": "sonnet-docs-reviewer",
+      "sourceHash": "sha256:d039df1c12cf2cafe802c86cbb1bf26cd1e9caaf1cd794dccccfaa0c27e9bc4f",
+      "semanticSummaryHash": "sha256:a28d403a291b0fd0e420effaa99fecf013f3a10ebede6d58ade88ee2db693555"
     },
     {
       "docId": "reference/kit",

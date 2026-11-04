@@ -1,8 +1,8 @@
 {
-  "generated": "2026-11-03",
+  "generated": "2026-11-04",
   "targetChars": 90000,
   "totalPages": 143,
-  "totalSourceChars": 1749552,
+  "totalSourceChars": 1749641,
   "batches": [
     {
       "id": "batch-001",
@@ -840,7 +840,7 @@
     },
     {
       "id": "batch-012",
-      "sourceChars": 72819,
+      "sourceChars": 72908,
       "pages": [
         {
           "docId": "reference/formats/rolecall",
@@ -879,7 +879,7 @@
           "sourcePath": "docs/reference/glossary.md",
           "sidecarPath": "docs/summaries/reference/glossary.json",
           "sectionCount": 6,
-          "sourceChars": 15333,
+          "sourceChars": 15422,
           "status": "APPROVED"
         },
         {

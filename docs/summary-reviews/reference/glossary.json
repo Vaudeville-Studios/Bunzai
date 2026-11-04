@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/glossary",
   "sourcePath": "docs/reference/glossary.md",
-  "sourceHash": "sha256:9c4393f6d11c5fb601b82b88944c7854d3506f8242cce83e3cc2cf89b112587f",
-  "semanticSummaryHash": "sha256:e838861292a322874921d9a8b83d2137868cb238a275a51be5188c6e04ee4d01",
+  "sourceHash": "sha256:d039df1c12cf2cafe802c86cbb1bf26cd1e9caaf1cd794dccccfaa0c27e9bc4f",
+  "semanticSummaryHash": "sha256:a28d403a291b0fd0e420effaa99fecf013f3a10ebede6d58ade88ee2db693555",
   "verdict": "APPROVE",
-  "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read the source changes, full new guide and reference pages, and affected semantic summaries. Claims distinguish explicit inference, encrypted snapshot support, plain export omissions, manual ownership, exact-ID recovery, workflow evidence and packaged limitations.",
-  "reviewedAt": "2026-11-03T09:17:07.188Z"
+  "reviewer": "sonnet-docs-reviewer",
+  "notes": "Revised sentence matches the page row and the workflows (release.yml no longer runs S21, ci.yml runs it only on workflow_dispatch with performance_evidence); word band now passes and the unsupported 'no measured results exist' claim is gone.",
+  "reviewedAt": "2026-11-04T08:44:58.239Z"
 }

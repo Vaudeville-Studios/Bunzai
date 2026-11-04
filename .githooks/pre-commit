@@ -1,4 +1,4 @@
 #!/bin/sh
-# Fast staged structural checks, relevant catalog validation, and staged UI TSX linting.
-# Full type and test proof runs at pre-push; see scripts/hooks/README.md.
+# Keep generated docs current and run the structural gate. Everything else is the owner harness
+# (bun run verify:ci); see scripts/hooks/README.md.
 exec bun run scripts/hooks/pre-commit.ts

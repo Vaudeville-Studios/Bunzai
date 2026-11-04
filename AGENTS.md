@@ -103,6 +103,7 @@ starting.
 
 ```bash
 bun run verify:ci     # the complete Bun/TypeScript wall: everything below, in order
+bun run verify:release  # the short smoke gate a release runs before publishing
 ```
 
 Or individually while iterating:
@@ -131,9 +132,10 @@ Or individually while iterating:
 | `bun run matrix:check` | docs/FORMAT-SUPPORT.md matches the live format registry |
 | `bun run license:audit` | no copyleft/restricted dependencies |
 
-Pre-commit runs fast checks against staged files. Pre-push runs the full typecheck and supported test
-suite. CI remains authoritative: its required `test` check runs `verify:ci` and independently vets,
-tests, and builds the Go sidecar with the version pinned in `sidecar/go.mod`. The Go gate stays outside
+Pre-commit regenerates the docs index and code map and runs the structural gate. Pre-push and the
+release run only the smoke gate, `verify:release`. `verify:ci` is the owner harness.
+CI on push stays authoritative: its required `test` check runs `verify:ci` and independently vets, tests,
+and builds the Go sidecar with the version pinned in `sidecar/go.mod`. The Go gate stays outside
 `verify:ci` so contributors working outside the remote-access sidecar do not need a Go toolchain.
 
 CI also runs a `packaged-sqlite` matrix that compiles the probe and executes the resulting binary on

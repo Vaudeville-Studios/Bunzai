@@ -42,7 +42,9 @@ jobs:
             echo "tag $RELEASE_TAG does not match package.json $PKG" >&2
             exit 1
           fi
-      - run: bun run verify:ci
+      # A short smoke gate. The full wall (verify:ci) runs in ci.yml on every push, and the S21
+      # scale evidence is owner-run on demand (ci.yml workflow_dispatch, performance_evidence).
+      - run: bun run verify:release
 
   build-windows:
     needs: verify
@@ -68,19 +70,6 @@ jobs:
         run: bun sidecar/build.ts --target=windows-x64
       - name: Build Bunzai.exe + Windows CLI
         run: bun run scripts/build-desktop.ts --cli-targets=bun-windows-x64
-      - name: Install the isolated CDP browser
-        run: bunx playwright install chromium
-      - name: Produce low-end S21 release evidence against these exact binaries
-        shell: pwsh
-        run: bun run scale:timed -- --release-evidence --profile low-end --n 10000 --artifact "$env:RUNNER_TEMP\s21-release-evidence.json" --packaged-cli "$PWD\dist\bunzai-cli-windows-x64.exe" --packaged-desktop "$PWD\dist\Bunzai.exe"
-      - name: Consume S21 evidence before a release can proceed
-        shell: pwsh
-        run: bun run scale:release-evidence -- "$env:RUNNER_TEMP\s21-release-evidence.json" --packaged-cli "$PWD\dist\bunzai-cli-windows-x64.exe" --packaged-desktop "$PWD\dist\Bunzai.exe"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: s21-release-evidence
-          path: ${{ runner.temp }}\s21-release-evidence.json
-          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: windows

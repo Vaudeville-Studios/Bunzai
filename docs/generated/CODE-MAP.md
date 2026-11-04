@@ -122,7 +122,7 @@ Tests are left out. For what a project word means, see [the glossary](../referen
 - `part-names-core.ts`: Part-name rules (the theme-parts contract in docs/reference/extending/make-a-theme.md): every `data-part` in the UI is a stable dotted name, `<surface>.<part>`, written as a literal or as a literal prefix plus an id t...
 - `part-names.ts`: part-names: every `data-part` in src/ui is a stable dotted name keyed on ids, and every scenes wing, tab and pop-out file carries one (see part-names-core.ts).
 - `pre-commit-core.ts`: Pure parsing and staged-path routing decisions for the fast pre-commit hook.
-- `pre-commit.ts`: Fast pre-commit orchestration: structural guards plus only relevant catalog and lint work.
+- `pre-commit.ts`: Fast pre-commit orchestration: keep the generated docs index and code map current, then the structural gate.
 - `prose-guards.ts`: Prose guards - two repo-wide honesty checks for text that strangers read: --emdash : no em dash (U+2014) anywhere in prose or copy.
 - `remove-emoji.ts`: Mechanical formatter for removing emoji sequences from authored files before the doctrine scan.
 - `single-source-copies.ts`: Single-source guards for small value helpers whose copies kept drifting: JSON coercions, magic-byte sniffing, archive bounds, platform-ownership predicates and role tables.

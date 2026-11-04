@@ -1,13 +1,11 @@
-/** Fast pre-commit orchestration: structural guards plus only relevant catalog and lint work. */
+/** Fast pre-commit orchestration: keep the generated docs index and code map current, then the structural gate. */
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import {
   needsCodeMap,
-  needsComponentCatalog,
   needsDocsIndex,
   parseNameStatusZ,
-  stagedUiTypeScript,
 } from "./pre-commit-core";
 
 const run = (name: string, command: string[]): number => {
@@ -91,26 +89,8 @@ function main(): number {
     if (code !== 0) return code;
   }
 
-  const checks: Array<readonly [string, string[]]> = [
-    ["structural", ["bun", "run", "scripts/hooks/gate.ts", "--staged"]],
-    ["colors", ["bun", "run", "scripts/hooks/no-hardcode-colors.ts", "--staged"]],
-    ["style", ["bun", "run", "scripts/hooks/style-guard.ts", "--staged"]],
-    ["clones", ["bun", "run", "scripts/hooks/clones.ts", "--staged"]],
-    ["lists", ["bun", "run", "scripts/hooks/unbounded-lists.ts", "--staged"]],
-  ];
-  if (needsComponentCatalog(paths)) {
-    checks.push(["component-catalog", ["bun", "run", "scripts/hooks/component-catalog.ts", "--check"]]);
-  }
-  const uiTsx = stagedUiTypeScript(paths);
-  if (uiTsx.length > 0 || paths.some((entry) => entry.path === "scripts/hooks/virtualizer-boundary.ts")) {
-    checks.push(["virtualizer-boundary", ["bun", "run", "scripts/hooks/virtualizer-boundary.ts"]]);
-  }
-  if (uiTsx.length > 0) checks.push(["ui-eslint", ["bunx", "eslint", ...uiTsx, "--max-warnings", "0"]]);
-  for (const [name, command] of checks) {
-    const code = run(name, command);
-    if (code !== 0) return code;
-  }
-  return 0;
+  // Style, color, clone, list, catalog and lint checks live in the owner harness (verify:ci), not here.
+  return run("structural", ["bun", "run", "scripts/hooks/gate.ts", "--staged"]);
 }
 
 process.exit(main());

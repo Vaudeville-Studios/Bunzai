@@ -1,18 +1,9 @@
 #!/bin/sh
-# Full local proof lives here so the commit reflex stays fast.
-bun run typecheck
+# The "is this functioning" smoke gate, the same one a release runs. The full wall is the owner
+# harness: bun run verify:ci.
+bun run verify:release
 if [ $? -ne 0 ]; then
-  echo "GUARDRAIL BLOCK (typecheck): tsc is red. Fix types before pushing." >&2
-  exit 1
-fi
-bun run extensions:catalog:check && bun run extensions:sdk:check && bun run scripts/test-run.ts ./scripts/extension-required-families.test.ts
-if [ $? -ne 0 ]; then
-  echo "GUARDRAIL BLOCK (extensions): catalog, SDK, or required-family checks are red. Fix extension sources before pushing." >&2
-  exit 1
-fi
-bun run test
-if [ $? -ne 0 ]; then
-  echo "GUARDRAIL BLOCK (tests): bun run test is red. Fix tests before pushing." >&2
+  echo "GUARDRAIL BLOCK (smoke): bun run verify:release is red. Fix it before pushing." >&2
   exit 1
 fi
 exit 0

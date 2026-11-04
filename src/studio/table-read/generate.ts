@@ -1,6 +1,8 @@
 /** Bounded Table Read inference uses saved provider connections and returns strictly decoded, value-only proposals. */
 import type { Connected } from "../scene-turn";
-import { extractObject } from "../../core/compendium/filing-schema";
+import { extractObject } from "../../core/model-json";
+import { splitReasoning } from "../../core/reasoning-tags";
+import { utf8ByteLength } from "../../shared/utf8";
 import { tableReadPrompt } from "../../core/table-read/prompts";
 import { deckAnswerSchema, modelAnswerSchema, TABLE_READ_LIMITS, type TableReadSession } from "../../core/table-read/schema";
 import { applyDeck, applyModelAnswer } from "../../core/table-read/interview";
@@ -25,7 +27,7 @@ export async function generateInterview(session: TableReadSession, kind: "start"
     signal.throwIfAborted();
     if (!connected) throw new StudioValidationError("That saved connection is no longer available. Choose a connection in Settings.");
     const prompt = tableReadPrompt(session, kind);
-    const size = new TextEncoder().encode(prompt.system + prompt.user).byteLength;
+    const size = utf8ByteLength(prompt.system + prompt.user);
     if (size > TABLE_READ_LIMITS.request) throw new StudioValidationError("This interview is too large to send. Shorten a long field or finish with the draft you have.");
     const maxTokens = Math.min(6_000, Math.floor((connected.context ?? 32_000) / 3));
     if (connected.context && countText(prompt.system + prompt.user) + maxTokens > connected.context) throw new StudioValidationError("This interview no longer fits that model's context. Shorten a long field before retrying.");
@@ -35,15 +37,15 @@ export async function generateInterview(session: TableReadSession, kind: "start"
       onEvent(event) {
         if (signal.aborted) return;
         const text = "delta" in event ? event.delta : event.full;
-        const bytes = new TextEncoder().encode(text).byteLength;
+        const bytes = utf8ByteLength(text);
         received[event.channel] = "delta" in event ? received[event.channel] + bytes : bytes;
         if (received.content + received.reasoning > TABLE_READ_LIMITS.output) cap.abort(new StudioValidationError("The interviewer returned too much text. Your draft is kept; retry with a shorter response."));
       },
     });
     signal.throwIfAborted();
-    const finalBytes = new TextEncoder().encode(completion.content).byteLength + new TextEncoder().encode(completion.reasoning ?? "").byteLength;
+    const finalBytes = utf8ByteLength(completion.content) + utf8ByteLength(completion.reasoning ?? "");
     if (finalBytes > TABLE_READ_LIMITS.output) throw new StudioValidationError("The interviewer returned too much text. Your draft is kept.");
-    const raw = extractObject(completion.content);
+    const raw = extractObject(splitReasoning(completion.content).reply);
     if (session.settings.tempo === "rapid-fire" && kind === "start") {
       const result = deckAnswerSchema.safeParse(raw);
       if (!result.success) throw new StudioValidationError("The interviewer returned an unreadable set of choices. Your idea is kept; retry this turn.");

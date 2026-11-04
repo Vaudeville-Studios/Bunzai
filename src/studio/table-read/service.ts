@@ -8,6 +8,7 @@ import { documentSchema, sessionSchema, TABLE_READ_LIMITS, type TableReadMutatio
 import { StudioConflictError, StudioReadError, StudioValidationError } from "../errors";
 import { generateInterview, type TableReadConnect } from "./generate";
 import { toErrorMessage } from "../../error-message";
+import { utf8ByteLength } from "../../shared/utf8";
 
 export interface TableReadDeps {
   state: StateStore;
@@ -39,7 +40,7 @@ export class TableReadService {
     const stored = await this.deps.state.readVersioned("tableRead");
     let session: TableReadSession | null = null;
     if (stored.text !== null) {
-      if (new TextEncoder().encode(stored.text).byteLength > TABLE_READ_LIMITS.document) throw new StudioReadError("This Table Read is too large to open safely. Its saved data has been kept.");
+      if (utf8ByteLength(stored.text) > TABLE_READ_LIMITS.document) throw new StudioReadError("This Table Read is too large to open safely. Its saved data has been kept.");
       try { session = documentSchema.parse(JSON.parse(stored.text)).session; }
       catch { throw new StudioReadError("This saved Table Read could not be read. Its data has been kept; restore a library backup to recover it."); }
     }
@@ -51,7 +52,7 @@ export class TableReadService {
     if (!this.deps.state.writeIfRevision) throw new StudioValidationError("Table Read needs a revisioned local library.");
     const document = documentSchema.parse({ version: 1, session });
     const text = JSON.stringify(document);
-    if (new TextEncoder().encode(text).byteLength > TABLE_READ_LIMITS.document) throw new StudioValidationError("This interview has reached its saved-text limit. Shorten a long answer or field before continuing.");
+    if (utf8ByteLength(text) > TABLE_READ_LIMITS.document) throw new StudioValidationError("This interview has reached its saved-text limit. Shorten a long answer or field before continuing.");
     if (await this.deps.state.writeIfRevision("tableRead", text, revision) !== "saved") throw new StudioConflictError("This Table Read changed in another window. Your unsubmitted text is kept; reload its latest draft.");
     return this.read();
   }

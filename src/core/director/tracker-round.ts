@@ -8,7 +8,7 @@
  *  - an answer never removes by omission: entries it leaves out stay, and a name in `remove` takes an entry out the way the module takes one out (a mark, never a delete);
  *  - an answer that cannot be read, or does not fit the module, changes nothing and says why.
  */
-import { extractObject } from "../compendium/filing-schema";
+import { extractObject } from "../model-json";
 import { deepEq, isRecord } from "../guards";
 import { PROMPT_ORDER, isStoryboard, refreshSpecOf } from "../trackers";
 import { conversationOf, type Read, type Subs } from "../trackers/generate";

@@ -6,7 +6,7 @@
  * one case a repair call is for; an operation that is skipped is named, never dropped silently. Pure.
  */
 import { isRecord } from "../guards";
-import { extractObject } from "./filing-schema";
+import { extractObject } from "../model-json";
 import { MAX_OPS } from "./refine-prompt";
 
 export type RefineOp =

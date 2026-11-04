@@ -8,7 +8,7 @@
 import type { LorebookEntry } from "../../entities/lorebook/schema";
 import type { ChatCompendiumTreeBuild, ChatCompendiumTreeConstraints } from "../../stage/contracts/chat-settings-types";
 import { isRecord, optStr } from "../guards";
-import { extractObject } from "./filing-schema";
+import { extractObject } from "../model-json";
 import type { CompendiumEntry } from "./read";
 
 export interface GranularityPreset { targetCategories: string; maxEntries: number; label: string }

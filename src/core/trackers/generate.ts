@@ -5,7 +5,7 @@
  * This module does not write the scene: its answer is a proposal for the person to accept or discard.
  * An unreadable answer is an error, and a world theme is included only when the person chose one.
  */
-import { extractObject } from "../compendium/filing-schema";
+import { extractObject } from "../model-json";
 import { isRecord } from "../guards";
 import type { Shape } from "./shape";
 

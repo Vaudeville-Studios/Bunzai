@@ -9,7 +9,7 @@
  *  - rows are matched by name, a row the answer leaves out is marked removed (Undo brings it back), and the person sees all of it before accepting;
  *  - the prompt text drops "still include it with empty/default values" and the Creature Codex line that invents species when none have appeared.
  */
-import { extractObject } from "../compendium/filing-schema";
+import { extractObject } from "../model-json";
 import { isRecord } from "../guards";
 import { ITEM_TEMPERATURE, conversationOf, type Line, type Messages, type Read, type Subs } from "./generate";
 import type { Shape } from "./shape";

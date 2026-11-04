@@ -8,6 +8,7 @@
 import { isRecord, type Rec } from "../guards";
 import { parseStructured } from "./entry-types";
 import { isEntryType, type EntryType } from "./types";
+import { extractObject } from "../model-json";
 
 /** The most items one pass accepts, and the most JSON characters one item may carry. */
 export const MAX_ITEMS = 12;
@@ -39,15 +40,6 @@ const jsonSafe = (v: unknown, depth = 0): boolean => {
   if (Array.isArray(v)) return v.every((x) => x !== null && jsonSafe(x, depth + 1));
   return isRecord(v) && Object.values(v).every((x) => jsonSafe(x, depth + 1));
 };
-
-/** The JSON object in a model's text: the whole text, a fenced block, or the outermost braces. */
-export function extractObject(text: string): unknown {
-  const body = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  for (const candidate of [body, body.slice(body.indexOf("{"), body.lastIndexOf("}") + 1)]) {
-    try { return JSON.parse(candidate); } catch { /* try the next shape */ }
-  }
-  return undefined;
-}
 
 /** One item checked alone; `maxChars` bounds its JSON (a Standardize item carries a whole converted entry, so it asks for more). */
 export function checkItem(raw: unknown, position: number, allow: readonly EntryType[], maxChars = MAX_ITEM_CHARS): FilingItem | string {

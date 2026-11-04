@@ -6,7 +6,8 @@
  * readable at all is reported unreadable, which is the one case a repair call is for. Pure.
  */
 import { isRecord } from "../guards";
-import { checkItem, extractObject, MAX_ITEMS, type FilingItem, type Rejection } from "./filing-schema";
+import { extractObject } from "../model-json";
+import { checkItem, MAX_ITEMS, type FilingItem, type Rejection } from "./filing-schema";
 import type { EntryType } from "./types";
 
 /** A converted entry carries all the source's facts, so it may be longer than a filed addition. */

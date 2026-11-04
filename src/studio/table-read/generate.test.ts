@@ -39,3 +39,11 @@ test("a non-streamed completion cannot bypass the combined cap with final reason
   const error = await generateInterview(session(), "start", connect, new AbortController().signal, () => 0).then(() => null, (value: unknown) => value);
   expect(String(error)).toContain("too much text");
 });
+
+test("inline reasoning that mentions braces does not hide the answer object", async () => {
+  const answer = JSON.stringify({ patches: [], covered: [], question: { field: "name", text: "What name do they use?", chips: ["Vesper", "A borrowed name"] }, note: "", followUp: null, deflection: false });
+  const content = `<think>Maybe a {nickname} first.</think>${answer}`;
+  const connect: TableReadConnect = async () => ({ kind: "script", provider: { id: "script", send: async () => ({ content, raw: null }) } });
+  const next = await generateInterview(session(), "start", connect, new AbortController().signal, () => 0);
+  expect(next.question?.text).toBe("What name do they use?");
+});

@@ -13,7 +13,8 @@ import { emptyLoreEntry } from "../lore";
 import { isRecord, optStr, type Rec } from "../guards";
 import { countText } from "../tokens";
 import { ARC_SOURCE, readBook, type CompendiumEntry } from "./read";
-import { extractObject, parseFilingAnswer, type FilingItem, type Rejection } from "./filing-schema";
+import { extractObject } from "../model-json";
+import { parseFilingAnswer, type FilingItem, type Rejection } from "./filing-schema";
 import { normalizeName } from "./relationships";
 import type { EntryType } from "./types";
 

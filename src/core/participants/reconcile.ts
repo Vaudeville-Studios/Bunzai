@@ -7,7 +7,7 @@
  */
 import { editDistance } from "../text";
 import { isRecord, optStr } from "../guards";
-import { extractObject } from "../compendium/filing-schema";
+import { extractObject } from "../model-json";
 
 export const RECONCILE_CHUNK_CHARS = 12_000;
 export const RECONCILE_MAX_PER_CHUNK = 8;

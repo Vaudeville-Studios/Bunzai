@@ -52,11 +52,12 @@ test("the release builds helpers for its Windows and Linux targets", async () =>
   expect(release).not.toContain("--target=darwin-");
 });
 
-test("the normal release publishes one Windows app, one Linux app and their checksums", async () => {
+test("the normal release publishes one Windows app, the Linux app bare and as a .deb, and their checksums", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
   const publish = jobBlock(release, "publish");
   const assets = [...publish.matchAll(/dist\/([^\s\\]+)/g)].map((match) => match[1]);
-  expect(assets).toEqual([APP_ASSET_NAMES.windows, APP_ASSET_NAMES.linux, "SHA256SUMS"]);
+  expect(assets).toEqual([APP_ASSET_NAMES.windows, APP_ASSET_NAMES.linux, APP_ASSET_NAMES.linuxPackage, "SHA256SUMS"]);
+  expect(jobBlock(release, "build-linux")).toContain("bun run scripts/build-deb.ts");
   expect(jobBlock(release, "build-windows")).not.toContain("scale:timed");
   expect(jobBlock(release, "build-linux")).toContain(`cp dist/bunzai-cli-linux-x64 dist/${APP_ASSET_NAMES.linux}`);
   expect(release).not.toContain("build-macos:");

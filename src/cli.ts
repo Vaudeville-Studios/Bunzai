@@ -284,8 +284,15 @@ async function main(argv: string[]): Promise<number> {
      * exactly what it was given and threw, so a stray `npx http-server -p 8321` stopped the studio
      * starting at all. The port actually in use is printed below, and is the only URL that works.
      */
-    const { server: started, port: bound } = await claimPort(port, 10, (p) =>
-      startUi(p, studioDir, PACKAGED_ASSETS ?? undefined, library, bundledSidecar));
+    const startOn = (p: number) => startUi(p, studioDir, PACKAGED_ASSETS ?? undefined, library, bundledSidecar);
+    // Opened as the Linux app, a second launch opens the Bunzai already running, as Bunzai.exe does,
+    // instead of starting another server on the same library.
+    const claimed = openApp ? await (await import("./desktop-port")).claimDesktopPort(null, startOn) : null;
+    if (claimed && !claimed.ours) {
+      (await import("./ui/server-security")).openInBrowser(claimed.server.url);
+      return 0;
+    }
+    const { server: started, port: bound } = claimed ? { server: claimed.server, port: Number(new URL(claimed.server.url).port) } : await claimPort(port, 10, startOn);
     const opened = await library.open();
     if (bound !== port) {
       console.log(`\n  Port ${port} is held by something that is not Bunzai - using ${bound}.`);

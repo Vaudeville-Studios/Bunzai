@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:e18018465d8127984bfc1e6f9425eb8c64adb024ee43fffdf46061a50cc2565c",
-  "semanticSummaryHash": "sha256:260d56eb0e961034f995a350fa95aaa98c6853a142f216f9dd7e22d5685b6368",
+  "sourceHash": "sha256:58505a5414b8535d7efb808d8590998daae236d7dbd19c9b971b533f3318102a",
+  "semanticSummaryHash": "sha256:475b707ea6e0772aa0b0faf690e20357e1a45345a0f28b2e3ffd41a02890acf2",
   "verdict": "APPROVE",
-  "reviewer": "root",
-  "notes": "Recorded after explicit independent root review of source, naming compatibility, release publication, bounded atomic updates and live download-card behavior; Linux runtime and macOS release availability are not claimed.",
-  "reviewedAt": "2026-11-03T04:03:57.787Z"
+  "reviewer": "sonnet-docs-reviewer",
+  "notes": "Re-read after 'The apps include the remote helper' edit; sidecar matches the guide page.",
+  "reviewedAt": "2026-11-04T09:12:18.768Z"
 }

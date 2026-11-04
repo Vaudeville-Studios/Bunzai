@@ -44,7 +44,7 @@ export function Setup({ ctx, drafts, busy, onStart, reader, onReaderChange }: { 
         {models.conns !== null && !available ? <div className={styles.empty}>
           <strong>Add a model to begin.</strong>
           <p>The Table Read uses a connection you choose. Your answers are sent to that model; no other Library pieces are included.</p>
-          <Button size="sm" onClick={() => { window.location.hash = "settings/models"; ctx.openApp("settings"); }}>Open Connections</Button>
+          <Button size="sm" onClick={(event) => { event.currentTarget.ownerDocument.defaultView!.location.hash = "settings/models"; ctx.openApp("settings"); }}>Open Connections</Button>
         </div> : <p className={styles.muted}>Use any available saved connection. A local model works too.</p>}
         <div className={styles.modeNote}><strong>{copy.title}</strong><p>{copy.detail}</p></div>
         <p className={styles.muted}>Your interview is kept in the encrypted library. Nothing becomes a Library character until you review and save.</p>

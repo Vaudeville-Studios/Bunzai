@@ -45,6 +45,7 @@ const ALLOWED: Record<string, Entry> = {
   "src/ui/server-staging.ts": { count: 1, ceiling: 90, reason: "staged entity read whole, then parsed (row 8)" },
   "src/ui/server-asset-staging.ts": { count: 3, ceiling: 32, reason: "staged upload prefix sniff, ciphertext read whole, Buffer.concat on open (rows 10, 11)" },
   "src/ui/server-static.ts": { count: 5, ceiling: 8, reason: "bundled app and style output read as text; build artifacts, not user data" },
+  "src/ui/app-asset-plugin.ts": { count: 1, ceiling: 8, reason: "bundler inlines PNG art shipped in app folders (about 2 MiB each); build inputs, not user data" },
   "src/ui/server-handler.ts": { count: 1, ceiling: 1, reason: "the unbundled index page" },
   "src/ui/server-docs.ts": { count: 1, ceiling: 1, reason: "one shipped docs page" },
   "src/ui/sandbox-host.ts": { count: 2, ceiling: 8, reason: "compiled worker output and trusted frame HTML are capped at 8 MiB before conversion to response text" },

@@ -9,11 +9,13 @@ Choose an asset attached to this release for your operating system and processor
 
 macOS release binaries are currently held back. Use a source checkout on macOS until a macOS release is published.
 
-Each app includes its matching remote-access helper and prepares a verified local copy automatically, without a second download. Remote access stays off until you enable it in Settings. You do not need a separate sidecar file. `SHA256SUMS` is the integrity list, not another app to run. GitHub's source archives are for development.
+Each app includes its matching remote-access helper and prepares a verified local copy automatically, without a second download. Remote access stays off until you enable it in Settings. You do not need a separate sidecar file. GitHub's source archives are for development.
 
 Advanced CLI commands and Linux ARM64 builds remain available from a source checkout. Older releases retain their separate helpers and CLI files for existing installations and recovery links. Kit is available from source and is not included in release downloads.
 
-This release includes `SHA256SUMS`. Compare the checksum for the exact asset you downloaded before opening it. A Windows reputation warning does not tell you whether a file is safe; verify the release source and checksum, or cancel if you cannot establish that you trust the file. Do not treat the warning itself as a reason to bypass Windows protections.
+**What is `SHA256SUMS`?** You can ignore it. It is not an app. It is a short list of fingerprints, one per download, so anyone who wants to can check that their file arrived undamaged and is the real one: put it next to your download and run `sha256sum -c SHA256SUMS --ignore-missing`.
+
+A Windows reputation warning does not tell you whether a file is safe; verify the release source and checksum, or cancel if you cannot establish that you trust the file. Do not treat the warning itself as a reason to bypass Windows protections.
 
 The Windows desktop app uses Microsoft's WebView2 Runtime. See [Microsoft's distribution guidance](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution) and [runtime downloads](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
 

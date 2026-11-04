@@ -13,7 +13,7 @@ Each app includes its matching remote-access helper and prepares a verified loca
 
 Advanced CLI commands and Linux ARM64 builds remain available from a source checkout. Older releases retain their separate helpers and CLI files for existing installations and recovery links. Kit is available from source and is not included in release downloads.
 
-**What is `SHA256SUMS`?** You can ignore it. It is not an app. It is a short list of fingerprints, one per download, so anyone who wants to can check that their file arrived undamaged and is the real one: put it next to your download and run `sha256sum -c SHA256SUMS --ignore-missing`.
+**What is `SHA256SUMS`?** You can ignore it. It is not an app. It is a short list of fingerprints, one per download, so anyone who wants to can check that their file arrived undamaged: put it next to your download and run `sha256sum -c SHA256SUMS --ignore-missing`.
 
 A Windows reputation warning does not tell you whether a file is safe; verify the release source and checksum, or cancel if you cannot establish that you trust the file. Do not treat the warning itself as a reason to bypass Windows protections.
 

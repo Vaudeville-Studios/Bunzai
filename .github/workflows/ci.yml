@@ -112,6 +112,14 @@ jobs:
         env:
           NODE_OPTIONS: ${{ matrix.runner == 'macos-14' && '--max-old-space-size=4096' || '' }}
         run: bun run typecheck
+      - name: Prepare a keychain (macOS)
+        # The runner keychain is locked, so keystore tests would wait on it; same setup as the keychain job.
+        if: runner.os == 'macOS'
+        run: |
+          security create-keychain -p ci bunzai-ci.keychain
+          security default-keychain -s bunzai-ci.keychain
+          security unlock-keychain -p ci bunzai-ci.keychain
+          security set-keychain-settings bunzai-ci.keychain
       - name: Tests
         run: bun run test
 

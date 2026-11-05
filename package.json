@@ -6,8 +6,7 @@
   "description": "The forge for AI-roleplay content. Convert, edit, and ship any format.",
   "license": "AGPL-3.0-or-later",
   "bin": {
-    "bunzai": "./src/cli.ts",
-    "kit": "./src/kit/index.tsx"
+    "bunzai": "./src/cli.ts"
   },
   "scripts": {
     "bunzai": "bun run src/cli.ts",

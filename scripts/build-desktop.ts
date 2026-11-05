@@ -40,10 +40,8 @@ if (desktopOutfile !== undefined) {
     throw new Error("--desktop-outfile must be a non-empty relative path inside the repository");
   }
 }
-// --kit compiles the Kit terminal app for THIS runner's own platform. Unlike the CLI it cannot be
-// cross-compiled: @opentui ships a native rendering library per platform, and a --target build fails
-// to resolve the one it is not running on. So Kit is built where it will run, on each OS's runner.
-const buildKit = process.argv.includes("--kit");
+// Kit's terminal app is not packaged for now: it runs from a source checkout (`bun run kit`), and no
+// build here compiles it.
 
 // The bake ships production React: minified, dev-only
 // warnings and the `.development` build compiled away. `bun run dev` and its own bundling in
@@ -342,23 +340,6 @@ try {
       { cwd: root, stdout: "inherit", stderr: "inherit" },
     );
     if (compile.exitCode !== 0) throw new Error(`cli compile failed for ${target}`);
-    console.log(`${out} ready`);
-  }
-
-  if (buildKit) {
-    await bakeSidecar(root, `${process.platform}-${process.arch}`);
-    // Host platform only, and named for it, since this binary cannot be built anywhere else.
-    const arch = process.arch === "arm64" ? "arm64" : "x64";
-    const os = process.platform === "win32" ? "windows" : process.platform === "darwin" ? "darwin" : "linux";
-    const out = join(root, "dist", `bunzai-kit-${os}-${arch}${os === "windows" ? ".exe" : ""}`);
-    const compile = Bun.spawnSync(
-      [process.execPath, "build", "--compile", ...NO_PROPRIETARY_SDK, join(root, "src", "kit", "index.tsx"),
-        javascriptWorker, join(root, "src", "sandbox", "regex", "worker.ts"), "--outfile", out],
-      { cwd: root, stdout: "inherit", stderr: "inherit" },
-    );
-    // A cross-target opentui miss exits 0 while writing nothing, so the file is the real check.
-    if (compile.exitCode !== 0) throw new Error("kit compile failed");
-    if (!await Bun.file(out).exists()) throw new Error(`kit compile produced no binary at ${out}`);
     console.log(`${out} ready`);
   }
 } finally {

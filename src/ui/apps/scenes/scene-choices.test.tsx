@@ -11,6 +11,7 @@ import type { Chat, ChoicePick } from "../../../stage/contracts/chat-store";
 import { resolveSelections } from "../../../core/macros/choice-groups";
 import { PRESET_CHOICE_DEFAULTS_KEY, defaultsFor, toChoiceGroups, withDefaults } from "../../../core/preset/choices";
 import { installRigDom, props, rig, settle, type FlushSync } from "./fake-scene-page-rig";
+import { waitFor } from "../../_shared/test-dom";
 
 const click = (flushSync: FlushSync, el: Element): void => { flushSync(() => props(el)["onClick"]!({ stopPropagation: () => undefined, shiftKey: false })); };
 import { ChoicesRow } from "./scene-choices";
@@ -91,7 +92,7 @@ describe("the walkthrough", () => {
     expect(saved).toEqual([]);
     click(flushSync, [...doc().querySelectorAll<HTMLElement>("[role=radio]")].find((r) => r.textContent?.includes("Light"))!);
     expect(saved).toEqual([["tone", "light"]]);
-    await settle(flushSync, 450);
+    await waitFor(flushSync, () => doc().body.textContent?.includes("Question 2 of 2"), "the walkthrough to advance to question 2");
     expect(doc().body.textContent).toContain("Question 2 of 2");
     const boxes = [...doc().querySelectorAll<HTMLElement>("[role=checkbox]")];
     click(flushSync, boxes.find((r) => r.textContent?.includes("Y"))!);

@@ -92,7 +92,7 @@ jobs:
     # sidecar steps are platform-neutral and already run above.
     name: tests (${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.runner == 'windows-latest' && 45 || 30 }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:

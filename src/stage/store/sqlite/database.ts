@@ -4,7 +4,7 @@
  * (scripts/probe-sqlite-runtime.ts) are rules here: transactions are explicit BEGIN and COMMIT,
  * never Bun's `db.transaction()`, and close finalizes cached statements and throws if it cannot.
  */
-import { Database, type Statement } from "bun:sqlite";
+import { Database, constants, type Statement } from "bun:sqlite";
 import { statSync, statfsSync } from "node:fs";
 import { dirname } from "node:path";
 import { toErrorMessage } from "../../../error-message";
@@ -257,6 +257,9 @@ export function openStageDatabase(path: string, migrations: readonly Migration[]
 
   try {
     if (path !== ":memory:") {
+      // macOS system SQLite keeps the WAL file after the last close by default; a closed library is
+      // one file on every OS (the import refuses to go live while a WAL is still beside it).
+      db.fileControl(constants.SQLITE_FCNTL_PERSIST_WAL, 0);
       const mode = statement("PRAGMA journal_mode = WAL").get() as { journal_mode: string };
       if (mode.journal_mode !== "wal") throw new StageDatabaseError(`journal_mode is ${mode.journal_mode}, not wal`);
       // FULL, not NORMAL: in WAL mode NORMAL can lose the last commits on power loss. A chat app's

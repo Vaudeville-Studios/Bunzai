@@ -11,7 +11,7 @@ import type { ChatParticipants, ParticipantChange } from "../../../stage/contrac
 import { applyParticipantChange, checkParticipantChange } from "../../../stage/store/participant-rules";
 import type { OpenScene } from "../../../studio/scenes";
 import type { AppContext } from "../../app-contract";
-import { installDom, type InstalledDom } from "../../_shared/test-dom";
+import { installDom, waitFor, type InstalledDom } from "../../_shared/test-dom";
 import { registerInserter } from "./context/draft-bus";
 import { holdParticipants } from "./participants/participants-store";
 
@@ -175,7 +175,8 @@ describe("the Participants tab", () => {
     expect(reconciles).toEqual([12]);
     expect(text()).toContain("Found 2 new in the last 12 messages · 1 already known. Nothing is added until you confirm.");
     expect(stored).toBeNull();
-    const boxes = [...doc().body.querySelectorAll(".found input[type=checkbox]")] as HTMLInputElement[];
+    // every name starts ticked once the card has taken the proposal (an effect after it renders); untick only after that
+    const boxes = await waitFor(f, () => { const all = [...doc().body.querySelectorAll(".found input[type=checkbox]")] as HTMLInputElement[]; return all.length === 2 && all.every((b) => b.checked) && all; }, "every proposed name ticked");
     f(() => boxes[1]!.click());
     await settle(f);
     await press(f, button("Add selected"));

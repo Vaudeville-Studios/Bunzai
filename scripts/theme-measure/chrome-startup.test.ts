@@ -77,7 +77,8 @@ test("a connection acquired after child exit is closed rather than returned", as
   }).then(() => null, (error: unknown) => error);
   expect(error).toBeInstanceOf(Error);
   expect((error as Error).message).toContain("Chrome exited");
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  // the late connection is closed when it arrives, which a loaded runner can put well past 250 ms
+  for (let waited = 0; closed === 0 && waited < 5000; waited += 25) await new Promise((resolve) => setTimeout(resolve, 25));
   expect(closed).toBe(1);
 });
 

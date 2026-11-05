@@ -12,7 +12,7 @@ import type { AppContext } from "../../app-contract";
 import type { MenuItem, MenuTarget } from "../../shell/menus";
 import type { SceneFolder } from "../../../stage/contracts/chat-store";
 import type { SceneGrave, SceneSummary } from "../../../studio/scenes";
-import { installDom, setSurfacePicks, type InstalledDom } from "../../_shared/test-dom";
+import { installDom, setSurfacePicks, waitFor, type InstalledDom } from "../../_shared/test-dom";
 import { PieceStore } from "../../_shared/piece-store";
 
 
@@ -262,7 +262,7 @@ describe("ScenesList: the chat summary on the list", () => {
     expect([...host.querySelectorAll(".sumline")].map((l) => l.textContent)).toEqual(["They met at the pier."]);
     typeIn(flushSync, "a");
     for (const v of ["pier", "pier!", "pier"]) typeIn(flushSync, v);
-    await settle(flushSync, 400);
+    await waitFor(flushSync, () => bodyText(host.querySelector(".main")!).includes("Older Vera scene"), "the summary match to show");
     expect(summaryQueries).toEqual(["pier"]);
     const main = bodyText(host.querySelector(".main")!);
     expect(main).toContain("Older Vera scene");

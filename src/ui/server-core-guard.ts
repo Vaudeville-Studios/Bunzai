@@ -4,10 +4,24 @@ import type { CoreSceneRecords } from "../stage/store/sqlite/core-record-store";
 import { INCOMPLETE_CORE_SCENE_MESSAGE } from "../studio/core-scene";
 import { err } from "./server-security";
 
-// Backdrop is persisted presentation state on the host chat, outside the RP-Core session journal/config.
-// edit, hide and select-swipe go to rp-core's journal first (server-chats-core-messages.ts); the scene's
-// lore and preset are read for each Core turn and handed to rp-core (studio/core-library.ts).
-const ALLOWED = new Set(["start", "send", "turn", "stop", "review", "connection", "search", "rename", "delete", "favorite", "folder", "core-settings", "backdrop", "edit", "hide", "select-swipe", "lore", "preset", "prompting", "discard", "add-anyway", "fork", "take", "delete-take", "rename-take", "restore-take", "persona", "update-card", "revert-card", "save-member", "variant", "opening", "draft", "formula-try", "regex", "regex-answer", "final-cut", "final-cut/rerun", "final-cut/rerun/apply", "cut", "restore-cut"]);
+// The scene writes a Core scene takes, one group per line (a route named like a piece kind is a route, not a kind list).
+const ALLOWED = new Set([
+  // The turn and its gates; scene metadata. Backdrop is presentation state on the host chat, outside the journal.
+  "start", "send", "turn", "stop", "review", "connection", "search", "rename", "delete", "favorite", "folder", "core-settings", "backdrop",
+  // A person's own message changes, journal first (server-chats-core-messages.ts, studio/core-scene-ops.ts).
+  "edit", "hide", "select-swipe", "discard", "add-anyway", "cut", "restore-cut",
+  // Takes: one rp-core session each.
+  "fork", "take", "delete-take", "rename-take", "restore-take",
+  // Read for each Core turn and handed to rp-core (studio/core-library.ts).
+  "lore",
+  "preset",
+  "prompting",
+  "regex", "regex-answer",
+  "final-cut", "final-cut/rerun", "final-cut/rerun/apply",
+  // The cast rp-core plays (CoreTurnOwner.syncCast), the opening's wording, and read-only drafts.
+  "persona",
+  "update-card", "revert-card", "save-member", "variant", "opening", "draft", "formula-try",
+]);
 /** `finish` completes a host-created scene whose rp-core session was never written (ensureCoreScene). */
 export async function coreWriteGuard(path: string, body: Record<string, unknown>, records?: CoreSceneRecords, finish?: (sceneId: string) => Promise<unknown>): Promise<Response | null> {
   if (!records || !path.startsWith("/api/chats/")) return null;

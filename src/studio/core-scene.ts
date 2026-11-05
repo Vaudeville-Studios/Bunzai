@@ -2,7 +2,7 @@
 import { Engine, createAnthropicProvider, createOpenAIChatProvider, resolveCaps } from "rp-core";
 import type { Character, Connection, Persona, PromptMsg } from "rp-core";
 import type { AsyncSessionHandle, RecordStore } from "rp-core";
-import { bodyOf, recOr, str } from "../core/guards";
+import { bodyOf, isRecord, recOr, str } from "../core/guards";
 import type { ChatConnection, ChatStore } from "../stage/contracts/chat-store";
 import type { CoreSceneRecords } from "../stage/store/sqlite/core-record-store";
 import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
@@ -55,7 +55,7 @@ function corePersona(source: unknown): Persona {
 const NO_PERSONA: Persona = { name: "User", description: "" };
 /** Key-order-free equality for the JSON rp-core validated and the JSON Bunzai built. */
 const stable = (value: unknown): string => JSON.stringify(value, (_key, v: unknown) =>
-  v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b))) : v);
+  isRecord(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b))) : v);
 
 /**
  * Moves rp-core's cast onto the scene's: a persona change, an updated or reverted card, an edit saved

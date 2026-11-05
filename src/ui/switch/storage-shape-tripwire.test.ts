@@ -44,7 +44,7 @@ async function shapeFiles(): Promise<string[]> {
     "src/stage/store/sqlite/chat-store-state.ts",
     "src/stage/store/sqlite/core-record-authority.ts",
     "src/stage/store/sqlite/core-record-projection.ts",
-    "src/stage/store/sqlite/migration-52-core-projections.ts",
+    "src/stage/store/sqlite/migration-52-core-projections.ts", "src/stage/store/sqlite/migration-53-core-takes.ts",
     "src/stage/store/sqlite/migration-18-parts.ts",
     "src/stage/store/sqlite/migration-19-blobs.ts",
     "src/stage/store/sqlite/migration-20-derived.ts",
@@ -489,7 +489,7 @@ async function shapeFiles(): Promise<string[]> {
 // reviewed and approved this exact additive shape.
 // 2026-11-01: COMPATIBLE Core birth fingerprint v2 adds origin coverage and adopts valid v1 rows; shared uncut timestamp ownership emits identical message SQL. No migration or stored-column change.
 // 2026-11-03: Optional attachments are fenced at v0.1.54. Table Read adds private state without SQL/envelope changes; old known-key writes preserve it, encrypted snapshots restore it, and plain folder exports omit it.
-const PINNED_SHAPE_HASH = "5273a5ff8490c387a54bbb3eb03c366f1d0f4b9672571ccfb605476238df20a4";
+const PINNED_SHAPE_HASH = "b3c93535f673fb500dddefc9858cd357b4476852fd3c581e08d9f7e42c543355"; // 2026-11-05 COMPATIBLE: migration 53 adds core_take_links (one rp-core session per Core take, a new table only), and a Core projection may write the new version's swipe_traces row with it; nothing existing moved, no SCHEMA_BUMPS entry.
 test("storage-shape tripwire: an on-disk shape change must be a deliberate, version-aware act", async () => {
   const h = createHash("sha256");
   const files = await shapeFiles();

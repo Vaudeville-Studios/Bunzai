@@ -13,7 +13,7 @@ import { CHAT, installLoreDom, press, q, qa, rig, settle, text, type FlushSync }
 import { PopoutHost, PopoutSlot } from "../popout/popout-host";
 import { activityPopout } from "./activity-popout";
 
-const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", enabled: true, missing: false, entries: 3, tokens: 0 };
+const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 3, tokens: 0 };
 const filed: CompendiumReceipt = { id: "r1", chatId: "chat1", branchId: "b1", settledAt: 1, kind: "filing", status: "filed", at: Date.now() - 5_000, writes: [{ bookId: "b1", entryId: "e1", op: "update", fields: { before: {}, after: { "data.name": "Mira Vance" } } }] };
 const latest = { reply: { messageId: "m4", swipeId: "s4", number: 4, model: "n", take: "t" }, blocks: [], window: { context: 1, reply: 1, stated: true }, trimmed: 0, lore: null, rawAvailable: false, replies: [{ messageId: "m4", swipeId: "s4", number: 4 }],
   recall: { status: "recalled", at: Date.now() - 1_000, calls: 1, cached: false, alreadyPlaced: 0, cut: [], injected: [{ bookId: "b1", entryId: "e1", bookName: "The Drowned Coast", title: "Mira Vance", tokens: 12, reason: "She is on the quay" }] } } as SceneTrace;

@@ -52,7 +52,7 @@ const ctxOf = (): AppContext => {
   const base: Record<string, unknown> = {
     listScenes: async () => { if (rig.listing instanceof Error) throw rig.listing; return rig.listing; },
     getSceneParticipants: async () => ({ participants: null }),
-    getSceneLore: async () => ({ books: Array.from({ length: rig.books }, (_, i) => ({ id: `b${i}`, name: "Book", source: "scene", enabled: true, missing: false, entries: 1, tokens: 1 })), lastTurn: null }),
+    getSceneLore: async () => ({ books: Array.from({ length: rig.books }, (_, i) => ({ id: `b${i}`, name: "Book", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 1, tokens: 1 })), lastTurn: null }),
     startScene: async (characterId: string) => { rig.started.push(characterId); return { id: `new-${characterId}` }; },
   };
   const api = new Proxy(base, { get: (t, k) => (typeof k === "string" && typeof t[k] === "function" ? (...a: unknown[]) => { rig.calls.push(k); return (t[k] as (...x: unknown[]) => unknown)(...a); } : t[k as string]) });
@@ -142,7 +142,7 @@ describe("the Messenger shell", () => {
     expect(one(".msn-head #takes")).not.toBeNull();
     unmount();
     rig.books = 0;
-    await mount({ loreBooks: [{ id: "x", name: "X", source: "scene", enabled: true, missing: false, entries: 1, tokens: 1 }, { id: "y", name: "Y", source: "scene", enabled: false, missing: false, entries: 1, tokens: 1 }], programs: PROGRAMS.slice(0, 4) });
+    await mount({ loreBooks: [{ id: "x", name: "X", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 1, tokens: 1 }, { id: "y", name: "Y", source: "scene", addedByScene: true, enabled: false, missing: false, entries: 1, tokens: 1 }], programs: PROGRAMS.slice(0, 4) });
     expect(one(".msn-head .msn-topic")!.textContent).toBe("Alex · 48 messages · 1 lorebook on");
     unmount();
   });

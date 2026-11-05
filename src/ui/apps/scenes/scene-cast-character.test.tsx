@@ -43,7 +43,7 @@ const scene = (): OpenScene => ({
   lastUserMessageIndex: null, lastAssistantMessageIndex: null, branchVersion: 1, takes: [], latestCardVersion: 3,
 }) as unknown as OpenScene;
 
-const book = (id: string, name: string, source: SceneLoreBook["source"], enabled = true): SceneLoreBook => ({ id, name, source, enabled, missing: false, entries: 3, tokens: 90 });
+const book = (id: string, name: string, source: SceneLoreBook["source"], enabled = true): SceneLoreBook => ({ id, name, source, addedByScene: source === "scene", enabled, missing: false, entries: 3, tokens: 90 });
 const library: StudioEntitySummary[] = [
   { id: "tides", kind: "lorebook", name: "Tide Tables", version: 1, facts: { lore: { entryCount: 12 } } } as unknown as StudioEntitySummary,
   { id: "mine", kind: "lorebook", name: "Keeper's Notes", version: 1 } as StudioEntitySummary,

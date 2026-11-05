@@ -16,7 +16,7 @@ import { expectWindowed, teardownAllDoms } from "../../../_shared/test-dom";
 import { CHAT, bodyOf, installLoreDom, press, q, qa, resetLore, rig, settle, text, typeInto, unmount, waitFor, type FlushSync } from "../fake-lore-rig";
 import { CompendiumWing } from "./compendium-wing";
 
-const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", enabled: true, missing: false, entries: 213, tokens: 0 };
+const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 213, tokens: 0 };
 let calls: string[] = [];
 let flushSync: FlushSync;
 

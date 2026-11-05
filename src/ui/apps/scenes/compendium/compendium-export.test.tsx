@@ -14,8 +14,8 @@ import { CompendiumWithFiling } from "./compendium-mounts";
 import { exportName } from "./export-button";
 
 const BOOKS: SceneLoreBook[] = [
-  { id: "b1", name: "The Drowned Coast", source: "scene", enabled: true, missing: false, entries: 1, tokens: 0 },
-  { id: "b2", name: "Salt: Court/Law", source: "scene", enabled: true, missing: false, entries: 1, tokens: 0 },
+  { id: "b1", name: "The Drowned Coast", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 1, tokens: 0 },
+  { id: "b2", name: "Salt: Court/Law", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 1, tokens: 0 },
 ];
 let asked: string[] = [];
 let status: string[] = [];

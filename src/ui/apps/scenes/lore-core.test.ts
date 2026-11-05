@@ -9,12 +9,19 @@ import {
 } from "./lore-core";
 
 const book = (id: string, over: Partial<SceneLoreBook> = {}): SceneLoreBook =>
-  ({ id, name: id, source: "character", enabled: true, missing: false, entries: 1, tokens: 10, ...over });
+  ({ id, name: id, source: "character", addedByScene: false, enabled: true, missing: false, entries: 1, tokens: 10, ...over });
 
 describe("choiceFromBooks", () => {
   test("added is the scene's own books; off is whichever are disabled, whatever their source", () => {
-    const books = [book("a"), book("b", { source: "scene" }), book("c", { source: "persona", enabled: false })];
+    const books = [book("a"), book("b", { source: "scene", addedByScene: true }), book("c", { source: "persona", addedByScene: false, enabled: false })];
     expect(choiceFromBooks(books)).toEqual({ added: ["b"], off: ["c"] });
+  });
+});
+
+describe("choiceFromBooks keeps the scene's own additions", () => {
+  test("a book the scene added stays added when the character also links it", () => {
+    const linked = { id: "x", name: "Shared", source: "character" as const, addedByScene: true, enabled: true, missing: false, entries: 1, tokens: 1 };
+    expect(choiceFromBooks([linked]).added).toEqual(["x"]);
   });
 });
 

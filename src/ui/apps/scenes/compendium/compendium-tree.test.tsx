@@ -18,7 +18,7 @@ import { CHAT, bodyOf, installLoreDom, press, props, q, qa, rig, settle, text, w
 import { CompendiumWing } from "./compendium-wing";
 import { CompendiumSettingsTab } from "./tabs/settings";
 
-const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", enabled: true, missing: false, entries: 4, tokens: 0 };
+const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 4, tokens: 0 };
 const entries: LorebookEntry[] = ["Alder", "Birch", "Cedar", "Dogwood"].map((t, i) => ({ ...emptyLoreEntry(`e${i}`), title: t, content: `${t}.` }));
 const node = (id: string, label: string, entryIds: string[]) => ({ id, label, summary: label, entryIds, children: [] });
 const LAYOUT: StoredLayout = { rev: "r1", model: "m1", granularity: 0, detail: "lite", root: { id: "root", label: "World Knowledge", summary: "A coast.", entryIds: [], children: [node("n:woods", "Woods", ["e0", "e1"]), node("n:marsh", "Marsh", ["e2", "e3"])] } };

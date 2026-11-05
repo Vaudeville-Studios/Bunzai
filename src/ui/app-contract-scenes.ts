@@ -239,6 +239,8 @@ export interface SceneLoreBook {
   id: string;
   name: string;
   source: SceneLoreSource;
+  /** true when the scene itself added the book, even if the character or persona also links it */
+  addedByScene: boolean;
   /** false when the scene switched it off */
   enabled: boolean;
   /** true when the scene names a book the library no longer has */

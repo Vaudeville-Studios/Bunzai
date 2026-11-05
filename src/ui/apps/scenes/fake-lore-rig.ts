@@ -33,9 +33,9 @@ export const bodyOf = (name: string, entries: LorebookEntry[]): LorebookBody => 
 });
 
 export const BOOKS: SceneLoreBook[] = [
-  { id: "b1", name: "Keeper's Log", source: "character", enabled: true, missing: false, entries: 2, tokens: 200 },
-  { id: "b2", name: "The Drowned Coast", source: "scene", enabled: true, missing: false, entries: 21, tokens: 1000 },
-  { id: "b3", name: "My quirks", source: "persona", enabled: false, missing: false, entries: 3, tokens: 40 },
+  { id: "b1", name: "Keeper's Log", source: "character", addedByScene: false, enabled: true, missing: false, entries: 2, tokens: 200 },
+  { id: "b2", name: "The Drowned Coast", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 21, tokens: 1000 },
+  { id: "b3", name: "My quirks", source: "persona", addedByScene: false, enabled: false, missing: false, entries: 3, tokens: 40 },
 ];
 export const LIBRARY: StudioEntitySummary[] = [
   { id: "b1", kind: "lorebook", name: "Keeper's Log", facts: { lore: { entryCount: 2, searchKeys: [], enabled: true } } },
@@ -106,8 +106,8 @@ export function loreCtx(): AppContext {
       const off = lore?.off ?? [];
       const added = lore?.added ?? [];
       // a book the scene adds comes from the library (or was just created): it joins the list, switched on
-      const joined = added.filter((id) => !rig.books.some((b) => b.id === id)).map((id): SceneLoreBook => ({ id, name: rig.library.find((s) => s.id === id)?.name ?? "Sea Log", source: "scene", enabled: true, missing: false, entries: 0, tokens: 0 }));
-      return { books: [...rig.books, ...joined].map((b) => ({ ...b, enabled: !off.includes(b.id) })).filter((b) => b.source !== "scene" || added.includes(b.id)), lastTurn: rig.lastTurn };
+      const joined = added.filter((id) => !rig.books.some((b) => b.id === id)).map((id): SceneLoreBook => ({ id, name: rig.library.find((s) => s.id === id)?.name ?? "Sea Log", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 0, tokens: 0 }));
+      return { books: [...rig.books, ...joined].map((b) => ({ ...b, addedByScene: added.includes(b.id), enabled: !off.includes(b.id) })).filter((b) => b.source !== "scene" || added.includes(b.id)), lastTurn: rig.lastTurn };
     },
     getLightEditableEntity: async (query: string) => {
       const id = decodeURIComponent(/id=([^&]+)/.exec(query)![1]!);

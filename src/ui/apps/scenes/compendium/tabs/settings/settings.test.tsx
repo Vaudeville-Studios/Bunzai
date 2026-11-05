@@ -33,7 +33,7 @@ beforeAll(() => {
 afterAll(() => installed.teardown());
 
 const guide = (id: string, over: Partial<GuideRecord> = {}): GuideRecord => ({ id, title: id, content: `text ${id}`, type: "guide", category: "situational", role: "user", mode: "standard", depth: null, target: null, side: null, visible: true, createdAt: 1, updatedAt: 1, ...over });
-const book = (id: string, over: Partial<SceneLoreBook> = {}): SceneLoreBook => ({ id, name: `Book ${id}`, source: "scene", enabled: true, missing: false, entries: 12, tokens: 300, ...over });
+const book = (id: string, over: Partial<SceneLoreBook> = {}): SceneLoreBook => ({ id, name: `Book ${id}`, source: "scene", addedByScene: true, enabled: true, missing: false, entries: 12, tokens: 300, ...over });
 const chatWith = (compendium?: Chat["compendium"]): Chat => ({ id: "chat1", title: "Night", cast: { character: { id: "c1", version: 1, name: "Char" } }, activeBranchId: "b1", createdAt: 0, updatedAt: 0, snapshotVersion: 1, connection: { id: "k1", model: "m-own" }, ...(compendium ? { compendium } : {}) }) as Chat;
 
 let books: SceneLoreBook[] = [];

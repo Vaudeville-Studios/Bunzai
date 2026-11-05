@@ -132,8 +132,8 @@ describe("Booth Lorebooks row", () => {
   type Book = import("../../app-contract-scenes").SceneLoreBook;
   type Choice = import("../../app-contract-scenes").SceneLoreChoice;
   const BASE: Book[] = [
-    { id: "b1", name: "Keeper's Log", source: "character", enabled: true, missing: false, entries: 2, tokens: 200 },
-    { id: "b2", name: "The Drowned Coast", source: "scene", enabled: true, missing: false, entries: 21, tokens: 1000 },
+    { id: "b1", name: "Keeper's Log", source: "character", addedByScene: false, enabled: true, missing: false, entries: 2, tokens: 200 },
+    { id: "b2", name: "The Drowned Coast", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 21, tokens: 1000 },
   ];
   // One stateful store: a write changes what the next read answers, as the real ChatStore does.
   let off: string[];

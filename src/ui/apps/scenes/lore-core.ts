@@ -16,7 +16,7 @@ const dedup = (ids: readonly string[]): string[] => [...new Set(ids)];
 /** The scene's own choice as the current books already reflect it: which it added, which it turned off. */
 export function choiceFromBooks(books: readonly SceneLoreBook[]): SceneLoreChoice {
   return {
-    added: dedup(books.filter((b) => b.source === "scene").map((b) => b.id)),
+    added: dedup(books.filter((b) => b.addedByScene).map((b) => b.id)),
     off: dedup(books.filter((b) => !b.enabled).map((b) => b.id)),
   };
 }

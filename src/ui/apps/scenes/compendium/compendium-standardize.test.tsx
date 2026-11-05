@@ -16,7 +16,7 @@ import { CHAT, bodyOf, installLoreDom, press, qa, rig, settle, text, typeInto, w
 import { CompendiumWithFiling } from "./compendium-mounts";
 import { LOCK_TEXT } from "./standardize/standardize-cards";
 
-const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", enabled: true, missing: false, entries: 6, tokens: 0 };
+const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 6, tokens: 0 };
 const classic = (id: string, over = {}) => ({ ...emptyLoreEntry(id), title: id, content: `${id} is a person of the harbor.`, ...over });
 const ENTRIES = [typedEntry("t1", "Mira", "character", { name: "Mira" }), classic("a"), classic("b"), classic("c"), classic("p", { metadata: { preserve_during_standardize: true } }), classic("r", { enabled: false, metadata: { retired: { at: 1 } } })];
 const run = (over: Partial<RunSnapshot> = {}): RunSnapshot => ({ chatId: "chat1", bookId: "b1", status: "running", startedAt: 1, model: "vera-1", total: 3, processed: 0, rewritten: 0, consumed: 0, created: 0, dedup: 0, failed: 0, typed: {}, batches: { done: 0, total: 1 }, warnings: [], log: [], ...over });

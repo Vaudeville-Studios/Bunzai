@@ -83,10 +83,10 @@ test("GET answers books from all three sources, with off and missing", async () 
   expect(res.status).toBe(200);
   const body = (await res.json()) as { books: Record<string, unknown>[]; lastTurn: unknown };
   expect(body.books).toEqual([
-    { id: "char-book", name: "Character Book", source: "character", enabled: true, missing: false, entries: 1, tokens: expect.any(Number) },
-    { id: "persona-book", name: "Persona Book", source: "persona", enabled: false, missing: false, entries: 1, tokens: expect.any(Number) },
-    { id: "scene-book", name: "scene-book", source: "scene", enabled: true, missing: true, entries: 0, tokens: 0 },
-    { id: "ghost", name: "ghost", source: "scene", enabled: true, missing: true, entries: 0, tokens: 0 },
+    { id: "char-book", name: "Character Book", source: "character", addedByScene: false, enabled: true, missing: false, entries: 1, tokens: expect.any(Number) },
+    { id: "persona-book", name: "Persona Book", source: "persona", addedByScene: false, enabled: false, missing: false, entries: 1, tokens: expect.any(Number) },
+    { id: "scene-book", name: "scene-book", source: "scene", addedByScene: true, enabled: true, missing: true, entries: 0, tokens: 0 },
+    { id: "ghost", name: "ghost", source: "scene", addedByScene: true, enabled: true, missing: true, entries: 0, tokens: 0 },
   ]);
   expect(body.lastTurn).toBeNull();
 });
@@ -123,7 +123,7 @@ test("a trashed book is missing, same as one never in the library", async () => 
   await post("/api/chats/lore", { chatId, lore: { added: ["char-book"], off: [] } });
   await store.delete("lorebook", "char-book");
   const body = (await (await handler(apiReq(`/api/chats/lore?chatId=${chatId}`))).json()) as { books: Record<string, unknown>[] };
-  expect(body.books.find((b) => b["id"] === "char-book")).toEqual({ id: "char-book", name: "char-book", source: "character", enabled: true, missing: true, entries: 0, tokens: 0 });
+  expect(body.books.find((b) => b["id"] === "char-book")).toEqual({ id: "char-book", name: "char-book", source: "character", addedByScene: true, enabled: true, missing: true, entries: 0, tokens: 0 });
 });
 
 test("an unknown chat is 404 on both routes", async () => {

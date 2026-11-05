@@ -116,6 +116,7 @@ async function sceneLoreFor(chats: ChatStore, readLorebook: ReadLorebook, chat: 
     id: r.id,
     name: r.book?.name ?? r.id,
     source: r.source,
+    addedByScene: chat.lore?.added.includes(r.id) ?? false,
     enabled: r.enabled,
     missing: r.book === null,
     entries: r.book?.body.entries.length ?? 0,

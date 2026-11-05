@@ -12,8 +12,8 @@ import type { SettingsCategory } from "../../frames/settings-window";
 export type Calls = Record<string, unknown[][]>;
 
 export const BOOKS = [
-  { id: "b1", name: "Keeper's Log", source: "character", enabled: true, missing: false, entries: 2, tokens: 200 },
-  { id: "b2", name: "The Drowned Coast", source: "scene", enabled: false, missing: false, entries: 21, tokens: 1000 },
+  { id: "b1", name: "Keeper's Log", source: "character", addedByScene: false, enabled: true, missing: false, entries: 2, tokens: 200 },
+  { id: "b2", name: "The Drowned Coast", source: "scene", addedByScene: true, enabled: false, missing: false, entries: 21, tokens: 1000 },
 ];
 
 export interface RigOptions {

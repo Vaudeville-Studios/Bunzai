@@ -13,7 +13,7 @@ import { teardownAllDoms } from "../../../_shared/test-dom";
 import { CHAT, bodyOf, installLoreDom, press, q, qa, rig, settle, text, waitFor, type FlushSync } from "../fake-lore-rig";
 import { CompendiumWithFiling } from "./compendium-mounts";
 
-const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", enabled: true, missing: false, entries: 3, tokens: 0 };
+const BOOK: SceneLoreBook = { id: "b1", name: "The Drowned Coast", source: "scene", addedByScene: true, enabled: true, missing: false, entries: 3, tokens: 0 };
 const CHAT_W = { ...CHAT, compendium: { books: { b1: { access: "read_write" as const } } } };
 let entries = [typedEntry("e1", "Mira Vance", "character", { name: "Mira Vance" }), typedEntry("e2", "Dov Ketter", "character", { name: "Dov Ketter" })];
 const base = { chatId: "chat1", branchId: "b1", settledAt: 1, writes: [] as CompendiumReceipt["writes"] };

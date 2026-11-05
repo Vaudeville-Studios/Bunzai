@@ -43,7 +43,8 @@ export class PresetPlanError extends Error {
 }
 
 /** One working block: the preset's fields RoleCall reads, copied so the preset itself is never touched. */
-interface Working {
+/** A preset block as the turn sends it, before macros run (filledPresetBlocks). */
+export interface Working {
   id: string;
   name: string;
   content: string;
@@ -85,6 +86,17 @@ export function presetPlan(body: PresetBody, toggles: Readonly<Record<string, bo
   fillSlots(blocks);
   const info = body.prompts.map((p) => ({ id: p.id, identifier: p.id, name: p.name, enabled: isOn(p, toggles), content: p.content }));
   return { ...layOut(blocks), info, slots, slotNonce: nonce };
+}
+
+/**
+ * The blocks a turn sends before macros run: switched on, de-duplicated, with RoleCall's five fills
+ * (fillSlots). The rp-core translation (studio/core-library.ts) reads the same list, so both engines
+ * seat lore, persona, the card slots, the summary and the history by one rule.
+ */
+export function filledPresetBlocks(body: PresetBody, toggles: Readonly<Record<string, boolean>> = {}): readonly Working[] {
+  const blocks = activeBlocks(body.prompts, toggles);
+  fillSlots(blocks);
+  return blocks;
 }
 
 /** The one test for "this block already seats the persona": fillSlots adds its own block when none does, and the Cast wing's scan asks the same. */

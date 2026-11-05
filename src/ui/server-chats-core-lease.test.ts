@@ -27,8 +27,9 @@ test("unsupported version and branch writes are rejected before touching a linke
   const chat = await (await r.post("/api/chats/start", { characterId: "vera" })).json() as { id: string; activeBranchId: string };
   const records = libraryFor(r.store.studioPath())!.core!;
   const { coreWriteGuard } = await import("./server-core-guard");
-  expect((await coreWriteGuard("/api/chats/delete-take", { branchId: chat.activeBranchId }, records))?.status).toBe(501);
-  expect((await coreWriteGuard("/api/chats/restore-take", { id: chat.activeBranchId }, records))?.status).toBe(501);
+  // Takes and cuts are rp-core sessions now (core-scene-ops.ts); removing one version has no rp-core verb yet.
+  expect((await coreWriteGuard("/api/chats/cut-version", { chatId: chat.id }, records))?.status).toBe(501);
+  expect(await coreWriteGuard("/api/chats/delete-take", { branchId: chat.activeBranchId }, records)).toBeNull();
   await r.post("/api/chats/send", { chatId: chat.id, content: "Hi", greetingIndex: 0, expectedVersion: 1 });
   const messages = await libraryFor(r.store.studioPath())!.chats.readMessages(chat.activeBranchId, { limit: 10 });
   const message = messages.messages[0]!;

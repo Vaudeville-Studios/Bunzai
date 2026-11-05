@@ -7,6 +7,8 @@
  * moving a scene to the latest card follow the store's rules 11 to 13; each returns the scene as it
  * now stands, so the page redraws from one answer.
  */
+import { takeName } from "./scene-take-name";
+export { takeName };
 import { checkUserMessage } from "./final-cut-user-check";
 import type { Branch, Cast, CastSnapshot, Chat, ChatStore, JsonObject, Message, MessageAtPage, MessageRole, MessageSwipePage } from "../stage/contracts/chat-store";
 import type { ParsedCanonicalEntity } from "../entities/runtime-schema";
@@ -309,16 +311,13 @@ export async function switchTake(chats: ChatStore, studio: StudioStoreLike, inpu
   return reopen(chats, studio, input.chatId, moved);
 }
 
-/** A new take from a message, named "Take N" (the first number no take uses) unless a name is given (RoleCall's numbering). */
+/** A new take from a message (takeName). */
 export async function forkScene(
   chats: ChatStore,
   studio: StudioStoreLike,
   input: { chatId: string; messageId: string; name?: string; expectedVersion: number },
 ): Promise<OpenScene | null> {
-  const taken = new Set((await chats.listBranches(input.chatId)).map((b) => b.name));
-  let n = taken.size + 1;
-  while (taken.has(`Take ${n}`)) n++;
-  const name = input.name?.trim() || `Take ${n}`;
+  const name = await takeName(chats, input.chatId, input.name);
   const take = await chats.fork(await activeOf(chats, input.chatId), input.messageId, { name, expectedVersion: input.expectedVersion });
   return reopen(chats, studio, input.chatId, take);
 }

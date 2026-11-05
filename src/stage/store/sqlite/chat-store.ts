@@ -245,11 +245,16 @@ export function sqliteChatStoreBackend(
       const guard = { expectedVersion: input.expectedVersion + inserted };
       const payload = { content: input.content, ...(input.generation ? { generation: input.generation } : {}) };
       const before = target ? messageById(target.messageId) : null;
-      if (target && (!before || before.branchId !== input.takeId || before.swipes[before.current]?.id !== target.swipeId)) throw new Error("Core projection target is not the selected UI swipe");
+      if (target && (!before || before.branchId !== input.takeId || (input.mode !== "edit" && before.swipes[before.current]?.id !== target.swipeId))) throw new Error("Core projection target is not the selected UI swipe");
       const message = !target ? appendMany(input.takeId, [{ role: input.role, ...payload }], guard)?.[0]
         : input.mode === "swipe" ? addSwipeInTransaction({ ...kit, insertSwipe }, target.messageId, payload, guard)
         : editSwipeInTransaction(kit, target.messageId, target.swipeId, input.content, guard);
       if (!message) throw new Error("Core projection take is unavailable");
+      if (input.trace && (input.mode ?? "append") !== "continue" && input.mode !== "edit") {
+        // The version this projection just wrote is the message's newest.
+        const { position } = one<{ position: number }>("SELECT MAX(position) AS position FROM swipes WHERE message_id = ?", message.id)!;
+        run("INSERT INTO swipe_traces (message_id, position, trace_json) VALUES (?, ?, ?)", message.id, position, cipher.seal("swipe_traces.trace_json", JSON.stringify(input.trace)));
+      }
       inserted++;
       return message.id;
     });

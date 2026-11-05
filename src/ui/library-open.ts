@@ -2,6 +2,10 @@
  * Opens and initializes the encrypted library, importing a plain Studio folder before exposing stores.
  * Locked or failed libraries never fall back to plain files; shutdown awaits owned scene work.
  */
+import { selectedGuides } from "../studio/guides";
+import { coreSceneLibrary } from "../studio/core-library";
+import { presetReader } from "../studio/scene-turn-load";
+import { lorebookReader } from "../studio/scene-lore";
 import { closeSceneRuntime } from "./server-scene-runtime";
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "node:fs";
 import { attachDerivedPersistence } from "../core/derive/derive";
@@ -100,14 +104,17 @@ const storesOf = (database: StageDatabase, cipher: CellCipher, file: string, stu
   const chats = sqliteChatStore(database, cipher);
   const content = createContentStore(backend, Date.now, { coldFill: coldReads.fill });
   const core = coreSceneIntegration ? sqliteCoreRecordStore(database, cipher) : undefined;
+  // The scene readers take a body store: the content store answers bodies by kind.
+  const bodies = { read: async () => null, readBody: (kind: string, id: string) => content.readBody(assertStudioEntityKind(kind), id), readBodyVersioned: (kind: string, id: string) => content.readBodyVersioned(assertStudioEntityKind(kind), id) };
+  const state = sqliteStateStore(database, cipher);
   const coreTurns = core ? createCoreTurnOwner(chats, core, studioDir, async (sceneId) => {
     const chat = await chats.getChat(sceneId);
     if (!chat?.preset) return;
     const entity = await content.readLight(assertStudioEntityKind(chat.preset.kind), chat.preset.id);
     if (entity) assertNoCorePromptAttachments(entity.entity, chat.preset.toggles);
-  }) : undefined;
+  }, (sceneId, choiceDefaults) => coreSceneLibrary(chats, sceneId, { readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readGuides: (ids) => selectedGuides(state, ids), ...(choiceDefaults ? { choiceDefaults } : {}) })) : undefined;
   return {
-    content, state: sqliteStateStore(database, cipher), chats, ...(core ? { core, coreTurns: coreTurns! } : {}),
+    content, state, chats, ...(core ? { core, coreTurns: coreTurns! } : {}),
     importCompleted: async (pieceCount) => { if (pieceCount > 1000) await database.optimize(); },
     backend, extensionStore: sqliteExtensionStore(database, cipher), closeColdReads: coldReads.close,
   };

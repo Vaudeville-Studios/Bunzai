@@ -328,10 +328,15 @@ test("identical Core siblings retain distinct UI swipe IDs and continue changes 
     { id: old!.swipeId, content: "same answer" }, { id: newer!.swipeId, content: "same answer continued" },
   ]);
   expect(await f.chats.swipeHistory(messageId, newer!.swipeId)).toEqual(["same answer"]);
-  await append({ t: "edit", seq: ++seq, ts: "2026-10-31T12:00:03Z", target: first.coreMessageId, reason: "user", blocks: [{ k: "text", text: "must not replace selected sibling" }] });
+  // A person's edit of a version that is not shown lands on that exact version; the shown one is untouched.
+  await append({ t: "edit", seq: ++seq, ts: "2026-10-31T12:00:03Z", target: first.coreMessageId, reason: "user", blocks: [{ k: "text", text: "an earlier version, edited" }] });
   host = await f.records.hostProjection(f.sessionId, 4);
-  await expect(f.chats.projectCoreMessage({ ...first, throughSeq: host.lastSeq, mode: "edit", content: "must not replace selected sibling", expectedVersion: 4 })).rejects.toThrow("selected UI swipe");
-  expect((await f.chats.readMessages(second.takeId, { limit: 10 })).messages[0]!.swipes[1]!.content).toBe("same answer continued");
+  expect(await f.chats.projectCoreMessage({ ...first, throughSeq: host.lastSeq, mode: "edit", content: "an earlier version, edited", expectedVersion: 4 })).toBe(messageId);
+  const edited = (await f.chats.readMessages(second.takeId, { limit: 10 })).messages[0]!;
+  expect(edited.current).toBe(1);
+  expect(edited.swipes.map(({ id, content }) => ({ id, content }))).toEqual([
+    { id: old!.swipeId, content: "an earlier version, edited" }, { id: newer!.swipeId, content: "same answer continued" },
+  ]);
   f.db.statement("DELETE FROM swipes WHERE message_id = ? AND swipe_id = ?").run(messageId, old!.swipeId);
   expect(await f.records.messageIdentityFor(f.sessionId, first.coreMessageId, first.takeId)).toBeNull();
   expect(await f.records.messageIdentityFor(f.sessionId, second.coreMessageId, second.takeId)).toEqual(newer);

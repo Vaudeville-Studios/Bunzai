@@ -7,7 +7,7 @@ import { coreOperationBody, coreRecordAuthority, requireCoreBirth, requireHostCo
 import { liveOf } from "./swipe-sql";
 
 export function coreRecordProjection(database: StageDatabase, cipher: CellCipher, requireHost: () => void = () => {}): Pick<CoreSceneRecords,
-  "pendingProjection" | "projectionEntries" | "pendingCreation" | "unlinkedBirth" | "unlinkedBirthForBranch" | "hostProjection" | "recoverCreation" | "messageFor" | "messageIdentityFor" | "linkMessage" | "linkMessages" | "markProjected" | "projectMessage" | "projectMessages"> {
+  "pendingProjection" | "projectionEntries" | "pendingCreation" | "unlinkedBirth" | "unlinkedBirthForBranch" | "hostProjection" | "recoverCreation" | "messageFor" | "messageIdentityFor" | "coreMessagesFor" | "linkMessage" | "linkMessages" | "markProjected" | "projectMessage" | "projectMessages"> {
   const authority = coreRecordAuthority(database, cipher);
   const write = <T>(run: () => T): Promise<T> => database.patiently(() => database.transaction(() => { requireHost(); cipher.ready(); return run(); }));
   const entries = (sessionId: string, throughSeq: number): Entry[] => (database.statement("SELECT entry_cell FROM core_entries WHERE session_id = ? AND seq <= ? ORDER BY seq").all(sessionId, throughSeq) as { entry_cell: string }[])
@@ -158,6 +158,11 @@ export function coreRecordProjection(database: StageDatabase, cipher: CellCipher
     },
     async messageFor(sessionId, coreMessageId, takeId) { cipher.ready(); await database.idle(); return mapped(sessionId, coreMessageId, takeId)?.messageId ?? null; },
     async messageIdentityFor(sessionId, coreMessageId, takeId) { cipher.ready(); await database.idle(); return mapped(sessionId, coreMessageId, takeId); },
+    async coreMessagesFor(sessionId, takeId, messageId) {
+      cipher.ready(); await database.idle();
+      return (database.statement("SELECT core_message_id, swipe_id FROM core_message_links WHERE session_id = ? AND branch_id = ? AND message_id = ? ORDER BY swipe_position").all(sessionId, takeId, messageId) as { core_message_id: string; swipe_id: string }[])
+        .map((row) => ({ coreMessageId: row.core_message_id, swipeId: row.swipe_id }));
+    },
     linkMessages,
     async linkMessage(input, expectedVersion) { await linkMessages([input], expectedVersion); },
     async markProjected(operationId, throughSeq) {

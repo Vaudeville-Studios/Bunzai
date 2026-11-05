@@ -19,7 +19,8 @@ async function allMessages(chats: ChatStore, takeId: string, expectedVersion: nu
   while (true) {
     const page = await chats.readMessages(takeId, { fromSeq, limit: 200 });
     if (page.branchVersion !== expectedVersion) throw new StudioConflictError("the take changed while checking its Core projection");
-    messages.push(...page.messages);
+    // A cut message left rp-core's path when it was cut (CoreTurnOwner.cut rewinds the head); it waits in the take, restorable.
+    messages.push(...page.messages.filter((message) => !message.cut));
     if (page.nextSeq === null) return messages;
     fromSeq = page.nextSeq;
   }
@@ -78,6 +79,13 @@ export async function reconcileCoreProjection(chats: ChatStore, records: CoreSce
       ui = await allMessages(chats, branch.id, currentVersion);
       message = ui[index];
     }
+    if (message && message.role === core.role && Boolean(core.hidden) !== (message.hidden === true)) {
+      // A committed hide is in the journal but not yet on the page (a crash between the two writes).
+      if (!await chats.setHidden(message.id, Boolean(core.hidden), { expectedVersion: currentVersion })) throw new StudioConflictError("the hidden message could not be repaired from the RP-Core journal");
+      currentVersion++;
+      ui = await allMessages(chats, branch.id, currentVersion);
+      message = ui[index];
+    }
     if (!message || message.role !== core.role || Boolean(core.hidden) !== (message.hidden === true)) throw new StudioConflictError("the RP-Core journal and scene differ; export this scene before continuing");
     const siblings = await session.messageSiblings(core.id);
     if (!siblings.length || siblings.some((sibling, siblingIndex) => sibling.swipe.index !== siblingIndex || sibling.swipe.count !== siblings.length || sibling.role !== core.role)) {
@@ -107,6 +115,21 @@ export async function reconcileCoreProjection(chats: ChatStore, records: CoreSce
         message = ui[index]!;
         repaired = true;
         break;
+      }
+      if (!repaired && chats.projectCoreMessages) {
+        // A person's committed edit (host journal) that a crash kept off the page: the store re-checks
+        // that the journal's latest entry for this sibling is that user edit before it writes anything.
+        const identity = await records.messageIdentityFor(sessionId, sibling.id, branch.id);
+        if (identity && identity.messageId === message.id && identity.swipeId === message.swipes[siblingIndex]?.id) {
+          // The store refuses (and rolls back) anything but that exact committed user edit; the scene then differs.
+          repaired = await chats.projectCoreMessages([{ operationId: proof.operationId, sessionId, takeId: branch.id, coreMessageId: sibling.id,
+            targetCoreMessageId: sibling.id, throughSeq: proof.lastSeq, role: sibling.role, content: siblingText(sibling), expectedVersion: currentVersion, mode: "edit" }]).then(() => true, () => false);
+          if (repaired) {
+            currentVersion++;
+            ui = await allMessages(chats, branch.id, currentVersion);
+            message = ui[index]!;
+          }
+        }
       }
       if (!repaired) throw new StudioConflictError("the RP-Core journal and scene differ; export this scene before continuing");
     }

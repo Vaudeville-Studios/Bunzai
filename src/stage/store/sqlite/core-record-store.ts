@@ -34,6 +34,10 @@ function scopedCoreRecords(database: StageDatabase, cipher: CellCipher, now: () 
   const lastSeq = (id: string): number =>
     (statement("SELECT COALESCE(MAX(seq), 0) AS seq FROM core_entries WHERE session_id = ?").get(id) as { seq: number }).seq;
   const authority = coreRecordAuthority(database, cipher);
+  /** A session that moved to another take (a fork, a restored cut) takes its host projection row with it. */
+  const moveHostProjection = (sessionId: string, takeId: string): void => {
+    statement("UPDATE core_operation_projections SET branch_id = ? WHERE operation_hash = ? AND session_id = ?").run(takeId, cipher.index(`host:${sessionId}`), sessionId);
+  };
   const projection = coreRecordProjection(database, cipher, () => { if (scope || hostBirth) throw new Error("Scoped Core writers cannot invoke privileged projection recovery"); });
   const checkRead = (id: string) => {
     if (scope && id !== (scope.target.sessionId ?? authority.operation(scope.target.operationId)?.session_id)) throw new Error("Core read is outside its invocation session");
@@ -71,6 +75,48 @@ function scopedCoreRecords(database: StageDatabase, cipher: CellCipher, now: () 
       await database.idle();
       const row = statement("SELECT l.chat_id FROM core_scene_links l JOIN branches b ON b.chat_id = l.chat_id WHERE b.id = ?").get(branchId) as { chat_id: string } | null;
       return row?.chat_id ?? null;
+    },
+    async linkTake(chatId, fromTakeId, takeId, sessionId) {
+      await write(() => {
+        if (scope || hostBirth) throw new Error("Scoped Core writers cannot link takes");
+        const current = statement("SELECT session_id, branch_id FROM core_scene_links WHERE chat_id = ?").get(chatId) as { session_id: string; branch_id: string } | null;
+        if (!current || current.branch_id !== fromTakeId) throw new Error("the forked take is no longer the scene's linked take");
+        if (!readSession(sessionId)) throw new Error("the forked rp-core session was never written");
+        statement("INSERT OR IGNORE INTO core_take_links (branch_id, chat_id, session_id) VALUES (?, ?, ?)").run(fromTakeId, chatId, current.session_id);
+        statement("INSERT INTO core_take_links (branch_id, chat_id, session_id) VALUES (?, ?, ?)").run(takeId, chatId, sessionId);
+        statement("UPDATE core_scene_links SET session_id = ?, branch_id = ? WHERE chat_id = ?").run(sessionId, takeId, chatId);
+        moveHostProjection(sessionId, takeId);
+      });
+    },
+    async relinkTake(chatId, takeId, sessionId) {
+      await write(() => {
+        if (scope || hostBirth) throw new Error("Scoped Core writers cannot relink takes");
+        if (!readSession(sessionId)) throw new Error("that rp-core session was never written");
+        const current = statement("SELECT session_id, branch_id FROM core_scene_links WHERE chat_id = ?").get(chatId) as { session_id: string; branch_id: string } | null;
+        if (!current) throw new Error("the scene has no rp-core link");
+        if (current.branch_id === takeId) statement("INSERT OR IGNORE INTO core_take_links (branch_id, chat_id, session_id) VALUES (?, ?, ?)").run(takeId, chatId, current.session_id);
+        statement("DELETE FROM core_take_links WHERE session_id = ? AND branch_id <> ?").run(sessionId, takeId);
+        statement("INSERT INTO core_take_links (branch_id, chat_id, session_id) VALUES (?, ?, ?) ON CONFLICT (branch_id) DO UPDATE SET session_id = excluded.session_id").run(takeId, chatId, sessionId);
+        if (current.branch_id === takeId) statement("UPDATE core_scene_links SET session_id = ? WHERE chat_id = ?").run(sessionId, chatId);
+        moveHostProjection(sessionId, takeId);
+      });
+    },
+    async sessionsOfMessage(takeId, messageId) {
+      cipher.ready(); await database.idle();
+      return (statement("SELECT DISTINCT l.session_id FROM core_message_links l JOIN core_sessions s ON s.id = l.session_id WHERE l.branch_id = ? AND l.message_id = ? ORDER BY s.updated_at DESC").all(takeId, messageId) as { session_id: string }[]).map((row) => row.session_id);
+    },
+    async activateTake(chatId, takeId) {
+      return write(() => {
+        if (scope || hostBirth) throw new Error("Scoped Core writers cannot switch takes");
+        const current = statement("SELECT session_id, branch_id FROM core_scene_links WHERE chat_id = ?").get(chatId) as { session_id: string; branch_id: string } | null;
+        if (!current) return false;
+        if (current.branch_id === takeId) return true;
+        statement("INSERT OR IGNORE INTO core_take_links (branch_id, chat_id, session_id) VALUES (?, ?, ?)").run(current.branch_id, chatId, current.session_id);
+        const take = statement("SELECT session_id FROM core_take_links WHERE branch_id = ? AND chat_id = ?").get(takeId, chatId) as { session_id: string } | null;
+        if (!take) return false;
+        statement("UPDATE core_scene_links SET session_id = ?, branch_id = ? WHERE chat_id = ?").run(take.session_id, takeId, chatId);
+        return true;
+      });
     },
     async sceneForMessage(messageId: string): Promise<string | null> {
       cipher.ready();

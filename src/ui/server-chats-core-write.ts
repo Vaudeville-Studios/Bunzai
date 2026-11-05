@@ -2,7 +2,7 @@
 import { str } from "../core/guards";
 import type { ChatStore } from "../stage/contracts/chat-store";
 import type { SettingsStoreLike, StudioStoreLike } from "../studio/contracts";
-import { createCoreSceneSession, INCOMPLETE_CORE_SCENE_MESSAGE, reconcileCoreScene, resolveCoreScene, sendCoreScene } from "../studio/core-scene";
+import { createCoreSceneSession, ensureCoreScene, INCOMPLETE_CORE_SCENE_MESSAGE, reconcileCoreScene, sendCoreScene } from "../studio/core-scene";
 import { greetingsOf, openScene, sendToScene, startSceneWithNotes } from "../studio/scenes";
 import { libraryFor } from "../studio/library-content";
 import { err, json } from "./server-security";
@@ -19,7 +19,7 @@ export async function handleCoreChatWrite(path: string, chats: ChatStore, store:
   if (typeof greetingIndex !== "number" || typeof expectedVersion !== "number" || typeof body["content"] !== "string") return err("expected { chatId, content, greetingIndex, expectedVersion }");
   const chatId = str(body["chatId"]);
   const records = libraryFor(store.studioPath())?.core;
-  const resolved = records ? await resolveCoreScene(records, chatId) : null;
+  const resolved = records ? await ensureCoreScene(chats, records, store.studioPath(), chatId) : null;
   if (resolved?.incomplete) return err(INCOMPLETE_CORE_SCENE_MESSAGE, 409);
   const core = resolved?.link ?? null;
   if (core) {

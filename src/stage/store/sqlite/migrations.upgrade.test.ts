@@ -35,7 +35,7 @@ test("the list is numbered 1 to n and holds the real health check at 24, never a
   expect(MIGRATIONS.some((m) => /reserved|placeholder/i.test(m.name))).toBe(false);
   expect(MIGRATIONS[24]!.id).toBe(25);
   expect(MIGRATIONS[25]!.id).toBe(26);
-  expect(MIGRATIONS.at(-1)!.id).toBe(52);
+  expect(MIGRATIONS.at(-1)!.id).toBe(53);
 });
 
 test("a database from before migration 24 upgrades cleanly through 24, 25 and 26", () => {

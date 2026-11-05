@@ -59,8 +59,8 @@ afterAll(async () => {
   }
 });
 
-async function scene() {
-  const r = await rig();
+async function scene(core = false) {
+  const r = await rig({ core });
   await r.store.save(vera);
   const chat = (await (await r.post("/api/chats/start", { characterId: "vera" })).json()) as { id: string };
   const sent = (await (await r.post("/api/chats/send", { chatId: chat.id, content: "Any storms?", greetingIndex: 0, expectedVersion: 1 })).json()) as { branchVersion: number };
@@ -214,4 +214,38 @@ test("applying a re-run is refused when the scene moved on, the reply was edited
   expect((await s.post("/api/chats/final-cut/rerun/apply", { chatId: s.chatId, rerunId: pre.rerunId, expectedVersion: (await s.open()).branchVersion })).status).toBe(409);
   expect((await s.post("/api/chats/final-cut/rerun/apply", { chatId: s.chatId, rerunId: "nope", expectedVersion: (await s.open()).branchVersion })).status).toBe(404);
   expect((await s.post("/api/chats/final-cut/rerun/apply", { chatId: "other", rerunId: pre.rerunId, expectedVersion: 1 })).status).toBe(404);
+});
+
+test("on a core scene, the reply runs through the pass before rp-core commits it, and the saved version keeps what the pass did", async () => {
+  asked.length = 0;
+  const s = await scene(true);
+  expect((await s.post("/api/chats/final-cut", { chatId: s.chatId, finalCut: { on: true, passes: [editor] } })).status).toBe(200);
+  const e = await turn(s, s.version);
+  expect(e.map((x) => x.type)).toContain("finalcut");
+  expect(e.at(-1)!.type).toBe("done");
+  const reply = (await s.open()).messages.at(-1)!;
+  expect(reply.swipes[reply.current]!.content).toBe("It might, and the light holds.");
+  expect(reply.swipes[reply.current]!.generation!.finalCut).toEqual({ passes: 1, changed: true, failed: 0 });
+  const run = (await (await s.handler(apiReq(`/api/chats/final-cut/run?chatId=${s.chatId}&messageId=${reply.id}`))).json()) as { run: { original: string } };
+  expect(run.run.original).toBe("It might.");
+});
+
+
+test("on a core scene, an applied re-run edits the reply in rp-core's journal and is kept in the reply's run", async () => {
+  const s = await scene(true);
+  await s.post("/api/chats/final-cut", { chatId: s.chatId, finalCut: { on: true, passes: [editor] } });
+  await turn(s, s.version);
+  const reply = (await s.open()).messages.at(-1)!;
+  passBody = "A second pass, a colder light.";
+  const pre = (await (await s.post("/api/chats/final-cut/rerun", { chatId: s.chatId, messageId: reply.id })).json()) as { rerunId: string; text: string };
+  passBody = "It might, and the light holds.";
+  const applied = await s.post("/api/chats/final-cut/rerun/apply", { chatId: s.chatId, rerunId: pre.rerunId, expectedVersion: (await s.open()).branchVersion });
+  if (applied.status !== 200) throw new Error(`${applied.status}: ${await applied.text()}`);
+  expect(((await applied.json()) as { recorded: boolean }).recorded).toBe(true);
+  const edited = (await s.open()).messages.at(-1)!;
+  expect(edited.swipes[edited.current]!.content).toBe(pre.text);
+  // The next request reads the journal: it carries the applied text.
+  const next = (await (await s.post("/api/chats/send", { chatId: s.chatId, content: "Then what?", greetingIndex: 0, expectedVersion: (await s.open()).branchVersion })).json()) as { branchVersion: number };
+  await turn(s, next.branchVersion);
+  expect(asked.filter((a) => !/post-generation|Anti-Slop Engine/.test(a.messages[0]?.content ?? "")).at(-1)!.messages.map((m) => m.content)).toContain(pre.text);
 });

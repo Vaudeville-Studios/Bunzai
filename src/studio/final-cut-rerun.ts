@@ -73,7 +73,7 @@ export async function rerunFinalCut(
 
 /** Writes a previewed re-run over the reply as an edit and keeps it in the reply's run. `recorded` is false when the reply has no run to add it to. */
 export async function applyFinalCutRerun(
-  deps: { chats: ChatStore; now(): number },
+  deps: { chats: ChatStore; now(): number; /** A Core scene's edit goes through rp-core's journal (CoreTurnOwner.hostMessage). */ edit?(messageId: string, swipeId: string, text: string, expectedVersion: number): Promise<Message | null> },
   input: { chatId: string; rerunId: string; expectedVersion: number },
 ): Promise<{ message: Message; recorded: boolean }> {
   const p = PENDING.get(input.rerunId);
@@ -85,7 +85,9 @@ export async function applyFinalCutRerun(
   const shown = messages.find((m) => m.id === p.messageId && !m.cut);
   const swipe = shown ? shown.swipes[shown.current] : undefined;
   if (!shown || !swipe || swipe.id !== p.swipeId || swipe.content !== p.before) throw new StudioConflictError("This reply changed since the re-run. Run it again.");
-  const message = await deps.chats.editSwipe(p.messageId, p.swipeId, p.after, { expectedVersion: input.expectedVersion });
+  const message = deps.edit
+    ? await deps.edit(p.messageId, p.swipeId, p.after, input.expectedVersion)
+    : await deps.chats.editSwipe(p.messageId, p.swipeId, p.after, { expectedVersion: input.expectedVersion });
   if (!message) throw new StudioNotFoundError("that reply is gone");
   PENDING.delete(input.rerunId);
   const recorded = await deps.chats.appendFinalCutRerun(p.messageId, p.swipeId, { at: p.at, ms: p.ms, before: p.before, after: p.after, passes: p.passes }).catch(() => false);

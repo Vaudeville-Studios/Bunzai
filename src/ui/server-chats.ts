@@ -10,7 +10,7 @@ import type { PersonaBody } from "../entities/persona/schema";
 import type { Chat, ChatOpening, ChatProps, ChatStore, JsonObject } from "../stage/contracts/chat-store";
 import type { SettingsStoreLike, StudioStoreLike } from "../studio/contracts";
 import { libraryChatsFor, libraryFor, libraryStateFor } from "../studio/library-content";
-import { INCOMPLETE_CORE_SCENE_MESSAGE, reconcileCoreScene, resolveCoreScene } from "../studio/core-scene";
+import { ensureCoreScene, INCOMPLETE_CORE_SCENE_MESSAGE, reconcileCoreScene } from "../studio/core-scene";
 import { lorebookReader, resolveBooks, type ReadLorebook } from "../studio/scene-lore";
 import { presetReader } from "../studio/scene-turn-load";
 import { StudioLockedError } from "../studio/errors";
@@ -72,6 +72,7 @@ import { handleLinkedRoute } from "./server-chats-links";
 import { handleTurnRoute } from "./server-chats-turn";
 import { handleCoreSettings, handleCoreRead } from "./server-chats-core-settings";
 import { handleCoreChatWrite } from "./server-chats-core-write";
+import { CORE_CAST_ROUTES, handleCoreMessageWrite } from "./server-chats-core-messages";
 import { compendiumDepsFor, compendiumDepsOf, handleCompendiumRoute } from "./server-chats-compendium";
 import { filingsOfVersion, filingsUnderCut, undoWithCut } from "../studio/compendium-hooks";
 import { busy } from "../studio/compendium-queue";
@@ -326,7 +327,7 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
       if (p === "/api/chats/open") {
         const id = url.searchParams.get("id") ?? "";
         const records = libraryFor(store.studioPath())?.core;
-        const resolvedCore = records ? await resolveCoreScene(records, id) : null;
+        const resolvedCore = records ? await ensureCoreScene(chats, records, store.studioPath(), id) : null;
         if (resolvedCore?.incomplete) return err(INCOMPLETE_CORE_SCENE_MESSAGE, 409);
         const core = resolvedCore?.link ?? null;
         if (records && core) await reconcileCoreScene(chats, id, core.branchId, records, store.studioPath(), core.sessionId);
@@ -423,8 +424,10 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
     const b = await body(req);
     if (b instanceof Response) return b;
     const records = libraryFor(store.studioPath())?.core;
-    const refusal = await coreWriteGuard(p, b, records);
+    const refusal = await coreWriteGuard(p, b, records, records ? (sceneId) => ensureCoreScene(chats, records, store.studioPath(), sceneId) : undefined);
     if (refusal) return refusal;
+    const coreMessage = await handleCoreMessageWrite(p, b, chats, store, records, libraryFor(store.studioPath())?.coreTurns);
+    if (coreMessage) return coreMessage;
     if (p === "/api/chats/core-settings") return handleCoreSettings(b, chats, records, store.studioPath());
     const turn = await handleTurnRoute(req, url, chats, state, readPreset, readLorebook, b, store, filingDeps, settings, dispatchExtensionEvent, applyExtensionPrompts, hasPromptContributors);
     if (turn) return turn;
@@ -462,7 +465,9 @@ async function handleChatRouteOwned(req: Request, url: URL, store: StudioStoreLi
     if (coreWrite) return coreWrite;
     const write = WRITES[p];
     if (!write) return err("not found", 404);
-    return await write(chats, store, b, settings, session);
+    const answered = await write(chats, store, b, settings, session);
+    if (answered.ok && CORE_CAST_ROUTES.has(p) && records && await records.sceneFor(str(b["chatId"]))) await libraryFor(store.studioPath())?.coreTurns?.syncCast(str(b["chatId"]));
+    return answered;
   } catch (e) {
     return studioErr(e);
   }

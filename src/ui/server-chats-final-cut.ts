@@ -4,6 +4,7 @@
  * `POST /api/chats/final-cut/rerun` runs the scene's passes over a saved reply again and answers the result without writing it
  * (studio/final-cut-rerun.ts). A failed model call is a 502 carrying the provider's category and code, as a draft's is.
  */
+import { libraryFor } from "../studio/library-content";
 import { str } from "../core/guards";
 import { sceneRuntimeFor } from "./server-scene-runtime";
 import type { ChatFinalCutPatch, ChatStore } from "../stage/contracts/chat-store";
@@ -43,7 +44,11 @@ export async function handleFinalCutRoute(req: Request, url: URL, chats: ChatSto
   if (p === "/api/chats/final-cut/rerun/apply") {
     const expectedVersion = b["expectedVersion"];
     if (typeof expectedVersion !== "number") return err("expected { chatId, rerunId, expectedVersion }");
-    return json(await applyFinalCutRerun({ chats, now: Date.now }, { chatId: str(b["chatId"]), rerunId: str(b["rerunId"]), expectedVersion }));
+    const chatId = str(b["chatId"]);
+    const library = libraryFor(store.studioPath());
+    const owner = library?.coreTurns && await library.core?.sceneFor(chatId) ? library.coreTurns : undefined;
+    return json(await applyFinalCutRerun({ chats, now: Date.now, ...(owner ? { edit: (messageId: string, swipeId: string, content: string, version: number) =>
+      owner.hostMessage({ kind: "edit", sceneId: chatId, messageId, swipeId, content, expectedVersion: version }) } : {}) }, { chatId, rerunId: str(b["rerunId"]), expectedVersion }));
   }
   if (p === "/api/chats/final-cut/rerun") {
     try {

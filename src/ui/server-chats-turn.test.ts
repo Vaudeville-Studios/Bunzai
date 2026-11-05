@@ -163,17 +163,6 @@ test("new core scene's prompt inspector answers the rp-core review gate", async 
   expect(seen.map((event) => event.type)).toEqual(["start", "review", "text", "done"]);
 });
 
-test("an unsupported edit is refused before it can diverge from rp-core", async () => {
-  const r = await rig({ core: true });
-  await r.store.save(vera);
-  const chat = (await (await r.post("/api/chats/start", { characterId: "vera" })).json()) as { id: string };
-  const sent = (await (await r.post("/api/chats/send", { chatId: chat.id, content: "Any storms?", greetingIndex: 0, expectedVersion: 1 })).json()) as { branchVersion: number; messages: { id: string; swipes: { id: string }[] }[] };
-  const user = sent.messages.at(-1)!;
-  expect((await r.post("/api/chats/edit", { messageId: user.id, swipeId: user.swipes[0]!.id, content: "A different question", expectedVersion: sent.branchVersion })).status).toBe(501);
-  const open = (await (await r.handler(apiReq(`/api/chats/open?id=${chat.id}`))).json()) as { messages: { swipes: { content: string }[] }[] };
-  expect(open.messages.at(-1)?.swipes[0]?.content).toBe("Any storms?");
-});
-
 test("opening a core scene restores an answer committed before its UI projection", async () => {
   const r = await rig({ core: true });
   await r.store.save(vera);

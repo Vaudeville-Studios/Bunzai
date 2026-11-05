@@ -35,14 +35,19 @@ import type { SettingsStoreLike, StudioStoreLike } from "../studio/contracts";
 import type { CompendiumDeps } from "../studio/compendium-deps";
 import { BASE_SUPPORT } from "../stage/params/wire";
 import { libraryFor } from "../studio/library-content";
-import type { CoreTurnOwner, CoreTurnFrame } from "../studio/core-turn-owner";
-import { INCOMPLETE_CORE_SCENE_MESSAGE, resolveCoreScene } from "../studio/core-scene";
+import type { CoreTurnOwner, CoreTurnFrame, CoreTurnStart } from "../studio/core-turn-owner";
+import { choiceDefaultsOf, regexReaderOf } from "./server-scene-readers";
+import { corePromptRegex } from "./server-core-regex";
+import { coreFinalCut } from "./server-core-final-cut";
+import { finalCutBanksOf } from "../studio/final-cut-library";
+import type { RegexSetBody } from "../entities/regex/schema";
+import { ensureCoreScene, INCOMPLETE_CORE_SCENE_MESSAGE } from "../studio/core-scene";
 import { projectCoreSceneTurnEvent } from "../extensions/contracts/events";
 import { err, json } from "./server-security";
 
 type Body = Record<string, unknown>;
 
-async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: string, b: Body, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasPromptContributors?: (sceneId: string) => Promise<boolean>): Promise<Response> {
+async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: string, b: Body, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasPromptContributors?: (sceneId: string) => Promise<boolean>, choiceDefaults?: CoreTurnStart["choiceDefaults"], readRegex?: (id: string) => Promise<RegexSetBody | null>, cutDeps?: { readPreset: ReadPreset; state: StateStore }): Promise<Response> {
   const chatId = str(b["chatId"]);
   const kind = b["kind"] === "reply" || b["kind"] === "swipe" || b["kind"] === "continue" ? b["kind"] : null;
   const chat = await chats.getChat(chatId);
@@ -56,7 +61,9 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
   const buffered: TurnEvent[] = [];
   let send: (event: TurnEvent) => void = (event) => { buffered.push(event); };
   const coalescer = coalesceTurnEvents((event) => send(event));
-  const hostHooks = applyExtensionPrompts ? {
+  const transformRequest = corePromptRegex({ chatId, setIds: chat.regex?.sets, readRegex, runtime: sceneRuntimeFor(chats),
+    names: { user: chat.cast.persona?.name ?? "User", char: chat.cast.character.name ?? "" }, emit: (event) => coalescer.push(event) });
+  const extensionHooks = applyExtensionPrompts ? {
     appendSystemContributions: async ({ messages }: { messages: readonly import("rp-core").PromptMsg[] }, context: import("rp-core").HookCtx) => {
       if (messages.some((message) => message.blocks.some((block) => block.k !== "text"))) {
         if (!hasPromptContributors || !await hasPromptContributors(chatId)) return [];
@@ -65,7 +72,11 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
       return applyExtensionPrompts(chatId, messages.map((message) => ({ role: message.role as ProviderRole, content: message.blocks.filter((block) => block.k === "text").map((block) => block.text).join("") })), context.signal);
     },
   } : undefined;
-  const work = owner.run({ sceneId: chatId, sessionId, kind, expectedBranchVersion: b["expectedVersion"], actor: { kind: "host" },
+  const cut = cutDeps ? coreFinalCut({ chats, chat, emit: (event) => coalescer.push(event), banks: () => finalCutBanksOf(cutDeps.state),
+    deps: { connect, now: Date.now, readPreset: cutDeps.readPreset, ...(readRegex ? { readRegex } : {}), runtime: sceneRuntimeFor(chats) } }) : undefined;
+  const hooked = { ...extensionHooks, ...(transformRequest ? { transformRequest } : {}), ...(cut?.transformReply ? { transformReply: cut.transformReply } : {}) };
+  const hostHooks = Object.keys(hooked).length ? hooked : undefined;
+  const work = owner.run({ sceneId: chatId, sessionId, kind, expectedBranchVersion: b["expectedVersion"], actor: { kind: "host" }, ...(choiceDefaults ? { choiceDefaults } : {}), ...(cut ? { replyExtras: cut.extras } : {}),
     ...(hostHooks ? { hostHooks } : {}), ...(typeof b["guidance"] === "string" ? { guidance: b["guidance"] } : {}), ...(b["inspect"] === true ? { inspect: true } : {}),
   }, async ({ event, projected }: CoreTurnFrame) => {
     let output: TurnEvent | null = null;
@@ -294,11 +305,11 @@ export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, 
     const home = studio?.studioPath();
     const stores = home ? libraryFor(home) : null;
     const records = stores?.core;
-    const resolvedCore = records ? await resolveCoreScene(records, str(b["chatId"])) : null;
+    const resolvedCore = records && home ? await ensureCoreScene(chats, records, home, str(b["chatId"])) : null;
     if (resolvedCore?.incomplete) return err(INCOMPLETE_CORE_SCENE_MESSAGE, 409);
     const core = resolvedCore?.link ?? null;
     if (core && (await chats.getChat(str(b["chatId"])))?.activeBranchId !== core.branchId) return err("this take is not connected to rp-core yet", 409);
-    if (records && core) return stores?.coreTurns ? coreStream(chats, stores.coreTurns, core.sessionId, b, dispatchExtensionEvent, applyExtensionPrompts, hasPromptContributors) : err("the Core turn owner is unavailable", 503);
+    if (records && core) return stores?.coreTurns ? coreStream(chats, stores.coreTurns, core.sessionId, b, dispatchExtensionEvent, applyExtensionPrompts, hasPromptContributors, choiceDefaultsOf(settings), regexReaderOf(studio), { readPreset, state }) : err("the Core turn owner is unavailable", 503);
     return stream(chats, state, readPreset, readLorebook, b, studio, compendium, settings, dispatchExtensionEvent, applyExtensionPrompts);
   }
   if (p === "/api/chats/review") {
@@ -324,6 +335,15 @@ export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, 
     return json({ stopped: stopTurn(sceneRuntimeFor(chats), str(b["chatId"]), str(b["turnId"])) });
   }
 
+  if (p === "/api/chats/discard" || p === "/api/chats/add-anyway") {
+    const owner = studio ? libraryFor(studio.studioPath())?.coreTurns : undefined;
+    const linked = await libraryFor(studio?.studioPath() ?? "")?.core?.sceneFor(str(b["chatId"]));
+    if (owner && linked) {
+      const held = await owner.resolveHeld({ sceneId: str(b["chatId"]), turnId: str(b["turnId"]), action: p === "/api/chats/discard" ? "discard" : "commit" });
+      if (!held) return err("that reply is no longer waiting", 404);
+      return json("message" in held ? held.message : held);
+    }
+  }
   if (p === "/api/chats/discard") {
     return (await discardWaiting(sceneRuntimeFor(chats), chats, str(b["chatId"]), str(b["turnId"]))) ? json({ discarded: true }) : err("that reply is no longer waiting", 404);
   }

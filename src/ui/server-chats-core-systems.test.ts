@@ -8,11 +8,11 @@ import { emptyAgentBody } from "../entities/agent/schema";
 import { emptyPresetBody } from "../entities/preset/schema";
 import { readVault, saveProvider } from "../kit/providers/vault";
 import { libraryFor } from "../studio/library-content";
-import { asked, coreScene, journal, model, sendAndAnswer, UNLOCK, useCoreModel, type Opened, type Rig } from "./fake-core-wiring-rig";
+import { asked, coreScene, journal, model, sendAndAnswer, UNLOCK, installCoreModel, type Opened, type Rig } from "./fake-core-wiring-rig";
 import { chatRouteRig as rig, vera } from "./fake-server-chats-rig";
 
 setDefaultTimeout(30_000);
-useCoreModel();
+installCoreModel();
 
 const narrated = () => asked.filter((request) => !request.messages[0]?.content.startsWith("You are")).at(-1)!;
 

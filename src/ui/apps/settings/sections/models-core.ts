@@ -1,4 +1,3 @@
-import type { MessageFormat } from "../../../../kit/providers/message-format";
 /**
  * The model settings screen's decisions, with no React in them.
  *
@@ -7,6 +6,7 @@ import type { MessageFormat } from "../../../../kit/providers/message-format";
  * called when nobody named it. Those are the things that go quietly wrong and the things worth
  * proving without a browser.
  */
+import type { MessageFormat } from "../../../../kit/providers/message-format";
 
 /** A saved provider as the server is willing to describe it. Never carries a key. */
 export interface SafeProvider {

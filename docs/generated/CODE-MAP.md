@@ -3836,7 +3836,7 @@ Tests are left out. For what a project word means, see [the glossary](../referen
 - `library-export.ts`: Export library: the one call and the words for it, shared by Settings, Backups and the Messenger Data and backups page.
 - `memory.tsx`: Settings section: Memory & Summaries (RoleCall Defaults, `DefaultsConfigurator.tsx` "Memory & Summaries"; rc-parity 08, follow-up 2): the chat-summary settings a scene starts with.
 - `models-api.ts`: The vault's provider routes the Models section and the Messenger's AI connection page both call: the saved list and one real test request.
-- `models-core.ts`: (no opening comment)
+- `models-core.ts`: The model settings screen's decisions, with no React in them.
 - `models-message-format.tsx`: The Message format picker of an OpenAI-compatible connection (approved wireframe): the presets, and under Custom its three rules.
 - `models.tsx`: Settings > Models: which models this studio can reach, and which one it uses.
 - `redact.ts`: Screenshot-redaction helper for the Remote access tab's "hide details" (eye) toggle.

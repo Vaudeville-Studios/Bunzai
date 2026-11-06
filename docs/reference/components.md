@@ -516,6 +516,7 @@ The answer for the common needs, before searching the table below. For buttons, 
 | MenuItem | src/ui/components/button/rows.tsx | ({ children, icon, hint, danger, checked, description, accent, vars, "data-part": part, type = "button", role = "menu... |  | .row .item .fold .lead .text .clip .sub .meta ... |
 | MenuList | src/ui/apps/scenes/messenger/frames/context-menu.tsx | ({ items, label, onDone, onEscape, autoFocus = true }: MenuListProps) |  |  |
 | MessageAct | src/ui/apps/scenes/stage-message-act.tsx | ({ look, set, prefs, onSet }: StageActProps) |  |  |
+| MessageFormatField | src/ui/apps/settings/sections/models-message-format.tsx | ({ value, onChange }: { value: MessageFormat; onChange(next: MessageFormat): void }) |  | .list .empty .row .rowActive .pick .name .model .key ... |
 | Messenger | src/ui/apps/scenes/messenger/messenger.tsx | ({ args, ...props }: Omit<MessengerChromeProps, "renderSettings" \| "renderPersonaSwap" \| "onChat"> & { args: WingArgs... | `args` is what the settings content reads of the page; null while the scene loads, which leaves the settings layer unopened. |  |
 | MessengerBooth | src/ui/apps/scenes/messenger/panels/booth/messenger-booth.tsx | ({ args, open }: { args: WingArgs; open(programId: string): void }) |  |  |
 | MessengerChrome | src/ui/apps/scenes/messenger/messenger-chrome.tsx | ({ ctx, chatId, scene, name, personaName, programs, request, actions, loreBooks, onBack, onTake, onSurface, renderPro... |  |  |

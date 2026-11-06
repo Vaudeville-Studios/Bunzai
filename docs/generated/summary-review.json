@@ -398,9 +398,9 @@
       "docId": "reference/components",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "root-table-read-advisor",
-      "sourceHash": "sha256:a6cf349555778889f69a4ab49013bd6f99b768354b8e622da6d48f08c573de01",
-      "semanticSummaryHash": "sha256:8ee80f4cc669adf43095ced3e665da257de926dfcb46804761e3718abd33ddd1"
+      "reviewer": "docs-review-haiku",
+      "sourceHash": "sha256:3287a2e42917bae7da329d02c75c70fe98c8ddd5498cb0c7e6525e9cd771af1e",
+      "semanticSummaryHash": "sha256:ae9683f6ff77332418c0ccf6a0e7bc4ed71ce79ae57ba5c7fce482fd40234238"
     },
     {
       "docId": "reference/concepts/bundles",

@@ -1,13 +1,13 @@
 /**
  * A scripted OpenAI-compatible model and a Core scene on it, for the tests that prove what a Core scene sends over HTTP. Call
- * useCoreModel() once per test file; `model` says how the next requests are answered and `asked` holds what reached it.
+ * installCoreModel() once per test file; `model` says how the next requests are answered and `asked` holds what reached it.
  */
 import { afterAll, afterEach, beforeAll } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { useTestBunzaiHome } from "../../scripts/test-home";
+import { useTestBunzaiHome as enterTestHome } from "../../scripts/test-home";
 import { saveProvider } from "../kit/providers/vault";
 import { ARGS } from "../studio/fake-director-rig";
 import { libraryFor } from "../studio/library-content";
@@ -26,13 +26,13 @@ export const model = {
   toolCalls: [] as { name: string; args: string }[],
 };
 
-export function useCoreModel(): void {
+export function installCoreModel(): void {
   const home = join(tmpdir(), `bunzai-core-wiring-${randomUUID()}`);
   let restoreBunzaiHome: (() => void) | undefined;
   let server: ReturnType<typeof Bun.serve>;
   afterEach(() => { model.reply = "It might."; return cleanupChatRouteRigs(); });
   beforeAll(async () => {
-    restoreBunzaiHome = useTestBunzaiHome(home);
+    restoreBunzaiHome = enterTestHome(home);
     server = Bun.serve({
       port: 0,
       async fetch(req) {

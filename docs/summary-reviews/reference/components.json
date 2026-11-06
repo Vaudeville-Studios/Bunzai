@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/components",
   "sourcePath": "docs/reference/components.md",
-  "sourceHash": "sha256:a6cf349555778889f69a4ab49013bd6f99b768354b8e622da6d48f08c573de01",
-  "semanticSummaryHash": "sha256:8ee80f4cc669adf43095ced3e665da257de926dfcb46804761e3718abd33ddd1",
+  "sourceHash": "sha256:3287a2e42917bae7da329d02c75c70fe98c8ddd5498cb0c7e6525e9cd771af1e",
+  "semanticSummaryHash": "sha256:ae9683f6ff77332418c0ccf6a0e7bc4ed71ce79ae57ba5c7fce482fd40234238",
   "verdict": "APPROVE",
-  "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read generated ReaderPicker and updated scene/setup/conversation signatures plus semantic summaries; catalog remains discovery metadata.",
-  "reviewedAt": "2026-11-03T21:53:33.821Z"
+  "reviewer": "docs-review-haiku",
+  "notes": "Verified the MessageFormatField row's path, signature and style classes against models-message-format.tsx and models.module.css, and matched the React section and file hashes to the sidecar sourceHash values.",
+  "reviewedAt": "2026-11-06T22:45:06.044Z"
 }

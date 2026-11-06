@@ -5,13 +5,13 @@
 import { expect, setDefaultTimeout, test } from "bun:test";
 import { emptyDirectorState } from "../core/director/state";
 import { libraryFor } from "../studio/library-content";
-import { asked, coreScene, journal, model, sendAndAnswer, useCoreModel, type Opened, type Rig } from "./fake-core-wiring-rig";
+import { asked, coreScene, journal, model, sendAndAnswer, installCoreModel, type Opened, type Rig } from "./fake-core-wiring-rig";
 import { chatRouteRig as rig } from "./fake-server-chats-rig";
 import { apiReq } from "./server-test-rig";
 
 // Sealing the vault spawns the keystore (about a second, cold).
 setDefaultTimeout(30_000);
-useCoreModel();
+installCoreModel();
 
 test("a Core scene sent to the Trash comes back, and its next turn still runs on its rp-core session", async () => {
   const r = await rig({ core: true });

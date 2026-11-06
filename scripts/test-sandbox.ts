@@ -3,9 +3,9 @@
  * throwaway folders, Git fixtures inherit no caller repository, and the run audits original data paths.
  */
 import { afterAll } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { appDataDir } from "../src/app-data";
 import { testGitEnvironment } from "./test-git-env";
 
@@ -43,6 +43,15 @@ process.env["XDG_DATA_HOME"] = inSandbox("xdg-data");
 process.env["XDG_STATE_HOME"] = inSandbox("xdg-state");
 process.env["XDG_CACHE_HOME"] = inSandbox("xdg-cache");
 process.env["XDG_RUNTIME_DIR"] = inSandbox("xdg-runtime");
+
+// The OS keychains are per-user stores too, and no redirected folder reaches them: macOS `security`
+// waits forever on a keychain under the throwaway HOME, and a developer's real keyring would take the
+// writes. Both tools answer "failed" here, so the registry falls through to the sandboxed key file.
+if (process.platform !== "win32") {
+  const tools = inSandbox("no-os-keychain");
+  for (const tool of ["security", "secret-tool"]) writeFileSync(join(tools, tool), "#!/bin/sh\nexit 127\n", { mode: 0o755 });
+  process.env["PATH"] = `${tools}${delimiter}${process.env["PATH"] ?? ""}`;
+}
 
 /**
  * Every Studio test runs on the encrypted database, as the app does (plan phase 1 exit bar): each

@@ -174,13 +174,12 @@ test("manager resolves declared package images through the digest-bound host rou
   const host = dom.window.document.createElement("div"); dom.window.document.body.appendChild(host); const root = createRoot(host);
   try {
     flushSync(() => root.render(<ExtensionManager ctx={ctx} />));
-    await new Promise((resolve) => setTimeout(resolve, 30));
+    const image = await waitFor(flushSync, () => host.querySelector('img[alt="Cover image"]'), "the package image");
     expect(assetReads.map((args) => args.slice(0, 4))).toEqual([[current.id, "cover", themeDigest, assetDigest]]);
-    expect(host.querySelector('img[alt="Cover image"]')?.getAttribute("src")).toBe("blob:approved-extension-image");
+    expect(image.getAttribute("src")).toBe("blob:approved-extension-image");
     flushSync(() => [...host.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent === "Revoke access")?.click());
-    await new Promise((resolve) => setTimeout(resolve, 25));
-    expect(host.querySelector('img[alt="Cover image"]')).toBeNull();
-    expect(revoked).toContain("blob:approved-extension-image");
+    await waitFor(flushSync, () => host.querySelector('img[alt="Cover image"]') === null, "the package image to go");
+    await waitFor(flushSync, () => revoked.includes("blob:approved-extension-image"), "its Blob URL to be revoked");
   } finally {
     flushSync(() => root.unmount()); host.remove();
     Object.defineProperty(URL, "createObjectURL", { configurable: true, value: oldCreate });

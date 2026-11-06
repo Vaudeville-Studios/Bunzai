@@ -26,6 +26,7 @@ import { resolveBooks, type ReadLorebook } from "./scene-lore";
 import type { ReadPreset } from "./scene-turn-load";
 import { PresetGoneError } from "./scene-turn-load";
 import { WHOLE_BRANCH } from "./scene-branch";
+import type { CoreSceneParts } from "./core-turn-plan";
 
 export interface CoreSceneLibrary {
   /** What the session's config names. */
@@ -39,6 +40,8 @@ export interface CoreSceneLibrary {
   reasoning?: "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
   /** Send the last message as the user: the request's final message becomes a user turn (withLastAsUser). */
   lastAsUser?: boolean;
+  /** What Bunzai's own systems add (core-turn-plan.ts); recall reads what lore placed from it. */
+  parts?: CoreSceneParts;
 }
 
 /** Reasoning Effort values rp-core's binding holds. */
@@ -48,7 +51,7 @@ const CORE_REASONING = new Set(["none", "minimal", "low", "medium", "high", "xhi
 const CORE_PROMPTING: Readonly<Record<string, string | null>> = {
   guides: null, note: null, prefill: null, prefillRole: null, reasoningEffort: null, lastAsUser: null, keepThinking: null,
   toolAccess: "Tool Access", toolRounds: "Max tool rounds", tools: "library tools",
-  trackers: "linked trackers", skills: "skills", trackerChanges: "tracker change chips",
+  skills: "skills",
 };
 
 /** Why a prompting change cannot apply to a Core scene, or null when it can. */
@@ -61,15 +64,6 @@ export function corePromptingRefusal(patch: unknown): string | null {
     if (key === "reasoningEffort" && typeof value === "string" && !CORE_REASONING.has(value)) return "that reasoning effort is not one this scene knows";
   }
   return null;
-}
-
-/** Props that live on the page and never read a turn; the others run on the old engine's turn, and are refused rather than left switched on and doing nothing. */
-const CORE_PROPS = new Set(["mood-music", "dialogue-colors", "spotify"]);
-
-/** Why a props change cannot apply to a Core scene, or null when it can: only what it newly switches on is refused, so a scene holding such a prop can still change the rest. */
-export function corePropsRefusal(props: unknown, current: readonly string[] = []): string | null {
-  const on = props && typeof props === "object" ? (props as { on?: unknown }).on : undefined;
-  return Array.isArray(on) && on.some((id) => !CORE_PROPS.has(id as string) && !current.includes(id as string)) ? "that prop is not available on this scene yet" : null;
 }
 
 /**
@@ -117,6 +111,10 @@ export interface CoreSceneReaders {
   /** The scene's switched-on guides from the guide library (studio/guides.ts selectedGuides). */
   readGuides(ids: readonly string[] | undefined): Promise<AssemblyGuide[]>;
   choiceDefaults?(presetId: string): Promise<Record<string, unknown> | undefined>;
+  /** What Bunzai's own systems add to this turn (core-turn-plan.ts). */
+  parts?(sceneId: string): Promise<CoreSceneParts | null>;
+  /** The rp-core messages behind a message of the scene, every version of it. */
+  coreMessages?(sceneId: string, messageId: string): Promise<string[]>;
 }
 
 /** The preset id a scene with none picked is given: Bunzai's own no-preset layout (conversation.ts defaultPrompts). */
@@ -164,7 +162,7 @@ function coreAt(placement: string, depth: number, order: number): PresetBlock["a
 /** rp-core's own importer gives these ST blocks the card's system prompt and post-history instructions. */
 const CARD_OVERRIDES: Readonly<Record<string, PresetBlock["override"]>> = { main: "card_system", jailbreak: "card_post_history" };
 
-interface SceneAdds { guides: ResolvedGuides; persona: PersonaBody | undefined; note?: string; noteAt?: PresetBlock["at"]; prefill?: string; prefillRole?: "user" | "system"; keepThinking?: boolean }
+interface SceneAdds { guides: ResolvedGuides; persona: PersonaBody | undefined; note?: string; noteAt?: PresetBlock["at"]; prefill?: string; prefillRole?: "user" | "system"; keepThinking?: boolean; parts?: CoreSceneParts; covered?: string[] }
 
 /**
  * The scene's preset as rp-core reads it. The blocks are exactly what Bunzai's own engine lays out for
@@ -181,20 +179,28 @@ function corePreset(id: string, body: PresetBody, chat: Chat, defaults: Record<s
   const own = new Map(body.prompts.map((prompt) => [prompt.id, prompt]));
   const settings = { ...body, samplers: { ...body.samplers, ...chat.preset?.samplers } };
   const wire = wireOf(stPreset.fromCanonical({ schemaVersion: CANONICAL_SCHEMA_VERSION, kind: "preset", id, body: settings }));
-  const blocks = filledPresetBlocks(body, toggles).map((block): PresetBlock => {
+  const asRaw = (id: string, content: string, at: PresetBlock["at"]): PresetBlock => ({ id, name: id, role: "system", enabled: true, content, raw: true, at });
+  const features = adds.parts?.features ?? {};
+  const blocks = filledPresetBlocks(body, toggles).flatMap((block): PresetBlock[] => {
+    // A feature marker is where its text goes; with none on, the marker adds nothing.
+    if (block.slot) return (features[block.slot] ?? []).map((text, index) => asRaw(`${block.id}:${index}`, text, coreAt(block.placement, block.depth, block.order)));
     const override = own.get(block.id)?.forbidOverrides ? undefined : CARD_OVERRIDES[block.id];
     let content = CORE_MACROS.reduce((text, [macro, core]) => text.replace(macro, core), block.content).replace(/\{\{\s*persona\s*\}\}/gi, () => personaText);
     for (const [target, macro, spelled] of DECORATED) content = content.replace(macro, () => decorateMacroValue(spelled, adds.guides.macro, target));
-    return {
+    return [{
       id: block.id, name: block.name, role: block.role === "assistant" || block.role === "user" ? block.role : "system", enabled: true,
       content, at: coreAt(block.placement, block.depth, block.order), ...(override ? { override } : {}),
-    };
+    }];
   });
   // After the leading system prompts (where the history starts), in Bunzai's order: the note, then the system guide.
   const history = blocks.findIndex((block) => block.at === "relative" && block.content.includes("{{history}}"));
   const lead: PresetBlock[] = [];
   if (adds.note && adds.noteAt === "relative") lead.push({ id: "sceneNote", name: "Scene note", role: "system", enabled: true, content: adds.note, at: "relative" });
   if (adds.guides.system) lead.push({ id: "sceneGuides", name: "Guides", role: "system", enabled: true, content: adds.guides.system, at: "relative" });
+  // A feature with no marker in the preset rides after those, and the recaps last, in front of the history they stand in for (assemble.ts).
+  const seated = new Set<string>(filledPresetBlocks(body, toggles).flatMap((block) => (block.slot ? [block.slot] : [])));
+  for (const [slot, texts] of Object.entries(features)) if (!seated.has(slot)) (texts ?? []).forEach((text, index) => lead.push(asRaw(`scene:${slot}:${index}`, text, "relative")));
+  (adds.parts?.recaps ?? []).forEach((text, index) => lead.push(asRaw(`sceneRecap${index}`, text, "relative")));
   blocks.splice(history >= 0 ? history : blocks.length, 0, ...lead);
   if (adds.note && adds.noteAt !== "relative") blocks.push({ id: "sceneNote", name: "Scene note", role: "system", enabled: true, content: adds.note, at: adds.noteAt! });
   adds.guides.depth.forEach((guide, index) => blocks.push({ id: `sceneGuide${index}`, name: "Guide", enabled: true, content: guide.content,
@@ -204,7 +210,8 @@ function corePreset(id: string, body: PresetBody, chat: Chat, defaults: Record<s
   // A chat-start guide runs once per scene for its macros and its text is dropped (assemble.ts); first, so the blocks after it read what it set.
   blocks.unshift(...adds.guides.chatStart.map((guide): PresetBlock => ({ id: `sceneStart${guide.id}`, name: "Chat-start guide", role: "system", enabled: true, content: guide.content, at: "top", once: `chatStart_${guide.id}` })));
   const preset = stPresetToPreset(wire, body.name).value;
-  return { ...preset, blocks, ...(adds.prefill && !adds.prefillRole ? { prefill: adds.prefill } : {}), ...(adds.keepThinking ? { keepThinking: true } : {}) };
+  return { ...preset, blocks, ...(adds.prefill && !adds.prefillRole ? { prefill: adds.prefill } : {}), ...(adds.keepThinking ? { keepThinking: true } : {}),
+    ...(adds.parts?.summary ? { hostRecap: adds.parts.summary } : {}), ...(adds.covered?.length ? { skipHistory: adds.covered } : {}) };
 }
 
 /** The ST JSON an adapter wrote; both adapters always write text. */
@@ -232,7 +239,9 @@ export async function coreSceneLibrary(
   const prefill = [...(chat.prompting?.prefill?.trim() ? [chat.prompting.prefill] : []), ...guides.prefill.filter((p) => p.trim())].join("\n");
   // The last message as the user makes Start Reply With, the request's last message, that user message whatever its role (request.ts lastAsUser).
   const prefillRole = chat.prompting?.lastAsUser ? "user" as const : chat.prompting?.prefillRole === "user" || chat.prompting?.prefillRole === "system" ? chat.prompting.prefillRole : undefined;
-  const adds: SceneAdds = { guides, persona, ...(prefill ? { prefill } : {}), ...(prefillRole ? { prefillRole } : {}), ...(chat.prompting?.keepThinking ? { keepThinking: true } : {}),
+  const parts = await readers.parts?.(sceneId);
+  const covered = parts && readers.coreMessages ? (await Promise.all(parts.covered.map((id) => readers.coreMessages!(sceneId, id)))).flat() : [];
+  const adds: SceneAdds = { guides, persona, ...(parts ? { parts } : {}), ...(covered.length ? { covered } : {}), ...(prefill ? { prefill } : {}), ...(prefillRole ? { prefillRole } : {}), ...(chat.prompting?.keepThinking ? { keepThinking: true } : {}),
     ...(due ? { note: `[Author's Note: ${due.text}]`, noteAt: due.position === "after_scenario" ? "relative" as const : { depth: coreDepth(due.depth), order: 100 } } : {}) };
   const presetId = chat.preset?.id ?? SCENE_DEFAULT_PRESET;
   let body = DEFAULT_BODY;
@@ -249,6 +258,6 @@ export async function coreSceneLibrary(
     lorebooks[id] = worldInfoToLoreBook(wire, book!.name).value;
   }
   const revision = createHash("sha256").update(JSON.stringify([presets, lorebooks])).digest("base64url");
-  return { config: { preset: presetId, lorebooks: books.map((book) => book.id) }, library: { revision, presets, lorebooks }, userGuides: guides.user, ...(answering ? { answering } : {}), ...(chat.prompting?.lastAsUser ? { lastAsUser: true } : {}),
+  return { config: { preset: presetId, lorebooks: books.map((book) => book.id) }, library: { revision, presets, lorebooks }, userGuides: guides.user, ...(answering ? { answering } : {}), ...(parts ? { parts } : {}), ...(chat.prompting?.lastAsUser ? { lastAsUser: true } : {}),
     ...(chat.prompting?.reasoningEffort && CORE_REASONING.has(chat.prompting.reasoningEffort) ? { reasoning: chat.prompting.reasoningEffort as NonNullable<CoreSceneLibrary["reasoning"]> } : {}) };
 }

@@ -12,12 +12,12 @@ import { StudioConflictError, StudioValidationError } from "./errors";
 import { withLastAsUser, withUserGuides, type CoreSceneLibrary } from "./core-library";
 
 /** A scene's own preset and lorebooks, read for each Core turn and preview (core-library.ts). */
-export type CoreSceneLibraryReader = (sceneId: string, choiceDefaults?: CoreTurnStart["choiceDefaults"]) => Promise<CoreSceneLibrary | null>;
+export type CoreSceneLibraryReader = (sceneId: string, choiceDefaults?: CoreTurnStart["choiceDefaults"], kind?: CoreTurnStart["kind"]) => Promise<CoreSceneLibrary | null>;
 
 export type CoreTurnActor = { kind: "host" } | { kind: "extension"; packageId: string };
 export interface CoreTurnStart {
   sceneId: string; sessionId: string; kind: "reply" | "swipe" | "continue"; expectedBranchVersion: number;
-  actor: CoreTurnActor; signal?: AbortSignal; hostHooks?: HostHooks | ((resolvedFingerprint: string) => HostHooks);
+  actor: CoreTurnActor; signal?: AbortSignal; hostHooks?: HostHooks | ((resolvedFingerprint: string, scene: CoreSceneLibrary | null) => HostHooks);
   expectedJournalSeq?: number;
   commit?: ExtensionCommitContext; guidance?: string; inspect?: boolean;
   /** What the reply hook did to this turn's answer (Final Cut), stored with the version it projects. */
@@ -278,9 +278,9 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
         // The selected narrator binding is derived from the scene connection already shown in
         // the turn review. This changes only that role binding; extension-owned run policy below
         // narrows tools/jobs without rewriting saved config.
-        const scene = await sceneLibrary(input.sceneId, input.choiceDefaults);
+        const scene = await sceneLibrary(input.sceneId, input.choiceDefaults, input.kind);
         opened = await openCoreScene(records, home, input.sessionId, chat.connection, { recordStore: invocationRecords, configure: true, ...(scene ? { scene } : {}) });
-        const hostHooks = withLastAsUser(withUserGuides(typeof input.hostHooks === "function" ? input.hostHooks(opened.connectionFingerprint) : input.hostHooks, scene?.userGuides ?? [], scene?.answering), scene?.lastAsUser);
+        const hostHooks = withLastAsUser(withUserGuides(typeof input.hostHooks === "function" ? input.hostHooks(opened.connectionFingerprint, scene) : input.hostHooks, scene?.userGuides ?? [], scene?.answering), scene?.lastAsUser);
         const repairedVersion = await checkCoreProjection(chats, records, input.sceneId, opened.session, input.actor.kind === "extension");
         if (repairedVersion !== input.expectedBranchVersion) throw new StudioConflictError("The RP-Core transcript was repaired from its committed journal. Reload the scene and review the turn again.");
         // A cast change whose own sync did not land (a crash, a busy scene) is caught up before the host's turn.

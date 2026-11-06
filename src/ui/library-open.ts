@@ -4,6 +4,7 @@
  */
 import { selectedGuides } from "../studio/guides";
 import { coreSceneLibrary } from "../studio/core-library";
+import { coreSceneParts } from "../studio/core-turn-plan";
 import { presetReader } from "../studio/scene-turn-load";
 import { lorebookReader } from "../studio/scene-lore";
 import { closeSceneRuntime } from "./server-scene-runtime";
@@ -112,7 +113,9 @@ const storesOf = (database: StageDatabase, cipher: CellCipher, file: string, stu
     if (!chat?.preset) return;
     const entity = await content.readLight(assertStudioEntityKind(chat.preset.kind), chat.preset.id);
     if (entity) assertNoCorePromptAttachments(entity.entity, chat.preset.toggles);
-  }, (sceneId, choiceDefaults) => coreSceneLibrary(chats, sceneId, { readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readGuides: (ids) => selectedGuides(state, ids), ...(choiceDefaults ? { choiceDefaults } : {}) })) : undefined;
+  }, (sceneId, choiceDefaults, kind) => coreSceneLibrary(chats, sceneId, { readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readGuides: (ids) => selectedGuides(state, ids), ...(choiceDefaults ? { choiceDefaults } : {}),
+    parts: (id) => coreSceneParts({ chats, state, readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readLibrary: async (pieceKind, pieceId) => (await content.readLight(assertStudioEntityKind(pieceKind), pieceId))?.entity ?? null, ...(choiceDefaults ? { choiceDefaults } : {}) }, id, kind ?? "draft"),
+    coreMessages: async (id, messageId) => { const linked = await core!.sceneFor(id); return linked ? (await core!.coreMessagesFor(linked.sessionId, linked.branchId, messageId)).map((row) => row.coreMessageId) : []; } })) : undefined;
   return {
     content, state, chats, ...(core ? { core, coreTurns: coreTurns! } : {}),
     importCompleted: async (pieceCount) => { if (pieceCount > 1000) await database.optimize(); },

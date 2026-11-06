@@ -8,7 +8,9 @@ import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { useTestBunzaiHome } from "../../scripts/test-home";
+import { emptyDirectorState } from "../core/director/state";
 import { saveProvider } from "../kit/providers/vault";
+import { ARGS } from "../studio/fake-director-rig";
 import { libraryFor } from "../studio/library-content";
 import { chatRouteRig as rig, cleanupChatRouteRigs, vera } from "./fake-server-chats-rig";
 import { apiReq } from "./server-test-rig";
@@ -21,17 +23,24 @@ const HOME = join(tmpdir(), `bunzai-core-wiring-${randomUUID()}`);
 const UNLOCK = { passphrase: "core-wiring-test" };
 let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
-const asked: { messages: { role: string; content: string }[] }[] = [];
+const asked: { messages: { role: string; content: string }[]; stream?: boolean }[] = [];
 let localId = "";
 let reply = "It might.";
+const PLAN = ARGS();
 
 beforeAll(async () => {
   restoreBunzaiHome = useTestBunzaiHome(HOME);
   server = Bun.serve({
     port: 0,
     async fetch(req) {
-      asked.push((await req.json()) as (typeof asked)[number]);
+      const request = (await req.json()) as (typeof asked)[number];
+      asked.push(request);
       const chunk = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
+      if (request.messages[0]?.content.startsWith("You are the Story Director")) {
+        const call = { id: "c1", type: "function", index: 0, function: { name: "commit_planning_round", arguments: JSON.stringify(PLAN) } };
+        const planned = { choices: [{ message: { role: "assistant", content: "", tool_calls: [call] }, delta: { tool_calls: [call] }, finish_reason: "tool_calls" }], model: "qwen3-local" };
+        return request.stream === false ? Response.json(planned) : new Response(chunk(planned) + "data: [DONE]\n\n", { headers: { "content-type": "text/event-stream" } });
+      }
       const body = chunk({ choices: [{ delta: { content: reply }, finish_reason: "stop" }], model: "qwen3-local" }) + "data: [DONE]\n\n";
       return new Response(body, { headers: { "content-type": "text/event-stream" } });
     },
@@ -216,28 +225,15 @@ test("a version cut in the journal that a crash kept off the page is repaired wh
   expect((await tail()).swipes.map((swipe) => swipe.content)).toEqual(["First answer."]);
 });
 
-test("on a Core scene, page-only props switch on with the journal untouched, and a prop that needs the old engine is refused plainly", async () => {
+test("on a Core scene, every prop switches on with the journal untouched", async () => {
   const r = await rig({ core: true });
   const { chatId, open } = await coreScene(r);
   const before = { version: (await open()).branchVersion, journal: await journal(r, chatId) };
-  const on = await r.post("/api/chats/props", { chatId, props: { on: ["mood-music", "dialogue-colors", "spotify"] } });
+  const on = await r.post("/api/chats/props", { chatId, props: { on: ["mood-music", "dialogue-colors", "spotify", "story-director", "dramaturg", "trackhare", "tracker-inventory"] } });
   if (on.status !== 200) throw new Error(`${on.status}: ${await on.text()}`);
   expect((await open()).branchVersion).toBe(before.version);
   expect(await journal(r, chatId)).toBe(before.journal);
-  const refused = await r.post("/api/chats/props", { chatId, props: { on: ["story-director"] } });
-  expect(refused.status).toBe(501);
-  expect(await refused.json()).toEqual({ error: "that prop is not available on this scene yet" });
   expect((await r.post("/api/chats/props", { chatId, props: null })).status).toBe(200);
-});
-
-test("a Core scene that already has a refused prop on can still change its other props, and can turn that one off", async () => {
-  const r = await rig({ core: true });
-  const { chatId } = await coreScene(r);
-  await libraryFor(r.store.studioPath())!.chats.setProps(chatId, { on: ["spotify", "story-director"] });
-  const added = await r.post("/api/chats/props", { chatId, props: { on: ["spotify", "story-director", "mood-music"] } });
-  if (added.status !== 200) throw new Error(`${added.status}: ${await added.text()}`);
-  expect((await r.post("/api/chats/props", { chatId, props: { on: ["spotify", "mood-music"] } })).status).toBe(200);
-  expect((await r.post("/api/chats/props", { chatId, props: { on: ["spotify", "mood-music", "story-director"] } })).status).toBe(501);
 });
 
 test("on a Core scene, continuing a reply with old thinking on keeps the thinking out of the reply being continued", async () => {
@@ -251,4 +247,113 @@ test("on a Core scene, continuing a reply with old thinking on keeps the thinkin
   if (cont.status !== 200) throw new Error(`${cont.status}: ${await cont.text()}`);
   await cont.text();
   expect(JSON.stringify(asked.at(-1)!.messages)).not.toContain("<think>");
+});
+
+test("what a Core reply's versions hold stays with them through a swipe, a switch, an edit, and a removed and restored version", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open, tail } = await twoVersions(r);
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  const held = await tail();
+  const ids = held.swipes.map((swipe) => swipe.id);
+  const note = (name: string, swipe: string, at: number) => [{ slot: "summary", path: [swipe], value: { version: swipe, text: name, through: 1, at }, at }];
+  expect(await chats.recordDeltas(take, ids[0]!, note("onFirst", ids[0]!, 1))).toBe(true);
+  expect(await chats.recordDeltas(take, ids[1]!, note("onSecond", ids[1]!, 2))).toBe(true);
+  expect(await chats.putDirector(chatId, held.id, { ...emptyDirectorState(), notes: [{ id: "n1", content: "kept", createdAt: 1 }] }, { expectedVersion: null })).not.toBeNull();
+  const check = async (step: string, shown: "onFirst" | "onSecond") => {
+    const now = await tail();
+    expect(`${step}: ${now.id} ${now.swipes.map((swipe) => swipe.id).join()}`).toBe(`${step}: ${held.id} ${(step === "cut" ? [ids[0]] : ids).join()}`);
+    const state = JSON.stringify(await chats.sceneState(take));
+    expect(`${step}: ${state.includes(shown)}`).toBe(`${step}: true`);
+    expect(`${step}: ${state.includes(shown === "onFirst" ? "onSecond" : "onFirst")}`).toBe(`${step}: false`);
+    // A Director snapshot belongs to the version it was written on (ChatStore rule 47), as on an old scene.
+    expect((await chats.getDirector(chatId, held.id))?.state.notes[0]?.content ?? null).toBe(shown === "onSecond" ? "kept" : null);
+  };
+  const post = async (path: string, body: Record<string, unknown>) => {
+    const out = await r.post(path, body);
+    if (out.status !== 200) throw new Error(`${path} ${out.status}: ${await out.text()}`);
+  };
+  await check("recorded", "onSecond");
+  await post("/api/chats/select-swipe", { chatId, messageId: held.id, index: 0, expectedVersion: (await open()).branchVersion });
+  await check("switched", "onFirst");
+  await post("/api/chats/edit", { chatId, messageId: held.id, swipeId: ids[0], content: "First, reworded.", expectedVersion: (await open()).branchVersion });
+  await check("edited", "onFirst");
+  await post("/api/chats/cut-version", { chatId, messageId: held.id, swipeId: ids[1], expectedVersion: (await open()).branchVersion });
+  await check("cut", "onFirst");
+  await post("/api/chats/restore-version", { id: `${held.id}:${ids[1]}` });
+  expect((await r.handler(apiReq(`/api/chats/open?id=${chatId}`))).status).toBe(200);
+  await check("restored", "onFirst");
+  await post("/api/chats/select-swipe", { chatId, messageId: held.id, index: 1, expectedVersion: (await open()).branchVersion });
+  await check("switched back", "onSecond");
+  reply = "Later.";
+  await sendAndAnswer(r, chatId, (await open()).branchVersion, "And then?");
+  const next = await tail();
+  expect(next.id).not.toBe(held.id);
+  expect(JSON.stringify(await chats.sceneState(take))).toContain("onSecond");
+  expect((await chats.getDirector(chatId, next.id))?.state.notes[0]?.content).toBe("kept");
+});
+
+const narrated = () => asked.filter((request) => !request.messages[0]?.content.startsWith("You are")).at(-1)!;
+
+test("on a Core scene, the Story Director plans before the reply: its constraints reach the model, and its story is saved on the version the reply landed as", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  expect((await r.post("/api/chats/props", { chatId, props: { on: ["story-director"] } })).status).toBe(200);
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  expect(asked.some((request) => request.messages[0]?.content.startsWith("You are the Story Director"))).toBe(true);
+  const sent = narrated().messages;
+  const at = sent.findLastIndex((message) => message.content.includes("[DIRECTOR CONSTRAINTS"));
+  expect(sent.findIndex((message) => message.content.includes("Story Director Authority"))).toBeLessThan(at);
+  if (at < 0) throw new Error(JSON.stringify(sent).slice(0, 1500));
+  expect(sent[at]!.content).toContain("Let Vera slip once.");
+  expect(sent.map((message) => message.content).join()).toContain("Story Director Authority");
+  // A model that takes no system message mid-chat reads the constraints folded into the message they sit above.
+  expect((sent.slice(at).find((message) => message.role === "user") ?? sent[at]!).content).toContain("Will it rain?");
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  const tip = (await chats.readMessagesBefore(take, { limit: 1, liveOnly: true })).messages[0]!;
+  expect((await chats.getDirector(chatId, tip.id))?.state.arcs.map((arc) => arc.title)).toEqual(["The Lamp"]);
+});
+
+test("on a Core scene with the Director off, nothing plans and no contract is sent", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  const was = asked.length;
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  expect(asked.length).toBe(was + 1);
+  expect(JSON.stringify(asked.at(-1))).not.toContain("Story Director");
+});
+
+test("on a Core scene, a tracker that is on reaches the model in the block an old scene sends, in front of the conversation, and a macro in it is not read again", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  expect((await r.post("/api/chats/props", { chatId, props: { on: ["tracker-inventory"] } })).status).toBe(200);
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  const first = await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  expect(JSON.stringify(first.messages)).not.toContain("Current Game State");
+  const tip = (await chats.readMessagesBefore(take, { limit: 1, liveOnly: true })).messages[0]!;
+  const wrote = await r.post("/api/chats/tracker-state", { chatId, branchId: take, messageId: tip.id, expectedVersion: (await open()).branchVersion, writes: [{ module: "inventory", data: { items: [{ id: "i1", name: "A {{char}} key", description: "", category: "key", rarity: "common", quantity: 1, obtainedAt: 1 }], equipment: {}, currency: 0 } }] });
+  if (wrote.status !== 200) throw new Error(`${wrote.status}: ${await wrote.text()}`);
+  const sent = (await sendAndAnswer(r, chatId, (await open()).branchVersion, "And now?")).messages;
+  const at = sent.findIndex((message) => message.content.includes("Current Game State"));
+  if (at < 0) throw new Error(JSON.stringify(sent).slice(0, 1500));
+  expect(sent[at]!.content).toContain("A {{char}} key");
+  expect(at).toBeLessThan(sent.findIndex((message) => message.content.includes("Will it rain?")));
+});
+
+test("on a Core scene, the saved summary fills the summary slot and stands in for the messages it covers, which stay on the page and in the journal", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  await sendAndAnswer(r, chatId, (await open()).branchVersion, "First question.");
+  await sendAndAnswer(r, chatId, (await open()).branchVersion, "Second question.");
+  const saved = await r.post("/api/chats/summary", { chatId, text: "SUMMARY {{char}}: they asked twice." });
+  if (saved.status !== 200) throw new Error(`${saved.status}: ${await saved.text()}`);
+  const settings = await r.post("/api/chats/summary-settings", { chatId, patch: { include: true, hideOld: true, keepRecent: 1 } });
+  if (settings.status !== 200) throw new Error(`${settings.status}: ${await settings.text()}`);
+  const seq = await journal(r, chatId);
+  const sent = JSON.stringify((await sendAndAnswer(r, chatId, (await open()).branchVersion, "Third question.")).messages);
+  expect(sent).toContain("SUMMARY {{char}}: they asked twice.");
+  expect(sent).not.toContain("First question.");
+  expect(sent).toContain("Third question.");
+  expect(await journal(r, chatId)).toBeGreaterThan(seq);
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  expect(JSON.stringify((await chats.readMessages(take, { fromSeq: 1, limit: 200 })).messages)).toContain("First question.");
 });

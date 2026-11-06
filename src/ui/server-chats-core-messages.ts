@@ -5,7 +5,7 @@ import type { CoreSceneRecords } from "../stage/contracts/core-record-store";
 import type { StudioStoreLike } from "../studio/contracts";
 import type { CoreTurnOwner } from "../studio/core-turn-owner";
 import { openScene, takeName } from "../studio/scenes";
-import { corePromptingRefusal, corePropsRefusal } from "../studio/core-library";
+import { corePromptingRefusal } from "../studio/core-library";
 import { err, json } from "./server-security";
 
 export const CORE_MESSAGE_ROUTES = new Set(["/api/chats/edit", "/api/chats/hide", "/api/chats/select-swipe", "/api/chats/fork", "/api/chats/take", "/api/chats/delete-take", "/api/chats/cut", "/api/chats/restore-cut", "/api/chats/cut-version", "/api/chats/restore-version"]);
@@ -17,10 +17,6 @@ export const CORE_CAST_ROUTES = new Set(["/api/chats/persona", "/api/chats/updat
 export async function handleCoreMessageWrite(p: string, b: Record<string, unknown>, chats: ChatStore, store: StudioStoreLike, records: CoreSceneRecords | undefined, owner: CoreTurnOwner | undefined): Promise<Response | null> {
   if (records && p === "/api/chats/prompting" && await records.sceneFor(str(b["chatId"]))) {
     const refusal = corePromptingRefusal(b["prompting"]);
-    if (refusal) return err(refusal, 501);
-  }
-  if (records && p === "/api/chats/props" && await records.sceneFor(str(b["chatId"]))) {
-    const refusal = corePropsRefusal(b["props"], (await chats.getChat(str(b["chatId"])))?.props?.on);
     if (refusal) return err(refusal, 501);
   }
   if (!records || !CORE_MESSAGE_ROUTES.has(p)) return null;

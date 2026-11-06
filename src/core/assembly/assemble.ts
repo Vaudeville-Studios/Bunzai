@@ -406,6 +406,10 @@ export function assemble(input: AssemblyInput): AssemblyResult {
     ["storyboards", boards ? [boards] : [], "storyboards"],
     ["skills", skillsBlock ? [skillsBlock] : [], "skills"],
   ];
+  const parts: AssemblyResult["parts"] = {
+    features: Object.fromEntries(features.map(([slot, texts]) => [slot, texts])),
+    lore: { keys: [...loreKeys, ...cut.used.map((r) => r.entryKey)], tokens: loreResult?.totalTokens ?? 0 },
+  };
   for (const [slot, texts, kind] of features) if (plan.slots.has(slot)) blocks = fillSlot(blocks, slot, plan.slotNonce, texts, { kind });
   for (const skill of placedSkills) blocks = fillSlot(blocks, skill.slot, plan.slotNonce, skill.text ? [skill.text] : [], { kind: "skills" });
   if (leftPlaceholder(blocks, plan.slotNonce)) throw new PresetPlanError("A feature marker in the preset could not be filled, so the turn was stopped rather than send its placeholder.");
@@ -453,6 +457,7 @@ export function assemble(input: AssemblyInput): AssemblyResult {
     ...(prefill ? { prefill } : {}),
     ...(continueNudge ? { continueNudge } : {}),
     ...(loreResult ? { lore: loreResult } : {}),
+    parts,
     ...(hide > 0 ? { chatSummary: { hidden: afterRecaps.slice(0, hide).map((m) => m.id) } } : {}),
     ...(cut.drop > 0 ? { summaries: { dropped: history.slice(0, cut.drop).map((m) => m.id), injected: placedRecaps.map((r) => ({ entryKey: r.entryKey, title: r.title, tokens: countText(summaryText(r)) })) } } : {}),
     ...(skillsRun ? { skills: skillsRun } : {}),

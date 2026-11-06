@@ -27,13 +27,13 @@ test("unsupported version and branch writes are rejected before touching a linke
   const chat = await (await r.post("/api/chats/start", { characterId: "vera" })).json() as { id: string; activeBranchId: string };
   const records = libraryFor(r.store.studioPath())!.core!;
   const { coreWriteGuard } = await import("./server-core-guard");
-  // Takes, cuts and versions go through rp-core now (core-scene-ops.ts); a scene system with no Core form yet stays refused.
-  expect((await coreWriteGuard("/api/chats/summary-now", { chatId: chat.id }, records))?.status).toBe(501);
+  // Takes, cuts and versions go through rp-core now (core-scene-ops.ts); a write the guard has not been told of stays refused.
+  expect((await coreWriteGuard("/api/chats/not-connected", { chatId: chat.id }, records))?.status).toBe(501);
   expect(await coreWriteGuard("/api/chats/delete-take", { branchId: chat.activeBranchId }, records)).toBeNull();
   await r.post("/api/chats/send", { chatId: chat.id, content: "Hi", greetingIndex: 0, expectedVersion: 1 });
   const messages = await libraryFor(r.store.studioPath())!.chats.readMessages(chat.activeBranchId, { limit: 10 });
   const message = messages.messages[0]!;
-  expect((await r.post("/api/chats/director-edit", { messageId: message.id })).status).toBe(501);
+  expect((await coreWriteGuard("/api/chats/not-connected", { messageId: message.id }, records))?.status).toBe(501);
 });
 
 

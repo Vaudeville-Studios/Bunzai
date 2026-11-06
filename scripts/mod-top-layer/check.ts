@@ -106,6 +106,8 @@ try {
   await open(page, INLINE + '<div id="pulse" class="pulse">pulse</div><div id="light" class="light">light</div>',
     '@keyframes mod-pulse{from{transform:translateX(0)}to{transform:translateX(100px)}}.pulse{animation:mod-pulse 10s linear infinite}.light{background:#ff0000}.light.dim{background:#00ff00}');
   out.continuity = await page.evaluate(async () => {
+    // The mod's own mount scan runs on the next frame, which a slow machine puts late: it lands before the count below starts.
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     // This harness enables animation explicitly; the screenshot runner's freeze is irrelevant here.
     for (const style of document.querySelectorAll("style")) if (style.textContent?.includes("animation:none!important")) style.remove();
     const host = document.createElement("style");

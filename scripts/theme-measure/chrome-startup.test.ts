@@ -19,7 +19,7 @@ afterEach(async () => {
 });
 
 test("a real delayed child announces its assigned port and accepts only its exact nonce after warming", async () => {
-  const process = child(`const http=require('node:http');const started=Date.now();const server=http.createServer((req,res)=>{res.statusCode=Date.now()-started>=3500?200:503;res.end('owned');});server.listen(0,'127.0.0.1',()=>setTimeout(()=>process.stderr.write('DevTools listening on ws://127.0.0.1:'+server.address().port+'/devtools/browser/owned-nonce\\n'),2800));`);
+  const process = child(`const http=require('node:http');let asked=0;const server=http.createServer((req,res)=>{res.statusCode=++asked>1?200:503;res.end('owned');});server.listen(0,'127.0.0.1',()=>setTimeout(()=>process.stderr.write('DevTools listening on ws://127.0.0.1:'+server.address().port+'/devtools/browser/owned-nonce\\n'),2800));`);
   let attempts = 0, closed = 0;
   const session = await connectOwnedChrome(process, 0, async (endpoint, timeout) => {
     attempts++;

@@ -158,6 +158,7 @@ describe("every active book in one list", () => {
   test("groups the entries of each book that is on under its own header, and a book that is off keeps a header without loading", async () => {
     holdDrowned([entry("t1", { title: "Tide table", sortOrder: 1 })]);
     const fs = await mountPanel();
+    await waitFor(fs, () => rows().length === 3, "both open books' entries");
     expect(heads().map((h) => /^[^0-9]+/.exec(h)![0])).toEqual(["Keeper's Log", "The Drowned Coast", "My quirks"]);
     expect(rows().map((r) => r.slice(0, 8))).toEqual(["always1A", "The stor", "Tide tab"]);
     expect(rig.loads).toEqual(["b1", "b2"]);

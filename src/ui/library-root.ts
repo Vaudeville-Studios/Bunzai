@@ -82,7 +82,8 @@ export function createLibrary(
   /** Fires the deferred summary rebuild (D2) on the first request `hold()` sees, not before. */
   let seenFirstHold = false;
   const restored = restoreNotifier();
-  const idleLock = createIdleLock(() => library?.keyring ?? null, () => running, options.idleCheckMs);
+  // A library on its way out has no keys left to protect, and its database may already be closed under a late request's release.
+  const idleLock = createIdleLock(() => (closing ? null : library?.keyring ?? null), () => running, options.idleCheckMs);
 
   /** Notices the first unlock; checked after opening and on each activity. Never itself pushes a
    *  lock event - a later unlock's push comes from `onUnlock` below, which fires exactly once per

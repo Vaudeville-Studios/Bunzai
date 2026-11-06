@@ -135,7 +135,7 @@ export async function launch(work: string, port = 9491 + Number(process.env.THEM
   };
   // Chrome is started by hand and attached over CDP: Playwright's own pipe launch hangs under Bun on Windows.
   let chrome: ChildProcess;
-  try { chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--window-size=1400,900", "about:blank"], { stdio: ["ignore", "ignore", "pipe"], detached: process.platform !== "win32" }); }
+  try { chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--window-size=1400,900", "about:blank"], { stdio: ["ignore", "ignore", "pipe"], detached: process.platform === "darwin" }); }
   catch (error) { await removeProfile(); throw error; }
   let session: { connection: CdpBrowser; close(): Promise<void> } | undefined;
   let closing: Promise<void> | undefined;

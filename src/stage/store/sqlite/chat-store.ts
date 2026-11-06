@@ -32,6 +32,7 @@ import { splitQuarantine } from "./chat-store-quarantine";
 import { turnMethods } from "./chat-store-turns";
 import { sceneSettingMethods } from "./chat-store-scene-settings";
 import { stateMethods } from "./chat-store-state";
+import { checkDeltas } from "../scene-state-rules";
 import { addSwipeInTransaction, versionMethods } from "./chat-store-versions";
 import { editSwipeInTransaction } from "./chat-store-edit";
 import { coreStateMethods } from "./chat-store-core-state";
@@ -254,6 +255,10 @@ export function sqliteChatStoreBackend(
         // The version this projection just wrote is the message's newest.
         const { position } = one<{ position: number }>("SELECT MAX(position) AS position FROM swipes WHERE message_id = ?", message.id)!;
         run("INSERT INTO swipe_traces (message_id, position, trace_json) VALUES (?, ?, ?)", message.id, position, cipher.seal("swipe_traces.trace_json", JSON.stringify(input.trace)));
+      }
+      if (input.deltas?.length && (input.mode ?? "append") !== "continue" && input.mode !== "edit") {
+        state.stampSwipe(message.swipes[message.current]!.id, checkDeltas(input.deltas, "turn"));
+        state.refresh(input.takeId, message.seq);
       }
       inserted++;
       return message.id;

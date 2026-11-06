@@ -20,11 +20,12 @@ import type { CharacterBody } from "../entities/character/schema";
 import { withUserGuides, type CoreSceneLibrary } from "./core-library";
 
 /** The session config a Core scene's own settings call for, as a patch of what changed (journaled only then). */
-function scenePatch(current: { preset?: string; lorebooks?: readonly string[] }, scene: CoreSceneLibrary | undefined) {
+function scenePatch(current: { preset?: string; lorebooks?: readonly string[]; narrator?: { maxRounds?: number } }, scene: CoreSceneLibrary | undefined) {
   if (!scene) return {};
   return {
     ...(current.preset !== scene.config.preset ? { preset: scene.config.preset } : {}),
     ...(JSON.stringify(current.lorebooks ?? []) !== JSON.stringify(scene.config.lorebooks) ? { lorebooks: scene.config.lorebooks } : {}),
+    ...(scene.toolRounds !== undefined && current.narrator?.maxRounds !== scene.toolRounds ? { narrator: { maxRounds: scene.toolRounds } } : {}),
   };
 }
 

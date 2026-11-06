@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { useTestBunzaiHome } from "../../scripts/test-home";
 import { emptyDirectorState } from "../core/director/state";
+import { emptyPresetBody } from "../entities/preset/schema";
 import { saveProvider } from "../kit/providers/vault";
 import { ARGS } from "../studio/fake-director-rig";
 import { libraryFor } from "../studio/library-content";
@@ -27,6 +28,8 @@ const asked: { messages: { role: string; content: string }[]; stream?: boolean }
 let localId = "";
 let reply = "It might.";
 const PLAN = ARGS();
+let toolCallNext: { name: string; args: string } | null = null;
+let attachmentsSeen: string[] | null = null;
 
 beforeAll(async () => {
   restoreBunzaiHome = useTestBunzaiHome(HOME);
@@ -41,6 +44,13 @@ beforeAll(async () => {
         const planned = { choices: [{ message: { role: "assistant", content: "", tool_calls: [call] }, delta: { tool_calls: [call] }, finish_reason: "tool_calls" }], model: "qwen3-local" };
         return request.stream === false ? Response.json(planned) : new Response(chunk(planned) + "data: [DONE]\n\n", { headers: { "content-type": "text/event-stream" } });
       }
+      if (attachmentsSeen && JSON.stringify(request.messages).includes("Files attached to")) attachmentsSeen.push(JSON.stringify(request.messages));
+      if (toolCallNext) {
+        const call = { id: "call1", type: "function", index: 0, function: { name: toolCallNext.name, arguments: toolCallNext.args } };
+        toolCallNext = null;
+        return new Response(chunk({ choices: [{ delta: { tool_calls: [call] }, finish_reason: "tool_calls" }], model: "qwen3-local" }) + "data: [DONE]\n\n", { headers: { "content-type": "text/event-stream" } });
+      }
+      if (request.stream === false) return Response.json({ choices: [{ message: { role: "assistant", content: reply }, finish_reason: "stop" }], model: "qwen3-local" });
       const body = chunk({ choices: [{ delta: { content: reply }, finish_reason: "stop" }], model: "qwen3-local" }) + "data: [DONE]\n\n";
       return new Response(body, { headers: { "content-type": "text/event-stream" } });
     },
@@ -356,4 +366,93 @@ test("on a Core scene, the saved summary fills the summary slot and stands in fo
   expect(await journal(r, chatId)).toBeGreaterThan(seq);
   const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
   expect(JSON.stringify((await chats.readMessages(take, { fromSeq: 1, limit: 200 })).messages)).toContain("First question.");
+});
+
+test("on a Core scene with Tool Access on, the model calls a library tool and reads its answer before it replies", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  await r.store.save({ schemaVersion: vera.schemaVersion, kind: "tool", id: "weather", body: { name: "check_weather", description: "Says the weather.", fields: [], action: { kind: "record" } } } as never);
+  const set = await r.post("/api/chats/prompting", { chatId, prompting: { toolAccess: true, tools: ["weather"], toolRounds: 2 } });
+  if (set.status !== 200) throw new Error(`${set.status}: ${await set.text()}`);
+  toolCallNext = { name: "check_weather", args: "{}" };
+  reply = "Rain, then.";
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  const withTools = asked.filter((request) => (request as { tools?: unknown[] }).tools?.length);
+  if (withTools.length === 0) throw new Error(JSON.stringify(asked.at(-1)).slice(0, 800));
+  expect(JSON.stringify(asked.at(-1)!.messages)).toContain("check_weather");
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  expect((await chats.readMessagesBefore(take, { limit: 1, liveOnly: true })).messages[0]!.swipes.at(-1)!.content).toBe("Rain, then.");
+});
+
+test("on a Core scene, a tool's tracker write lands with the version it was made on: another version of the reply does not carry it", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  await r.store.save({ schemaVersion: vera.schemaVersion, kind: "tracker", id: "gold", body: { name: "Gold", description: "", layout: "record", note: "", fields: [{ name: "coins", description: "", type: "number", default: 0 }] } } as never);
+  const set = await r.post("/api/chats/prompting", { chatId, prompting: { toolAccess: true, trackers: ["gold"] } });
+  if (set.status !== 200) throw new Error(`${set.status}: ${await set.text()}`);
+  toolCallNext = { name: "update_trackers", args: JSON.stringify({ updates: [{ tracker: "Gold", set: { coins: 7 } }] }) };
+  reply = "You find seven coins.";
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  const state = () => chats.sceneState(take).then((s) => JSON.stringify(s));
+  expect(await state()).toContain("coins");
+  reply = "No coins this time.";
+  const swiped = await r.post("/api/chats/turn", { chatId, kind: "swipe", expectedVersion: (await open()).branchVersion });
+  if (swiped.status !== 200) throw new Error(`${swiped.status}: ${await swiped.text()}`);
+  await swiped.text();
+  expect(await state()).not.toContain("coins");
+});
+
+test("on a Core scene, the Dramaturg answers from the scene and leaves the journal and the take's version alone", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  expect((await r.post("/api/chats/props", { chatId, props: { on: ["dramaturg"] } })).status).toBe(200);
+  const before = { version: (await open()).branchVersion, journal: await journal(r, chatId) };
+  reply = "The rain is a stated fact.";
+  const turn = await r.post("/api/chats/dramaturg-turn", { chatId, question: "Why did it rain?", revision: 0 });
+  if (turn.status !== 200) throw new Error(`${turn.status}: ${await turn.text()}`);
+  const stream = await turn.text();
+  expect(stream).toContain("done");
+  expect(JSON.stringify(asked.at(-1)!.messages)).toContain("Why did it rain?");
+  expect(JSON.stringify(asked.at(-1)!.messages)).toContain("Will it rain?");
+  expect((await open()).branchVersion).toBe(before.version);
+  expect(await journal(r, chatId)).toBe(before.journal);
+});
+
+test("on a Core scene, the automatic summary runs after a reply and its text reaches the next request", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  const settings = await r.post("/api/chats/summary-settings", { chatId, patch: { auto: true, interval: 1, include: true } });
+  if (settings.status !== 200) throw new Error(`${settings.status}: ${await settings.text()}`);
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  reply = "AUTO SUMMARY TEXT";
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  for (let waited = 0; waited < 3000 && !JSON.stringify(await chats.sceneState(take)).includes("AUTO SUMMARY TEXT"); waited += 20) await new Promise((done) => setTimeout(done, 20));
+  expect(JSON.stringify(await chats.sceneState(take))).toContain("AUTO SUMMARY TEXT");
+  reply = "Next.";
+  const sent = await sendAndAnswer(r, chatId, (await open()).branchVersion, "And then?");
+  expect(JSON.stringify(sent.messages)).toContain("AUTO SUMMARY TEXT");
+});
+
+test("on a Core scene, a preset block's attachments reach the model: a text file as its words, an image as an image part", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEAQH/cP3YdQAAAABJRU5ErkJggg==", "base64").toString("base64");
+  const text = Buffer.from("THE TIDE TABLE").toString("base64");
+  const prompt = (id: string, content: string, over: Record<string, unknown> = {}) => ({ id, name: id, content, role: "system", enabled: true, systemPrompt: true, marker: false, placement: "relative", injectionDepth: 4, injectionOrder: 100, forbidOverrides: false, ...over });
+  await r.store.save({ schemaVersion: vera.schemaVersion, kind: "preset", id: "files", body: { ...emptyPresetBody("Files"), prompts: [
+    prompt("main", "Be brief.", { attachments: [{ name: "tides.txt", ref: `data:text/plain;base64,${text}` }, { name: "map.png", ref: `data:image/png;base64,${png}` }] }),
+    prompt("chatHistory", "{{message_history}}"),
+  ] } } as never);
+  const set = await r.post("/api/chats/preset", { chatId, preset: { id: "files", kind: "preset", toggles: {}, samplers: {} } });
+  if (set.status !== 200) throw new Error(`${set.status}: ${await set.text()}`);
+  attachmentsSeen = [];
+  try {
+    await sendAndAnswer(r, chatId, (await open()).branchVersion);
+    const sent = attachmentsSeen.at(-1) ?? "";
+    expect(sent).toContain("THE TIDE TABLE");
+    expect(sent).toContain("image_url");
+    expect(sent).toContain(`data:image/png;base64,${png}`);
+  } finally { attachmentsSeen = null; }
 });

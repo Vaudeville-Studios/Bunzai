@@ -26,6 +26,7 @@ import { resolveBooks, type ReadLorebook } from "./scene-lore";
 import type { ReadPreset } from "./scene-turn-load";
 import { PresetGoneError } from "./scene-turn-load";
 import { WHOLE_BRANCH } from "./scene-branch";
+import { resolvePromptAttachments } from "./scene-turn-attachments";
 import type { CoreSceneParts } from "./core-turn-plan";
 
 export interface CoreSceneLibrary {
@@ -42,6 +43,8 @@ export interface CoreSceneLibrary {
   lastAsUser?: boolean;
   /** What Bunzai's own systems add (core-turn-plan.ts); recall reads what lore placed from it. */
   parts?: CoreSceneParts;
+  /** The scene's Max tool rounds, on rp-core's narrator. */
+  toolRounds?: number;
 }
 
 /** Reasoning Effort values rp-core's binding holds. */
@@ -50,8 +53,6 @@ const CORE_REASONING = new Set(["none", "minimal", "low", "medium", "high", "xhi
 /** Prompting settings a Core scene carries (the guides, the note, Start Reply With and its role, Reasoning Effort, the last message's role, old thinking); the rest are refused by name, never ignored. */
 const CORE_PROMPTING: Readonly<Record<string, string | null>> = {
   guides: null, note: null, prefill: null, prefillRole: null, reasoningEffort: null, lastAsUser: null, keepThinking: null,
-  toolAccess: "Tool Access", toolRounds: "Max tool rounds", tools: "library tools",
-  skills: "skills",
 };
 
 /** Why a prompting change cannot apply to a Core scene, or null when it can. */
@@ -113,6 +114,7 @@ export interface CoreSceneReaders {
   choiceDefaults?(presetId: string): Promise<Record<string, unknown> | undefined>;
   /** What Bunzai's own systems add to this turn (core-turn-plan.ts). */
   parts?(sceneId: string): Promise<CoreSceneParts | null>;
+  readAsset?: Parameters<typeof resolvePromptAttachments>[1];
   /** The rp-core messages behind a message of the scene, every version of it. */
   coreMessages?(sceneId: string, messageId: string): Promise<string[]>;
 }
@@ -162,7 +164,10 @@ function coreAt(placement: string, depth: number, order: number): PresetBlock["a
 /** rp-core's own importer gives these ST blocks the card's system prompt and post-history instructions. */
 const CARD_OVERRIDES: Readonly<Record<string, PresetBlock["override"]>> = { main: "card_system", jailbreak: "card_post_history" };
 
-interface SceneAdds { guides: ResolvedGuides; persona: PersonaBody | undefined; note?: string; noteAt?: PresetBlock["at"]; prefill?: string; prefillRole?: "user" | "system"; keepThinking?: boolean; parts?: CoreSceneParts; covered?: string[] }
+/** A block's files as rp-core sends them: text as its words, an image or a PDF as a media part, each its own user message after the block. */
+type CoreFiles = ReadonlyMap<string, readonly PresetBlock[]>;
+
+interface SceneAdds { files?: CoreFiles; guides: ResolvedGuides; persona: PersonaBody | undefined; note?: string; noteAt?: PresetBlock["at"]; prefill?: string; prefillRole?: "user" | "system"; keepThinking?: boolean; parts?: CoreSceneParts; covered?: string[] }
 
 /**
  * The scene's preset as rp-core reads it. The blocks are exactly what Bunzai's own engine lays out for
@@ -190,7 +195,7 @@ function corePreset(id: string, body: PresetBody, chat: Chat, defaults: Record<s
     return [{
       id: block.id, name: block.name, role: block.role === "assistant" || block.role === "user" ? block.role : "system", enabled: true,
       content, at: coreAt(block.placement, block.depth, block.order), ...(override ? { override } : {}),
-    }];
+    }, ...(adds.files?.get(block.id) ?? []).map((file) => ({ ...file, at: coreAt(block.placement, block.depth, block.order) }))];
   });
   // After the leading system prompts (where the history starts), in Bunzai's order: the note, then the system guide.
   const history = blocks.findIndex((block) => block.at === "relative" && block.content.includes("{{history}}"));
@@ -218,6 +223,26 @@ function corePreset(id: string, body: PresetBody, chat: Chat, defaults: Record<s
 function wireOf(output: { text?: string }): unknown {
   if (output.text === undefined) throw new Error("the SillyTavern writer produced no text");
   return JSON.parse(output.text);
+}
+
+/** The enabled blocks' files, read and checked once for the whole request (scene-turn-attachments.ts holds the rules and limits). */
+async function coreFiles(id: string, body: PresetBody, chat: Chat, defaults: Record<string, unknown> | undefined, readAsset: CoreSceneReaders["readAsset"]): Promise<CoreFiles> {
+  const groups = toChoiceGroups(body.choices);
+  const toggles = chat.preset ? effectiveToggles(groups, resolveSelections(groups, withDefaults(defaults, chat.regex?.choices?.[chat.preset.id])), chat.preset.toggles) : {};
+  const blocks = filledPresetBlocks(body, toggles).filter((block) => block.attachments?.length);
+  const resolved = await resolvePromptAttachments(blocks.map((block) => ({ role: "system" as const, content: "", attachments: block.attachments!, attachmentOwner: { id: block.id, name: block.name } })), readAsset);
+  const out = new Map<string, PresetBlock[]>();
+  resolved.messages.forEach((message, index) => {
+    if (message.role !== "user") return;
+    const owner = blocks[resolved.sourceIndexes[index]!]!;
+    const list = out.get(owner.id) ?? [];
+    list.push({ id: `${owner.id}:file${list.length}`, name: "Attachment", role: "user", enabled: true, content: message.content, raw: true, at: "relative",
+      media: (message.attachments ?? []).map((file) => (file.kind === "image"
+        ? { kind: "image" as const, name: file.name, mime: file.mime, base64: file.dataUri.slice(file.dataUri.indexOf(",") + 1) }
+        : { kind: "pdf" as const, name: file.name, mime: "application/pdf", base64: file.base64 })) });
+    out.set(owner.id, list);
+  });
+  return out;
 }
 
 export async function coreSceneLibrary(
@@ -250,7 +275,9 @@ export async function coreSceneLibrary(
     if (!read) throw new PresetGoneError();
     body = read;
   }
-  const presets: Record<string, unknown> = { [presetId]: corePreset(presetId, body, chat, chat.preset ? await readers.choiceDefaults?.(chat.preset.id) : undefined, adds) };
+  const defaults = chat.preset ? await readers.choiceDefaults?.(chat.preset.id) : undefined;
+  const files = await coreFiles(presetId, body, chat, defaults, readers.readAsset);
+  const presets: Record<string, unknown> = { [presetId]: corePreset(presetId, body, chat, defaults, { ...adds, ...(files.size ? { files } : {}) }) };
   const lorebooks: Record<string, unknown> = {};
   const books = (await resolveBooks(character, persona, chat.lore, readers.readLorebook)).filter((book) => book.enabled && book.book);
   for (const { id, book } of books) {
@@ -258,6 +285,6 @@ export async function coreSceneLibrary(
     lorebooks[id] = worldInfoToLoreBook(wire, book!.name).value;
   }
   const revision = createHash("sha256").update(JSON.stringify([presets, lorebooks])).digest("base64url");
-  return { config: { preset: presetId, lorebooks: books.map((book) => book.id) }, library: { revision, presets, lorebooks }, userGuides: guides.user, ...(answering ? { answering } : {}), ...(parts ? { parts } : {}), ...(chat.prompting?.lastAsUser ? { lastAsUser: true } : {}),
+  return { config: { preset: presetId, lorebooks: books.map((book) => book.id) }, library: { revision, presets, lorebooks }, userGuides: guides.user, ...(answering ? { answering } : {}), ...(parts ? { parts } : {}), ...(chat.prompting?.toolRounds ? { toolRounds: chat.prompting.toolRounds } : {}), ...(chat.prompting?.lastAsUser ? { lastAsUser: true } : {}),
     ...(chat.prompting?.reasoningEffort && CORE_REASONING.has(chat.prompting.reasoningEffort) ? { reasoning: chat.prompting.reasoningEffort as NonNullable<CoreSceneLibrary["reasoning"]> } : {}) };
 }

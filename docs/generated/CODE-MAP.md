@@ -2340,7 +2340,7 @@ Tests are left out. For what a project word means, see [the glossary](../referen
 - `core-inspect.ts`: Read and configure rp-core Director and Compendium for a linked Bunzai scene.
 - `core-library.ts`: A Core scene's preset and lorebooks as rp-core reads them (EngineSeams.library).
 - `core-ollama-provider.ts`: Adapt Bunzai's native Ollama transport to rp-core's streaming provider contract.
-- `core-prompt-attachments.ts`: RP-Core does not consume host preset attachments; conservatively refuse the selected setup while any remain authored.
+- `core-prompt-attachments.ts`: A Promptbook's phases are the one writing setup rp-core has no form for, so one with attachments in a phase stays refused; a preset block's files go in the request (core-library.ts).
 - `core-scene-ops.ts`: The host's own scene operations on a Core scene, outside a turn (CoreTurnOwner wraps each: refused while a turn owns the scene, awaited when the library closes).
 - `core-scene-projection.ts`: Exact Core-path projection and restart repair; never match messages by text alone.
 - `core-scene.ts`: New scenes may use rp-core as the turn engine while Bunzai keeps its scene projection.

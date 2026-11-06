@@ -1,16 +1,14 @@
-/** Core bridge refusal tests for selected prompt-block attachments. */
+/** A Promptbook phase's attachments stay refused on a Core scene; a preset block's own go in the request. */
 import { expect, test } from "bun:test";
 import { assertNoCorePromptAttachments } from "./core-prompt-attachments";
 
 const file = { name: "notes.txt", ref: "data:text/plain;base64,eA==" };
 const block = (enabled: boolean) => ({ id: "notes", enabled, attachments: [file] });
 
-test("Core refuses attachments only when their prompt block is selected", () => {
-  expect(() => assertNoCorePromptAttachments({ prompts: [block(true)] })).toThrow("enabled blocks");
-  expect(() => assertNoCorePromptAttachments({ prompts: [block(true)] }, { notes: false })).not.toThrow();
-  expect(() => assertNoCorePromptAttachments({ prompts: [block(false)] })).not.toThrow();
-  expect(() => assertNoCorePromptAttachments({ prompts: [block(false)] }, { notes: true })).toThrow("enabled blocks");
+test("Core refuses attachments only in an enabled Promptbook phase's enabled blocks", () => {
+  expect(() => assertNoCorePromptAttachments({ prompts: [block(true)] })).not.toThrow();
   expect(() => assertNoCorePromptAttachments({ phases: [{ enabled: false, preset: { prompts: [block(true)] } }] })).not.toThrow();
-  expect(() => assertNoCorePromptAttachments({ phases: [{ enabled: true, preset: { prompts: [block(true)] } }] })).toThrow("enabled blocks");
-  expect(() => assertNoCorePromptAttachments({ schemaVersion: "1", kind: "preset", id: "p", body: { prompts: [block(true)] } })).toThrow("enabled blocks");
+  expect(() => assertNoCorePromptAttachments({ phases: [{ enabled: true, preset: { prompts: [block(false)] } }] })).not.toThrow();
+  expect(() => assertNoCorePromptAttachments({ phases: [{ enabled: true, preset: { prompts: [block(true)] } }] })).toThrow("Promptbook");
+  expect(() => assertNoCorePromptAttachments({ schemaVersion: "1", kind: "promptbook", id: "p", body: { phases: [{ enabled: true, preset: { body: { prompts: [block(true)] } } }] } })).toThrow("Promptbook");
 });

@@ -5,7 +5,7 @@
  * Director's plan and the Compendium's recall, rp-core's beforeAssemble hook) and writes what the reply leaves behind once it has
  * landed on the page. rp-core's own Director and Compendium stay off on these scenes.
  */
-import type { HookCtx, HostHooks, PromptMsg } from "rp-core";
+import type { HookCtx, HostHooks, PromptMsg, Tool } from "rp-core";
 import type { AssemblyResult } from "../core/assembly/types";
 import { NARRATOR_AUTHORITY, renderDirective } from "../core/assembly/director";
 import { DEFAULT_LORE_SHARE } from "../core/assembly/types";
@@ -25,6 +25,11 @@ import type { Connected, TurnEvent } from "./scene-turn";
 import { assembleRequest, prepareRequest } from "./scene-turn-build";
 import { loadTurn, type LoadedTurn, type ReadPreset, type TurnKind } from "./scene-turn-load";
 import type { TurnRuntime } from "./scene-turn-runtime";
+import { toolTurn, type NarratorToolsFor } from "./scene-turn-tools";
+import { turnWrites } from "./scene-turn-writes";
+import { skillDelta } from "../core/skill";
+import type { Delta } from "../core/scene-state/types";
+import type { NarratorTool, ToolDeadline } from "../stage/provider/tool-loop";
 import { tickDeltas } from "./scene-turn-ticks";
 
 export interface CoreSceneRead {
@@ -47,6 +52,10 @@ export interface CoreSceneParts {
   covered: string[];
   /** What the lore engine already placed: recall never repeats it and shares its room. */
   lore: AssemblyResult["parts"]["lore"];
+  /** The turn's macro context as the prompt left it, for a formula a tool runs. */
+  macros: AssemblyResult["expansion"]["context"];
+  /** Picked skills whose close rule held this turn: the reply closes them. */
+  closing: string[];
 }
 
 /** The scene's parts for a turn of this kind; null when the scene is gone. Asks no model and writes nothing. */
@@ -66,6 +75,7 @@ export async function coreSceneParts(deps: CoreSceneRead, sceneId: string, kind:
   return {
     features: result.parts.features, recaps, ...(prep.summary ? { summary: prep.summary.text } : {}), lore: result.parts.lore,
     covered: [...(result.chatSummary?.hidden ?? []), ...(result.summaries?.dropped ?? [])],
+    macros: result.expansion.context, closing: (result.skills ?? []).filter((skill) => skill.close).map((skill) => skill.id),
   };
 }
 
@@ -74,6 +84,27 @@ export interface CorePlanDeps extends CoreSceneRead {
   now(): number;
   runtime: TurnRuntime;
   emit(event: TurnEvent): void;
+  narratorTools?: NarratorToolsFor;
+  toolBudgetMs?(): Promise<number | undefined>;
+}
+
+/** One of Bunzai's narrator tools as rp-core calls it. rp-core keeps its own tools read-only; this one's only write is held for the reply (scene-turn-writes.ts). */
+function asCoreTool(tool: NarratorTool<never>, deadline: () => ToolDeadline): Tool {
+  const { name, description, parameters } = tool.definition.function;
+  return {
+    name, description: description ?? "", schema: parameters as Tool["schema"], effect: "read",
+    ...(tool.resultCap ? { maxOutput: () => tool.resultCap! } : {}),
+    async run(args, ctx) {
+      const read = tool.parse(args);
+      if ("error" in read) return { text: read.error, summary: "refused", error: true };
+      try {
+        const out = await tool.run(read.args, ctx.signal, deadline());
+        return { text: out.text, summary: name };
+      } catch (error) {
+        return { text: toErrorMessage(error, "the tool failed"), summary: "failed", error: true };
+      }
+    },
+  };
 }
 
 /** One Core turn's Director and recall, and what they leave behind. */
@@ -82,11 +113,23 @@ export function corePlan(deps: CorePlanDeps, chat: Chat, kind: TurnKind) {
   let director: DirectorRun | null = null;
   let replaced: DirectorSnapshot | null = null;
   let recalled: JsonObject | undefined;
+  const writes = turnWrites(deps.now);
+  // Nothing is saved until the reply lands: a stopped or failed turn loses what its tools wrote, as a dropped checkpoint does.
+  writes.open([], async () => true);
   return {
     /** The turn's hooks with the plan in them, over the others the turn has. */
-    hooks(base: HostHooks | undefined, lore: CoreSceneParts["lore"] | undefined): HostHooks {
+    hooks(base: HostHooks | undefined, parts: CoreSceneParts | undefined): HostHooks {
+      const lore = parts?.lore;
       return {
         ...base,
+        async tools(context: HookCtx) {
+          const read = loaded ?? await loadTurn(deps.chats, chat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults);
+          if (!read) return [];
+          const turn = await toolTurn(deps.narratorTools, kind, chat, read, Math.floor(Math.random() * 2 ** 31), writes, await deps.toolBudgetMs?.());
+          if (parts) turn.macros.context = parts.macros;
+          const until = performance.now() + turn.budgetMs;
+          return turn.tools.map((tool) => asCoreTool(tool, () => ({ at: until, now: () => performance.now() })));
+        },
         async beforeAssemble(context: HookCtx) {
           const placed = (await base?.beforeAssemble?.(context)) ?? [];
           loaded = await loadTurn(deps.chats, chat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults);
@@ -122,6 +165,12 @@ export function corePlan(deps: CorePlanDeps, chat: Chat, kind: TurnKind) {
     },
     /** What the plan adds to the stored version's trace. */
     trace: (): JsonObject | undefined => (recalled ? { recall: recalled } : undefined),
+    /** What the reply itself wrote, stamped on the version it lands as: its tools' writes, its skills' closes and, unless it was stopped, the Props' tick. */
+    async deltas(as: "done" | "stopped", closing: readonly string[] = []): Promise<readonly Delta[]> {
+      if (kind === "continue") return [];
+      if (as === "done" && loaded) await writes.tick(tickDeltas(loaded, deps.now()));
+      return [...writes.pending(), ...closing.map((id) => skillDelta(id, false, deps.now()))];
+    },
     /** The reply is on the page: what it leaves behind is written to the version it landed as. Never fails the reply. */
     async landed(message: Message): Promise<void> {
       const swipe = message.swipes[message.current];
@@ -131,8 +180,6 @@ export function corePlan(deps: CorePlanDeps, chat: Chat, kind: TurnKind) {
       const stored = director ? await commitDirector(deps, chat.id, director, message, replaced) : true;
       if (stored !== true) deps.emit({ type: "director", status: "failed", reason: stored });
       if (kind === "continue") return;
-      const ticks = tickDeltas(loaded, deps.now());
-      if (ticks.length > 0) await deps.chats.recordDeltas(branchId, swipe.id, ticks);
       if (!deps.runtime.closed && stored === true && director?.status === "planned") {
         startTrackerRound(deps.runtime, { chats: deps.chats, connect: deps.connect, now: deps.now }, {
           chatId: chat.id, branchId, messageId: message.id, swipeId: swipe.id, turn: director.turn,

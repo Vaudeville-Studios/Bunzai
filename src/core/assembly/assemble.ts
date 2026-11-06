@@ -407,7 +407,7 @@ export function assemble(input: AssemblyInput): AssemblyResult {
     ["skills", skillsBlock ? [skillsBlock] : [], "skills"],
   ];
   const parts: AssemblyResult["parts"] = {
-    features: Object.fromEntries(features.map(([slot, texts]) => [slot, texts])),
+    features: { ...Object.fromEntries(features.map(([slot, texts]) => [slot, texts])), ...Object.fromEntries(placedSkills.map((skill) => [skill.slot, skill.text ? [skill.text] : []])) },
     lore: { keys: [...loreKeys, ...cut.used.map((r) => r.entryKey)], tokens: loreResult?.totalTokens ?? 0 },
   };
   for (const [slot, texts, kind] of features) if (plan.slots.has(slot)) blocks = fillSlot(blocks, slot, plan.slotNonce, texts, { kind });

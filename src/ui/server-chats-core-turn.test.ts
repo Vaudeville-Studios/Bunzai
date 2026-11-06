@@ -337,13 +337,13 @@ test("on a core scene, a draft reads the scene without writing anything", async 
 });
 
 
-test("on a core scene, Reasoning Effort rides rp-core's narrator binding, and a prompting setting it cannot carry is refused by name", async () => {
+test("on a core scene, Reasoning Effort rides rp-core's narrator binding, and an effort it does not know is refused plainly", async () => {
   const r = await rig({ core: true });
   const { chatId, open } = await coreSceneWithReply(r);
   expect((await r.post("/api/chats/prompting", { chatId, prompting: { reasoningEffort: "high" } })).status).toBe(200);
-  const refused = await r.post("/api/chats/prompting", { chatId, prompting: { toolAccess: true } });
+  const refused = await r.post("/api/chats/prompting", { chatId, prompting: { reasoningEffort: "ludicrous" } });
   expect(refused.status).toBe(501);
-  expect(await refused.json()).toEqual({ error: "Tool Access is not available on this scene yet" });
+  expect(await refused.json()).toEqual({ error: "that reasoning effort is not one this scene knows" });
   await nextRequest(r, chatId, (await open()).branchVersion);
   const records = libraryFor(r.store.studioPath())!.core!;
   const { Engine } = await import("rp-core");

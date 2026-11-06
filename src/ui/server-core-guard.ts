@@ -30,6 +30,9 @@ const ALLOWED = new Set([
   "summary", "summary-settings", "summary-backfill", "summary-now",
   "tracker-state", "tracker-item", "tracker-refresh", "tracker-edit", "library-trackers", "trackers",
   "compendium", "compendium/reconcile", "compendium/undo", "compendium/undo-take", "compendium/clear-feed", "compendium/file-again",
+  // The scene's setups and pictures; none of them writes a message.
+  "loadouts", "loadouts/save", "loadouts/delete", "loadouts/restore", "loadouts/receipt", "loadouts/receipt-finish", "loadouts/receipt-undone",
+  "guides", "guides/save", "guides/delete", "linked", "portrait", "portrait-ref",
   "compendium/ingest", "compendium/ingest-start", "compendium/ingest-cancel", "compendium/ingest-undo", "compendium/tree", "compendium/tree-build", "compendium/tree-undo", "compendium/tree-move", "compendium/standardize",
   "participants", "participants/reconcile", "participants/apply", "participants/undo",
 ]);

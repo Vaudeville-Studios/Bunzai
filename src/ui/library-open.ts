@@ -113,7 +113,7 @@ const storesOf = (database: StageDatabase, cipher: CellCipher, file: string, stu
     if (!chat?.preset) return;
     const entity = await content.readLight(assertStudioEntityKind(chat.preset.kind), chat.preset.id);
     if (entity) assertNoCorePromptAttachments(entity.entity, chat.preset.toggles);
-  }, (sceneId, choiceDefaults, kind) => coreSceneLibrary(chats, sceneId, { readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readGuides: (ids) => selectedGuides(state, ids), ...(choiceDefaults ? { choiceDefaults } : {}),
+  }, (sceneId, choiceDefaults, kind) => coreSceneLibrary(chats, sceneId, { readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readGuides: (ids) => selectedGuides(state, ids), ...(choiceDefaults ? { choiceDefaults } : {}), readAsset: (sha, maxBytes) => content.readAsset(sha, maxBytes),
     parts: (id) => coreSceneParts({ chats, state, readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readLibrary: async (pieceKind, pieceId) => (await content.readLight(assertStudioEntityKind(pieceKind), pieceId))?.entity ?? null, ...(choiceDefaults ? { choiceDefaults } : {}) }, id, kind ?? "draft"),
     coreMessages: async (id, messageId) => { const linked = await core!.sceneFor(id); return linked ? (await core!.coreMessagesFor(linked.sessionId, linked.branchId, messageId)).map((row) => row.coreMessageId) : []; } })) : undefined;
   return {

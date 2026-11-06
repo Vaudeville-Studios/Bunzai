@@ -1,5 +1,6 @@
 /** Invocation-scoped Core persistence and committed-journal projection identities. */
 import type { Entry, RecordStore } from "rp-core";
+import type { Delta } from "../../core/scene-state/types";
 import type { ExtensionCommitContext } from "./extension-store";
 import type { Generation } from "./chat-store-messages";
 import type { JsonObject } from "./chat-store";
@@ -23,6 +24,8 @@ export interface CoreMessageProjection extends Omit<CoreMessageLink, "chatMessag
   targetCoreMessageId?: string;
   /** The new version's stored trace (rule 15), written with it: what Final Cut did to the reply. Append and swipe only. */
   trace?: JsonObject;
+  /** The reply's own scene-state writes (its tools, a Props tracker's tick), stamped on the new version as a turn's are. Append and swipe only. */
+  deltas?: readonly Delta[];
 }
 export interface CoreSceneRecords extends RecordStore {
   link(chatId: string, sessionId: string, branchId: string): Promise<void>;

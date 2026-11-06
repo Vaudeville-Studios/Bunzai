@@ -8,6 +8,7 @@ import { checkCoreProjection, openCoreScene, previewCoreScene, syncCoreCast } fr
 import { cutCoreScene, cutCoreVersion, deleteCoreTake, forkCoreTake, resolveCoreHeld, restoreCoreCut, switchCoreTake, syncCoreSceneCast } from "./core-scene-ops";
 import { reconcileCoreProjection } from "./core-scene-projection";
 import type { ProviderRole } from "../stage/contracts/provider";
+import type { Delta } from "../core/scene-state/types";
 import { StudioConflictError, StudioValidationError } from "./errors";
 import { withLastAsUser, withUserGuides, type CoreSceneLibrary } from "./core-library";
 
@@ -21,7 +22,7 @@ export interface CoreTurnStart {
   expectedJournalSeq?: number;
   commit?: ExtensionCommitContext; guidance?: string; inspect?: boolean;
   /** What the reply hook did to this turn's answer (Final Cut), stored with the version it projects. */
-  replyExtras?(): { trace?: JsonObject; finalCut?: Generation["finalCut"] } | undefined;
+  replyExtras?(as: "done" | "stopped"): Promise<{ trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined> | { trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined;
   /** The person's saved preset choice answers (app settings), under the scene's own. */
   choiceDefaults?: (presetId: string) => Promise<Record<string, unknown> | undefined>;
 }
@@ -81,7 +82,7 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
     try { return await task; } finally { tasks.delete(task); }
   };
 
-  async function project(sceneId: string, sessionId: string, session: AsyncSessionHandle, kind: CoreTurnStart["kind"], answer: Extract<TurnOutcome, { type: "done" }>["message"], targetCoreMessageId: string | undefined, expectedVersion: number, commit?: ExtensionCommitContext, extras?: ReturnType<NonNullable<CoreTurnStart["replyExtras"]>>): Promise<Message> {
+  async function project(sceneId: string, sessionId: string, session: AsyncSessionHandle, kind: CoreTurnStart["kind"], answer: Extract<TurnOutcome, { type: "done" }>["message"], targetCoreMessageId: string | undefined, expectedVersion: number, commit?: ExtensionCommitContext, extras?: Awaited<ReturnType<NonNullable<CoreTurnStart["replyExtras"]>>>): Promise<Message> {
     const chat = await chats.getChat(sceneId);
     if (!chat) throw new StudioConflictError("the scene is gone");
     const branch = (await chats.listBranches(sceneId)).find((take) => take.id === chat.activeBranchId);
@@ -95,7 +96,7 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
       : await records.hostProjection(sessionId, expectedVersion);
     if (!proof || !proof.linked || proof.sceneId !== sceneId || proof.takeId !== chat.activeBranchId) throw new StudioConflictError("the committed rp-core operation has no matching projection proof");
     const messageId = await chats.projectCoreMessage?.({ operationId, sessionId, takeId: chat.activeBranchId, coreMessageId: answer.id,
-      throughSeq: proof.lastSeq, role: answer.role, content, generation, expectedVersion, ...(extras?.trace && kind !== "continue" ? { trace: extras.trace } : {}),
+      throughSeq: proof.lastSeq, role: answer.role, content, generation, expectedVersion, ...(extras?.trace && kind !== "continue" ? { trace: extras.trace } : {}), ...(extras?.deltas?.length && kind !== "continue" ? { deltas: extras.deltas } : {}),
       ...(kind === "swipe" ? { mode: "swipe" as const, targetCoreMessageId } : kind === "continue" ? { mode: "continue" as const, targetCoreMessageId } : { mode: "append" as const }) });
     if (!messageId) throw new StudioConflictError("atomic rp-core message projection is unavailable");
     await reconcileCoreProjection(chats, records, sceneId, sessionId, session);
@@ -314,7 +315,7 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
           try {
             for await (const event of run.events) {
               if (event.type === "gate" && event.kind === "review") activeTurn.gateId = event.gateId;
-              if (event.type === "done") { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, input.replyExtras?.()); }
+              if (event.type === "done") { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("done")); }
               else if (event.type === "stopped" && event.message) { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit); }
               await onEvent({ event, projected });
             }

@@ -7,7 +7,7 @@ Download one file.
 | `Bunzai.exe` | Windows | Double-click it. |
 | `Bunzai-Linux.deb` | Ubuntu, Debian (experimental) | No terminal needed. Double-click it, choose Install, then open **Bunzai** from your apps. If double-clicking does nothing, run `sudo apt install ./Bunzai-Linux.deb`. |
 | `Bunzai-Linux` | Any other Linux (experimental) | In a terminal: `chmod +x Bunzai-Linux && ./Bunzai-Linux`. Close the terminal to stop it. |
-| `Bunzai-macOS` | Apple Silicon Macs (experimental, not signed by Apple) | In a terminal: `chmod +x Bunzai-macOS && xattr -d com.apple.quarantine Bunzai-macOS && ./Bunzai-macOS`. Close the terminal to stop it. |
+| `Bunzai-macOS` | Apple Silicon Macs (experimental, not signed by Apple) | In a terminal: `chmod +x Bunzai-macOS && xattr -c Bunzai-macOS && ./Bunzai-macOS`. Close the terminal to stop it. |
 | `SHA256SUMS` | Checking downloads | Not an app. Fingerprints to check a download arrived undamaged: `sha256sum -c SHA256SUMS --ignore-missing`. |
 
 Everything except Windows is experimental: our main contributors are on Windows, so other systems get less testing.

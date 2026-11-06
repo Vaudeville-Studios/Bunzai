@@ -168,7 +168,7 @@ const CARD_OVERRIDES: Readonly<Record<string, PresetBlock["override"]>> = { main
 /** A block's files as rp-core sends them: text as its words, an image or a PDF as a media part, each its own user message after the block. */
 type CoreFiles = ReadonlyMap<string, readonly PresetBlock[]>;
 
-interface SceneAdds { files?: CoreFiles; guides: ResolvedGuides; persona: PersonaBody | undefined; note?: string; noteAt?: PresetBlock["at"]; prefill?: string; prefillRole?: "user" | "system"; keepThinking?: boolean; parts?: CoreSceneParts; covered?: string[] }
+interface SceneAdds { composed?: boolean; files?: CoreFiles; guides: ResolvedGuides; persona: PersonaBody | undefined; note?: string; noteAt?: PresetBlock["at"]; prefill?: string; prefillRole?: "user" | "system"; keepThinking?: boolean; parts?: CoreSceneParts; covered?: string[] }
 
 /**
  * The scene's preset as rp-core reads it. The blocks are exactly what Bunzai's own engine lays out for
@@ -183,7 +183,8 @@ function corePreset(id: string, body: PresetBody, chat: Chat, defaults: Record<s
   const groups = toChoiceGroups(body.choices);
   const toggles = chat.preset ? effectiveToggles(groups, resolveSelections(groups, withDefaults(defaults, chat.regex?.choices?.[chat.preset.id])), chat.preset.toggles) : {};
   const own = new Map(body.prompts.map((prompt) => [prompt.id, prompt]));
-  const settings = { ...body, samplers: { ...body.samplers, ...chat.preset?.samplers } };
+  // A Promptbook's composed phase has its samplers settled already, its own Max tokens last (book-phase.ts).
+  const settings = adds.composed ? body : { ...body, samplers: { ...body.samplers, ...chat.preset?.samplers } };
   const wire = wireOf(stPreset.fromCanonical({ schemaVersion: CANONICAL_SCHEMA_VERSION, kind: "preset", id, body: settings }));
   const asRaw = (id: string, content: string, at: PresetBlock["at"]): PresetBlock => ({ id, name: id, role: "system", enabled: true, content, raw: true, at });
   const features = adds.parts?.features ?? {};
@@ -285,7 +286,7 @@ export async function coreSceneLibrary(
   }
   const defaults = chat.preset ? await readers.choiceDefaults?.(chat.preset.id) : undefined;
   const files = await coreFiles(presetId, body, chat, defaults, readers.readAsset);
-  const presets: Record<string, unknown> = { [presetId]: corePreset(presetId, body, chat, defaults, { ...adds, ...(files.size ? { files } : {}) }) };
+  const presets: Record<string, unknown> = { [presetId]: corePreset(presetId, body, chat, defaults, { ...adds, ...(book ? { composed: true } : {}), ...(files.size ? { files } : {}) }) };
   const lorebooks: Record<string, unknown> = {};
   const books = (await resolveBooks(character, persona, chat.lore, readers.readLorebook)).filter((book) => book.enabled && book.book);
   for (const { id, book } of books) {

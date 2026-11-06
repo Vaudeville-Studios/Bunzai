@@ -25,7 +25,7 @@ export interface CoreTurnStart {
   /** What the reply hook did to this turn's answer (Final Cut), stored with the version it projects. */
   /** A Promptbook's private phases: run first, stopped with the turn, and what the reply then goes out on. */
   prepare?(signal: AbortSignal): Promise<CoreBook | null>;
-  replyExtras?(as: "done" | "stopped", text: string): Promise<{ trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined> | { trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined;
+  replyExtras?(as: "done" | "stopped", text: string, signal: AbortSignal): Promise<{ trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined> | { trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined;
   /** The person's saved preset choice answers (app settings), under the scene's own. */
   choiceDefaults?: (presetId: string) => Promise<Record<string, unknown> | undefined>;
 }
@@ -71,7 +71,7 @@ export interface CoreTurnOwner extends CoreStateLifecycle {
   status(sceneId: string, packageId: string): { turnId: string; kind: CoreTurnStart["kind"] } | null;
   close(): Promise<void>;
 }
-interface ActiveTurn { actor: CoreTurnActor; kind: CoreTurnStart["kind"]; controller: AbortController; session?: AsyncSessionHandle; turnId?: string; stateBinding?: CoreStateTurnBinding; gateId?: string; done: Promise<unknown> }
+interface ActiveTurn { /** Stops what runs after the reply, past the point rp-core's turn can be stopped. */ after: AbortController; actor: CoreTurnActor; kind: CoreTurnStart["kind"]; controller: AbortController; session?: AsyncSessionHandle; turnId?: string; stateBinding?: CoreStateTurnBinding; gateId?: string; done: Promise<unknown> }
 
 export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords, home: string, assertSupportedPrompt: (sceneId: string) => Promise<void> = async () => {}, sceneLibrary: CoreSceneLibraryReader = async () => null): CoreTurnOwner {
   const active = new Map<string, ActiveTurn>();
@@ -258,7 +258,8 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
       let settled!: () => void;
       const completion = new Promise<void>((resolve) => { settled = resolve; });
       tasks.add(completion);
-      const activeTurn: ActiveTurn = { actor: input.actor, kind: input.kind, controller, done: completion };
+      const after = new AbortController();
+      const activeTurn: ActiveTurn = { actor: input.actor, kind: input.kind, controller, done: completion, after };
       active.set(input.sceneId, activeTurn);
       let opened: Awaited<ReturnType<typeof openCoreScene>> | null = null;
       try {
@@ -320,8 +321,8 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
           try {
             for await (const event of run.events) {
               if (event.type === "gate" && event.kind === "review") activeTurn.gateId = event.gateId;
-              if (event.type === "done") { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("done", replyText(event.message))); }
-              else if (event.type === "stopped" && event.message) { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("stopped", replyText(event.message))); }
+              if (event.type === "done") { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("done", replyText(event.message), after.signal)); }
+              else if (event.type === "stopped" && event.message) { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("stopped", replyText(event.message), after.signal)); }
               await onEvent({ event, projected });
             }
             return { turnId: run.turnId, outcome: await run.result, projected };
@@ -347,6 +348,7 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
     async stop(sceneId, actor, turnId) {
       const turn = active.get(sceneId);
       if (!turn || (actor && !sameActor(turn.actor, actor)) || (turnId && turn.turnId !== turnId)) return false;
+      turn.after.abort();
       if (turn.session && turn.turnId) await turn.session.stop(turn.turnId);
       else turn.controller.abort();
       return true;

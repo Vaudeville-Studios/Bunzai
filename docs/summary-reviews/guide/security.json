@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/security",
   "sourcePath": "docs/guide/security.md",
-  "sourceHash": "sha256:628e7156dc3368f21c440d7deadc41c1ea2f972d5689b2031dfe4d70b480f772",
-  "semanticSummaryHash": "sha256:552256aae82391b3162ba7b3a434dcb3a2eca05c5d0d51be3ef678a7b2e2ceff",
+  "sourceHash": "sha256:793e7bced5aa109d54ea8e5193f14bc6c61a007afc411b9f48ee29fbb16eda29",
+  "semanticSummaryHash": "sha256:561a411e8b5bc916180c505a35c47373d549ec08a92988b05fd134cd94d8df4b",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "Wording accurate: same-release checksums show integrity not authenticity; consistent with ADR-003 and release notes; sidecar matches page.",
-  "reviewedAt": "2026-11-04T09:15:45.284Z"
+  "reviewer": "docs-review-sonnet",
+  "notes": "Verified the macOS not-signed-by-Apple sentence matches release.yml (Bunzai-macOS build, codesign check) and the pages.ts download text, and the sidecar section summary matches with no held-back claim left.",
+  "reviewedAt": "2026-11-06T22:07:27.388Z"
 }

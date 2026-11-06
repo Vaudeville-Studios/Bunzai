@@ -44,6 +44,7 @@ import type { RegexSetBody } from "../entities/regex/schema";
 import { ensureCoreScene, INCOMPLETE_CORE_SCENE_MESSAGE } from "../studio/core-scene";
 import { projectCoreSceneTurnEvent } from "../extensions/contracts/events";
 import type { TurnDeps } from "../studio/scene-turn";
+import { BookCancelledError } from "../studio/book-phase";
 import { corePlan, type CoreSceneParts } from "../studio/core-turn-plan";
 import { narratorTools } from "../studio/library-tools";
 import { runOwnedTask } from "../studio/scene-turn-runtime";
@@ -78,14 +79,15 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
       return applyExtensionPrompts(chatId, messages.map((message) => ({ role: message.role as ProviderRole, content: message.blocks.filter((block) => block.k === "text").map((block) => block.text).join("") })), context.signal);
     },
   } : undefined;
-  const cut = cutDeps ? coreFinalCut({ chats, chat, emit: (event) => coalescer.push(event), banks: () => finalCutBanksOf(cutDeps.state),
+  let currentChat = (): typeof chat => chat;
+  const cut = cutDeps ? coreFinalCut({ chats, chat, current: () => currentChat(), emit: (event) => coalescer.push(event), banks: () => finalCutBanksOf(cutDeps.state),
     deps: { connect, now: Date.now, readPreset: cutDeps.readPreset, ...(readRegex ? { readRegex } : {}), runtime: sceneRuntimeFor(chats) } }) : undefined;
   const hooked = { ...extensionHooks, ...(transformRequest ? { transformRequest } : {}), ...(cut?.transformReply ? { transformReply: cut.transformReply } : {}) };
   // Bunzai's Director, recall and the jobs a reply starts; without the library's readers the turn runs on what it has (a headless consumer).
   const runtime = sceneRuntimeFor(chats);
   const plan = cutDeps ? corePlan({ chats, state: cutDeps.state, readPreset: cutDeps.readPreset, readLorebook: cutDeps.readLorebook, ...(cutDeps.readLibrary ? { readLibrary: cutDeps.readLibrary } : {}), ...(choiceDefaults ? { choiceDefaults } : {}),
-    connect, now: Date.now, runtime, emit: (event) => coalescer.push(event), narratorTools: narratorTools(cutDeps.readLibrary), ...(cutDeps.toolBudgetMs ? { toolBudgetMs: cutDeps.toolBudgetMs } : {}), ...(cutDeps.turnDeps ? { turnDeps: cutDeps.turnDeps } : {}) }, chat, kind) : undefined;
-  if (plan) regexSets = plan.regexSets;
+    connect, now: Date.now, runtime, emit: (event) => coalescer.push(event), narratorTools: narratorTools(cutDeps.readLibrary), ...(cutDeps.toolBudgetMs ? { toolBudgetMs: cutDeps.toolBudgetMs } : {}), ...(cutDeps.turnDeps ? { turnDeps: cutDeps.turnDeps } : {}) }, chat, kind, b["inspect"] === true) : undefined;
+  if (plan) { regexSets = plan.regexSets; currentChat = plan.currentChat; }
   // A Promptbook's phases run before rp-core's turn opens, and the page watches them: the stream opens first.
   const isBook = chat.preset?.kind === "promptbook" && !!cutDeps?.turnDeps;
   let bookFailed = false;
@@ -98,10 +100,10 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
     try { return await plan.prepare(signal); }
     catch (error) {
       bookFailed = true;
-      coalescer.push(signal.aborted ? { type: "stopped", message: null } : { type: "failed", category: "api_error", code: "promptbook_failed", message: toErrorMessage(error, "The Promptbook could not finish. Nothing from this turn was committed."), draft: "" });
+      coalescer.push(signal.aborted || error instanceof BookCancelledError ? { type: "stopped", message: null } : { type: "failed", category: "api_error", code: "promptbook_failed", message: toErrorMessage(error, "The Promptbook could not finish. Nothing from this turn was committed."), draft: "" });
       throw error;
     }
-  } } : {}), sceneId: chatId, sessionId, kind, expectedBranchVersion: b["expectedVersion"], actor: { kind: "host" }, ...(choiceDefaults ? { choiceDefaults } : {}), ...(cut || plan ? { replyExtras: async (as: "done" | "stopped", text: string) => { const made = cut?.extras(), deltas = await plan?.deltas(as, scenePlan?.closing, text), recalled = plan?.trace(); return { ...made, ...(made?.trace || recalled ? { trace: { ...made?.trace, ...recalled } } : {}), ...(deltas?.length ? { deltas } : {}) }; } } : {}),
+  } } : {}), sceneId: chatId, sessionId, kind, expectedBranchVersion: b["expectedVersion"], actor: { kind: "host" }, ...(choiceDefaults ? { choiceDefaults } : {}), ...(cut || plan ? { replyExtras: async (as: "done" | "stopped", text: string, signal: AbortSignal) => { const made = cut?.extras(), deltas = await plan?.deltas(as, scenePlan?.closing, text, signal), recalled = plan?.trace(); return { ...made, ...(made?.trace || recalled ? { trace: { ...made?.trace, ...recalled } } : {}), ...(deltas?.length ? { deltas } : {}) }; } } : {}),
     ...(hostHooks ? { hostHooks } : {}), ...(typeof b["guidance"] === "string" ? { guidance: b["guidance"] } : {}), ...(b["inspect"] === true ? { inspect: true } : {}),
   }, async ({ event, projected }: CoreTurnFrame) => {
     let output: TurnEvent | null = null;
@@ -134,9 +136,15 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
       const write = (event: TurnEvent) => { if (!detached) controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`)); };
       for (const event of buffered.splice(0)) write(event);
       send = write;
-      void work.then(() => { coalescer.flush(); if (!detached) controller.close(); }, (error) => { coalescer.flush(); if (!detached) { if (bookFailed) controller.close(); else controller.error(error); } });
+      void work.then(() => { coalescer.flush(); if (!detached) controller.close(); }, (error) => {
+        // The page was told the turn started, so a refusal after that (a double send, a gone setup) reaches it as a failure, never as a lost stream.
+        if (isBook && !bookFailed) coalescer.push({ type: "failed", category: "invalid_request_error", code: "promptbook_failed", message: toErrorMessage(error, "The Promptbook could not start. Nothing from this turn was committed."), draft: "" });
+        coalescer.flush();
+        if (!detached) { if (isBook) controller.close(); else controller.error(error); }
+      });
     },
-    cancel() { detached = true; coalescer.flush(); },
+    // A phase may be waiting on this page's answer (a regex pass, the Inspector), with nobody left to give it.
+    cancel() { detached = true; coalescer.flush(); if (plan?.inPhases()) void owner.stop(chatId).catch(() => undefined); },
   }), { headers: { "content-type": "text/event-stream", "cache-control": "no-store", "x-accel-buffering": "no" } });
   return response;
 }

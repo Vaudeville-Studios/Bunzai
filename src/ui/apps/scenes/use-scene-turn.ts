@@ -103,6 +103,8 @@ export function useSceneTurn(ctx: AppContext, chatId: string, reload: () => void
         turn.prefill = e.text;
       } else if (e.type === "director") {
         publishDirector(chatId, e);
+      } else if (e.type === "world") {
+        if (e.status === "failed" && e.reason) ctx.setStatus(e.reason);
       } else if (e.type === "finalcut") {
         delete turn.phase;
         turn.finalCut = e.pass;

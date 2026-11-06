@@ -132,6 +132,10 @@ jobs:
         run: bun run scripts/build-desktop.ts --no-desktop --cli-targets=bun-darwin-arm64
       - name: Name the normal macOS download
         run: cp dist/bunzai-cli-darwin-arm64 dist/Bunzai-macOS
+      - name: Prove the macOS app is signed well enough to run, and runs
+        run: |
+          codesign --verify --strict dist/Bunzai-macOS
+          dist/Bunzai-macOS version
       - uses: actions/upload-artifact@v4
         with:
           name: macos

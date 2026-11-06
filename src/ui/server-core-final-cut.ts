@@ -13,6 +13,8 @@ import type { TurnDeps, TurnEvent } from "../studio/scene-turn";
 
 export function coreFinalCut(input: {
   chats: Pick<ChatStore, "readMessagesBefore">; chat: Chat;
+  /** The chat the reply went out on, read when the pass runs: a Promptbook phase's own. */
+  current?(): Chat;
   deps: Pick<TurnDeps, "connect" | "now" | "readPreset" | "readRegex" | "runtime">;
   banks?(): Promise<Record<string, Bank>>;
   emit(event: TurnEvent): void;
@@ -25,7 +27,7 @@ export function coreFinalCut(input: {
       if (context.kind === "continue") return { text };
       const recent = (await input.chats.readMessagesBefore(input.chat.activeBranchId, { limit: 12, liveOnly: true })).messages
         .slice().sort((a, b) => a.seq - b.seq).map((m) => ({ role: m.role, content: m.swipes[m.current]?.content ?? "" }));
-      const cut = await finalCutStage({ deps: input.deps, chat: input.chat, text, history: recent, format: undefined, signal: context.signal,
+      const cut = await finalCutStage({ deps: input.deps, chat: input.current?.() ?? input.chat, text, history: recent, format: undefined, signal: context.signal,
         emit: input.emit, turnId: context.turnId, ...(input.banks ? { userBanks: input.banks } : {}) });
       if (!cut) return { text };
       if ("stop" in cut) return { veto: cut.stop.type === "failed" ? cut.stop.message : "Final Cut stopped this reply." };

@@ -4,6 +4,7 @@
  */
 import { expect, setDefaultTimeout, test } from "bun:test";
 import { bookRecipe, newBookPhase } from "../core/promptbook";
+import { emptyAgentBody } from "../entities/agent/schema";
 import { emptyPresetBody } from "../entities/preset/schema";
 import { readVault, saveProvider } from "../kit/providers/vault";
 import { libraryFor } from "../studio/library-content";
@@ -270,4 +271,42 @@ test("on a Core scene, a reply's tool calls are kept in its version's trace", as
   const tip = (await chats.readMessagesBefore(take, { limit: 1, liveOnly: true })).messages[0]!;
   const trace = await chats.swipeTrace(tip.id, tip.swipes[tip.current]!.id);
   expect((trace?.["tools"] as { calls: { name: string; ok: boolean }[] }).calls.map((call) => [call.name, call.ok])).toEqual([["update_trackers", true]]);
+});
+
+test("on a Core scene, a Promptbook reply's agent reading no history leaves the older messages out, and its after phase still reads them", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  await sendAndAnswer(r, chatId, (await open()).branchVersion, "An old question.");
+  await r.store.save({ schemaVersion: vera.schemaVersion, kind: "agent", id: "brief", body: { ...emptyAgentBody("Brief"), contextMessages: 0 } } as never);
+  const book = bookRecipe("Casebook", "blank");
+  const reply = book.phases.findIndex((phase) => phase.role === "reply");
+  book.phases[reply] = { ...book.phases[reply]!, agentId: "brief" };
+  book.phases.push({ ...newBookPhase("tidy", "Tidy up", "after"), reads: [] });
+  await r.store.save({ schemaVersion: vera.schemaVersion, kind: "promptbook", id: "casebook", body: book } as never);
+  const set = await r.post("/api/chats/preset", { chatId, preset: { kind: "promptbook", id: "casebook", toggles: {}, samplers: {} } });
+  if (set.status !== 200) throw new Error(`${set.status}: ${await set.text()}`);
+  const was = asked.length;
+  await sendAndAnswer(r, chatId, (await open()).branchVersion, "A new question.");
+  const requests = asked.slice(was).map((request) => JSON.stringify(request.messages));
+  expect(requests.length).toBe(2);
+  expect(requests[0]).toContain("A new question.");
+  expect(requests[0]).not.toContain("An old question.");
+  expect(requests[1]).toContain("An old question.");
+});
+
+test("on a Core scene, a second Promptbook turn while one runs tells the page plainly, rather than losing the stream", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  await r.store.save({ schemaVersion: vera.schemaVersion, kind: "promptbook", id: "casebook", body: bookRecipe("Casebook", "blank") } as never);
+  await r.post("/api/chats/preset", { chatId, preset: { kind: "promptbook", id: "casebook", toggles: {}, samplers: {} } });
+  const sent = await r.post("/api/chats/send", { chatId, content: "Hello.", greetingIndex: 0, expectedVersion: (await open()).branchVersion });
+  const version = ((await sent.json()) as Opened).branchVersion;
+  model.holdNext = true;
+  const first = await r.post("/api/chats/turn", { chatId, kind: "reply", expectedVersion: version });
+  for (let waited = 0; waited < 5000 && model.holdNext; waited += 10) await new Promise((done) => setTimeout(done, 10));
+  const second = await (await r.post("/api/chats/turn", { chatId, kind: "reply", expectedVersion: version })).text();
+  expect(second).toContain("event: failed");
+  expect(second).toContain("a turn already owns this scene");
+  expect(await (await r.post("/api/chats/stop", { chatId })).json()).toEqual({ stopped: true });
+  await first.text();
 });

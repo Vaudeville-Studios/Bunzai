@@ -108,10 +108,10 @@ account and sends no Studio data to a Bunzai server. A browser runtime supplies 
 `/api/*` client contract from in-process stores and the shared inspect/export engine; it does not
 fork the canonical model or maintain a second set of format conversions.
 
-The download page has Windows, Linux and unavailable macOS choices. It shares the existing release-feed
+The download page has Windows, Linux and macOS choices. It shares the existing release-feed
 request, enabling direct app links only for actual compatible assets in the latest published release.
 The initial, offline and missing-asset states retain release/source links without guessed download URLs.
-New normal releases publish only the Windows desktop app, Linux x64 app and checksums; technical CLI,
+New normal releases publish only the Windows desktop app, the Linux x64 app and .deb, the Apple Silicon macOS app and checksums; technical CLI,
 ARM and source workflows are explained separately. Old release assets remain for existing recovery pins.
 
 The public website opens on a static Bunzai title, `All the worlds: your stage`, inside an

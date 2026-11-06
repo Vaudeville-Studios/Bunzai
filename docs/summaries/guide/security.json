@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "guide/security",
   "sourcePath": "docs/guide/security.md",
-  "sourceHash": "sha256:628e7156dc3368f21c440d7deadc41c1ea2f972d5689b2031dfe4d70b480f772",
+  "sourceHash": "sha256:793e7bced5aa109d54ea8e5193f14bc6c61a007afc411b9f48ee29fbb16eda29",
   "summary": "User-facing security and privacy guide for a local-first Studio that opens untrusted cards, scripts, regex sets, PNGs, and archives. Your content stays under your control through a primary loopback listener, no accounts or telemetry, and an encrypted studio library, while the guide names three deliberate network boundaries: provider-backed Kit turns, user-opened update and version-switch information, and explicitly enabled remote access. A card cannot run itself because regex is validated and budgeted, macros and triggers are analyzed, and Lua runs only in the opt-in Risu Test Bench with worker, WebAssembly, resource, and separate-origin defenses whose packaged-host isolation is not yet proven. The sandbox origin serves only the Lua worker, regex worker, and glue.wasm. Other files stay bounded by body, archive, parsing, and path rules. Converting never copies one app's code into another because only portable canonical content crosses formats while private fields stay escrowed. About API keys describes optional BYOP Kit vault storage, hop-by-hop provider destination checks, the missing non-Windows passphrase setup flow, and Studio's ephemeral mutation token.",
   "topics": [
     "local-first content control",
@@ -104,8 +104,8 @@
       "slug": "what-we-do-not-claim",
       "title": "What we do not claim",
       "level": 2,
-      "sourceHash": "sha256:fdc67f418de0e6570a875d16bd989be43e2b0474641e953524be5258c994d385",
-      "summary": "The guide avoids reassuring but unsupported claims. The currently configured Windows desktop binary is unsigned, so SmartScreen may warn; macOS release binaries are held back. The warning is no safety verdict; same-release checksums show a download arrived undamaged, not that it is authentic. The separate Test Bench origin has automated HTTP-layer proof but has not been measured inside the packaged desktop host. Anyone using the computer as the user can open the library, and without a system keyring a stolen disk can too. Kit's portable vault still lacks a settings-driven passphrase setup and unlock flow. Security reports should go privately to chibiconeja@gmail.com, also listed in SECURITY.md.",
+      "sourceHash": "sha256:edfcdab37d5b8824fe44e7a40b7c3fc4810988596a8cbab9ba6ff061d673f82b",
+      "summary": "The guide avoids reassuring but unsupported claims. The currently configured Windows desktop binary is unsigned, so SmartScreen may warn; the macOS binary is not signed by Apple and needs its quarantine flag cleared. The warning is no safety verdict; same-release checksums show a download arrived undamaged, not that it is authentic. The separate Test Bench origin has automated HTTP-layer proof but has not been measured inside the packaged desktop host. Anyone using the computer as the user can open the library, and without a system keyring a stolen disk can too. Kit's portable vault still lacks a settings-driven passphrase setup and unlock flow. Security reports should go privately to chibiconeja@gmail.com, also listed in SECURITY.md.",
       "topics": [
         "unsigned desktop binaries",
         "verify release checksums",

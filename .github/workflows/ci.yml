@@ -166,8 +166,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # darwin x64 is absent because this matrix has no Intel runner. macOS release artifacts are
-        # held back while platform verification is completed; this job still runs its arm64 checks.
+        # darwin x64 is absent because this matrix has no Intel runner, and releases ship Apple Silicon only.
         runner:
           - ubuntu-latest # linux x64
           - ubuntu-24.04-arm # linux arm64

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "reference/ui",
   "sourcePath": "docs/reference/ui.md",
-  "sourceHash": "sha256:6b50b4de501a2b3daa0e1c4445ed4e5afd75b57173d0fb62f9f5318026d1b3f7",
-  "semanticSummaryHash": "sha256:ed1fdeb3b7311ea6dd4d5193afda4a31047705f3ee4faf269769d73943c3f820",
+  "sourceHash": "sha256:7cb5a42fd4310c0142ecbee4e467fa7d19741b47871784fe98ba73222ce97c47",
+  "semanticSummaryHash": "sha256:dbf3787c99809448e1358a3bcaa3a5a6f48e5009382daa40eeea9b1ba26b6e05",
   "verdict": "APPROVE",
-  "reviewer": "root-table-read-advisor",
-  "notes": "Root independently read the source changes, full new guide and reference pages, and affected semantic summaries. Claims distinguish explicit inference, encrypted snapshot support, plain export omissions, manual ownership, exact-ID recovery, workflow evidence and packaged limitations.",
-  "reviewedAt": "2026-11-03T09:17:07.352Z"
+  "reviewer": "docs-review-sonnet",
+  "notes": "Verified no unavailable-macOS wording remains in ui.md or ui.json, and the release asset list (Windows exe, Linux bare and .deb, Apple Silicon macOS, SHA256SUMS) matches release.yml and the changed sentences.",
+  "reviewedAt": "2026-11-06T22:08:09.990Z"
 }

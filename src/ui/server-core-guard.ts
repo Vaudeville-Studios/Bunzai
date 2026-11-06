@@ -21,6 +21,9 @@ const ALLOWED = new Set([
   // The cast rp-core plays (CoreTurnOwner.syncCast), the opening's wording, and read-only drafts.
   "persona",
   "update-card", "revert-card", "save-member", "variant", "opening", "draft", "formula-try",
+  // Outside the journal: the Trash flag on the host chat, the Cast wing's roster (no prompt reads it), and a request preview that writes nothing.
+  "restore-scene", "forecast",
+  "participants", "participants/reconcile", "participants/apply", "participants/undo",
 ]);
 /** `finish` completes a host-created scene whose rp-core session was never written (ensureCoreScene). */
 export async function coreWriteGuard(path: string, body: Record<string, unknown>, records?: CoreSceneRecords, finish?: (sceneId: string) => Promise<unknown>): Promise<Response | null> {

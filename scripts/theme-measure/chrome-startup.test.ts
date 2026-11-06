@@ -70,16 +70,18 @@ test("early failure is prompt and retains bounded stderr diagnostics", async () 
 
 test("a connection acquired after child exit is closed rather than returned", async () => {
   const process = child(`process.stderr.write('DevTools listening on ws://127.0.0.1:9591/devtools/browser/nonce\\n');setTimeout(()=>process.exit(9),100);`);
-  let closed = 0;
+  let closed = 0, attempts = 0;
   const error = await connectOwnedChrome(process, 9591, async () => {
+    attempts++;
     await new Promise((resolve) => setTimeout(resolve, 200));
     return { close: async () => { closed++; } };
   }).then(() => null, (error: unknown) => error);
   expect(error).toBeInstanceOf(Error);
   expect((error as Error).message).toContain("Chrome exited");
   // the late connection is closed when it arrives, which a loaded runner can put well past 250 ms
-  for (let waited = 0; closed === 0 && waited < 5000; waited += 25) await new Promise((resolve) => setTimeout(resolve, 25));
-  expect(closed).toBe(1);
+  // and a runner slow enough that the child is gone before the first attempt has nothing to close.
+  for (let waited = 0; closed < attempts && waited < 5000; waited += 25) await new Promise((resolve) => setTimeout(resolve, 25));
+  expect(closed).toBe(attempts);
 });
 
 test("missing readiness expires at the fixed deadline and reaps only the owned child", async () => {

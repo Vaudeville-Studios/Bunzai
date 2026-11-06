@@ -44,7 +44,7 @@ function ownedEndpoint(raw: string, port: number): string {
 
 /** Owns startup and cleanup; the connector seam keeps real-child protocol tests independent of Playwright's transport. */
 export async function connectOwnedChrome<T extends { close(): Promise<void> }>(
-  child: ChildProcess, port: number, connect: (endpoint: string, timeout: number) => Promise<T>,
+  child: ChildProcess, port: number, connect: (endpoint: string, timeout: number) => Promise<T>, tolerateHeldStderr = false,
 ): Promise<{ connection: T; close(): Promise<void> }> {
   const deadline = performance.now() + STARTUP_MS;
   let tail: Buffer = Buffer.alloc(0);
@@ -81,8 +81,7 @@ export async function connectOwnedChrome<T extends { close(): Promise<void> }>(
     child.stderr?.off("data", onData);
     child.off("error", onError);
     child.off("exit", onExit);
-    // On macOS something Chrome started outlives it holding its stderr, even past a kill of its process group; the stream is destroyed above either way.
-    if (!drained && process.platform !== "darwin") throw new Error("Owned Chrome exited with an inherited stderr stream still open");
+    if (!drained && !tolerateHeldStderr) throw new Error("Owned Chrome exited with an inherited stderr stream still open");
   })();
   try {
     while (!endpoint && !failure && performance.now() < deadline) await sleep(25);
@@ -136,7 +135,8 @@ export async function launch(work: string, port = 9491 + Number(process.env.THEM
   let closing: Promise<void> | undefined;
   const close = (): Promise<void> => closing ??= (async () => { await session?.close(); if (!alive(chrome)) await removeProfile(); })();
   try {
-    session = await connectOwnedChrome(chrome, port, (endpoint, timeout) => chromium.connectOverCDP(endpoint, { timeout }));
+    // On macOS something real Chrome starts outlives it holding its stderr, even past a kill of its process group; the stream is destroyed either way.
+    session = await connectOwnedChrome(chrome, port, (endpoint, timeout) => chromium.connectOverCDP(endpoint, { timeout }), process.platform === "darwin");
     const context = session.connection.contexts()[0] ?? (await session.connection.newContext());
     await context.addInitScript(`document.addEventListener("DOMContentLoaded",()=>{const s=document.createElement("style");s.textContent=${JSON.stringify(FREEZE)};document.head.append(s)})`);
     const page = await context.newPage();

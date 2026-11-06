@@ -27,7 +27,8 @@ import type { ReadPreset } from "./scene-turn-load";
 import { PresetGoneError } from "./scene-turn-load";
 import { WHOLE_BRANCH } from "./scene-branch";
 import { resolvePromptAttachments } from "./scene-turn-attachments";
-import type { CoreSceneParts } from "./core-turn-plan";
+import type { CoreBook, CoreSceneParts } from "./core-turn-plan";
+import { slotPlaceholder } from "../core/assembly/feature-slots";
 
 export interface CoreSceneLibrary {
   /** What the session's config names. */
@@ -188,13 +189,19 @@ function corePreset(id: string, body: PresetBody, chat: Chat, defaults: Record<s
   const features = adds.parts?.features ?? {};
   const blocks = filledPresetBlocks(body, toggles).flatMap((block): PresetBlock[] => {
     // A feature marker is where its text goes; with none on, the marker adds nothing.
+    // A Promptbook's dice and earlier phases' notes go out exactly as written.
+    const literal = adds.parts?.literals?.[block.id];
+    if (literal !== undefined) return [asRaw(block.id, literal, coreAt(block.placement, block.depth, block.order))];
     if (block.slot) return (features[block.slot] ?? []).map((text, index) => asRaw(`${block.id}:${index}`, text, coreAt(block.placement, block.depth, block.order)));
     const override = own.get(block.id)?.forbidOverrides ? undefined : CARD_OVERRIDES[block.id];
     let content = CORE_MACROS.reduce((text, [macro, core]) => text.replace(macro, core), block.content).replace(/\{\{\s*persona\s*\}\}/gi, () => personaText);
     for (const [target, macro, spelled] of DECORATED) content = content.replace(macro, () => decorateMacroValue(spelled, adds.guides.macro, target));
+    // A Promptbook's skill card sits where its text goes.
+    if (adds.parts?.slotNonce) for (const [slot, texts] of Object.entries(features)) if (slot.startsWith("skill:")) content = content.split(slotPlaceholder(slot, adds.parts.slotNonce)).join((texts ?? []).join("\n\n"));
     return [{
       id: block.id, name: block.name, role: block.role === "assistant" || block.role === "user" ? block.role : "system", enabled: true,
-      content, at: coreAt(block.placement, block.depth, block.order), ...(override ? { override } : {}),
+      // The history block is where the history goes, whatever placement it was saved with (Bunzai's plan reads it by its text too).
+      content, at: content.includes("{{history}}") ? "relative" : coreAt(block.placement, block.depth, block.order), ...(override ? { override } : {}),
     }, ...(adds.files?.get(block.id) ?? []).map((file) => ({ ...file, at: coreAt(block.placement, block.depth, block.order) }))];
   });
   // After the leading system prompts (where the history starts), in Bunzai's order: the note, then the system guide.
@@ -204,7 +211,7 @@ function corePreset(id: string, body: PresetBody, chat: Chat, defaults: Record<s
   if (adds.guides.system) lead.push({ id: "sceneGuides", name: "Guides", role: "system", enabled: true, content: adds.guides.system, at: "relative" });
   // A feature with no marker in the preset rides after those, and the recaps last, in front of the history they stand in for (assemble.ts).
   const seated = new Set<string>(filledPresetBlocks(body, toggles).flatMap((block) => (block.slot ? [block.slot] : [])));
-  for (const [slot, texts] of Object.entries(features)) if (!seated.has(slot)) (texts ?? []).forEach((text, index) => lead.push(asRaw(`scene:${slot}:${index}`, text, "relative")));
+  for (const [slot, texts] of Object.entries(features)) if (!seated.has(slot) && !slot.startsWith("skill:")) (texts ?? []).forEach((text, index) => lead.push(asRaw(`scene:${slot}:${index}`, text, "relative")));
   (adds.parts?.recaps ?? []).forEach((text, index) => lead.push(asRaw(`sceneRecap${index}`, text, "relative")));
   blocks.splice(history >= 0 ? history : blocks.length, 0, ...lead);
   if (adds.note && adds.noteAt !== "relative") blocks.push({ id: "sceneNote", name: "Scene note", role: "system", enabled: true, content: adds.note, at: adds.noteAt! });
@@ -246,9 +253,9 @@ async function coreFiles(id: string, body: PresetBody, chat: Chat, defaults: Rec
 }
 
 export async function coreSceneLibrary(
-  chats: Pick<ChatStore, "getChat" | "castSnapshot" | "readMessages">, sceneId: string, readers: CoreSceneReaders,
+  chats: Pick<ChatStore, "getChat" | "castSnapshot" | "readMessages">, sceneId: string, readers: CoreSceneReaders, book?: CoreBook | null,
 ): Promise<CoreSceneLibrary | null> {
-  const chat = await chats.getChat(sceneId), snapshot = await chats.castSnapshot(sceneId);
+  const chat = book?.chat ?? await chats.getChat(sceneId), snapshot = await chats.castSnapshot(sceneId);
   if (!chat || !snapshot) return null;
   const character = playedBody(bodyOf(snapshot.character) as unknown as CharacterBody, chat.variantId);
   const persona = snapshot.persona ? (bodyOf(snapshot.persona) as unknown as PersonaBody) : undefined;
@@ -270,7 +277,8 @@ export async function coreSceneLibrary(
     ...(due ? { note: `[Author's Note: ${due.text}]`, noteAt: due.position === "after_scenario" ? "relative" as const : { depth: coreDepth(due.depth), order: 100 } } : {}) };
   const presetId = chat.preset?.id ?? SCENE_DEFAULT_PRESET;
   let body = DEFAULT_BODY;
-  if (chat.preset) {
+  if (book?.loaded.preset) body = book.loaded.preset;
+  else if (chat.preset) {
     const read = await readers.readPreset(chat.preset.id, chat.preset.kind);
     if (!read) throw new PresetGoneError();
     body = read;

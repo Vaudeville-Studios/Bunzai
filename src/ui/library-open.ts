@@ -32,7 +32,6 @@ import { sqliteStateStore } from "../stage/store/sqlite/state-store";
 import { sqliteExtensionStore } from "../stage/store/sqlite/extension-store";
 import { sqliteCoreRecordStore } from "../stage/store/sqlite/core-record-store";
 import { createCoreTurnOwner } from "../studio/core-turn-owner";
-import { assertNoCorePromptAttachments } from "../studio/core-prompt-attachments";
 import { assertStudioEntityKind } from "../studio/path-policy";
 import { sqliteChatStore } from "../stage/store/sqlite-chat-store";
 import type { ContentStore, DocumentBackend } from "../stage/contracts/content-store";
@@ -108,14 +107,9 @@ const storesOf = (database: StageDatabase, cipher: CellCipher, file: string, stu
   // The scene readers take a body store: the content store answers bodies by kind.
   const bodies = { read: async () => null, readBody: (kind: string, id: string) => content.readBody(assertStudioEntityKind(kind), id), readBodyVersioned: (kind: string, id: string) => content.readBodyVersioned(assertStudioEntityKind(kind), id) };
   const state = sqliteStateStore(database, cipher);
-  const coreTurns = core ? createCoreTurnOwner(chats, core, studioDir, async (sceneId) => {
-    const chat = await chats.getChat(sceneId);
-    if (!chat?.preset) return;
-    const entity = await content.readLight(assertStudioEntityKind(chat.preset.kind), chat.preset.id);
-    if (entity) assertNoCorePromptAttachments(entity.entity, chat.preset.toggles);
-  }, (sceneId, choiceDefaults, kind) => coreSceneLibrary(chats, sceneId, { readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readGuides: (ids) => selectedGuides(state, ids), ...(choiceDefaults ? { choiceDefaults } : {}), readAsset: (sha, maxBytes) => content.readAsset(sha, maxBytes),
-    parts: (id) => coreSceneParts({ chats, state, readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readLibrary: async (pieceKind, pieceId) => (await content.readLight(assertStudioEntityKind(pieceKind), pieceId))?.entity ?? null, ...(choiceDefaults ? { choiceDefaults } : {}) }, id, kind ?? "draft"),
-    coreMessages: async (id, messageId) => { const linked = await core!.sceneFor(id); return linked ? (await core!.coreMessagesFor(linked.sessionId, linked.branchId, messageId)).map((row) => row.coreMessageId) : []; } })) : undefined;
+  const coreTurns = core ? createCoreTurnOwner(chats, core, studioDir, undefined, (sceneId, choiceDefaults, kind, book) => coreSceneLibrary(chats, sceneId, { readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readGuides: (ids) => selectedGuides(state, ids), ...(choiceDefaults ? { choiceDefaults } : {}), readAsset: (sha, maxBytes) => content.readAsset(sha, maxBytes),
+    parts: (id) => coreSceneParts({ chats, state, readPreset: presetReader(bodies), readLorebook: lorebookReader(bodies), readLibrary: async (pieceKind, pieceId) => (await content.readLight(assertStudioEntityKind(pieceKind), pieceId))?.entity ?? null, ...(choiceDefaults ? { choiceDefaults } : {}) }, id, kind ?? "draft", book),
+    coreMessages: async (id, messageId) => { const linked = await core!.sceneFor(id); return linked ? (await core!.coreMessagesFor(linked.sessionId, linked.branchId, messageId)).map((row) => row.coreMessageId) : []; } }, book)) : undefined;
   return {
     content, state, chats, ...(core ? { core, coreTurns: coreTurns! } : {}),
     importCompleted: async (pieceCount) => { if (pieceCount > 1000) await database.optimize(); },

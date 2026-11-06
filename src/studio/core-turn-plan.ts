@@ -17,11 +17,13 @@ import { toErrorMessage } from "../error-message";
 import type { Chat, ChatConnection, ChatStore, DirectorSnapshot, JsonObject, Message } from "../stage/contracts/chat-store";
 import type { StateStore } from "../stage/contracts/state-store";
 import { recallSection, runRecall } from "./compendium-recall";
-import { StudioConflictError } from "./errors";
+import { StudioConflictError, StudioValidationError } from "./errors";
+import { bookTrace, composeBookPhase, continuedBookRuns, runBookPhases, type PhaseRun } from "./book-phase";
+import { replyPhase } from "../core/promptbook";
 import { commitDirector, runDirector, type DirectorRun } from "./scene-director";
 import { startTrackerRound } from "./scene-director-trackers";
 import type { ReadLorebook } from "./scene-lore";
-import type { Connected, TurnEvent } from "./scene-turn";
+import type { Connected, TurnDeps, TurnEvent } from "./scene-turn";
 import { assembleRequest, prepareRequest } from "./scene-turn-build";
 import { loadTurn, type LoadedTurn, type ReadPreset, type TurnKind } from "./scene-turn-load";
 import type { TurnRuntime } from "./scene-turn-runtime";
@@ -56,14 +58,20 @@ export interface CoreSceneParts {
   macros: AssemblyResult["expansion"]["context"];
   /** Picked skills whose close rule held this turn: the reply closes them. */
   closing: string[];
+  /** A Promptbook reply's own blocks that go out as written (dice, earlier phases' notes), and its marker nonce. */
+  literals?: Readonly<Record<string, string>>;
+  slotNonce?: string;
 }
 
+/** A Promptbook turn's reply phase, composed once its private phases have run: what the turn sends in place of the scene's own setup. */
+export interface CoreBook { chat: Chat; loaded: LoadedTurn; connection?: ChatConnection }
+
 /** The scene's parts for a turn of this kind; null when the scene is gone. Asks no model and writes nothing. */
-export async function coreSceneParts(deps: CoreSceneRead, sceneId: string, kind: TurnKind | "draft"): Promise<CoreSceneParts | null> {
-  const chat = await deps.chats.getChat(sceneId);
+export async function coreSceneParts(deps: CoreSceneRead, sceneId: string, kind: TurnKind | "draft", book?: CoreBook | null): Promise<CoreSceneParts | null> {
+  const chat = book?.chat ?? await deps.chats.getChat(sceneId);
   if (!chat) return null;
   // A swipe with no reply to swipe is the turn's own refusal to make, in rp-core's words (core-turn-owner.ts).
-  const loaded = await loadTurn(deps.chats, chat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults).catch((error: unknown) => {
+  const loaded = book?.loaded ?? await loadTurn(deps.chats, chat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults).catch((error: unknown) => {
     if (error instanceof StudioConflictError) return null;
     throw error;
   });
@@ -76,6 +84,7 @@ export async function coreSceneParts(deps: CoreSceneRead, sceneId: string, kind:
     features: result.parts.features, recaps, ...(prep.summary ? { summary: prep.summary.text } : {}), lore: result.parts.lore,
     covered: [...(result.chatSummary?.hidden ?? []), ...(result.summaries?.dropped ?? [])],
     macros: result.expansion.context, closing: (result.skills ?? []).filter((skill) => skill.close).map((skill) => skill.id),
+    ...(loaded.literalPrompts ? { literals: loaded.literalPrompts } : {}), ...(loaded.slotNonce ? { slotNonce: loaded.slotNonce } : {}),
   };
 }
 
@@ -86,6 +95,8 @@ export interface CorePlanDeps extends CoreSceneRead {
   emit(event: TurnEvent): void;
   narratorTools?: NarratorToolsFor;
   toolBudgetMs?(): Promise<number | undefined>;
+  /** What a Promptbook's phases run on; absent: no Promptbook phases run (a headless consumer). */
+  turnDeps?: TurnDeps;
 }
 
 /** The calls of one reply, one at a time as the old tool loop ran them: rp-core runs a round's read tools together, and these share held writes and a time budget. */
@@ -128,22 +139,47 @@ function asCoreTool(tool: NarratorTool<never>, lane: ReturnType<typeof toolLane>
 }
 
 /** One Core turn's Director and recall, and what they leave behind. */
-export function corePlan(deps: CorePlanDeps, chat: Chat, kind: TurnKind) {
+export function corePlan(deps: CorePlanDeps, sceneChat: Chat, kind: TurnKind) {
+  let chat = sceneChat;
+  let book: CoreBook | null = null;
+  const runs: PhaseRun[] = [];
+  let afterFailed = false;
+  const turnId = crypto.randomUUID();
   let loaded: LoadedTurn | null = null;
   let director: DirectorRun | null = null;
   let replaced: DirectorSnapshot | null = null;
   let recalled: JsonObject | undefined;
   const writes = turnWrites(deps.now);
   // Nothing is saved until the reply lands: a stopped or failed turn loses what its tools wrote, as a dropped checkpoint does.
-  writes.open([], async () => true);
+  const held = async () => true;
+  writes.open([], held);
   return {
+    /** A Promptbook's private phases, before the turn opens, so the reply goes out on its own setup and model. Null for any other scene. */
+    async prepare(signal: AbortSignal): Promise<CoreBook | null> {
+      if (sceneChat.preset?.kind !== "promptbook" || !deps.turnDeps || !sceneChat.connection) return null;
+      const base = await loadTurn(deps.chats, sceneChat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults);
+      if (!base?.promptbook) return null;
+      const connected = await deps.connect(sceneChat.connection, signal);
+      if (!connected) throw new StudioValidationError("this scene's connection is gone from Kit; pick another in the AI wing");
+      if (kind === "continue") runs.push(...await continuedBookRuns(deps.turnDeps, base));
+      else await runBookPhases({ deps: deps.turnDeps, chat: sceneChat, loaded: base, connected, role: "private", runs, writes, turnId, save: held, signal, emit: deps.emit });
+      const phase = replyPhase(base.promptbook);
+      const prepared = await composeBookPhase(deps.turnDeps, sceneChat, base, phase, runs, writes, kind === "continue");
+      deps.emit({ type: "phase", name: phase.name, role: "reply" });
+      chat = { ...prepared.chat, regex: { ...prepared.chat.regex, sets: prepared.regex } };
+      if (prepared.connection) chat.connection = prepared.connection;
+      book = { chat, loaded: { ...prepared.loaded, promptbook: base.promptbook }, ...(prepared.connection ? { connection: prepared.connection } : {}) };
+      return book;
+    },
+    /** The regex sets the reply runs: a Promptbook phase's own, once it is composed. */
+    regexSets: () => chat.regex?.sets,
     /** The turn's hooks with the plan in them, over the others the turn has. */
     hooks(base: HostHooks | undefined, parts: CoreSceneParts | undefined): HostHooks {
       const lore = parts?.lore;
       return {
         ...base,
         async tools(context: HookCtx) {
-          const read = loaded ?? await loadTurn(deps.chats, chat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults);
+          const read = book?.loaded ?? loaded ?? await loadTurn(deps.chats, chat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults);
           if (!read) return [];
           const turn = await toolTurn(deps.narratorTools, kind, chat, read, Math.floor(Math.random() * 2 ** 31), writes, await deps.toolBudgetMs?.());
           if (parts) turn.macros.context = parts.macros;
@@ -169,7 +205,7 @@ export function corePlan(deps: CorePlanDeps, chat: Chat, kind: TurnKind) {
         },
       };
       async function plan(context: HookCtx, placed: Placement[]): Promise<Placement[]> {
-          loaded = await loadTurn(deps.chats, chat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults);
+          loaded = book?.loaded ?? await loadTurn(deps.chats, chat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults);
           const connected = loaded && chat.connection ? await deps.connect(chat.connection, context.signal) : null;
           if (!loaded || !connected) return placed;
           const scene = { connected, model: chat.connection!.model };
@@ -193,13 +229,21 @@ export function corePlan(deps: CorePlanDeps, chat: Chat, kind: TurnKind) {
       }
     },
     /** What the plan adds to the stored version's trace. */
-    trace: (): JsonObject | undefined => (recalled ? { recall: recalled } : undefined),
+    trace: (): JsonObject | undefined => (recalled || runs.length ? { ...(recalled ? { recall: recalled } : {}), ...(runs.length ? { book: bookTrace(runs, afterFailed ? "stopped" : "complete") } : {}) } : undefined),
     /** What the reply itself wrote, stamped on the version it lands as: its tools' writes, its skills' closes and, unless it was stopped, the Props' tick. */
-    async deltas(as: "done" | "stopped", closing: readonly string[] = []): Promise<readonly Delta[]> {
+    async deltas(as: "done" | "stopped", closing: readonly string[] = [], text = "", signal?: AbortSignal): Promise<readonly Delta[]> {
       // The version being replaced holds the person's edits to its story, those made while this reply was written too; read now, since the commit moves the scene off it.
       if (director && loaded?.target) replaced = await deps.chats.getDirector(chat.id, loaded.target.id).catch(() => null);
       if (kind === "continue") return [];
       if (as === "done" && loaded) await writes.tick(tickDeltas(loaded, deps.now()));
+      // A Promptbook's after phases read the reply, and a failed one costs the phase, never the reply that is already written.
+      if (as === "done" && book?.loaded.promptbook && deps.turnDeps && chat.connection) {
+        const reply = replyPhase(book.loaded.promptbook);
+        runs.push({ id: reply.id, name: reply.name, role: "reply", status: "ran", why: "The reply.", text, request: [] });
+        const connected = await deps.connect(sceneChat.connection ?? chat.connection, signal);
+        if (connected) await runBookPhases({ deps: deps.turnDeps, chat: sceneChat, loaded: book.loaded, connected, role: "after", runs, writes, turnId, content: text, save: held, signal: signal ?? new AbortController().signal, emit: deps.emit })
+          .catch(() => { afterFailed = true; });
+      }
       // A skill's close first: a tool that reopens it in this reply wins, as on an old scene.
       return [...closing.map((id) => skillDelta(id, false, deps.now())), ...writes.pending()];
     },

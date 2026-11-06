@@ -1,5 +1,6 @@
 /** A Promptbook phase composes existing library pieces and the scene assembler; all writes belong to the reply checkpoint. */
 import type { BookPhase } from "../entities/promptbook/schema";
+import type { Delta } from "../core/scene-state/types";
 import type { AgentBody } from "../entities/agent/schema";
 import type { ScriptSheetBody } from "../entities/scriptsheet/schema";
 import type { DiceBody } from "../entities/dice/schema";
@@ -93,7 +94,7 @@ export async function composeBookPhase(deps: Pick<TurnDeps, "readLibrary" | "ran
   return { chat: phaseChat, loaded: { ...loaded, preset, slotNonce: nonce, literalPrompts, pendingGlobals: writes.pending().filter((d) => d.slot === "global"), localVariables: continuing ? loaded.localVariables : varsOf(state), skills, linkedTrackers: trackers, history: agent?.contextMessages === undefined ? loaded.history : agent.contextMessages === 0 ? [] : loaded.history.slice(-agent.contextMessages) }, connection: phase.connection ?? agent?.connection ?? chat.connection, regex: [...new Set([...(chat.regex?.sets ?? []), ...ids("regex")])] };
 }
 
-export async function runBookPhases(a: { deps: TurnDeps; chat: Chat; loaded: LoadedTurn; connected: Connected; role: "private" | "after"; runs: PhaseRun[]; writes: TurnWrites; turnId: string; content?: string; inspect?: boolean; signal: AbortSignal; emit(e: TurnEvent): void }): Promise<void> {
+export async function runBookPhases(a: { deps: TurnDeps; chat: Chat; loaded: LoadedTurn; connected: Connected; role: "private" | "after"; runs: PhaseRun[]; writes: TurnWrites; turnId: string; content?: string; inspect?: boolean; /** Where a phase's writes are kept; absent: the turn's checkpoint. */ save?: (deltas: Delta[]) => Promise<unknown>; signal: AbortSignal; emit(e: TurnEvent): void }): Promise<void> {
   const { deps, loaded, chat, runs, writes, signal } = a;
   for (const phase of loaded.promptbook?.phases.filter((p) => p.role === a.role) ?? []) {
     signal.throwIfAborted();
@@ -124,8 +125,9 @@ export async function runBookPhases(a: { deps: TurnDeps; chat: Chat; loaded: Loa
       messages = applyEdits(messages, decision.edits);
     }
     const deltas = [...writes.pending(), ...varsDeltas(built.result.local, started), ...globalDeltas(built.result.globalWrites, started, () => crypto.randomUUID()), ...(built.result.skills ?? []).filter((s) => s.close).map((s) => skillDelta(s.id, false, started))];
-    await deps.chats.saveCheckpoint(a.turnId, { content: a.content ?? "", deltas });
-    writes.open(deltas, (all) => deps.chats.saveCheckpoint(a.turnId, { content: a.content ?? "", deltas: all }));
+    const keep = a.save ?? ((all: Delta[]) => deps.chats.saveCheckpoint(a.turnId, { content: a.content ?? "", deltas: all }));
+    await keep(deltas);
+    writes.open(deltas, keep);
     const completion = await sendReply(connected, { model: connection.model, messages, options: prep.options }, { signal, onEvent: () => undefined }, tools, deps.now);
     signal.throwIfAborted();
     const request = withToolCalls(tools, {}, { texts: messages.map((m) => m.content), ...(resolved.files.length ? { files: resolved.files } : {}) }).request;

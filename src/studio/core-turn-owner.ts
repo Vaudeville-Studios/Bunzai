@@ -11,9 +11,10 @@ import type { ProviderRole } from "../stage/contracts/provider";
 import type { Delta } from "../core/scene-state/types";
 import { StudioConflictError, StudioValidationError } from "./errors";
 import { withLastAsUser, withUserGuides, type CoreSceneLibrary } from "./core-library";
+import type { CoreBook } from "./core-turn-plan";
 
 /** A scene's own preset and lorebooks, read for each Core turn and preview (core-library.ts). */
-export type CoreSceneLibraryReader = (sceneId: string, choiceDefaults?: CoreTurnStart["choiceDefaults"], kind?: CoreTurnStart["kind"]) => Promise<CoreSceneLibrary | null>;
+export type CoreSceneLibraryReader = (sceneId: string, choiceDefaults?: CoreTurnStart["choiceDefaults"], kind?: CoreTurnStart["kind"], book?: CoreBook | null) => Promise<CoreSceneLibrary | null>;
 
 export type CoreTurnActor = { kind: "host" } | { kind: "extension"; packageId: string };
 export interface CoreTurnStart {
@@ -22,7 +23,9 @@ export interface CoreTurnStart {
   expectedJournalSeq?: number;
   commit?: ExtensionCommitContext; guidance?: string; inspect?: boolean;
   /** What the reply hook did to this turn's answer (Final Cut), stored with the version it projects. */
-  replyExtras?(as: "done" | "stopped"): Promise<{ trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined> | { trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined;
+  /** A Promptbook's private phases: run first, stopped with the turn, and what the reply then goes out on. */
+  prepare?(signal: AbortSignal): Promise<CoreBook | null>;
+  replyExtras?(as: "done" | "stopped", text: string): Promise<{ trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined> | { trace?: JsonObject; finalCut?: Generation["finalCut"]; deltas?: readonly Delta[] } | undefined;
   /** The person's saved preset choice answers (app settings), under the scene's own. */
   choiceDefaults?: (presetId: string) => Promise<Record<string, unknown> | undefined>;
 }
@@ -279,8 +282,10 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
         // The selected narrator binding is derived from the scene connection already shown in
         // the turn review. This changes only that role binding; extension-owned run policy below
         // narrows tools/jobs without rewriting saved config.
-        const scene = await sceneLibrary(input.sceneId, input.choiceDefaults, input.kind);
-        opened = await openCoreScene(records, home, input.sessionId, chat.connection, { recordStore: invocationRecords, configure: true, ...(scene ? { scene } : {}) });
+        const book = await input.prepare?.(controller.signal) ?? null;
+        controller.signal.throwIfAborted();
+        const scene = await sceneLibrary(input.sceneId, input.choiceDefaults, input.kind, book);
+        opened = await openCoreScene(records, home, input.sessionId, book?.connection ?? chat.connection, { recordStore: invocationRecords, configure: true, ...(scene ? { scene } : {}) });
         const hostHooks = withLastAsUser(withUserGuides(typeof input.hostHooks === "function" ? input.hostHooks(opened.connectionFingerprint, scene) : input.hostHooks, scene?.userGuides ?? [], scene?.answering), scene?.lastAsUser);
         const repairedVersion = await checkCoreProjection(chats, records, input.sceneId, opened.session, input.actor.kind === "extension");
         if (repairedVersion !== input.expectedBranchVersion) throw new StudioConflictError("The RP-Core transcript was repaired from its committed journal. Reload the scene and review the turn again.");
@@ -315,8 +320,8 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
           try {
             for await (const event of run.events) {
               if (event.type === "gate" && event.kind === "review") activeTurn.gateId = event.gateId;
-              if (event.type === "done") { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("done")); }
-              else if (event.type === "stopped" && event.message) { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("stopped")); }
+              if (event.type === "done") { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("done", replyText(event.message))); }
+              else if (event.type === "stopped" && event.message) { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("stopped", replyText(event.message))); }
               await onEvent({ event, projected });
             }
             return { turnId: run.turnId, outcome: await run.result, projected };
@@ -381,6 +386,8 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
     },
   };
 }
+
+const replyText = (message: { blocks: readonly { k: string; text?: string }[] }): string => message.blocks.filter((block) => block.k === "text").map((block) => block.text ?? "").join("");
 
 function sameActor(left: CoreTurnActor, right: CoreTurnActor): boolean {
   if (left.kind !== right.kind) return false;

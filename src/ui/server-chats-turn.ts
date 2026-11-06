@@ -36,13 +36,14 @@ import type { CompendiumDeps } from "../studio/compendium-deps";
 import { BASE_SUPPORT } from "../stage/params/wire";
 import { libraryFor } from "../studio/library-content";
 import type { CoreTurnOwner, CoreTurnFrame, CoreTurnStart } from "../studio/core-turn-owner";
-import { choiceDefaultsOf, regexReaderOf, toolBudgetOf } from "./server-scene-readers";
+import { choiceDefaultsOf, regexReaderOf, sceneReaders, toolBudgetOf } from "./server-scene-readers";
 import { corePromptRegex } from "./server-core-regex";
 import { coreFinalCut } from "./server-core-final-cut";
 import { finalCutBanksOf } from "../studio/final-cut-library";
 import type { RegexSetBody } from "../entities/regex/schema";
 import { ensureCoreScene, INCOMPLETE_CORE_SCENE_MESSAGE } from "../studio/core-scene";
 import { projectCoreSceneTurnEvent } from "../extensions/contracts/events";
+import type { TurnDeps } from "../studio/scene-turn";
 import { corePlan, type CoreSceneParts } from "../studio/core-turn-plan";
 import { narratorTools } from "../studio/library-tools";
 import { runOwnedTask } from "../studio/scene-turn-runtime";
@@ -51,7 +52,7 @@ import { err, json } from "./server-security";
 
 type Body = Record<string, unknown>;
 
-async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: string, b: Body, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasPromptContributors?: (sceneId: string) => Promise<boolean>, choiceDefaults?: CoreTurnStart["choiceDefaults"], readRegex?: (id: string) => Promise<RegexSetBody | null>, cutDeps?: { readPreset: ReadPreset; readLorebook: ReadLorebook; state: StateStore; readLibrary?: (kind: string, id: string) => Promise<unknown | null>; compendium?: CompendiumDeps | null | undefined; toolBudgetMs?: () => Promise<number | undefined> }): Promise<Response> {
+async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: string, b: Body, dispatchExtensionEvent?: (payload: unknown) => Promise<void>, applyExtensionPrompts?: (sceneId: string, messages: readonly { role: ProviderRole; content: string }[], signal: AbortSignal) => Promise<readonly string[]>, hasPromptContributors?: (sceneId: string) => Promise<boolean>, choiceDefaults?: CoreTurnStart["choiceDefaults"], readRegex?: (id: string) => Promise<RegexSetBody | null>, cutDeps?: { readPreset: ReadPreset; readLorebook: ReadLorebook; state: StateStore; readLibrary?: (kind: string, id: string) => Promise<unknown | null>; compendium?: CompendiumDeps | null | undefined; toolBudgetMs?: () => Promise<number | undefined>; turnDeps?: TurnDeps }): Promise<Response> {
   const chatId = str(b["chatId"]);
   const kind = b["kind"] === "reply" || b["kind"] === "swipe" || b["kind"] === "continue" ? b["kind"] : null;
   const chat = await chats.getChat(chatId);
@@ -65,7 +66,8 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
   const buffered: TurnEvent[] = [];
   let send: (event: TurnEvent) => void = (event) => { buffered.push(event); };
   const coalescer = coalesceTurnEvents((event) => send(event));
-  const transformRequest = corePromptRegex({ chatId, setIds: chat.regex?.sets, readRegex, runtime: sceneRuntimeFor(chats),
+  let regexSets = (): readonly string[] | undefined => chat.regex?.sets;
+  const transformRequest = corePromptRegex({ chatId, setIds: () => regexSets(), readRegex, runtime: sceneRuntimeFor(chats),
     names: { user: chat.cast.persona?.name ?? "User", char: chat.cast.character.name ?? "" }, emit: (event) => coalescer.push(event) });
   const extensionHooks = applyExtensionPrompts ? {
     appendSystemContributions: async ({ messages }: { messages: readonly import("rp-core").PromptMsg[] }, context: import("rp-core").HookCtx) => {
@@ -82,12 +84,24 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
   // Bunzai's Director, recall and the jobs a reply starts; without the library's readers the turn runs on what it has (a headless consumer).
   const runtime = sceneRuntimeFor(chats);
   const plan = cutDeps ? corePlan({ chats, state: cutDeps.state, readPreset: cutDeps.readPreset, readLorebook: cutDeps.readLorebook, ...(cutDeps.readLibrary ? { readLibrary: cutDeps.readLibrary } : {}), ...(choiceDefaults ? { choiceDefaults } : {}),
-    connect, now: Date.now, runtime, emit: (event) => coalescer.push(event), narratorTools: narratorTools(cutDeps.readLibrary), ...(cutDeps.toolBudgetMs ? { toolBudgetMs: cutDeps.toolBudgetMs } : {}) }, chat, kind) : undefined;
+    connect, now: Date.now, runtime, emit: (event) => coalescer.push(event), narratorTools: narratorTools(cutDeps.readLibrary), ...(cutDeps.toolBudgetMs ? { toolBudgetMs: cutDeps.toolBudgetMs } : {}), ...(cutDeps.turnDeps ? { turnDeps: cutDeps.turnDeps } : {}) }, chat, kind) : undefined;
+  if (plan) regexSets = plan.regexSets;
+  // A Promptbook's phases run before rp-core's turn opens, and the page watches them: the stream opens first.
+  const isBook = chat.preset?.kind === "promptbook" && !!cutDeps?.turnDeps;
+  let bookFailed = false;
   const followOns = cutDeps ? sceneFollowOns(chats, connect, cutDeps.readLibrary, cutDeps.compendium) : undefined;
   const after = (event: TurnEvent) => { if (followOns && !runtime.closed) void runOwnedTask(runtime, () => followOns({ chatId, kind }, event)).catch(() => undefined); };
   let scenePlan: CoreSceneParts | undefined;
   const hostHooks = plan ? (_fingerprint: string, scene: { parts?: CoreSceneParts } | null) => { scenePlan = scene?.parts; return plan.hooks(hooked, scene?.parts); } : Object.keys(hooked).length ? hooked : undefined;
-  const work = owner.run({ sceneId: chatId, sessionId, kind, expectedBranchVersion: b["expectedVersion"], actor: { kind: "host" }, ...(choiceDefaults ? { choiceDefaults } : {}), ...(cut || plan ? { replyExtras: async (as: "done" | "stopped") => { const made = cut?.extras(), recalled = plan?.trace(), deltas = await plan?.deltas(as, scenePlan?.closing); return { ...made, ...(made?.trace || recalled ? { trace: { ...made?.trace, ...recalled } } : {}), ...(deltas?.length ? { deltas } : {}) }; } } : {}),
+  if (isBook) { didStart = true; started(); coalescer.push({ type: "start", turnId: crypto.randomUUID(), kind, messageId: null }); }
+  const work = owner.run({ ...(isBook && plan ? { prepare: async (signal: AbortSignal) => {
+    try { return await plan.prepare(signal); }
+    catch (error) {
+      bookFailed = true;
+      coalescer.push(signal.aborted ? { type: "stopped", message: null } : { type: "failed", category: "api_error", code: "promptbook_failed", message: toErrorMessage(error, "The Promptbook could not finish. Nothing from this turn was committed."), draft: "" });
+      throw error;
+    }
+  } } : {}), sceneId: chatId, sessionId, kind, expectedBranchVersion: b["expectedVersion"], actor: { kind: "host" }, ...(choiceDefaults ? { choiceDefaults } : {}), ...(cut || plan ? { replyExtras: async (as: "done" | "stopped", text: string) => { const made = cut?.extras(), deltas = await plan?.deltas(as, scenePlan?.closing, text), recalled = plan?.trace(); return { ...made, ...(made?.trace || recalled ? { trace: { ...made?.trace, ...recalled } } : {}), ...(deltas?.length ? { deltas } : {}) }; } } : {}),
     ...(hostHooks ? { hostHooks } : {}), ...(typeof b["guidance"] === "string" ? { guidance: b["guidance"] } : {}), ...(b["inspect"] === true ? { inspect: true } : {}),
   }, async ({ event, projected }: CoreTurnFrame) => {
     let output: TurnEvent | null = null;
@@ -120,7 +134,7 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
       const write = (event: TurnEvent) => { if (!detached) controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`)); };
       for (const event of buffered.splice(0)) write(event);
       send = write;
-      void work.then(() => { coalescer.flush(); if (!detached) controller.close(); }, (error) => { if (!detached) controller.error(error); });
+      void work.then(() => { coalescer.flush(); if (!detached) controller.close(); }, (error) => { coalescer.flush(); if (!detached) { if (bookFailed) controller.close(); else controller.error(error); } });
     },
     cancel() { detached = true; coalescer.flush(); },
   }), { headers: { "content-type": "text/event-stream", "cache-control": "no-store", "x-accel-buffering": "no" } });
@@ -321,7 +335,7 @@ export async function handleTurnRoute(req: Request, url: URL, chats: ChatStore, 
     if (resolvedCore?.incomplete) return err(INCOMPLETE_CORE_SCENE_MESSAGE, 409);
     const core = resolvedCore?.link ?? null;
     if (core && (await chats.getChat(str(b["chatId"])))?.activeBranchId !== core.branchId) return err("this take is not connected to rp-core yet", 409);
-    if (records && core) return stores?.coreTurns ? coreStream(chats, stores.coreTurns, core.sessionId, b, dispatchExtensionEvent, applyExtensionPrompts, hasPromptContributors, choiceDefaultsOf(settings), regexReaderOf(studio), { readPreset, readLorebook, state, ...(studio ? { readLibrary: (kind: string, id: string) => studio.read(kind, id) } : {}), compendium, ...(toolBudgetOf(settings) ? { toolBudgetMs: toolBudgetOf(settings)! } : {}) }) : err("the Core turn owner is unavailable", 503);
+    if (records && core) return stores?.coreTurns ? coreStream(chats, stores.coreTurns, core.sessionId, b, dispatchExtensionEvent, applyExtensionPrompts, hasPromptContributors, choiceDefaultsOf(settings), regexReaderOf(studio), { readPreset, readLorebook, state, turnDeps: { runtime: sceneRuntimeFor(chats), chats, state, connect, readPreset, readLorebook, ...(studio ? { readLibrary: (kind: string, id: string) => studio.read(kind, id) } : {}), ...(studio?.readAsset ? { readAsset: (sha: string, maxBytes: number) => studio.readAsset!(sha, maxBytes) } : {}), ...sceneReaders(studio, settings), narratorTools: narratorTools(studio ? (kind: string, id: string) => studio.read(kind, id) : undefined), now: Date.now, randomSeed: () => Math.floor(Math.random() * 2 ** 31) }, ...(studio ? { readLibrary: (kind: string, id: string) => studio.read(kind, id) } : {}), compendium, ...(toolBudgetOf(settings) ? { toolBudgetMs: toolBudgetOf(settings)! } : {}) }) : err("the Core turn owner is unavailable", 503);
     return stream(chats, state, readPreset, readLorebook, b, studio, compendium, settings, dispatchExtensionEvent, applyExtensionPrompts);
   }
   if (p === "/api/chats/review") {

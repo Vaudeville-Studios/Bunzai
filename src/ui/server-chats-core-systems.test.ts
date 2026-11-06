@@ -3,6 +3,7 @@
  * connection's message format, each proven over HTTP by what reaches the model and what the scene keeps.
  */
 import { expect, setDefaultTimeout, test } from "bun:test";
+import { bookRecipe, newBookPhase } from "../core/promptbook";
 import { emptyPresetBody } from "../entities/preset/schema";
 import { readVault, saveProvider } from "../kit/providers/vault";
 import { libraryFor } from "../studio/library-content";
@@ -215,4 +216,47 @@ test("on a Core scene, a reply stopped partway keeps what it has and what its to
   const take = (await chats.getChat(chatId))!.activeBranchId;
   expect((await chats.readMessagesBefore(take, { limit: 1, liveOnly: true })).messages[0]!.swipes.at(-1)!.content).toContain("Half a");
   expect(await state()).toContain("coins");
+});
+
+test("on a Core scene, a Promptbook runs its private phase first, hands its notes to the reply, and runs its after phase on the reply", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  const book = bookRecipe("Casebook", "think");
+  book.phases.push({ ...newBookPhase("tidy", "Tidy up", "after"), reads: ["write"] });
+  await r.store.save({ schemaVersion: vera.schemaVersion, kind: "promptbook", id: "casebook", body: book } as never);
+  const set = await r.post("/api/chats/preset", { chatId, preset: { kind: "promptbook", id: "casebook", toggles: {}, samplers: {} } });
+  if (set.status !== 200) throw new Error(`${set.status}: ${await set.text()}`);
+  const was = asked.length;
+  model.reply = "PHASE ANSWER";
+  const sent = await r.post("/api/chats/send", { chatId, content: "I open the door.", greetingIndex: 0, expectedVersion: (await open()).branchVersion });
+  if (sent.status !== 200) throw new Error(`${sent.status}: ${await sent.text()}`);
+  const turn = await r.post("/api/chats/turn", { chatId, kind: "reply", expectedVersion: ((await sent.json()) as Opened).branchVersion });
+  if (turn.status !== 200) throw new Error(`${turn.status}: ${await turn.text()}`);
+  const stream = await turn.text();
+  if (!stream.includes("event: done")) throw new Error(stream.slice(-800));
+  const requests = asked.slice(was).map((request) => JSON.stringify(request.messages));
+  expect(requests.length).toBe(3);
+  expect(requests[1]).toContain("Notes from");
+  expect(requests[1]).toContain("PHASE ANSWER");
+  expect(requests[2]).toContain("Notes from");
+  expect(stream.indexOf("event: phase")).toBeGreaterThan(-1);
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  const tip = (await chats.readMessagesBefore(take, { limit: 1, liveOnly: true })).messages[0]!;
+  const trace = await chats.swipeTrace(tip.id, tip.swipes[tip.current]!.id);
+  expect((trace?.["book"] as { status: string; phases: { id: string; status: string }[] }).phases.map((run) => [run.id, run.status])).toEqual(book.phases.map((phase) => [phase.id, "ran"]));
+});
+
+test("on a Core scene, a Promptbook whose private phase fails says so and writes no reply", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  const book = bookRecipe("Casebook", "think");
+  book.phases[0] = { ...book.phases[0]!, connection: { id: "gone", model: "gone" } };
+  await r.store.save({ schemaVersion: vera.schemaVersion, kind: "promptbook", id: "casebook", body: book } as never);
+  await r.post("/api/chats/preset", { chatId, preset: { kind: "promptbook", id: "casebook", toggles: {}, samplers: {} } });
+  const sent = await r.post("/api/chats/send", { chatId, content: "I open the door.", greetingIndex: 0, expectedVersion: (await open()).branchVersion });
+  const turn = await r.post("/api/chats/turn", { chatId, kind: "reply", expectedVersion: ((await sent.json()) as Opened).branchVersion });
+  const stream = await turn.text();
+  expect(stream).toContain("event: failed");
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  expect((await chats.readMessagesBefore(take, { limit: 1, liveOnly: true })).messages[0]!.role).toBe("user");
 });

@@ -18,13 +18,14 @@ const isHistory = (message: PromptMsg): boolean => message.src.split("+").every(
 const textOf = (message: PromptMsg): string => message.blocks.filter((block) => block.k === "text").map((block) => block.text).join("");
 
 export function corePromptRegex(input: {
-  chatId: string; setIds: readonly string[] | undefined; readRegex: ((id: string) => Promise<RegexSetBody | null>) | undefined;
+  chatId: string; setIds: () => readonly string[] | undefined; readRegex: ((id: string) => Promise<RegexSetBody | null>) | undefined;
   runtime: TurnRuntime; names: { user: string; char: string }; emit(event: TurnEvent): void;
 }): HostHooks["transformRequest"] | undefined {
-  if (!input.setIds?.length || !input.readRegex) return undefined;
+  if (!input.readRegex) return undefined;
   return async (request, context) => {
+    if (!input.setIds()?.length) return { edits: [] };
     const sets: SceneSet[] = [];
-    for (const id of input.setIds!) {
+    for (const id of input.setIds()!) {
       const body = await input.readRegex!(id).catch(() => null);
       if (body) sets.push({ id, rules: body.rules, enabled: body.enabled !== false });
     }

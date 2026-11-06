@@ -2294,7 +2294,7 @@ Tests are left out. For what a project word means, see [the glossary](../referen
 - `migration-50-extension-logs.ts`: Migration 49 adds sealed package-owned extension operational logs.
 - `migration-51-checkpoint-extension-owner.ts`: Migration 51 binds pending extension state to the extension authority that opened the turn.
 - `migration-52-core-projections.ts`: Durable accepted Core operations and exact UI message identities for recovery.
-- `migration-53-core-takes.ts`: (no opening comment)
+- `migration-53-core-takes.ts`: Each take of a Core scene keeps its own rp-core session (a fork of its source take's session); core_scene_links stays the link of the take the scene is on.
 - `migrations.ts`: The database's migrations, in order.
 - `piece-change-journal.ts`: Read and append the bounded sealed journal used by the per-piece change stream.
 - `piece-parts-sql.ts`: SQLite storage for `piece_parts` and `blob_refs`.

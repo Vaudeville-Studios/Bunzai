@@ -1,10 +1,10 @@
-import type { Migration } from "./database";
-
 /**
  * Each take of a Core scene keeps its own rp-core session (a fork of its source take's session);
  * core_scene_links stays the link of the take the scene is on. A take's row is written when it is
  * forked, and its source take's row with it.
  */
+import type { Migration } from "./database";
+
 export const MIGRATION_53_CORE_TAKES: Migration = {
   id: 53,
   name: "one rp-core session per Core scene take",

@@ -98,7 +98,7 @@ jobs:
       matrix:
         runner:
           - windows-latest
-          - macos-14
+          - macos-15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -110,7 +110,7 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Typecheck
         env:
-          NODE_OPTIONS: ${{ matrix.runner == 'macos-14' && '--max-old-space-size=4096' || '' }}
+          NODE_OPTIONS: ${{ matrix.runner == 'macos-15' && '--max-old-space-size=4096' || '' }}
         run: bun run typecheck
       - name: Prepare a keychain (macOS)
         # The runner keychain is locked, so keystore tests would wait on it; same setup as the keychain job.
@@ -134,7 +134,7 @@ jobs:
       matrix:
         runner:
           - ubuntu-latest
-          - macos-14
+          - macos-15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -180,7 +180,7 @@ jobs:
           - ubuntu-latest # linux x64
           - ubuntu-24.04-arm # linux arm64
           - windows-latest # windows x64
-          - macos-14 # darwin arm64
+          - macos-15 # darwin arm64
     steps:
       - uses: actions/checkout@v4
         with:

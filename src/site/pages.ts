@@ -101,7 +101,7 @@ function download(): Page {
 <div class="app-downloads">
 <section class="os-block" data-os="windows"><div class="act">Desktop app</div><h2>Windows</h2><p>For 64-bit Windows. Download the app and open it.</p><a class="btn" data-app-download="windows" aria-disabled="true">Checking releases...</a><code data-download-name="windows"></code></section>
 <section class="os-block" data-os="linux"><div class="act">Local browser app</div><h2>Linux</h2><p>For Intel and AMD 64-bit computers. Make the file executable, then run it.</p><a class="btn" data-app-download="linux" aria-disabled="true">Checking releases...</a><code data-download-name="linux"></code><p>Older files named <code>bunzai-cli-linux-x64</code> need the <code>ui</code> command.</p></section>
-<section class="os-block" data-os="mac"><div class="act">Not available yet</div><h2>macOS</h2><p>macOS downloads are currently unavailable while the platform build is repaired.</p><span class="btn ghost" aria-disabled="true">Download unavailable</span><p>The source checkout remains available below.</p></section>
+<section class="os-block" data-os="mac"><div class="act">Local browser app</div><h2>macOS</h2><p>For Apple Silicon Macs. Experimental and not signed by Apple: after downloading, run <code>chmod +x Bunzai-macOS</code> and <code>xattr -d com.apple.quarantine Bunzai-macOS</code>, then <code>./Bunzai-macOS</code>.</p><a class="btn" data-app-download="mac" aria-disabled="true">Checking releases...</a><code data-download-name="mac"></code><p>Older files named <code>bunzai-cli-linux-x64</code> need the <code>ui</code> command.</p></section>
 </div>
 <p class="note">New app builds include the remote-access helper. You do not need a separate sidecar download. Older releases may still offer the verified helper download in Settings.</p>
 <p><a class="more" href="${REPO}/releases">Releases and SHA256SUMS on GitHub</a> &middot; <a class="more" href="docs/guide/installation.html">Illustrated installation guide</a></p>
@@ -115,7 +115,7 @@ bun run dev</code></pre>
 <p><a class="more" href="docs/guide/installation.html">Full illustrated installation guide</a></p></section>
 <section class="s tight"><details><summary>Advanced: terminal use, ARM and older releases</summary><p>The app download is enough for ordinary use. CLI commands support automation, and Linux ARM64 builds are useful on ARM devices and servers. Those workflows remain available from source; the <a href="docs/guide/installation.html">installation guide</a> explains the difference. Old release assets stay in place for existing installations and recovery links.</p></details><p>The <a href="studio/">Browser Studio</a> is a temporary browser session for trying import, editing, and export. Its data does not persist after reload, and playing scenes requires the installed application.</p></section>
 </div>`;
-  return { path: "download.html", html: frame({ title: "Download Bunzai", description: "Choose Bunzai for Windows or Linux. macOS downloads are currently unavailable. One app, with the remote helper included.", up: "", section: "download", body }) };
+  return { path: "download.html", html: frame({ title: "Download Bunzai", description: "Choose Bunzai for Windows, Linux or macOS. One app, with the remote helper included.", up: "", section: "download", body }) };
 }
 
 function news(): Page {

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:58505a5414b8535d7efb808d8590998daae236d7dbd19c9b971b533f3318102a",
-  "semanticSummaryHash": "sha256:475b707ea6e0772aa0b0faf690e20357e1a45345a0f28b2e3ffd41a02890acf2",
+  "sourceHash": "sha256:94c83da956e72ad113bc9cbbaf2fce7264ba3318fb0d8d1870af037aa748763e",
+  "semanticSummaryHash": "sha256:3d32e896f5c21748a84d45daf15f1df5b3a682e32edde759686db9ca7a6dfb97",
   "verdict": "APPROVE",
-  "reviewer": "sonnet-docs-reviewer",
-  "notes": "Re-read after 'The apps include the remote helper' edit; sidecar matches the guide page.",
-  "reviewedAt": "2026-11-04T09:12:18.768Z"
+  "reviewer": "docs-review-sonnet",
+  "notes": "Verified summary download claims (Windows, Linux, macOS, five assets, Apple Silicon, unsigned macOS, experimental non-Windows) match installation.md and release.yml build and publish steps, with no stale macOS-unavailable text left.",
+  "reviewedAt": "2026-11-06T21:46:34.624Z"
 }

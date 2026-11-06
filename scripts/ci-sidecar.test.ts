@@ -44,23 +44,23 @@ test("scale evidence builds the matching helper before compiling the app", async
   expect(helper).toBeLessThan(body.indexOf("bun run scripts/build-desktop.ts"));
 });
 
-test("the release builds helpers for its Windows and Linux targets", async () => {
+test("the release builds helpers for its Windows, Linux and macOS targets", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
-  for (const flag of ["windows-x64", "linux-x64"]) {
+  for (const flag of ["windows-x64", "linux-x64", "darwin-arm64"]) {
     expect(release).toContain(`bun sidecar/build.ts --target=${flag}`);
   }
-  expect(release).not.toContain("--target=darwin-");
+  expect(release).not.toContain("--target=darwin-x64");
 });
 
-test("the normal release publishes one Windows app, the Linux app bare and as a .deb, and their checksums", async () => {
+test("the normal release publishes one Windows app, the Linux app bare and as a .deb, the macOS app, and their checksums", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
   const publish = jobBlock(release, "publish");
   const assets = [...publish.matchAll(/dist\/([^\s\\]+)/g)].map((match) => match[1]);
-  expect(assets).toEqual([APP_ASSET_NAMES.windows, APP_ASSET_NAMES.linux, APP_ASSET_NAMES.linuxPackage, "SHA256SUMS"]);
+  expect(assets).toEqual([APP_ASSET_NAMES.windows, APP_ASSET_NAMES.linux, APP_ASSET_NAMES.linuxPackage, APP_ASSET_NAMES.mac, "SHA256SUMS"]);
   expect(jobBlock(release, "build-linux")).toContain("bun run scripts/build-deb.ts");
   expect(jobBlock(release, "build-windows")).not.toContain("scale:timed");
   expect(jobBlock(release, "build-linux")).toContain(`cp dist/bunzai-cli-linux-x64 dist/${APP_ASSET_NAMES.linux}`);
-  expect(release).not.toContain("build-macos:");
+  expect(jobBlock(release, "build-macos")).toContain(`cp dist/bunzai-cli-darwin-arm64 dist/${APP_ASSET_NAMES.mac}`);
   expect(publish).not.toContain("darwin-");
 });
 

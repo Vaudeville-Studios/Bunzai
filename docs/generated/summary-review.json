@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-04",
+  "generated": "2026-11-06",
   "count": 143,
   "pages": [
     {
@@ -206,9 +206,9 @@
       "docId": "guide/installation",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "sonnet-docs-reviewer",
-      "sourceHash": "sha256:58505a5414b8535d7efb808d8590998daae236d7dbd19c9b971b533f3318102a",
-      "semanticSummaryHash": "sha256:475b707ea6e0772aa0b0faf690e20357e1a45345a0f28b2e3ffd41a02890acf2"
+      "reviewer": "docs-review-sonnet",
+      "sourceHash": "sha256:94c83da956e72ad113bc9cbbaf2fce7264ba3318fb0d8d1870af037aa748763e",
+      "semanticSummaryHash": "sha256:3d32e896f5c21748a84d45daf15f1df5b3a682e32edde759686db9ca7a6dfb97"
     },
     {
       "docId": "guide/library",

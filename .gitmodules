@@ -1,4 +1,4 @@
 [submodule "vendor/rp-core"]
 	path = vendor/rp-core
 	url = https://github.com/Vaudeville-Studios/rp-core.git
-	branch = feature/rp-core-extension-integration
+	branch = bunzai/native-provider-exports

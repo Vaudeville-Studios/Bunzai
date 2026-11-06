@@ -109,8 +109,37 @@ jobs:
             dist/Bunzai-Linux.deb
           if-no-files-found: error
 
+  build-macos:
+    needs: verify
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          ref: ${{ inputs.tag || github.ref_name }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: sidecar/go.mod
+          cache-dependency-path: sidecar/go.sum
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - name: Build the macOS app's embedded helper
+        run: bun sidecar/build.ts --target=darwin-arm64
+      - name: Build the macOS app
+        run: bun run scripts/build-desktop.ts --no-desktop --cli-targets=bun-darwin-arm64
+      - name: Name the normal macOS download
+        run: cp dist/bunzai-cli-darwin-arm64 dist/Bunzai-macOS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/Bunzai-macOS
+          if-no-files-found: error
+
   publish:
-    needs: [build-windows, build-linux]
+    needs: [build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
@@ -127,7 +156,7 @@ jobs:
       - name: Checksums
         run: |
           cd dist
-          sha256sum Bunzai.exe Bunzai-Linux Bunzai-Linux.deb > SHA256SUMS
+          sha256sum Bunzai.exe Bunzai-Linux Bunzai-Linux.deb Bunzai-macOS > SHA256SUMS
           cat SHA256SUMS
       - name: Release notes (install guide, changelog link, machine-parseable commit block)
         run: |
@@ -161,4 +190,5 @@ jobs:
             dist/Bunzai.exe \
             dist/Bunzai-Linux \
             dist/Bunzai-Linux.deb \
+            dist/Bunzai-macOS \
             dist/SHA256SUMS

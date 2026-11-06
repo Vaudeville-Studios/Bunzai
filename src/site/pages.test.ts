@@ -51,7 +51,7 @@ test("installation presents three OS choices without guessing unpublished downlo
   const pages = sitePages([]);
   const download = pages.find((page) => page.path === "download.html")!.html;
   for (const os of ["windows", "linux", "mac"]) expect(download).toContain(`data-os="${os}"`);
-  expect(download).toContain("macOS downloads are currently unavailable");
+  expect(download).toContain("data-app-download=\"mac\"");
   expect(download).toContain("data-app-download=\"windows\"");
   expect(download).toContain("data-app-download=\"linux\"");
   expect(download).not.toContain("There are no published release assets at the moment.");

@@ -13,7 +13,7 @@ export function publishedAppDownloads(raw: unknown, tag: string | undefined): Pa
   if (!isRecord(release) || !Array.isArray(release.assets)) return {};
   const assets = release.assets.filter(isRecord);
   const result: Partial<Record<keyof typeof APP_ASSET_NAMES, AppDownload>> = {};
-  for (const os of ["windows", "linux"] as const) {
+  for (const os of ["windows", "linux", "mac"] as const) {
     const names = assets.map((asset) => typeof asset.name === "string" ? asset.name : "");
     const name = resolveAsset(names, APP_ASSET_NAMES[os]);
     const asset = assets.find((item) => item.name === name);
@@ -26,14 +26,14 @@ export function publishedAppDownloads(raw: unknown, tag: string | undefined): Pa
 /** A failed release read leaves usable GitHub/source links, never a broken direct download. */
 export function fillAppDownloads(root: Document, raw: unknown, tag?: string): void {
   const downloads = publishedAppDownloads(raw, tag);
-  for (const os of ["windows", "linux"] as const) {
+  for (const os of ["windows", "linux", "mac"] as const) {
     const link = root.querySelector<HTMLAnchorElement>(`[data-app-download="${os}"]`);
     if (!link) continue;
     const asset = downloads[os];
     if (asset) {
       link.href = asset.url;
       link.removeAttribute("aria-disabled");
-      link.textContent = `Download for ${os === "windows" ? "Windows" : "Linux"}`;
+      link.textContent = `Download for ${os === "windows" ? "Windows" : os === "linux" ? "Linux" : "macOS"}`;
     } else {
       link.removeAttribute("href");
       link.setAttribute("aria-disabled", "true");

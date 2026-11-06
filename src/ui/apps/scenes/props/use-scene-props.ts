@@ -41,7 +41,8 @@ export function useSceneProps(ctx: AppContext, chatId: string): { load: PropsLoa
           const r = await api.current.setSceneProps(chatIdRef.current, next);
           if (mounted.current) setLoad({ state: "ready", on: r.on });
         } catch (e) {
-          if (mounted.current) setLoad({ state: "failed", why: toErrorMessage(e, "this scene's props could not be saved") });
+          // A refused switch goes back and says why; the list is still good, so it stays on screen.
+          if (mounted.current) { setLoad({ state: "ready", on: cur.on }); ctx.setStatus(toErrorMessage(e, "this scene's props could not be saved")); }
         }
       });
       return { state: "ready", on: next };

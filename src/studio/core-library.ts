@@ -63,6 +63,15 @@ export function corePromptingRefusal(patch: unknown): string | null {
   return null;
 }
 
+/** Props that live on the page and never read a turn; the others run on the old engine's turn, and are refused rather than left switched on and doing nothing. */
+const CORE_PROPS = new Set(["mood-music", "dialogue-colors", "spotify"]);
+
+/** Why a props change cannot apply to a Core scene, or null when it can. */
+export function corePropsRefusal(props: unknown): string | null {
+  const on = props && typeof props === "object" ? (props as { on?: unknown }).on : undefined;
+  return Array.isArray(on) && on.some((id) => !CORE_PROPS.has(id as string)) ? "that prop is not available on this scene yet" : null;
+}
+
 /**
  * The request hook that puts the scene's user-role guides in front of the message being answered (guides.ts
  * prependUserGuides), over whatever another hook already did to it. Fail-closed in rp-core, as the old turn is.

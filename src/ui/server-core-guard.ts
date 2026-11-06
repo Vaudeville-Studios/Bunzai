@@ -23,6 +23,8 @@ const ALLOWED = new Set([
   "update-card", "revert-card", "save-member", "variant", "opening", "draft", "formula-try",
   // Outside the journal: the Trash flag on the host chat, the Cast wing's roster (no prompt reads it), and a request preview that writes nothing.
   "restore-scene", "forecast",
+  // Page-only props; the ones that need a turn are refused by name (server-chats-core-messages.ts).
+  "props",
   "participants", "participants/reconcile", "participants/apply", "participants/undo",
 ]);
 /** `finish` completes a host-created scene whose rp-core session was never written (ensureCoreScene). */

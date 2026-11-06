@@ -137,6 +137,18 @@ describe("PropsWing: listing and toggling", () => {
     unmount(flushSync);
   });
 
+  test("a refused switch goes back and says why, and the list stays", async () => {
+    setImpl = async () => { throw new ApiHttpError(501, "that prop is not available on this scene yet"); };
+    const statuses: string[] = [];
+    const flushSync = await mountHarness({ ...makeCtx(), setStatus: (text: string) => { statuses.push(text); } }, [fakeProp("a"), fakeProp("b")]);
+    await press(flushSync, byLabel("Turn on Fake a")!);
+    await settleUntil(flushSync, () => statuses.length > 0);
+    expect(statuses).toEqual(["that prop is not available on this scene yet"]);
+    expect(byLabel("Turn on Fake a")).toBeDefined();
+    expect(byLabel("Turn on Fake b")).toBeDefined();
+    unmount(flushSync);
+  });
+
   test("switching off removes only that id", async () => {
     getImpl = async () => ({ on: ["a", "b"] });
     const flushSync = await mountHarness(makeCtx(), [fakeProp("a"), fakeProp("b")]);

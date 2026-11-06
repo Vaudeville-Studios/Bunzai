@@ -215,3 +215,17 @@ test("a version cut in the journal that a crash kept off the page is repaired wh
   expect((await r.handler(apiReq(`/api/chats/open?id=${chatId}`))).status).toBe(200);
   expect((await tail()).swipes.map((swipe) => swipe.content)).toEqual(["First answer."]);
 });
+
+test("on a Core scene, page-only props switch on with the journal untouched, and a prop that needs the old engine is refused plainly", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  const before = { version: (await open()).branchVersion, journal: await journal(r, chatId) };
+  const on = await r.post("/api/chats/props", { chatId, props: { on: ["mood-music", "dialogue-colors", "spotify"] } });
+  if (on.status !== 200) throw new Error(`${on.status}: ${await on.text()}`);
+  expect((await open()).branchVersion).toBe(before.version);
+  expect(await journal(r, chatId)).toBe(before.journal);
+  const refused = await r.post("/api/chats/props", { chatId, props: { on: ["story-director"] } });
+  expect(refused.status).toBe(501);
+  expect(await refused.json()).toEqual({ error: "that prop is not available on this scene yet" });
+  expect((await r.post("/api/chats/props", { chatId, props: null })).status).toBe(200);
+});

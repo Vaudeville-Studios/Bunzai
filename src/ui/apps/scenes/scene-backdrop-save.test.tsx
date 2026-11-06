@@ -9,7 +9,7 @@ import type { JSDOM } from "jsdom";
 import type { Root } from "react-dom/client";
 import type { AppContext } from "../../app-contract";
 import type { ChatBackdrop } from "../../../stage/contracts/chat-store";
-import { installDom, type InstalledDom } from "../../_shared/test-dom";
+import { installDom, type InstalledDom, waitFor } from "../../_shared/test-dom";
 import { BackdropPicker } from "./scene-backdrop-picker";
 
 let dom: JSDOM;
@@ -116,8 +116,7 @@ describe("the backdrop picker's sliders", () => {
     const flushSync = await open();
     fail = true;
     drag(flushSync, "Overlay darkness", 0.4);
-    await settle(flushSync, 450);
-    expect(dom.window.document.body.textContent).toContain("Could not save the backdrop");
+    await waitFor(flushSync, () => dom.window.document.body.textContent?.includes("Could not save the backdrop"), "the failed save to be said");
     flushSync(() => root.unmount());
   });
 });

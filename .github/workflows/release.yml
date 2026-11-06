@@ -143,7 +143,13 @@ jobs:
           if-no-files-found: error
 
   publish:
+    # A failed macOS build does not hold back Windows and Linux: they publish, the run stays red, and
+    # the alert step below opens an issue, because it still has to be fixed.
     needs: [build-windows, build-linux, build-macos]
+    if: ${{ !cancelled() && needs.build-windows.result == 'success' && needs.build-linux.result == 'success' }}
+    permissions:
+      contents: write
+      issues: write
     runs-on: ubuntu-latest
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
@@ -160,11 +166,16 @@ jobs:
       - name: Checksums
         run: |
           cd dist
-          sha256sum Bunzai.exe Bunzai-Linux Bunzai-Linux.deb Bunzai-macOS > SHA256SUMS
+          sha256sum Bunzai.exe Bunzai-Linux Bunzai-Linux.deb $( [ -f Bunzai-macOS ] && echo Bunzai-macOS ) > SHA256SUMS
           cat SHA256SUMS
       - name: Release notes (install guide, changelog link, machine-parseable commit block)
         run: |
-          cp .github/RELEASE-NOTES-INSTALL.md notes.md
+          : > notes.md
+          if [ ! -f dist/Bunzai-macOS ]; then
+            echo "**This release has no macOS file: its build failed. Use the previous release's on a Mac.**" >> notes.md
+            echo "" >> notes.md
+          fi
+          cat .github/RELEASE-NOTES-INSTALL.md >> notes.md
           PREV="$(git tag --sort=-v:refname | grep -vx "${RELEASE_TAG}" | head -n1 || true)"
           echo "" >> notes.md
           if [ -n "$PREV" ]; then
@@ -187,12 +198,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          FILES=( dist/Bunzai.exe dist/Bunzai-Linux dist/Bunzai-Linux.deb )
+          if [ -f dist/Bunzai-macOS ]; then FILES+=( dist/Bunzai-macOS ); fi
           gh release create "${RELEASE_TAG}" \
             --repo "${GITHUB_REPOSITORY}" \
             --title "Bunzai ${RELEASE_TAG}" \
             --notes-file notes.md \
-            dist/Bunzai.exe \
-            dist/Bunzai-Linux \
-            dist/Bunzai-Linux.deb \
-            dist/Bunzai-macOS \
+            "${FILES[@]}" \
             dist/SHA256SUMS
+      - name: Alert that the macOS build failed
+        if: ${{ needs.build-macos.result != 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "${GITHUB_REPOSITORY}" \
+            --title "macOS build failed for ${RELEASE_TAG}" \
+            --body "${RELEASE_TAG} published without a macOS file. This must be fixed. Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

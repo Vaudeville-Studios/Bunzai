@@ -69,5 +69,6 @@ jobs:
     uses: ./.github/workflows/release.yml
     permissions:
       contents: write
+      issues: write
     with:
       tag: ${{ needs.cut.outputs.tag }}

@@ -55,13 +55,23 @@ test("the release builds helpers for its Windows, Linux and macOS targets", asyn
 test("the normal release publishes one Windows app, the Linux app bare and as a .deb, the macOS app, and their checksums", async () => {
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
   const publish = jobBlock(release, "publish");
-  const assets = [...publish.matchAll(/dist\/([^\s\\]+)/g)].map((match) => match[1]);
+  const assets = [...new Set([...publish.matchAll(/dist\/([^\s\\]+)/g)].map((match) => match[1]))];
   expect(assets).toEqual([APP_ASSET_NAMES.windows, APP_ASSET_NAMES.linux, APP_ASSET_NAMES.linuxPackage, APP_ASSET_NAMES.mac, "SHA256SUMS"]);
   expect(jobBlock(release, "build-linux")).toContain("bun run scripts/build-deb.ts");
   expect(jobBlock(release, "build-windows")).not.toContain("scale:timed");
   expect(jobBlock(release, "build-linux")).toContain(`cp dist/bunzai-cli-linux-x64 dist/${APP_ASSET_NAMES.linux}`);
   expect(jobBlock(release, "build-macos")).toContain(`cp dist/bunzai-cli-darwin-arm64 dist/${APP_ASSET_NAMES.mac}`);
   expect(publish).not.toContain("darwin-");
+});
+
+test("a failed macOS build publishes Windows and Linux anyway, says so in the notes, and opens an issue", async () => {
+  const release = (await Bun.file(releaseUrl).text()).replace(/\n$/, "");
+  const publish = jobBlock(release.replace(/\r\n/g, "\n"), "publish");
+  expect(publish).toContain("needs.build-windows.result == 'success' && needs.build-linux.result == 'success'");
+  expect(publish).not.toContain("needs.build-macos.result == 'success'");
+  expect(publish).toContain("This release has no macOS file");
+  expect(publish).toContain("if: ${{ needs.build-macos.result != 'success' }}");
+  expect(publish).toContain("gh issue create");
 });
 
 test("every job that builds a helper has the Go toolchain to build it with", async () => {

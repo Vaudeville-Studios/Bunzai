@@ -40,6 +40,23 @@ export async function switchCoreTake(chats: ChatStore, records: CoreSceneRecords
   if (!await chats.setActiveBranch(input.sceneId, input.takeId)) throw new StudioConflictError("that take is gone");
 }
 
+/** Removes one version or puts it back: rp-core's journal, and the reconcile writes the scene from it (core-scene-projection.ts). */
+export async function cutCoreVersion(chats: ChatStore, records: CoreSceneRecords, home: string, input: Parameters<CoreTurnOwner["cutVersion"]>[0]): Promise<void> {
+  const linked = await records.sceneFor(input.sceneId), chat = await chats.getChat(input.sceneId);
+  if (!linked || chat?.activeBranchId !== linked.branchId) throw new StudioConflictError("The scene or its active take changed; reload it and try again.");
+  const engine = await Engine.openWithRecordStore({ home, recordStore: records, lane: "manual" });
+  try {
+    const session = await engine.session(linked.sessionId);
+    const version = await checkCoreProjection(chats, records, input.sceneId, session);
+    if (input.expectedVersion !== undefined && version !== input.expectedVersion) throw new StudioConflictError("The scene changed; reload it and try again.");
+    const coreMessageId = (await records.coreMessagesFor(linked.sessionId, linked.branchId, input.messageId)).find((known) => known.swipeId === input.swipeId)?.coreMessageId;
+    if (!coreMessageId) throw new StudioValidationError("that version is on another take; switch to it first");
+    try { await session.cutVersion({ messageId: coreMessageId, cut: input.cut, expectedVersion: await session.version() }); }
+    catch (error) { if (error instanceof Refusal) throw new StudioValidationError(error.message); throw error; }
+    await reconcileCoreProjection(chats, records, input.sceneId, linked.sessionId, session);
+  } finally { await engine.close(); }
+}
+
 export async function cutCoreScene(chats: ChatStore, records: CoreSceneRecords, home: string, input: Parameters<CoreTurnOwner["cut"]>[0]): Promise<void> {
   const linked = await records.sceneFor(input.sceneId), chat = await chats.getChat(input.sceneId);
   if (!linked || chat?.activeBranchId !== linked.branchId) throw new StudioConflictError("The scene or its active take changed; reload it and try again.");

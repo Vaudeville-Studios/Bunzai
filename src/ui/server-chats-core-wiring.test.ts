@@ -129,3 +129,89 @@ test("on a Core scene, Minimal and Extra high reasoning ride rp-core's narrator 
     } finally { await engine.close(); }
   }
 });
+
+/** A scene whose only reply has two versions, "First answer." and "Second answer." (the one it is on). */
+async function twoVersions(r: Rig) {
+  const { chatId, open } = await coreScene(r);
+  reply = "First answer.";
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  reply = "Second answer.";
+  const swiped = await r.post("/api/chats/turn", { chatId, kind: "swipe", expectedVersion: (await open()).branchVersion });
+  if (swiped.status !== 200) throw new Error(`${swiped.status}: ${await swiped.text()}`);
+  await swiped.text();
+  const live = libraryFor(r.store.studioPath())!.chats;
+  const tail = async () => {
+    const chat = (await live.getChat(chatId))!;
+    return (await live.readMessages(chat.activeBranchId, { fromSeq: 1, limit: 200 })).messages.filter((message) => !message.cut && message.role === "assistant").at(-1)!;
+  };
+  return { chatId, open, tail };
+}
+
+test("on a Core scene, removing a version takes it out of the scene and the next request, and restoring puts it back", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open, tail } = await twoVersions(r);
+  const reply2 = await tail();
+  const second = reply2.swipes.find((swipe) => swipe.content === "Second answer.")!;
+  const cut = await r.post("/api/chats/cut-version", { chatId, messageId: reply2.id, swipeId: second.id, expectedVersion: (await open()).branchVersion });
+  if (cut.status !== 200) throw new Error(`${cut.status}: ${await cut.text()}`);
+  expect((await tail()).swipes.map((swipe) => swipe.content)).toEqual(["First answer."]);
+  reply = "Third.";
+  const sent = JSON.stringify((await sendAndAnswer(r, chatId, (await open()).branchVersion, "And then?")).messages);
+  expect(sent).toContain("First answer.");
+  expect(sent).not.toContain("Second answer.");
+  const back = await r.post("/api/chats/restore-version", { id: `${reply2.id}:${second.id}` });
+  if (back.status !== 200) throw new Error(`${back.status}: ${await back.text()}`);
+  expect((await r.handler(apiReq(`/api/chats/open?id=${chatId}`))).status).toBe(200);
+  const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
+  const restored = (await chats.readMessages(take, { fromSeq: 1, limit: 200 })).messages.find((message) => message.id === reply2.id)!;
+  expect(restored.swipes.map((swipe) => swipe.content)).toEqual(["First answer.", "Second answer."]);
+});
+
+test("on a Core scene, the only version left and a version with messages after it are refused and change nothing", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open, tail } = await twoVersions(r);
+  const newest = await tail();
+  const [first, second] = newest.swipes;
+  expect((await r.post("/api/chats/cut-version", { chatId, messageId: newest.id, swipeId: first!.id, expectedVersion: (await open()).branchVersion })).status).toBe(200);
+  const before = await journal(r, chatId);
+  const last = await r.post("/api/chats/cut-version", { chatId, messageId: newest.id, swipeId: second!.id, expectedVersion: (await open()).branchVersion });
+  expect(last.status).toBeGreaterThanOrEqual(400);
+  expect(await journal(r, chatId)).toBe(before);
+  reply = "Later.";
+  await sendAndAnswer(r, chatId, (await open()).branchVersion, "And then?");
+  const atJournal = await journal(r, chatId);
+  const earlier = await r.post("/api/chats/cut-version", { chatId, messageId: newest.id, swipeId: second!.id, expectedVersion: (await open()).branchVersion });
+  expect(earlier.status).toBeGreaterThanOrEqual(400);
+  expect(await journal(r, chatId)).toBe(atJournal);
+});
+
+test("on a Core scene, a removed version stays removed on a take forked after it", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open, tail } = await twoVersions(r);
+  const newest = await tail();
+  const second = newest.swipes.find((swipe) => swipe.content === "Second answer.")!;
+  expect((await r.post("/api/chats/cut-version", { chatId, messageId: newest.id, swipeId: second.id, expectedVersion: (await open()).branchVersion })).status).toBe(200);
+  const forked = await r.post("/api/chats/fork", { chatId, messageId: newest.id, name: "Other", expectedVersion: (await open()).branchVersion });
+  if (forked.status !== 200) throw new Error(`${forked.status}: ${await forked.text()}`);
+  expect((await tail()).swipes.map((swipe) => swipe.content)).toEqual(["First answer."]);
+  reply = "Onward.";
+  expect(JSON.stringify((await sendAndAnswer(r, chatId, (await open()).branchVersion, "And then?")).messages)).toContain("First answer.");
+});
+
+test("a version cut in the journal that a crash kept off the page is repaired when the scene opens", async () => {
+  const r = await rig({ core: true });
+  const { chatId, tail } = await twoVersions(r);
+  const newest = await tail();
+  const second = newest.swipes.find((swipe) => swipe.content === "Second answer.")!;
+  const records = libraryFor(r.store.studioPath())!.core!;
+  const { sessionId, branchId } = (await records.sceneFor(chatId))!;
+  const coreId = (await records.coreMessagesFor(sessionId, branchId, newest.id)).find((version) => version.swipeId === second.id)!.coreMessageId;
+  const { Engine } = await import("rp-core");
+  const engine = await Engine.openWithRecordStore({ home: r.store.studioPath(), recordStore: records, lane: "manual" });
+  try {
+    const session = await engine.session(sessionId);
+    await session.cutVersion({ messageId: coreId, cut: true, expectedVersion: await session.version() });
+  } finally { await engine.close(); }
+  expect((await r.handler(apiReq(`/api/chats/open?id=${chatId}`))).status).toBe(200);
+  expect((await tail()).swipes.map((swipe) => swipe.content)).toEqual(["First answer."]);
+});

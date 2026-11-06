@@ -5,7 +5,7 @@ import type { CoreSceneRecords } from "../stage/store/sqlite/core-record-store";
 import type { ExtensionCommitContext } from "../stage/contracts/extension-store";
 import type { CoreStateLifecycle, CoreStateTurnBinding } from "../stage/contracts/core-extension-state";
 import { checkCoreProjection, openCoreScene, previewCoreScene, syncCoreCast } from "./core-scene";
-import { cutCoreScene, deleteCoreTake, forkCoreTake, resolveCoreHeld, restoreCoreCut, switchCoreTake, syncCoreSceneCast } from "./core-scene-ops";
+import { cutCoreScene, cutCoreVersion, deleteCoreTake, forkCoreTake, resolveCoreHeld, restoreCoreCut, switchCoreTake, syncCoreSceneCast } from "./core-scene-ops";
 import { reconcileCoreProjection } from "./core-scene-projection";
 import type { ProviderRole } from "../stage/contracts/provider";
 import { StudioConflictError, StudioValidationError } from "./errors";
@@ -51,6 +51,8 @@ export interface CoreTurnOwner extends CoreStateLifecycle {
    * message is cut on its own.
    */
   cut(input: { sceneId: string; messageId: string; scope: "one" | "from"; expectedVersion: number }): Promise<void>;
+  /** Removes one version of a message or puts it back. A version with messages after it stays: rp-core keeps versions as a tree. */
+  cutVersion(input: { sceneId: string; messageId: string; swipeId: string; cut: boolean; expectedVersion?: number }): Promise<void>;
   /** Puts a cut back: in place on the session that kept it, or, when the take moved on, on a new take that continues that session. */
   restoreCut(input: { sceneId: string; cutId: string; expectedVersion: number }): Promise<void>;
   /** After the scene's cast changed (persona, card, variant): rp-core's session plays the same cast. */
@@ -237,6 +239,7 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
     forkTake: (input) => owned(input.sceneId, () => forkCoreTake(chats, records, home, input)),
     switchTake: (input) => owned(input.sceneId, () => switchCoreTake(chats, records, home, input)),
     cut: (input) => owned(input.sceneId, () => cutCoreScene(chats, records, home, input)),
+    cutVersion: (input) => owned(input.sceneId, () => cutCoreVersion(chats, records, home, input)),
     restoreCut: (input) => owned(input.sceneId, () => restoreCoreCut(chats, records, home, input)),
     syncCast: (sceneId) => owned(sceneId, () => syncCoreSceneCast(chats, records, home, sceneId)),
     deleteTake: (input) => owned(input.sceneId, () => deleteCoreTake(chats, records, home, input)),

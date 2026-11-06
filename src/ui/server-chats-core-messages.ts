@@ -8,7 +8,7 @@ import { openScene, takeName } from "../studio/scenes";
 import { corePromptingRefusal } from "../studio/core-library";
 import { err, json } from "./server-security";
 
-export const CORE_MESSAGE_ROUTES = new Set(["/api/chats/edit", "/api/chats/hide", "/api/chats/select-swipe", "/api/chats/fork", "/api/chats/take", "/api/chats/delete-take", "/api/chats/cut", "/api/chats/restore-cut"]);
+export const CORE_MESSAGE_ROUTES = new Set(["/api/chats/edit", "/api/chats/hide", "/api/chats/select-swipe", "/api/chats/fork", "/api/chats/take", "/api/chats/delete-take", "/api/chats/cut", "/api/chats/restore-cut", "/api/chats/cut-version", "/api/chats/restore-version"]);
 
 /** Scene writes that change the cast: the old engine's route writes the scene, then rp-core's session follows (CoreTurnOwner.syncCast). */
 export const CORE_CAST_ROUTES = new Set(["/api/chats/persona", "/api/chats/update-card", "/api/chats/revert-card", "/api/chats/save-member", "/api/chats/variant"]);
@@ -20,8 +20,10 @@ export async function handleCoreMessageWrite(p: string, b: Record<string, unknow
     if (refusal) return err(refusal, 501);
   }
   if (!records || !CORE_MESSAGE_ROUTES.has(p)) return null;
-  const messageId = str(b["messageId"]);
-  const sceneId = p === "/api/chats/edit" ? await records.sceneForMessage(messageId)
+  // A removed version comes back from the Trash too, which names it `messageId:swipeId` (SceneGrave).
+  const [graveMessage = "", graveSwipe = ""] = p === "/api/chats/restore-version" ? str(b["id"]).split(":") : [];
+  const messageId = str(b["messageId"]) || graveMessage;
+  const sceneId = p === "/api/chats/edit" || p === "/api/chats/restore-version" ? await records.sceneForMessage(messageId)
     : p === "/api/chats/take" || p === "/api/chats/delete-take" ? str(b["chatId"]) || await records.sceneForBranch(str(b["branchId"])) : str(b["chatId"]);
   if (!sceneId || !await records.sceneFor(sceneId)) return null;
   if (!owner) return err("the Core turn owner is unavailable", 503);
@@ -31,6 +33,7 @@ export async function handleCoreMessageWrite(p: string, b: Record<string, unknow
   };
   if (p === "/api/chats/take") { await owner.switchTake({ sceneId, takeId: str(b["branchId"]) }); return reopen(); }
   if (p === "/api/chats/delete-take") return await owner.deleteTake({ sceneId, takeId: str(b["branchId"]) }) ? reopen() : err("that scene is gone", 404);
+  if (p === "/api/chats/restore-version") { await owner.cutVersion({ sceneId, messageId, swipeId: graveSwipe, cut: false }); return reopen(); }
   const expectedVersion = b["expectedVersion"];
   if (typeof expectedVersion !== "number") return err("expected an expectedVersion");
   if (p === "/api/chats/edit") {
@@ -42,6 +45,10 @@ export async function handleCoreMessageWrite(p: string, b: Record<string, unknow
     const scope = b["scope"] === "from" ? "from" : b["scope"] === "one" ? "one" : null;
     if (!scope) return err('scope must be "one" or "from"');
     await owner.cut({ sceneId, messageId, scope, expectedVersion });
+    return reopen();
+  }
+  if (p === "/api/chats/cut-version") {
+    await owner.cutVersion({ sceneId, messageId, swipeId: str(b["swipeId"]), cut: true, expectedVersion });
     return reopen();
   }
   if (p === "/api/chats/restore-cut") {

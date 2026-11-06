@@ -9,7 +9,7 @@ const ALLOWED = new Set([
   // The turn and its gates; scene metadata. Backdrop is presentation state on the host chat, outside the journal.
   "start", "send", "turn", "stop", "review", "connection", "search", "rename", "delete", "favorite", "folder", "core-settings", "backdrop",
   // A person's own message changes, journal first (server-chats-core-messages.ts, studio/core-scene-ops.ts).
-  "edit", "hide", "select-swipe", "discard", "add-anyway", "cut", "restore-cut",
+  "edit", "hide", "select-swipe", "discard", "add-anyway", "cut", "restore-cut", "cut-version", "restore-version",
   // Takes: one rp-core session each.
   "fork", "take", "delete-take", "rename-take", "restore-take",
   // Read for each Core turn and handed to rp-core (studio/core-library.ts).

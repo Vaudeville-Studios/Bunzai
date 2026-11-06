@@ -91,6 +91,18 @@ export async function reconcileCoreProjection(chats: ChatStore, records: CoreSce
     if (!siblings.length || siblings.some((sibling, siblingIndex) => sibling.swipe.index !== siblingIndex || sibling.swipe.count !== siblings.length || sibling.role !== core.role)) {
       throw new StudioConflictError("RP-Core returned an inconsistent sibling history");
     }
+    if (message.swipes.length !== siblings.length) {
+      // A version's cut or restore is in the journal; the scene follows it here, on the normal path and after a crash between the two writes.
+      for (const { coreMessageId, swipeId } of await records.coreMessagesFor(sessionId, branch.id, message.id)) {
+        const live = siblings.some((sibling) => sibling.id === coreMessageId), shown = message.swipes.some((swipe) => swipe.id === swipeId);
+        if (live === shown) continue;
+        const moved = live ? await chats.restoreSwipe(message.id, swipeId, { expectedVersion: currentVersion }) : await chats.cutSwipe(message.id, swipeId, { expectedVersion: currentVersion });
+        if (!moved) throw new StudioConflictError("the removed version could not be repaired");
+        currentVersion++;
+        ui = await allMessages(chats, branch.id, currentVersion);
+        message = ui[index]!;
+      }
+    }
     if (message.swipes.length > siblings.length) {
       throw new StudioConflictError("the RP-Core journal and scene differ; export this scene before continuing");
     }

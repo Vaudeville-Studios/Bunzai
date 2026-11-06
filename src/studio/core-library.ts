@@ -192,6 +192,8 @@ function corePreset(id: string, body: PresetBody, chat: Chat, defaults: Record<s
     role: guide.role === "user" || guide.role === "assistant" ? guide.role : "system", at: { depth: guide.depth, order: 100 } }));
   // A user hint or system note is an ordinary last turn, not a continuation (request.ts withPrefill). rp-core's depth 0 is after the current message.
   if (adds.prefill && adds.prefillRole) blocks.push({ id: "scenePrefill", name: "Start Reply With", role: adds.prefillRole, enabled: true, content: adds.prefill, at: { depth: 0, order: 100 } });
+  // A chat-start guide runs once per scene for its macros and its text is dropped (assemble.ts); first, so the blocks after it read what it set.
+  blocks.unshift(...adds.guides.chatStart.map((guide): PresetBlock => ({ id: `sceneStart${guide.id}`, name: "Chat-start guide", role: "system", enabled: true, content: guide.content, at: "top", once: `chatStart_${guide.id}` })));
   const preset = stPresetToPreset(wire, body.name).value;
   return { ...preset, blocks, ...(adds.prefill && !adds.prefillRole ? { prefill: adds.prefill } : {}), ...(adds.keepThinking ? { keepThinking: true } : {}) };
 }

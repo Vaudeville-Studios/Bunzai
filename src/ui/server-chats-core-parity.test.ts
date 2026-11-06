@@ -120,6 +120,15 @@ test("Send the last message as the user sends the same request on both engines",
   expect(await same(prompting({ prefill: "Begin.", prefillRole: "system", lastAsUser: true }))).toContain("Begin.");
 });
 
+test("a chat-start guide runs once for its macros, sends no text, and later requests read what it set, on both engines", async () => {
+  const sent = await same(async (r, chatId) => {
+    const ids = [await guide(r, { content: "HIDDEN{{incvar::fired}}", mode: "chat_start" }), await guide(r, { content: "Fired: {{getvar::fired}}.", role: "system" })];
+    await prompting({ guides: ids })(r, chatId);
+  });
+  expect(sent).toContain("Fired: 1.");
+  expect(sent).not.toContain("HIDDEN");
+});
+
 test("an in-chat preset block and an after-scenario note send the same request on both engines", async () => {
   const sent = await same(async (r, chatId) => {
     await r.store.save({ schemaVersion: CANONICAL_SCHEMA_VERSION, kind: "preset", id: "deep", body: { name: "D",

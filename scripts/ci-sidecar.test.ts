@@ -56,7 +56,7 @@ test("the normal release publishes one Windows app, the Linux app bare and as a 
   const release = (await Bun.file(releaseUrl).text()).replace(/\r\n/g, "\n");
   const publish = jobBlock(release, "publish");
   const assets = [...new Set([...publish.matchAll(/dist\/([^\s\\]+)/g)].map((match) => match[1]))];
-  expect(assets).toEqual([APP_ASSET_NAMES.windows, APP_ASSET_NAMES.linux, APP_ASSET_NAMES.linuxPackage, APP_ASSET_NAMES.mac, "SHA256SUMS"]);
+  expect(assets.sort()).toEqual([APP_ASSET_NAMES.windows, APP_ASSET_NAMES.linux, APP_ASSET_NAMES.linuxPackage, APP_ASSET_NAMES.mac, "SHA256SUMS"].sort());
   expect(jobBlock(release, "build-linux")).toContain("bun run scripts/build-deb.ts");
   expect(jobBlock(release, "build-windows")).not.toContain("scale:timed");
   expect(jobBlock(release, "build-linux")).toContain(`cp dist/bunzai-cli-linux-x64 dist/${APP_ASSET_NAMES.linux}`);

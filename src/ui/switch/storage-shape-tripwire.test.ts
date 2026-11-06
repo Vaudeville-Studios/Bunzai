@@ -489,7 +489,7 @@ async function shapeFiles(): Promise<string[]> {
 // reviewed and approved this exact additive shape.
 // 2026-11-01: COMPATIBLE Core birth fingerprint v2 adds origin coverage and adopts valid v1 rows; shared uncut timestamp ownership emits identical message SQL. No migration or stored-column change.
 // 2026-11-03: Optional attachments are fenced at v0.1.54. Table Read adds private state without SQL/envelope changes; old known-key writes preserve it, encrypted snapshots restore it, and plain folder exports omit it.
-const PINNED_SHAPE_HASH = "b3c93535f673fb500dddefc9858cd357b4476852fd3c581e08d9f7e42c543355"; // 2026-11-05 COMPATIBLE: migration 53 adds core_take_links (one rp-core session per Core take, a new table only), and a Core projection may write the new version's swipe_traces row with it; nothing existing moved, no SCHEMA_BUMPS entry.
+const PINNED_SHAPE_HASH = "a3ac8b163a8d5520345f29f5b4665d885aa1aeed4cc8a334994834b914916272"; // 2026-11-05 COMPATIBLE: migration 53 adds core_take_links (one rp-core session per Core take, a new table only), and a Core projection may write the new version's swipe_traces row with it; nothing existing moved, no SCHEMA_BUMPS entry. 2026-11-06 COMPATIBLE: migration 53 opens with its purpose block instead of its import; its SQL and id are unchanged.
 test("storage-shape tripwire: an on-disk shape change must be a deliberate, version-aware act", async () => {
   const h = createHash("sha256");
   const files = await shapeFiles();

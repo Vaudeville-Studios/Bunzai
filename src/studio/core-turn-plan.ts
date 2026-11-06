@@ -27,11 +27,11 @@ import type { Connected, TurnDeps, TurnEvent } from "./scene-turn";
 import { assembleRequest, prepareRequest } from "./scene-turn-build";
 import { loadTurn, type LoadedTurn, type ReadPreset, type TurnKind } from "./scene-turn-load";
 import type { TurnRuntime } from "./scene-turn-runtime";
-import { toolTurn, type NarratorToolsFor } from "./scene-turn-tools";
+import { toolTurn, withToolCalls, type NarratorToolsFor, type ToolTurn } from "./scene-turn-tools";
 import { turnWrites } from "./scene-turn-writes";
 import { skillDelta } from "../core/skill";
 import type { Delta } from "../core/scene-state/types";
-import type { NarratorTool, ToolDeadline } from "../stage/provider/tool-loop";
+import type { NarratorTool, ToolCallRecord, ToolDeadline } from "../stage/provider/tool-loop";
 import { tickDeltas } from "./scene-turn-ticks";
 
 export interface CoreSceneRead {
@@ -120,19 +120,27 @@ function toolLane(budgetMs: number) {
 }
 
 /** One of Bunzai's narrator tools as rp-core calls it. rp-core keeps its own tools read-only; this one's only write is held for the reply (scene-turn-writes.ts). */
-function asCoreTool(tool: NarratorTool<never>, lane: ReturnType<typeof toolLane>): Tool {
+function asCoreTool(tool: NarratorTool<never>, lane: ReturnType<typeof toolLane>, calls: ToolCallRecord[]): Tool {
   const { name, description, parameters } = tool.definition.function;
   return {
     name, description: description ?? "", schema: parameters as Tool["schema"], effect: "read", repeats: true,
     ...(tool.resultCap ? { maxOutput: () => tool.resultCap! } : {}),
     async run(args, ctx) {
+      const began = performance.now();
+      const noted = (text: string, error?: string): void => {
+        // rp-core's round is not told to a tool; the calls are in the order they were made.
+        calls.push({ round: 1, id: `${name}-${calls.length}`, name, args: JSON.stringify(args).slice(0, 2_000), ok: error === undefined, ...(error ? { error } : {}), ms: Math.round(performance.now() - began), text });
+      };
       const read = tool.parse(args);
-      if ("error" in read) return { text: read.error, summary: "refused", error: true };
+      if ("error" in read) { noted(read.error, read.error); return { text: read.error, summary: "refused", error: true }; }
       try {
         const out = await lane.run(tool, (deadline) => tool.run(read.args, ctx.signal, deadline));
+        noted(out.text);
         return { text: out.text, summary: name };
       } catch (error) {
-        return { text: toErrorMessage(error, "the tool failed"), summary: "failed", error: true };
+        const text = toErrorMessage(error, "the tool failed");
+        noted(text, text);
+        return { text, summary: "failed", error: true };
       }
     },
   };
@@ -144,6 +152,7 @@ export function corePlan(deps: CorePlanDeps, sceneChat: Chat, kind: TurnKind) {
   let book: CoreBook | null = null;
   const runs: PhaseRun[] = [];
   let afterFailed = false;
+  let toolsTurn: ToolTurn | null = null;
   const turnId = crypto.randomUUID();
   let loaded: LoadedTurn | null = null;
   let director: DirectorRun | null = null;
@@ -184,7 +193,8 @@ export function corePlan(deps: CorePlanDeps, sceneChat: Chat, kind: TurnKind) {
           const turn = await toolTurn(deps.narratorTools, kind, chat, read, Math.floor(Math.random() * 2 ** 31), writes, await deps.toolBudgetMs?.());
           if (parts) turn.macros.context = parts.macros;
           const lane = toolLane(turn.budgetMs);
-          return turn.tools.map((tool) => asCoreTool(tool, lane));
+          toolsTurn = turn;
+          return turn.tools.map((tool) => asCoreTool(tool, lane, turn.calls));
         },
         async beforeAssemble(context: HookCtx) {
           const placed = (await base?.beforeAssemble?.(context)) ?? [];
@@ -229,7 +239,10 @@ export function corePlan(deps: CorePlanDeps, sceneChat: Chat, kind: TurnKind) {
       }
     },
     /** What the plan adds to the stored version's trace. */
-    trace: (): JsonObject | undefined => (recalled || runs.length ? { ...(recalled ? { recall: recalled } : {}), ...(runs.length ? { book: bookTrace(runs, afterFailed ? "stopped" : "complete") } : {}) } : undefined),
+    trace: (): JsonObject | undefined => {
+      const tools = toolsTurn?.calls.length ? withToolCalls(toolsTurn, {}, { texts: [] }).trace : undefined;
+      return recalled || runs.length || tools ? { ...tools, ...(recalled ? { recall: recalled } : {}), ...(runs.length ? { book: bookTrace(runs, afterFailed ? "stopped" : "complete") } : {}) } : undefined;
+    },
     /** What the reply itself wrote, stamped on the version it lands as: its tools' writes, its skills' closes and, unless it was stopped, the Props' tick. */
     async deltas(as: "done" | "stopped", closing: readonly string[] = [], text = "", signal?: AbortSignal): Promise<readonly Delta[]> {
       // The version being replaced holds the person's edits to its story, those made while this reply was written too; read now, since the commit moves the scene off it.

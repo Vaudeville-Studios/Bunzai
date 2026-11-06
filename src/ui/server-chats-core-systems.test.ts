@@ -260,3 +260,14 @@ test("on a Core scene, a Promptbook whose private phase fails says so and writes
   const chats = libraryFor(r.store.studioPath())!.chats, take = (await chats.getChat(chatId))!.activeBranchId;
   expect((await chats.readMessagesBefore(take, { limit: 1, liveOnly: true })).messages[0]!.role).toBe("user");
 });
+
+test("on a Core scene, a reply's tool calls are kept in its version's trace", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open, chats } = await goldScene(r);
+  model.toolCallNext = { name: "update_trackers", args: JSON.stringify({ updates: [{ tracker: "Gold", set: { coins: 7 } }] }) };
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  const take = (await chats.getChat(chatId))!.activeBranchId;
+  const tip = (await chats.readMessagesBefore(take, { limit: 1, liveOnly: true })).messages[0]!;
+  const trace = await chats.swipeTrace(tip.id, tip.swipes[tip.current]!.id);
+  expect((trace?.["tools"] as { calls: { name: string; ok: boolean }[] }).calls.map((call) => [call.name, call.ok])).toEqual([["update_trackers", true]]);
+});

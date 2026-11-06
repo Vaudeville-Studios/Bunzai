@@ -3,7 +3,7 @@ name: release
 # Builds and publishes a GitHub Release for one tag. Two doors, same room:
 #  - push a tag like v0.1.0 by hand, or
 #  - get called by auto-release.yml (workflow_call with the tag it just cut).
-# Builds the Windows desktop app and the Linux x64 browser app (bare and as a .deb), checksums
+# Builds the Windows desktop app, the Linux x64 browser app (bare and as a .deb) and the Apple Silicon macOS app, checksums
 # them, and publishes with the install guide (.github/RELEASE-NOTES-INSTALL.md) at the top of the
 # notes. The tag must match package.json's version.
 

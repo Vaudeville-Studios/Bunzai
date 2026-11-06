@@ -20,11 +20,14 @@ export function useSceneProps(ctx: AppContext, chatId: string): { load: PropsLoa
   const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; }, []);
   const queue = useRef(Promise.resolve());
+  // What the scene holds: each write is built from this, so a refused switch never rides along with the next one.
+  const held = useRef<string[]>([]);
 
   const load2 = useCallback(async () => {
     setLoad({ state: "loading" });
     try {
       const r = await api.current.getSceneProps(chatIdRef.current);
+      held.current = r.on;
       if (mounted.current) setLoad({ state: "ready", on: r.on });
     } catch (e) {
       if (mounted.current) setLoad({ state: "failed", why: toErrorMessage(e, "this scene's props could not be read") });
@@ -35,17 +38,18 @@ export function useSceneProps(ctx: AppContext, chatId: string): { load: PropsLoa
   const toggle = (id: string, on: boolean): void => {
     setLoad((cur) => {
       if (cur.state !== "ready") return cur;
-      const next = on ? [...cur.on, id] : cur.on.filter((x) => x !== id);
+      const flip = (list: readonly string[]) => on ? [...list.filter((x) => x !== id), id] : list.filter((x) => x !== id);
       queue.current = queue.current.then(async () => {
         try {
-          const r = await api.current.setSceneProps(chatIdRef.current, next);
+          const r = await api.current.setSceneProps(chatIdRef.current, flip(held.current));
+          held.current = r.on;
           if (mounted.current) setLoad({ state: "ready", on: r.on });
         } catch (e) {
           // A refused switch goes back and says why; the list is still good, so it stays on screen.
-          if (mounted.current) { setLoad({ state: "ready", on: cur.on }); ctx.setStatus(toErrorMessage(e, "this scene's props could not be saved")); }
+          if (mounted.current) { setLoad({ state: "ready", on: held.current }); ctx.setStatus(toErrorMessage(e, "this scene's props could not be saved")); }
         }
       });
-      return { state: "ready", on: next };
+      return { state: "ready", on: flip(cur.on) };
     });
   };
 

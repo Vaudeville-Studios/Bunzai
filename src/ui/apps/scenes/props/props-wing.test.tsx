@@ -149,6 +149,18 @@ describe("PropsWing: listing and toggling", () => {
     unmount(flushSync);
   });
 
+  test("a refused switch does not ride along with a quick second switch", async () => {
+    setImpl = async (_chatId, on) => { if (on.includes("a")) throw new ApiHttpError(501, "that prop is not available on this scene yet"); return { on }; };
+    const statuses: string[] = [];
+    const flushSync = await mountHarness({ ...makeCtx(), setStatus: (text: string) => { statuses.push(text); } }, [fakeProp("a"), fakeProp("b")]);
+    const [a, b] = [byLabel("Turn on Fake a")!, byLabel("Turn on Fake b")!];
+    flushSync(() => { a.click(); b.click(); });
+    await settleUntil(flushSync, () => byLabel("Turn off Fake b") !== undefined && byLabel("Turn on Fake a") !== undefined && setCalls.length === 2);
+    expect(setCalls.at(-1)).toEqual({ chatId: "chat1", on: ["b"] });
+    expect(statuses).toEqual(["that prop is not available on this scene yet"]);
+    unmount(flushSync);
+  });
+
   test("switching off removes only that id", async () => {
     getImpl = async () => ({ on: ["a", "b"] });
     const flushSync = await mountHarness(makeCtx(), [fakeProp("a"), fakeProp("b")]);

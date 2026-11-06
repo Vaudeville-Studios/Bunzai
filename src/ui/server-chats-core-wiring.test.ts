@@ -229,3 +229,26 @@ test("on a Core scene, page-only props switch on with the journal untouched, and
   expect(await refused.json()).toEqual({ error: "that prop is not available on this scene yet" });
   expect((await r.post("/api/chats/props", { chatId, props: null })).status).toBe(200);
 });
+
+test("a Core scene that already has a refused prop on can still change its other props, and can turn that one off", async () => {
+  const r = await rig({ core: true });
+  const { chatId } = await coreScene(r);
+  await libraryFor(r.store.studioPath())!.chats.setProps(chatId, { on: ["spotify", "story-director"] });
+  const added = await r.post("/api/chats/props", { chatId, props: { on: ["spotify", "story-director", "mood-music"] } });
+  if (added.status !== 200) throw new Error(`${added.status}: ${await added.text()}`);
+  expect((await r.post("/api/chats/props", { chatId, props: { on: ["spotify", "mood-music"] } })).status).toBe(200);
+  expect((await r.post("/api/chats/props", { chatId, props: { on: ["spotify", "mood-music", "story-director"] } })).status).toBe(501);
+});
+
+test("on a Core scene, continuing a reply with old thinking on keeps the thinking out of the reply being continued", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  reply = "<think>the barometer fell</think>It might.";
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  expect((await r.post("/api/chats/prompting", { chatId, prompting: { keepThinking: true } })).status).toBe(200);
+  reply = " And more.";
+  const cont = await r.post("/api/chats/turn", { chatId, kind: "continue", expectedVersion: (await open()).branchVersion });
+  if (cont.status !== 200) throw new Error(`${cont.status}: ${await cont.text()}`);
+  await cont.text();
+  expect(JSON.stringify(asked.at(-1)!.messages)).not.toContain("<think>");
+});

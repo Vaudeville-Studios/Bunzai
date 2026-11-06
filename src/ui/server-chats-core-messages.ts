@@ -20,7 +20,7 @@ export async function handleCoreMessageWrite(p: string, b: Record<string, unknow
     if (refusal) return err(refusal, 501);
   }
   if (records && p === "/api/chats/props" && await records.sceneFor(str(b["chatId"]))) {
-    const refusal = corePropsRefusal(b["props"]);
+    const refusal = corePropsRefusal(b["props"], (await chats.getChat(str(b["chatId"])))?.props?.on);
     if (refusal) return err(refusal, 501);
   }
   if (!records || !CORE_MESSAGE_ROUTES.has(p)) return null;

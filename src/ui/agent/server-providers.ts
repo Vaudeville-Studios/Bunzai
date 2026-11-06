@@ -16,6 +16,7 @@
  * and every provider configured there shows up here. One place to paste a key.
  */
 import { json } from "../server-security";
+import { parseMessageFormat, type MessageFormat } from "../../kit/providers/message-format";
 import { toErrorMessage } from "../_shared/error-message";
 import { spokes } from "../../kit/providers/registry";
 import { asksBaseURL } from "../../kit/providers/spoke";
@@ -51,6 +52,7 @@ export interface SafeProvider {
   readonly hasKey: boolean;
   /** Shown so somebody running a proxy can tell two entries apart. Not a secret; it is their URL. */
   readonly baseURL?: string;
+  readonly messageFormat?: MessageFormat;
   readonly active: boolean;
 }
 
@@ -67,6 +69,7 @@ function safe(config: ProviderConfig, activeId: string | null): SafeProvider {
      * form that could not see the saved posture would send the default on every edit.
      */
     ...(config.options ? { options: { ...config.options } } : {}),
+    ...(config.messageFormat ? { messageFormat: config.messageFormat } : {}),
     active: config.id !== undefined && config.id === activeId,
   };
 }
@@ -129,6 +132,8 @@ export async function handleProviderSave(body: unknown): Promise<Response> {
 
   if (apiKey !== undefined && typeof apiKey !== "string") return json({ error: "apiKey must be a string" }, 400);
   if (baseURL !== undefined && typeof baseURL !== "string") return json({ error: "baseURL must be a string" }, 400);
+  const messageFormat = body["messageFormat"] === undefined ? undefined : parseMessageFormat(body["messageFormat"]);
+  if (messageFormat === null) return json({ error: "that is not a message format" }, 400);
   if (name !== undefined && typeof name !== "string") return json({ error: "name must be a string" }, 400);
   if (id !== undefined && typeof id !== "string") return json({ error: "id must be a string" }, 400);
 
@@ -196,6 +201,7 @@ export async function handleProviderSave(body: unknown): Promise<Response> {
     ...(typeof baseURL === "string" && baseURL ? { baseURL } : {}),
     ...(typeof name === "string" && name ? { name } : {}),
     ...(Object.keys(options).length > 0 ? { options } : {}),
+    ...(messageFormat ? { messageFormat } : stored?.messageFormat ? { messageFormat: stored.messageFormat } : {}),
   };
 
   try {

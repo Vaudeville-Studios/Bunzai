@@ -1,3 +1,4 @@
+import type { MessageFormat } from "../../../../kit/providers/message-format";
 /**
  * The model settings screen's decisions, with no React in them.
  *
@@ -18,6 +19,7 @@ export interface SafeProvider {
   readonly active: boolean;
   /** The spoke's own choices as saved. Not secret - they are settings, and the form has to show them. */
   readonly options?: Readonly<Record<string, string>>;
+  readonly messageFormat?: MessageFormat;
 }
 
 /** One provider-specific choice a spoke declares, e.g. the Claude subscription's write posture. */
@@ -61,6 +63,8 @@ export interface ProviderDraft {
   readonly baseURL: string;
   /** The spoke's own choices, seeded from their defaults so nothing is ever unset. */
   readonly options: Readonly<Record<string, string>>;
+  /** Shown and sent only for an OpenAI-compatible connection. */
+  readonly messageFormat: MessageFormat;
 }
 
 /** Every option a spoke declares, at its default. The safe posture, chosen by the spoke. */
@@ -74,6 +78,7 @@ export const emptyDraft = (kind: ProviderKind | undefined): ProviderDraft => ({
   apiKey: "",
   baseURL: "",
   options: defaultOptions(kind),
+  messageFormat: { preset: "standard" },
 });
 
 /**
@@ -98,6 +103,7 @@ export const draftFrom = (provider: SafeProvider, kind?: ProviderKind): Provider
    * a provider with writes enabled would quietly take that permission away again.
    */
   options: { ...defaultOptions(kind), ...(provider.options ?? {}) },
+  messageFormat: provider.messageFormat ?? { preset: "standard" },
 });
 
 /**
@@ -141,6 +147,7 @@ export function saveBody(draft: ProviderDraft): Record<string, unknown> {
    * an agent that could read everything and stage nothing.
    */
   if (Object.keys(draft.options).length > 0) body["options"] = { ...draft.options };
+  if (draft.baseURL.trim()) body["messageFormat"] = draft.messageFormat;
   return body;
 }
 

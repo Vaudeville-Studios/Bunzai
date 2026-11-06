@@ -18,6 +18,7 @@ import { protect } from "../../../_shared/protected-control";
 import { SettingsRow, type SettingsSection } from "../section-contract";
 import { Button } from "../../../components/button";
 import { testProvider, testWords } from "./models-api";
+import { MessageFormatField } from "./models-message-format";
 import styles from "./models.module.css";
 import {
   draftFrom,
@@ -347,6 +348,10 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
                 }}
               />
             </label>
+          )}
+
+          {kindOf(draft.kind)?.needsBaseUrl && (
+            <MessageFormatField value={draft.messageFormat} onChange={(messageFormat) => { setDraft({ ...draft, messageFormat }); }} />
           )}
 
           {!kindOf(draft.kind)?.keyless && (

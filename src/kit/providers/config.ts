@@ -5,6 +5,7 @@
  * picked (the egress gate enforces that). No server, no phone-home.
  */
 import { homedir } from "node:os";
+import type { MessageFormat } from "./message-format";
 import { join } from "node:path";
 
 export interface ProviderConfig {
@@ -24,6 +25,8 @@ export interface ProviderConfig {
   headers?: Record<string, string>;
   /** Provider-specific choices from the spoke's declared options (e.g. NanoGPT's plan). */
   options?: Record<string, string>;
+  /** How an OpenAI-compatible connection lays out its messages (Settings > Models). Absent: the standard layout. */
+  messageFormat?: MessageFormat;
   /** Optional human label (e.g. "Personal", "Work"). */
   name?: string;
 }

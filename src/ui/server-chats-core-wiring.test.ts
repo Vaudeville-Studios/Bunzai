@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { useTestBunzaiHome } from "../../scripts/test-home";
 import { emptyDirectorState } from "../core/director/state";
 import { emptyPresetBody } from "../entities/preset/schema";
-import { saveProvider } from "../kit/providers/vault";
+import { readVault, saveProvider } from "../kit/providers/vault";
 import { ARGS } from "../studio/fake-director-rig";
 import { libraryFor } from "../studio/library-content";
 import { chatRouteRig as rig, cleanupChatRouteRigs, vera } from "./fake-server-chats-rig";
@@ -455,4 +455,18 @@ test("on a Core scene, a preset block's attachments reach the model: a text file
     expect(sent).toContain("image_url");
     expect(sent).toContain(`data:image/png;base64,${png}`);
   } finally { attachmentsSeen = null; }
+});
+
+test("a connection's message format decides whether the scene's system text stays a system message", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  const noted = await r.post("/api/chats/prompting", { chatId, prompting: { note: { text: "SCENE NOTE", position: "in_chat", depth: 1, frequency: 1 } } });
+  if (noted.status !== 200) throw new Error(`${noted.status}: ${await noted.text()}`);
+  const roleOfNote = (messages: { role: string; content: string }[]) => messages.find((message) => message.content.includes("SCENE NOTE"))?.role;
+  expect(roleOfNote((await sendAndAnswer(r, chatId, (await open()).branchVersion)).messages)).toBe("system");
+  const saved = (await readVault(UNLOCK)).providers.find((provider) => provider.id === localId)!;
+  await saveProvider({ ...saved, messageFormat: { preset: "strict" } }, UNLOCK);
+  try {
+    expect(roleOfNote((await sendAndAnswer(r, chatId, (await open()).branchVersion, "Again?")).messages)).toBe("user");
+  } finally { await saveProvider(saved, UNLOCK); }
 });

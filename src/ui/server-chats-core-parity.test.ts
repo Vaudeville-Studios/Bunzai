@@ -7,6 +7,7 @@
  * so the old scene's request is compared after rp-core's own caps rules for the same connection.
  */
 import { afterAll, afterEach, beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { messageFormatCaps } from "../kit/providers/message-format";
 import { useTestBunzaiHome } from "../../scripts/test-home";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
@@ -68,7 +69,7 @@ async function same(setup: (r: Rig, chatId: string) => Promise<void>) {
   const core = await requestFor(true, setup);
   // The caps Bunzai resolves for this Kit connection (core-scene.ts connectionFor).
   const origin = `http://127.0.0.1:${server.port}`;
-  const caps = resolveCaps({ dialect: "openai-chat", origin, local: true, model: "qwen3", server: "local" });
+  const caps = resolveCaps({ dialect: "openai-chat", origin, local: true, model: "qwen3", server: "local", user: messageFormatCaps({ preset: "standard" }) });
   const old = applyCapsRules((await requestFor(false, setup)).map((m) => ({ role: m.role as "system" | "user" | "assistant", blocks: [{ k: "text" as const, text: m.content }], src: "bunzai" })), caps)
     .map((m) => ({ role: m.role, content: m.blocks.flatMap((b) => (b.k === "text" ? [b.text] : [])).join("") }));
   expect(core).toEqual(old);

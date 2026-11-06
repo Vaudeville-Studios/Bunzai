@@ -115,6 +115,21 @@
   letter-spacing: normal;
 }
 
+.hint {
+  font-weight: 400;
+  color: var(--text-dim);
+  font-size: var(--text-meta);
+}
+
+/* The custom rules sit under the picker as open rows, one frame for the group. */
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--seam);
+}
+
 .formActs {
   display: flex;
   gap: 0.4rem;

@@ -1,5 +1,6 @@
 /** New scenes may use rp-core as the turn engine while Bunzai keeps its scene projection. */
 import { Engine, createAnthropicProvider, createOpenAIChatProvider, resolveCaps } from "rp-core";
+import { messageFormatCaps } from "../kit/providers/message-format";
 import type { Character, Connection, Persona, PromptMsg } from "rp-core";
 import type { AsyncSessionHandle, RecordStore } from "rp-core";
 import { bodyOf, isRecord, recOr, str } from "../core/guards";
@@ -88,7 +89,8 @@ async function connectionFor(pick: ChatConnection): Promise<{ connection: Connec
   const local = /^(localhost|127\.0\.0\.1|\[::1\])(?::|$)/.test(new URL(baseUrl).host);
   const origin = new URL(baseUrl).origin;
   const dialect = spoke.scene.native === "anthropic" ? "anthropic" as const : "openai-chat" as const;
-  const caps = resolveCaps({ dialect, origin, local, model: pick.model, server: saved.kind, ...(saved.context ? { user: { contextLength: saved.context } } : {}) });
+  const format = dialect === "openai-chat" && saved.kind !== "ollama" && saved.baseURL ? messageFormatCaps(saved.messageFormat ?? { preset: "standard" }) : {};
+  const caps = resolveCaps({ dialect, origin, local, model: pick.model, server: saved.kind, user: { ...format, ...(saved.context ? { contextLength: saved.context } : {}) } });
   if (saved.kind === "ollama" && spoke.scene.resolve) {
     const config = { ...saved, model: pick.model };
     const { provider: native, traits } = await spoke.scene.resolve(config, guardedFetch(host), saved.name ?? "Ollama");

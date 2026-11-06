@@ -35,14 +35,14 @@ const track = (handle: StageDatabase) => {
 const one: Migration = { id: 1, name: "t", sql: "CREATE TABLE t (x INTEGER);" };
 const two: Migration = { id: 2, name: "u", sql: "CREATE TABLE u (y INTEGER); CREATE TABLE u2 (z INTEGER);" };
 const tables = (d: StageDatabase) =>
-  (d.db.query("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as { name: string }[]).map((r) => r.name);
+  (d.db.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all() as { name: string }[]).map((r) => r.name);
 
 describe("migrations", () => {
   test("apply in order, once, including every statement in a migration", () => {
     const path = tempFile();
     track(openStageDatabase(path, [one])).close();
     const d = track(openStageDatabase(path, [one, two]));
-    expect(tables(d)).toEqual(["_migrations", "sqlite_stat1", "t", "u", "u2"]);
+    expect(tables(d)).toEqual(["_migrations", "t", "u", "u2"]);
     expect(d.db.query("SELECT id, name FROM _migrations ORDER BY id").all()).toEqual([
       { id: 1, name: "t" },
       { id: 2, name: "u" },
@@ -54,7 +54,7 @@ describe("migrations", () => {
     const broken: Migration = { id: 2, name: "u", sql: "CREATE TABLE u (y INTEGER); THIS IS NOT SQL;" };
     expect(() => openStageDatabase(path, [one, broken])).toThrow();
     const d = track(openStageDatabase(path, [one]));
-    expect(tables(d)).toEqual(["_migrations", "sqlite_stat1", "t"]);
+    expect(tables(d)).toEqual(["_migrations", "t"]);
     expect(d.db.query("SELECT count(*) AS n FROM _migrations").get()).toEqual({ n: 1 });
   });
 

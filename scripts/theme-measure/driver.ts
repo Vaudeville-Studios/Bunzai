@@ -68,14 +68,20 @@ export async function connectOwnedChrome<T extends { close(): Promise<void> }>(
   child.stderr?.on("data", onData);
   child.on("error", onError);
   child.once("exit", onExit);
+  /** Signals the process group a detached Chrome leads, helpers included; false for a child that leads none. */
+  const killGroup = (signal: NodeJS.Signals): boolean => {
+    if (process.platform === "win32" || !child.pid) return false;
+    try { process.kill(-child.pid, signal); return true; } catch { return false; }
+  };
   const close = (): Promise<void> => closing ??= (async () => {
     if (connection) await settled(Promise.resolve().then(() => connection!.close()), 1000);
-    if (alive(child)) child.kill();
+    if (alive(child) && !killGroup("SIGTERM")) child.kill();
     if (alive(child) && !await settled(closed, 1000)) {
-      child.kill("SIGKILL");
+      if (!killGroup("SIGKILL")) child.kill("SIGKILL");
       await settled(closed, 1000);
     }
     if (alive(child)) throw new Error(`Owned Chrome process ${child.pid} did not stop`);
+    killGroup("SIGKILL");
     const drained = !child.pid || await settled(closed, 1000);
     if (!drained) child.stderr?.destroy();
     child.stderr?.off("data", onData);
@@ -129,7 +135,7 @@ export async function launch(work: string, port = 9491 + Number(process.env.THEM
   };
   // Chrome is started by hand and attached over CDP: Playwright's own pipe launch hangs under Bun on Windows.
   let chrome: ChildProcess;
-  try { chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--window-size=1400,900", "about:blank"], { stdio: ["ignore", "ignore", "pipe"] }); }
+  try { chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--window-size=1400,900", "about:blank"], { stdio: ["ignore", "ignore", "pipe"], detached: process.platform !== "win32" }); }
   catch (error) { await removeProfile(); throw error; }
   let session: { connection: CdpBrowser; close(): Promise<void> } | undefined;
   let closing: Promise<void> | undefined;

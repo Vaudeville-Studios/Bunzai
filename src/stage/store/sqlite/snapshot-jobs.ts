@@ -191,6 +191,9 @@ export function restoreSnapshot(livePath: string, snapshot: string, work: string
   if (schema === "older") {
     copyFileSync(snapshot, work);
     openStageDatabase(work, MIGRATIONS).close();
+    // Out of WAL, so the read-only open below needs no -shm beside it (macOS's own SQLite refuses without one).
+    const migrated = new Database(work, { strict: true });
+    try { migrated.run("PRAGMA journal_mode = DELETE"); } finally { migrated.close(true); }
     source = work;
   }
   const check = new Database(source, { strict: true, readonly: true });

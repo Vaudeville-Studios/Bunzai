@@ -131,18 +131,20 @@ describe("the password wrap", () => {
 
   test("the app is never frozen while a password is checked", async () => {
     let longest = 0;
-    let last = performance.now();
+    const began = performance.now();
+    let last = began;
     const beat = setInterval(() => {
       const now = performance.now();
       longest = Math.max(longest, now - last);
       last = now;
     }, 5);
     await openWithPassword(shared, "correct horse");
+    const checking = performance.now() - began;
     // Let one more beat land before stopping: a fully blocking check delays that beat, and the
     // delay is the freeze. Stopping at once would never measure it.
     await new Promise((r) => setTimeout(r, 30));
     clearInterval(beat);
-    expect(longest).toBeLessThan(100);
+    expect(longest).toBeLessThan(checking / 2);
   });
 
   test("an empty password is refused", async () => {

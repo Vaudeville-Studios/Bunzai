@@ -89,8 +89,11 @@ async function connectionFor(pick: ChatConnection): Promise<{ connection: Connec
   const local = /^(localhost|127\.0\.0\.1|\[::1\])(?::|$)/.test(new URL(baseUrl).host);
   const origin = new URL(baseUrl).origin;
   const dialect = spoke.scene.native === "anthropic" ? "anthropic" as const : "openai-chat" as const;
-  const format = dialect === "openai-chat" && saved.kind !== "ollama" && saved.baseURL ? messageFormatCaps(saved.messageFormat ?? { preset: "standard" }) : {};
-  const caps = resolveCaps({ dialect, origin, local, model: pick.model, server: saved.kind, user: { ...format, ...(saved.context ? { contextLength: saved.context } : {}) } });
+  // A chosen format is final. With none chosen the standard layout replaces rp-core's pessimistic default, and a model known to refuse it (a Mistral or Gemma template) stays as the catalog says.
+  const shaped = dialect === "openai-chat" && saved.kind !== "ollama" && saved.baseURL;
+  const caps = resolveCaps({ dialect, origin, local, model: pick.model, server: saved.kind,
+    ...(shaped && !saved.messageFormat ? { fallback: messageFormatCaps({ preset: "standard" }) } : {}),
+    user: { ...(shaped && saved.messageFormat ? messageFormatCaps(saved.messageFormat) : {}), ...(saved.context ? { contextLength: saved.context } : {}) } });
   if (saved.kind === "ollama" && spoke.scene.resolve) {
     const config = { ...saved, model: pick.model };
     const { provider: native, traits } = await spoke.scene.resolve(config, guardedFetch(host), saved.name ?? "Ollama");

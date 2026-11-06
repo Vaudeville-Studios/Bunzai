@@ -5,7 +5,7 @@
  * Director's plan and the Compendium's recall, rp-core's beforeAssemble hook) and writes what the reply leaves behind once it has
  * landed on the page. rp-core's own Director and Compendium stay off on these scenes.
  */
-import type { HookCtx, HostHooks, PromptMsg, Tool } from "rp-core";
+import type { HookCtx, HostHooks, Placement, PromptMsg, Tool } from "rp-core";
 import type { AssemblyResult } from "../core/assembly/types";
 import { NARRATOR_AUTHORITY, renderDirective } from "../core/assembly/director";
 import { DEFAULT_LORE_SHARE } from "../core/assembly/types";
@@ -70,7 +70,7 @@ export async function coreSceneParts(deps: CoreSceneRead, sceneId: string, kind:
   if (!loaded) return null;
   const started = Date.now();
   const prep = await prepareRequest({ chats: deps.chats, state: deps.state }, chat, loaded, undefined, "", started);
-  const { result } = await assembleRequest({ state: deps.state, randomSeed: () => 0 }, { chat, loaded, prep, started, kind: kind === "draft" ? "reply" : kind, original: "", guidance: "", unbudgeted: true });
+  const { result } = await assembleRequest({ state: deps.state, randomSeed: () => Math.floor(Math.random() * 2 ** 31) }, { chat, loaded, prep, started, kind: kind === "draft" ? "reply" : kind, original: "", guidance: "", unbudgeted: true });
   const recaps = result.messages.flatMap((message, index) => (result.trace[index]?.source.kind === "summary" ? [message.content] : []));
   return {
     features: result.parts.features, recaps, ...(prep.summary ? { summary: prep.summary.text } : {}), lore: result.parts.lore,
@@ -88,17 +88,37 @@ export interface CorePlanDeps extends CoreSceneRead {
   toolBudgetMs?(): Promise<number | undefined>;
 }
 
+/** The calls of one reply, one at a time as the old tool loop ran them: rp-core runs a round's read tools together, and these share held writes and a time budget. */
+function toolLane(budgetMs: number) {
+  let queue: Promise<unknown> = Promise.resolve();
+  let spent = 0;
+  return {
+    run<T>(tool: NarratorTool<never>, work: (deadline: ToolDeadline | undefined) => Promise<T>): Promise<T> {
+      const turn = queue.then(async () => {
+        const left = budgetMs - spent;
+        // A state write is cheap and keeps the narration and the state in step, so a spent budget does not refuse it (tool-loop.ts).
+        if (left <= 0 && !tool.stateScoped) throw new Error("The tool time budget for this reply is spent.");
+        const began = performance.now();
+        try { return await work(tool.stateScoped ? undefined : { at: began + left, now: () => performance.now() }); }
+        finally { spent += performance.now() - began; }
+      });
+      queue = turn.catch(() => undefined);
+      return turn;
+    },
+  };
+}
+
 /** One of Bunzai's narrator tools as rp-core calls it. rp-core keeps its own tools read-only; this one's only write is held for the reply (scene-turn-writes.ts). */
-function asCoreTool(tool: NarratorTool<never>, deadline: () => ToolDeadline): Tool {
+function asCoreTool(tool: NarratorTool<never>, lane: ReturnType<typeof toolLane>): Tool {
   const { name, description, parameters } = tool.definition.function;
   return {
-    name, description: description ?? "", schema: parameters as Tool["schema"], effect: "read",
+    name, description: description ?? "", schema: parameters as Tool["schema"], effect: "read", repeats: true,
     ...(tool.resultCap ? { maxOutput: () => tool.resultCap! } : {}),
     async run(args, ctx) {
       const read = tool.parse(args);
       if ("error" in read) return { text: read.error, summary: "refused", error: true };
       try {
-        const out = await tool.run(read.args, ctx.signal, deadline());
+        const out = await lane.run(tool, (deadline) => tool.run(read.args, ctx.signal, deadline));
         return { text: out.text, summary: name };
       } catch (error) {
         return { text: toErrorMessage(error, "the tool failed"), summary: "failed", error: true };
@@ -127,11 +147,28 @@ export function corePlan(deps: CorePlanDeps, chat: Chat, kind: TurnKind) {
           if (!read) return [];
           const turn = await toolTurn(deps.narratorTools, kind, chat, read, Math.floor(Math.random() * 2 ** 31), writes, await deps.toolBudgetMs?.());
           if (parts) turn.macros.context = parts.macros;
-          const until = performance.now() + turn.budgetMs;
-          return turn.tools.map((tool) => asCoreTool(tool, () => ({ at: until, now: () => performance.now() })));
+          const lane = toolLane(turn.budgetMs);
+          return turn.tools.map((tool) => asCoreTool(tool, lane));
         },
         async beforeAssemble(context: HookCtx) {
           const placed = (await base?.beforeAssemble?.(context)) ?? [];
+          try { return await plan(context, placed); }
+          catch (error) {
+            if (context.signal.aborted) throw error;
+            // The reply goes on without the plan, as it does when the Director alone fails, and the person is told.
+            const reason = toErrorMessage(error, "the story systems could not run for this reply");
+            if (directorOn(chat)) deps.emit({ type: "director", status: "failed", reason });
+            else deps.emit({ type: "world", status: "failed", reason });
+            return placed;
+          }
+        },
+        // The standing contract goes with a directive and only then, so it waits for the plan.
+        async appendSystemContributions(input: { messages: readonly PromptMsg[] }, context: HookCtx) {
+          const others = (await base?.appendSystemContributions?.(input, context)) ?? [];
+          return director?.directive && renderDirective(director.directive) ? [NARRATOR_AUTHORITY, ...others] : others;
+        },
+      };
+      async function plan(context: HookCtx, placed: Placement[]): Promise<Placement[]> {
           loaded = await loadTurn(deps.chats, chat.id, kind, deps.readPreset, deps.readLorebook, deps.readLibrary, deps.choiceDefaults);
           const connected = loaded && chat.connection ? await deps.connect(chat.connection, context.signal) : null;
           if (!loaded || !connected) return placed;
@@ -145,8 +182,6 @@ export function corePlan(deps: CorePlanDeps, chat: Chat, kind: TurnKind) {
           director = await planning;
           if (recall) deps.emit({ type: "world", status: recall.status === "empty" ? "recalled" : recall.status, count: recall.entries.length, ...(recall.reason ? { reason: recall.reason } : {}) });
           if (director) deps.emit({ type: "director", status: director.status, ...(director.reason ? { reason: director.reason } : {}), entries: director.entries });
-          // The version being replaced holds the person's edits to its story; read now, since the commit moves the scene off it.
-          if (director && loaded.target) replaced = await deps.chats.getDirector(chat.id, loaded.target.id).catch(() => null);
           const room = connected.context ? Math.max(0, loreShareTokens(connected.context, DEFAULT_LORE_SHARE) - (lore?.tokens ?? 0)) : RECALL_NO_WINDOW_TOKENS;
           const picks = recall && loaded.current.content !== "" ? placeRecall(recall.entries, room, new Set(lore?.keys ?? [])) : null;
           if (recall) recalled = recallSection(recall, picks ?? undefined);
@@ -155,31 +190,28 @@ export function corePlan(deps: CorePlanDeps, chat: Chat, kind: TurnKind) {
           return [...placed,
             ...(picks?.text ? [{ depth: 1, role: "system" as const, text: picks.text, src: "compendium" as const }] : []),
             ...(directive ? [{ depth: 1, role: "system" as const, text: directive, src: "director" as const }] : [])];
-        },
-        // The standing contract goes with a directive and only then, so it waits for the plan.
-        async appendSystemContributions(input: { messages: readonly PromptMsg[] }, context: HookCtx) {
-          const others = (await base?.appendSystemContributions?.(input, context)) ?? [];
-          return director?.directive && renderDirective(director.directive) ? [NARRATOR_AUTHORITY, ...others] : others;
-        },
-      };
+      }
     },
     /** What the plan adds to the stored version's trace. */
     trace: (): JsonObject | undefined => (recalled ? { recall: recalled } : undefined),
     /** What the reply itself wrote, stamped on the version it lands as: its tools' writes, its skills' closes and, unless it was stopped, the Props' tick. */
     async deltas(as: "done" | "stopped", closing: readonly string[] = []): Promise<readonly Delta[]> {
+      // The version being replaced holds the person's edits to its story, those made while this reply was written too; read now, since the commit moves the scene off it.
+      if (director && loaded?.target) replaced = await deps.chats.getDirector(chat.id, loaded.target.id).catch(() => null);
       if (kind === "continue") return [];
       if (as === "done" && loaded) await writes.tick(tickDeltas(loaded, deps.now()));
-      return [...writes.pending(), ...closing.map((id) => skillDelta(id, false, deps.now()))];
+      // A skill's close first: a tool that reopens it in this reply wins, as on an old scene.
+      return [...closing.map((id) => skillDelta(id, false, deps.now())), ...writes.pending()];
     },
     /** The reply is on the page: what it leaves behind is written to the version it landed as. Never fails the reply. */
-    async landed(message: Message): Promise<void> {
+    async landed(message: Message, as: "done" | "stopped"): Promise<void> {
       const swipe = message.swipes[message.current];
       if (!loaded || !swipe) return;
       const branchId = (await deps.chats.getChat(chat.id))?.activeBranchId;
       if (!branchId) return;
       const stored = director ? await commitDirector(deps, chat.id, director, message, replaced) : true;
       if (stored !== true) deps.emit({ type: "director", status: "failed", reason: stored });
-      if (kind === "continue") return;
+      if (kind === "continue" || as === "stopped") return;
       if (!deps.runtime.closed && stored === true && director?.status === "planned") {
         startTrackerRound(deps.runtime, { chats: deps.chats, connect: deps.connect, now: deps.now }, {
           chatId: chat.id, branchId, messageId: message.id, swipeId: swipe.id, turn: director.turn,

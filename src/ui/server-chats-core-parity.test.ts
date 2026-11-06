@@ -69,7 +69,7 @@ async function same(setup: (r: Rig, chatId: string) => Promise<void>) {
   const core = await requestFor(true, setup);
   // The caps Bunzai resolves for this Kit connection (core-scene.ts connectionFor).
   const origin = `http://127.0.0.1:${server.port}`;
-  const caps = resolveCaps({ dialect: "openai-chat", origin, local: true, model: "qwen3", server: "local", user: messageFormatCaps({ preset: "standard" }) });
+  const caps = resolveCaps({ dialect: "openai-chat", origin, local: true, model: "qwen3", server: "local", fallback: messageFormatCaps({ preset: "standard" }) });
   const old = applyCapsRules((await requestFor(false, setup)).map((m) => ({ role: m.role as "system" | "user" | "assistant", blocks: [{ k: "text" as const, text: m.content }], src: "bunzai" })), caps)
     .map((m) => ({ role: m.role, content: m.blocks.flatMap((b) => (b.k === "text" ? [b.text] : [])).join("") }));
   expect(core).toEqual(old);

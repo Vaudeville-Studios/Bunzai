@@ -34,7 +34,7 @@ test("real Core links use Core preview and append paths while legacy scenes rema
   if (!stores?.core || stores.chats !== opened.chats) throw new Error("SQLite Core scene records are unavailable");
   await opened.content.create(testCharacter("fixture-character", [], { name: "Fixture", firstMessage: "Welcome." }));
   const preset = sheetAsPreset({ name: "Preset with file", content: "" });
-  preset.prompts[0]!.attachments = [{ name: "notes.txt", ref: "data:text/plain;base64,eA==" }];
+  preset.prompts[0]!.attachments = [{ name: "notes.png", ref: "data:image/png;base64,eA==" }];
   await opened.content.create({ schemaVersion: "1", kind: "preset", id: "preset-with-file", body: preset });
   const cast = { character: { id: "fixture-character", version: 1 } };
   const snapshot = { character: { kind: "character", id: "fixture-character", body: { identity: { name: "Fixture" }, persona: {}, prompts: {}, greetings: {}, examples: {}, media: {}, attribution: {}, discovery: {} } } };
@@ -54,9 +54,9 @@ test("real Core links use Core preview and append paths while legacy scenes rema
   opened.content.readLight = async (...args) => { lightReads++; return originalLight(...args); };
   try {
     await expect(turns.preview(coreChat.id, "preview", new AbortController().signal, async () => { previewApplied++; return []; }, async () => false))
-      .rejects.toThrow("cannot send prompt-block attachments");
+      .rejects.toThrow("no longer matches its recorded media type");
     await expect(turns.run({ sceneId: coreChat.id, sessionId: beforeBlockedTurn.sessionId, kind: "reply", expectedBranchVersion: beforeBlockedTurn.branchVersion, actor: { kind: "host" } }, () => { turnEvents++; }))
-      .rejects.toThrow("cannot send prompt-block attachments");
+      .rejects.toThrow("no longer matches its recorded media type");
   } finally {
     opened.content.read = originalRead;
     opened.content.readLight = originalLight;

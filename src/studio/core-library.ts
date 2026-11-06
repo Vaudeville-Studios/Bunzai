@@ -79,7 +79,7 @@ export function withUserGuides(hooks: HostHooks | undefined, guides: readonly st
     ...hooks,
     // The guides go on first and the other hook (the scene's prompt regex) reads the guided message, the old turn's order.
     async transformRequest(request, context) {
-      const index = request.messages.findLastIndex((message) => message.role === "user");
+      const index = request.messages.findLastIndex((message) => message.role === "user" && !message.blocks.some((block) => block.k === "media"));
       if (index < 0) return (await hooks?.transformRequest?.(request, context)) ?? { edits: [] };
       const text = request.messages[index]!.blocks.filter((block) => block.k === "text").map((block) => block.text).join("");
       const at = answering ? text.lastIndexOf(answering) : -1;

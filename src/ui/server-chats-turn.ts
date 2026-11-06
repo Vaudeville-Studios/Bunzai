@@ -106,7 +106,7 @@ async function coreStream(chats: ChatStore, owner: CoreTurnOwner, sessionId: str
       const payload = projectCoreSceneTurnEvent(chatId, kind, event.type);
       await dispatchExtensionEvent?.(payload).catch(() => undefined);
     }
-    if (event.type === "done" && projected) await plan?.landed(projected).catch(() => undefined);
+    if ((event.type === "done" || event.type === "stopped") && projected) await plan?.landed(projected, event.type).catch(() => undefined);
     if (output) { coalescer.push(output); after(output); }
     if (event.type === "start" && !didStart) { didStart = true; started(); }
   });

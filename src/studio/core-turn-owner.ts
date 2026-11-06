@@ -316,7 +316,7 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
             for await (const event of run.events) {
               if (event.type === "gate" && event.kind === "review") activeTurn.gateId = event.gateId;
               if (event.type === "done") { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("done")); }
-              else if (event.type === "stopped" && event.message) { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit); }
+              else if (event.type === "stopped" && event.message) { await run.result; projected = await project(input.sceneId, input.sessionId, opened!.session, input.kind, event.message, targetCoreMessageId, input.expectedBranchVersion, input.commit, await input.replyExtras?.("stopped")); }
               await onEvent({ event, projected });
             }
             return { turnId: run.turnId, outcome: await run.result, projected };

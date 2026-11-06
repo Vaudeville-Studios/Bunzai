@@ -350,7 +350,8 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
             </label>
           )}
 
-          {kindOf(draft.kind)?.needsBaseUrl && (
+          {/* Ollama speaks its own format. */}
+          {kindOf(draft.kind)?.needsBaseUrl && draft.kind !== "ollama" && (
             <MessageFormatField value={draft.messageFormat} onChange={(messageFormat) => { setDraft({ ...draft, messageFormat }); }} />
           )}
 

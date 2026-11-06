@@ -36,17 +36,19 @@ export interface CoreSceneLibrary {
   /** The message being answered, as the scene shows it: where the user guides go inside rp-core's shaped request. */
   answering?: string;
   /** The scene's Reasoning Effort on the narrator binding; absent is Auto. */
-  reasoning?: "none" | "low" | "medium" | "high";
+  reasoning?: "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
+  /** Send the last message as the user: the request's final message becomes a user turn (withLastAsUser). */
+  lastAsUser?: boolean;
 }
 
-/** Reasoning Effort values rp-core's binding holds; Minimal and Extra high have no rp-core word yet. */
-const CORE_REASONING = new Set(["none", "low", "medium", "high"]);
+/** Reasoning Effort values rp-core's binding holds. */
+const CORE_REASONING = new Set(["none", "minimal", "low", "medium", "high", "xhigh"]);
 
-/** Prompting settings a Core scene carries (the guides, the note, Start Reply With, Reasoning Effort); the rest are refused by name, never ignored. */
+/** Prompting settings a Core scene carries (the guides, the note, Start Reply With and its role, Reasoning Effort, the last message's role, old thinking); the rest are refused by name, never ignored. */
 const CORE_PROMPTING: Readonly<Record<string, string | null>> = {
-  guides: null, note: null, prefill: null, reasoningEffort: null,
-  lastAsUser: "Send the last message as the user", toolAccess: "Tool Access", toolRounds: "Max tool rounds", tools: "library tools",
-  trackers: "linked trackers", skills: "skills", trackerChanges: "tracker change chips", prefillRole: "the Start Reply With role", keepThinking: "Let the model see its old thinking",
+  guides: null, note: null, prefill: null, prefillRole: null, reasoningEffort: null, lastAsUser: null, keepThinking: null,
+  toolAccess: "Tool Access", toolRounds: "Max tool rounds", tools: "library tools",
+  trackers: "linked trackers", skills: "skills", trackerChanges: "tracker change chips",
 };
 
 /** Why a prompting change cannot apply to a Core scene, or null when it can. */
@@ -56,7 +58,7 @@ export function corePromptingRefusal(patch: unknown): string | null {
     if (value === null || value === false || (Array.isArray(value) && value.length === 0)) continue;
     const name = CORE_PROMPTING[key];
     if (name) return `${name} is not available on this scene yet`;
-    if (key === "reasoningEffort" && typeof value === "string" && !CORE_REASONING.has(value)) return "this scene's model takes None, Low, Medium or High reasoning effort";
+    if (key === "reasoningEffort" && typeof value === "string" && !CORE_REASONING.has(value)) return "that reasoning effort is not one this scene knows";
   }
   return null;
 }
@@ -81,6 +83,21 @@ export function withUserGuides(hooks: HostHooks | undefined, guides: readonly st
       const messages = request.messages.map((message, i) => (i === index ? { ...message, blocks: [{ k: "text" as const, text: guided }] } : message));
       const after = (await hooks?.transformRequest?.({ messages }, context))?.edits ?? [];
       return { edits: after.some((edit) => edit.index === index) ? after : [{ index, text: guided }, ...after] };
+    },
+  };
+}
+
+/** The request hook for Send the last message as the user (request.ts lastAsUser), over whatever the other hooks did. */
+export function withLastAsUser(hooks: HostHooks | undefined, on: boolean | undefined): HostHooks | undefined {
+  if (!on) return hooks;
+  return {
+    ...hooks,
+    async transformRequest(request, context) {
+      const edits = (await hooks?.transformRequest?.(request, context))?.edits ?? [];
+      const index = request.messages.length - 1, last = request.messages[index];
+      if (!last || last.role === "user") return { edits };
+      const text = edits.find((edit) => edit.index === index)?.text ?? last.blocks.flatMap((block) => (block.k === "text" ? [block.text] : [])).join("");
+      return { edits: [...edits.filter((edit) => edit.index !== index), { index, text, role: "user" as const }] };
     },
   };
 }
@@ -138,7 +155,7 @@ function coreAt(placement: string, depth: number, order: number): PresetBlock["a
 /** rp-core's own importer gives these ST blocks the card's system prompt and post-history instructions. */
 const CARD_OVERRIDES: Readonly<Record<string, PresetBlock["override"]>> = { main: "card_system", jailbreak: "card_post_history" };
 
-interface SceneAdds { guides: ResolvedGuides; persona: PersonaBody | undefined; note?: string; noteAt?: PresetBlock["at"]; prefill?: string }
+interface SceneAdds { guides: ResolvedGuides; persona: PersonaBody | undefined; note?: string; noteAt?: PresetBlock["at"]; prefill?: string; prefillRole?: "user" | "system"; keepThinking?: boolean }
 
 /**
  * The scene's preset as rp-core reads it. The blocks are exactly what Bunzai's own engine lays out for
@@ -173,8 +190,10 @@ function corePreset(id: string, body: PresetBody, chat: Chat, defaults: Record<s
   if (adds.note && adds.noteAt !== "relative") blocks.push({ id: "sceneNote", name: "Scene note", role: "system", enabled: true, content: adds.note, at: adds.noteAt! });
   adds.guides.depth.forEach((guide, index) => blocks.push({ id: `sceneGuide${index}`, name: "Guide", enabled: true, content: guide.content,
     role: guide.role === "user" || guide.role === "assistant" ? guide.role : "system", at: { depth: guide.depth, order: 100 } }));
+  // A user hint or system note is an ordinary last turn, not a continuation (request.ts withPrefill). rp-core's depth 0 is after the current message.
+  if (adds.prefill && adds.prefillRole) blocks.push({ id: "scenePrefill", name: "Start Reply With", role: adds.prefillRole, enabled: true, content: adds.prefill, at: { depth: 0, order: 100 } });
   const preset = stPresetToPreset(wire, body.name).value;
-  return { ...preset, blocks, ...(adds.prefill ? { prefill: adds.prefill } : {}) };
+  return { ...preset, blocks, ...(adds.prefill && !adds.prefillRole ? { prefill: adds.prefill } : {}), ...(adds.keepThinking ? { keepThinking: true } : {}) };
 }
 
 /** The ST JSON an adapter wrote; both adapters always write text. */
@@ -200,7 +219,9 @@ export async function coreSceneLibrary(
   const due = noteDue(note, Math.max(0, users - 1)) ? note : undefined;
   // Start Reply With and assistant-role guides replace the preset's own prefill (assemble.ts chatPrefill).
   const prefill = [...(chat.prompting?.prefill?.trim() ? [chat.prompting.prefill] : []), ...guides.prefill.filter((p) => p.trim())].join("\n");
-  const adds: SceneAdds = { guides, persona, ...(prefill ? { prefill } : {}),
+  // The last message as the user makes Start Reply With, the request's last message, that user message whatever its role (request.ts lastAsUser).
+  const prefillRole = chat.prompting?.lastAsUser ? "user" as const : chat.prompting?.prefillRole === "user" || chat.prompting?.prefillRole === "system" ? chat.prompting.prefillRole : undefined;
+  const adds: SceneAdds = { guides, persona, ...(prefill ? { prefill } : {}), ...(prefillRole ? { prefillRole } : {}), ...(chat.prompting?.keepThinking ? { keepThinking: true } : {}),
     ...(due ? { note: `[Author's Note: ${due.text}]`, noteAt: due.position === "after_scenario" ? "relative" as const : { depth: coreDepth(due.depth), order: 100 } } : {}) };
   const presetId = chat.preset?.id ?? SCENE_DEFAULT_PRESET;
   let body = DEFAULT_BODY;
@@ -217,6 +238,6 @@ export async function coreSceneLibrary(
     lorebooks[id] = worldInfoToLoreBook(wire, book!.name).value;
   }
   const revision = createHash("sha256").update(JSON.stringify([presets, lorebooks])).digest("base64url");
-  return { config: { preset: presetId, lorebooks: books.map((book) => book.id) }, library: { revision, presets, lorebooks }, userGuides: guides.user, ...(answering ? { answering } : {}),
+  return { config: { preset: presetId, lorebooks: books.map((book) => book.id) }, library: { revision, presets, lorebooks }, userGuides: guides.user, ...(answering ? { answering } : {}), ...(chat.prompting?.lastAsUser ? { lastAsUser: true } : {}),
     ...(chat.prompting?.reasoningEffort && CORE_REASONING.has(chat.prompting.reasoningEffort) ? { reasoning: chat.prompting.reasoningEffort as NonNullable<CoreSceneLibrary["reasoning"]> } : {}) };
 }

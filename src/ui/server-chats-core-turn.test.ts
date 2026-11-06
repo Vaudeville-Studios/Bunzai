@@ -341,10 +341,9 @@ test("on a core scene, Reasoning Effort rides rp-core's narrator binding, and a 
   const r = await rig({ core: true });
   const { chatId, open } = await coreSceneWithReply(r);
   expect((await r.post("/api/chats/prompting", { chatId, prompting: { reasoningEffort: "high" } })).status).toBe(200);
-  const refused = await r.post("/api/chats/prompting", { chatId, prompting: { lastAsUser: true } });
+  const refused = await r.post("/api/chats/prompting", { chatId, prompting: { toolAccess: true } });
   expect(refused.status).toBe(501);
-  expect(await refused.json()).toEqual({ error: "Send the last message as the user is not available on this scene yet" });
-  expect((await r.post("/api/chats/prompting", { chatId, prompting: { reasoningEffort: "xhigh" } })).status).toBe(501);
+  expect(await refused.json()).toEqual({ error: "Tool Access is not available on this scene yet" });
   await nextRequest(r, chatId, (await open()).branchVersion);
   const records = libraryFor(r.store.studioPath())!.core!;
   const { Engine } = await import("rp-core");
@@ -353,7 +352,7 @@ test("on a core scene, Reasoning Effort rides rp-core's narrator binding, and a 
     const session = await engine.session((await records.sceneFor(chatId))!.sessionId);
     expect((await session.configurationSnapshot()).roles.narrator).toMatchObject({ reasoning: "high" });
   } finally { await engine.close(); }
-  expect((await r.post("/api/chats/prompting", { chatId, prompting: { lastAsUser: null } })).status).toBe(200);
+  expect((await r.post("/api/chats/prompting", { chatId, prompting: { toolAccess: null } })).status).toBe(200);
 });
 
 test("on a core scene, the prompt regex holds the turn for the page, and what the page answers is what rp-core sends", async () => {

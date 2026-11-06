@@ -105,6 +105,21 @@ test("a scene with no preset, guides of every placement and an in-chat note send
   for (const text of ["Keep it moody.", "(OOC: short answers)", "Remember the storm.", "Chi hums sea shanties.", "[Author's Note: The lamp is failing.]", "BELL."]) expect(sent).toContain(text);
 });
 
+const prompting = (fields: Record<string, unknown>) => async (r: Rig, chatId: string) => {
+  const set = await r.post("/api/chats/prompting", { chatId, prompting: fields });
+  if (set.status !== 200) throw new Error(`${set.status}: ${await set.text()}`);
+};
+
+test("Start Reply With in the user or system role sends the same request on both engines", async () => {
+  expect(await same(prompting({ prefill: "Stay terse.", prefillRole: "user" }))).toContain("Stay terse.");
+  expect(await same(prompting({ prefill: "Stay terse.", prefillRole: "system" }))).toContain("Stay terse.");
+});
+
+test("Send the last message as the user sends the same request on both engines", async () => {
+  expect(await same(prompting({ prefill: "Begin.", lastAsUser: true }))).toContain("Begin.");
+  expect(await same(prompting({ prefill: "Begin.", prefillRole: "system", lastAsUser: true }))).toContain("Begin.");
+});
+
 test("an in-chat preset block and an after-scenario note send the same request on both engines", async () => {
   const sent = await same(async (r, chatId) => {
     await r.store.save({ schemaVersion: CANONICAL_SCHEMA_VERSION, kind: "preset", id: "deep", body: { name: "D",

@@ -9,7 +9,7 @@ import { cutCoreScene, deleteCoreTake, forkCoreTake, resolveCoreHeld, restoreCor
 import { reconcileCoreProjection } from "./core-scene-projection";
 import type { ProviderRole } from "../stage/contracts/provider";
 import { StudioConflictError, StudioValidationError } from "./errors";
-import { withUserGuides, type CoreSceneLibrary } from "./core-library";
+import { withLastAsUser, withUserGuides, type CoreSceneLibrary } from "./core-library";
 
 /** A scene's own preset and lorebooks, read for each Core turn and preview (core-library.ts). */
 export type CoreSceneLibraryReader = (sceneId: string, choiceDefaults?: CoreTurnStart["choiceDefaults"]) => Promise<CoreSceneLibrary | null>;
@@ -277,7 +277,7 @@ export function createCoreTurnOwner(chats: ChatStore, records: CoreSceneRecords,
         // narrows tools/jobs without rewriting saved config.
         const scene = await sceneLibrary(input.sceneId, input.choiceDefaults);
         opened = await openCoreScene(records, home, input.sessionId, chat.connection, { recordStore: invocationRecords, configure: true, ...(scene ? { scene } : {}) });
-        const hostHooks = withUserGuides(typeof input.hostHooks === "function" ? input.hostHooks(opened.connectionFingerprint) : input.hostHooks, scene?.userGuides ?? [], scene?.answering);
+        const hostHooks = withLastAsUser(withUserGuides(typeof input.hostHooks === "function" ? input.hostHooks(opened.connectionFingerprint) : input.hostHooks, scene?.userGuides ?? [], scene?.answering), scene?.lastAsUser);
         const repairedVersion = await checkCoreProjection(chats, records, input.sceneId, opened.session, input.actor.kind === "extension");
         if (repairedVersion !== input.expectedBranchVersion) throw new StudioConflictError("The RP-Core transcript was repaired from its committed journal. Reload the scene and review the turn again.");
         // A cast change whose own sync did not land (a crash, a busy scene) is caught up before the host's turn.

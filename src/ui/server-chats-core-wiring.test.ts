@@ -13,7 +13,7 @@ import { libraryFor } from "../studio/library-content";
 import { chatRouteRig as rig, cleanupChatRouteRigs, vera } from "./fake-server-chats-rig";
 import { apiReq } from "./server-test-rig";
 
-afterEach(cleanupChatRouteRigs);
+afterEach(() => { reply = "It might."; return cleanupChatRouteRigs(); });
 
 // Sealing the vault spawns the OS keystore (about a second, cold).
 setDefaultTimeout(30_000);
@@ -23,6 +23,7 @@ let restoreBunzaiHome: (() => void) | undefined;
 let server: ReturnType<typeof Bun.serve>;
 const asked: { messages: { role: string; content: string }[] }[] = [];
 let localId = "";
+let reply = "It might.";
 
 beforeAll(async () => {
   restoreBunzaiHome = useTestBunzaiHome(HOME);
@@ -31,7 +32,7 @@ beforeAll(async () => {
     async fetch(req) {
       asked.push((await req.json()) as (typeof asked)[number]);
       const chunk = (o: unknown) => `data: ${JSON.stringify(o)}\n\n`;
-      const body = chunk({ choices: [{ delta: { content: "It might." }, finish_reason: "stop" }], model: "qwen3-local" }) + "data: [DONE]\n\n";
+      const body = chunk({ choices: [{ delta: { content: reply }, finish_reason: "stop" }], model: "qwen3-local" }) + "data: [DONE]\n\n";
       return new Response(body, { headers: { "content-type": "text/event-stream" } });
     },
   });
@@ -100,4 +101,31 @@ test("a Core scene's forecast answers without touching the scene", async () => {
   expect((await open()).branchVersion).toBe(before.version);
   expect(await journal(r, chatId)).toBe(before.journal);
   expect(asked.length).toBe(before.asked);
+});
+
+test("on a Core scene, old thinking reaches the next request only while Let the model see its old thinking is on", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  reply = "<think>the barometer fell</think>It might.";
+  await sendAndAnswer(r, chatId, (await open()).branchVersion);
+  reply = "Yes.";
+  expect(JSON.stringify((await sendAndAnswer(r, chatId, (await open()).branchVersion, "And then?")).messages)).not.toContain("the barometer fell");
+  expect((await r.post("/api/chats/prompting", { chatId, prompting: { keepThinking: true } })).status).toBe(200);
+  expect(JSON.stringify((await sendAndAnswer(r, chatId, (await open()).branchVersion, "And after?")).messages)).toContain("<think>the barometer fell</think>");
+});
+
+test("on a Core scene, Minimal and Extra high reasoning ride rp-core's narrator binding", async () => {
+  const r = await rig({ core: true });
+  const { chatId, open } = await coreScene(r);
+  for (const effort of ["minimal", "xhigh"]) {
+    expect((await r.post("/api/chats/prompting", { chatId, prompting: { reasoningEffort: effort } })).status).toBe(200);
+    await sendAndAnswer(r, chatId, (await open()).branchVersion, `At ${effort}?`);
+    const records = libraryFor(r.store.studioPath())!.core!;
+    const { Engine } = await import("rp-core");
+    const engine = await Engine.openWithRecordStore({ home: r.store.studioPath(), recordStore: records, lane: "manual" });
+    try {
+      const session = await engine.session((await records.sceneFor(chatId))!.sessionId);
+      expect((await session.configurationSnapshot()).roles.narrator).toMatchObject({ reasoning: effort });
+    } finally { await engine.close(); }
+  }
 });

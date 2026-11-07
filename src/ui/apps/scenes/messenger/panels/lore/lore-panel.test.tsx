@@ -115,6 +115,7 @@ describe("the entries view", () => {
   test("New entry adds a selective entry at depth 4 and opens it", async () => {
     const fs = await mountPanel();
     await press(fs, byText("button", "New entry"), 60);
+    await waitFor(fs, () => q('[data-part="scene.messenger.lore.entry-editor"]'), "the new entry's editor");
     expect(heldBody().entries).toHaveLength(3);
     expect(heldBody().entries.at(-1)).toMatchObject({ title: "New Entry", position: "depth", depth: 4, constant: false });
     expect(q('[data-part="scene.messenger.lore.entry-editor"]')).not.toBeNull();

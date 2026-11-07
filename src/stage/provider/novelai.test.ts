@@ -20,6 +20,7 @@ test("it sends the token, the model and the samplers, streams each token, and st
   const done = await provider.send({ model: "kayra-v1", messages: [{ role: "user", content: "Hi" }], options: { temperature: 0.5, max_tokens: 40, stream: true } }, { onEvent: (event) => { if ("delta" in event) deltas.push(event.delta); } });
   expect(seen[0]!.url).toBe("https://novel.test/ai/generate-stream");
   expect(seen[0]!.auth).toBe("Bearer tok");
+  expect(seen[0]!.body["stream"]).toBeUndefined();
   expect(seen[0]!.body).toMatchObject({ model: "kayra-v1", input: "User: Hi\n\nAssistant:", parameters: { temperature: 0.5, max_length: 40, use_string: true } });
   expect(deltas).toEqual(["Once ", "upon"]);
   expect(done.content).toBe("Once upon");
@@ -27,5 +28,5 @@ test("it sends the token, the model and the samplers, streams each token, and st
 
 test("a refused token says so, in words", async () => {
   const provider = createNovelAIProvider({ id: "n", apiKey: "bad", baseUrl: "https://novel.test" }, { fetch: async () => new Response("nope", { status: 401 }) });
-  await expect(provider.send({ model: "kayra-v1", messages: [{ role: "user", content: "Hi" }], options: {} }, {})).rejects.toThrow("NovelAI refused that token");
+  await expect(provider.send({ model: "kayra-v1", messages: [{ role: "user", content: "Hi" }], options: {} }, {})).rejects.toMatchObject({ code: "invalid_api_key" });
 });

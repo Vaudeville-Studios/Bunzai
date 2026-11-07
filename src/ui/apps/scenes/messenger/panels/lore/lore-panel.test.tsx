@@ -133,7 +133,8 @@ describe("the entries view", () => {
   test("a 500-entry book mounts only the rows near the viewport, not all of them", async () => {
     resetLore(Array.from({ length: 500 }, (_, i) => entry(`e${i}`, { title: `Entry ${i}`, sortOrder: i })));
     const fs = await mountPanel();
-    expect(rows().length).toBeGreaterThan(0);
+    // Two 400-entry books can still be arriving when the empty list first draws.
+    await waitFor(fs, () => rows().length > 0, "the first rows");
     expect(rows().length).toBeLessThan(60);
     unmount(fs);
   });

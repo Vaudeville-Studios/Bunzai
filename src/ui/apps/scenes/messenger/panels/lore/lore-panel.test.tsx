@@ -24,6 +24,8 @@ async function mountPanel(): Promise<FlushSync> {
   flushSync(() => rig.root.render(createElement(LorePanel, { ctx: loreCtx(), chat: CHAT, characterName: "Marguerite Vane", onLore: () => undefined })));
   await settle(flushSync);
   await waitFor(flushSync, () => q('[data-part="scene.messenger.lore.entries"]'), "the entries view");
+  // The list draws before its books arrive; a book still loading has only its note where the rows go.
+  await waitFor(flushSync, () => !text().includes("Loading the book..."), "the books to load");
   await settle(flushSync);
   return flushSync;
 }
@@ -133,8 +135,7 @@ describe("the entries view", () => {
   test("a 500-entry book mounts only the rows near the viewport, not all of them", async () => {
     resetLore(Array.from({ length: 500 }, (_, i) => entry(`e${i}`, { title: `Entry ${i}`, sortOrder: i })));
     const fs = await mountPanel();
-    // Two 400-entry books can still be arriving when the empty list first draws.
-    await waitFor(fs, () => rows().length > 0, "the first rows");
+    expect(rows().length).toBeGreaterThan(0);
     expect(rows().length).toBeLessThan(60);
     unmount(fs);
   });

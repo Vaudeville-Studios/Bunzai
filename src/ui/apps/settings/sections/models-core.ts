@@ -40,6 +40,8 @@ export interface ProviderKind {
   readonly needsBaseUrl: boolean;
   /** Where the list shows it (spoke.ts PROVIDER_GROUPS). */
   readonly group?: string;
+  readonly keyHint?: string;
+  readonly baseUrlExample?: string;
   /** Where the server answers when the base URL is left blank (Ollama's local address); the field is then optional. */
   readonly defaultBaseURL?: string;
   /**

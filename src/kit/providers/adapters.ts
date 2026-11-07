@@ -43,7 +43,7 @@ export async function buildModel(config: ProviderConfig | null): Promise<Languag
   if (!spoke.model) {
     // A spoke with neither model nor chat is a wiring mistake, and it must fail closed here rather
     // than at the wire. Reached only if spokeChat was not consulted first.
-    throw new EgressBlocked(`${spoke.label} does not build a model; it supplies its own chat.`);
+    throw new EgressBlocked(`${spoke.label} works in scenes, but Kit's agent cannot use it. Choose another provider for Kit.`);
   }
   const fetch = guardedFetch(allowedHost(config, spoke));
   return spoke.model(config, fetch);

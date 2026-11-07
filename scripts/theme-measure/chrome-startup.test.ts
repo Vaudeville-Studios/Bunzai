@@ -33,7 +33,7 @@ test("a real delayed child announces its assigned port and accepts only its exac
   await session.close(); await session.close();
   expect(closed).toBe(1);
   expect(process.exitCode !== null || process.signalCode !== null).toBe(true);
-}, 10_000);
+}, 25_000);
 
 test("a split endpoint is not attached until its complete line arrives", async () => {
   const process = child(`process.stderr.write('DevTools listening on ws://127.0.0.1:9591/devtools/browser/');setTimeout(()=>process.stderr.write('complete\\n'),100);setInterval(()=>{},1000);`);

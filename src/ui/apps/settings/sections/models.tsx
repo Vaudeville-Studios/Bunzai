@@ -285,7 +285,7 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
               {"Base URL"}
               <input
                 value={draft.baseURL}
-                placeholder={kindOf(draft.kind)?.defaultBaseURL ? `${kindOf(draft.kind)!.defaultBaseURL} (leave blank for this)` : "http://localhost:1234/v1"}
+                placeholder={kindOf(draft.kind)?.defaultBaseURL ? `${kindOf(draft.kind)!.defaultBaseURL} (leave blank for this)` : kindOf(draft.kind)?.baseUrlExample ?? "http://localhost:1234/v1"}
                 onChange={(e) => {
                   const next = { ...draft, baseURL: e.target.value };
                   setDraft(next);
@@ -303,7 +303,7 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
                 type="password"
                 value={draft.apiKey}
                 autoComplete="off"
-                placeholder={editing?.hasKey ? "leave blank to keep the saved key" : "paste your key"}
+                placeholder={editing?.hasKey ? "leave blank to keep the saved key" : kindOf(draft.kind)?.keyHint ?? "paste your key"}
                 onChange={(e) => {
                   const next = { ...draft, apiKey: e.target.value };
                   setDraft(next);

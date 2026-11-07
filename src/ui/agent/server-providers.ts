@@ -103,6 +103,8 @@ export async function handleProviderList(): Promise<Response> {
        */
       needsBaseUrl: asksBaseURL(spoke),
       group: spoke.group ?? "OpenAI compatible",
+      ...(spoke.keyHint ? { keyHint: spoke.keyHint } : {}),
+      ...(spoke.baseUrlExample ? { baseUrlExample: spoke.baseUrlExample } : {}),
       ...(spoke.defaultBaseURL ? { defaultBaseURL: spoke.defaultBaseURL } : {}),
       ...(spoke.options ? { options: spoke.options } : {}),
     })),

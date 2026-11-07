@@ -81,7 +81,7 @@ async function connectionFor(pick: ChatConnection): Promise<{ connection: Connec
   const catalog = await spokes();
   const spoke = catalog.get(saved.kind);
   if (!spoke?.scene) throw new StudioValidationError("this Kit connection cannot drive a scene");
-  if ((spoke.scene.native && spoke.scene.native !== "anthropic") || (spoke.scene.resolve && saved.kind !== "ollama")) throw new StudioValidationError("this provider needs a native rp-core adapter");
+  if (spoke.scene.native && spoke.scene.native !== "anthropic") throw new StudioValidationError("this provider needs a native rp-core adapter");
   const baseUrl = spoke.scene.base({ ...saved, model: pick.model });
   if (!baseUrl) throw new StudioValidationError("this connection needs a base URL");
   const host = allowedHost(saved, spoke);
@@ -94,9 +94,9 @@ async function connectionFor(pick: ChatConnection): Promise<{ connection: Connec
   const caps = resolveCaps({ dialect, origin, local, model: pick.model, server: saved.kind,
     ...(shaped && !saved.messageFormat ? { fallback: messageFormatCaps({ preset: "standard" }) } : {}),
     user: { ...(shaped && saved.messageFormat ? messageFormatCaps(saved.messageFormat) : {}), ...(saved.context ? { contextLength: saved.context } : {}) } });
-  if (saved.kind === "ollama" && spoke.scene.resolve) {
+  if (spoke.scene.resolve) {
     const config = { ...saved, model: pick.model };
-    const { provider: native, traits } = await spoke.scene.resolve(config, guardedFetch(host), saved.name ?? "Ollama");
+    const { provider: native, traits } = await spoke.scene.resolve(config, guardedFetch(host), saved.name ?? spoke.label);
     const ollamaCaps = {
       ...caps,
       ...(traits?.window ? { contextLength: traits.window } : {}),

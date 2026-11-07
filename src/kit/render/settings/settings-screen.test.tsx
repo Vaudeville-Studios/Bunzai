@@ -88,7 +88,7 @@ test("provider setup masks the key, lists models, selects one, and saves", async
     // label, so adding any provider whose name sorts earlier silently moves what a count lands on,
     // and this test needs a KEYED one for the masking it goes on to check.
     const onDeepSeek = (frame: string): boolean => /▌\s*■\s*DeepSeek/.test(frame);
-    for (let i = 0; i < 12 && !onDeepSeek(t.captureCharFrame()); i++) {
+    for (let i = 0; i < 40 && !onDeepSeek(t.captureCharFrame()); i++) {
       t.mockInput.pressKey("ARROW_DOWN");
       await tick();
     }

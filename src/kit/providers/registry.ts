@@ -14,12 +14,12 @@ const isSpokeFile = (name: string): boolean =>
   name.endsWith(".ts") && !name.endsWith(".test.ts") && !name.startsWith("_");
 
 /** Load every drop-in provider in spokes/, keyed by id, sorted for a stable order. */
-// A spoke earns its place with EITHER a model or its own chat. Requiring `model` would silently drop
+// A spoke earns its place with a model, its own chat, or a scene transport of its own (NovelAI has no chat API for Kit's agent to call). Requiring `model` would silently drop
 // a provider that is not an HTTP model, and the symptom is an "unknown provider" error far from the
 // file that caused it.
 const isSpoke = (value: unknown): value is ProviderSpoke => {
   const spoke = value as Partial<ProviderSpoke> | undefined;
-  const usable = typeof spoke?.model === "function" || typeof spoke?.chat === "function";
+  const usable = typeof spoke?.model === "function" || typeof spoke?.chat === "function" || typeof spoke?.scene?.resolve === "function";
   return typeof spoke?.id === "string" && usable;
 };
 

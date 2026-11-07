@@ -58,11 +58,15 @@ export interface SpokeOption {
 }
 
 /** Where the Providers list shows a spoke, in RoleCall's order. Absent: OpenAI compatible. */
-export const PROVIDER_GROUPS = ["Major", "OpenAI compatible", "Regional", "Specialized", "Free", "Custom"] as const;
+export const PROVIDER_GROUPS = ["Major", "OpenAI compatible", "Enterprise", "Regional", "Specialized", "Free", "Custom"] as const;
 export type ProviderGroup = (typeof PROVIDER_GROUPS)[number];
 
 export interface ProviderSpoke {
   group?: ProviderGroup;
+  /** What the key field asks for when it is not a plain API key. */
+  keyHint?: string;
+  /** What the Base URL field shows as an example, when a generic one would mislead. */
+  baseUrlExample?: string;
   /** Stable id stored in config.kind. */
   id: string;
   /** Display name for the setup screen preset card. */

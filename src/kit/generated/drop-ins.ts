@@ -68,31 +68,35 @@ import m56 from "../doctor/checks/version";
 import m57 from "../providers/spokes/ai21";
 import m58 from "../providers/spokes/aimlapi";
 import m59 from "../providers/spokes/anthropic";
-import m60 from "../providers/spokes/claude-sub";
-import m61 from "../providers/spokes/codex";
-import m62 from "../providers/spokes/cometapi";
-import m63 from "../providers/spokes/custom";
-import m64 from "../providers/spokes/deepseek";
-import m65 from "../providers/spokes/electronhub";
-import m66 from "../providers/spokes/fireworks";
-import m67 from "../providers/spokes/google";
-import m68 from "../providers/spokes/groq";
-import m69 from "../providers/spokes/local";
-import m70 from "../providers/spokes/minimax";
-import m71 from "../providers/spokes/mistral";
-import m72 from "../providers/spokes/moonshot";
-import m73 from "../providers/spokes/nanogpt";
-import m74 from "../providers/spokes/ollama";
-import m75 from "../providers/spokes/openai";
-import m76 from "../providers/spokes/openrouter";
-import m77 from "../providers/spokes/perplexity";
-import m78 from "../providers/spokes/pollinations";
-import m79 from "../providers/spokes/siliconflow";
-import m80 from "../providers/spokes/xai";
-import m81 from "../providers/spokes/zai";
-import m82 from "../render/notify/channels/bell";
-import m83 from "../render/notify/channels/desktop";
-import m84 from "../render/notify/channels/title";
+import m60 from "../providers/spokes/azure";
+import m61 from "../providers/spokes/claude-sub";
+import m62 from "../providers/spokes/codex";
+import m63 from "../providers/spokes/cohere";
+import m64 from "../providers/spokes/cometapi";
+import m65 from "../providers/spokes/custom";
+import m66 from "../providers/spokes/deepseek";
+import m67 from "../providers/spokes/electronhub";
+import m68 from "../providers/spokes/fireworks";
+import m69 from "../providers/spokes/google";
+import m70 from "../providers/spokes/groq";
+import m71 from "../providers/spokes/local";
+import m72 from "../providers/spokes/minimax";
+import m73 from "../providers/spokes/mistral";
+import m74 from "../providers/spokes/moonshot";
+import m75 from "../providers/spokes/nanogpt";
+import m76 from "../providers/spokes/novelai";
+import m77 from "../providers/spokes/ollama";
+import m78 from "../providers/spokes/openai";
+import m79 from "../providers/spokes/openrouter";
+import m80 from "../providers/spokes/perplexity";
+import m81 from "../providers/spokes/pollinations";
+import m82 from "../providers/spokes/siliconflow";
+import m83 from "../providers/spokes/vertexai";
+import m84 from "../providers/spokes/xai";
+import m85 from "../providers/spokes/zai";
+import m86 from "../render/notify/channels/bell";
+import m87 from "../render/notify/channels/desktop";
+import m88 from "../render/notify/channels/title";
 
 /** Every drop-in Kit ships, in the same order the folder walk would return them. */
 export const KIT_DROP_INS = {
@@ -102,10 +106,10 @@ export const KIT_DROP_INS = {
   tools: [m22, m23, m24, m25, m26, m27, m28, m29, m30, m31, m32, m33, m34, m35, m36, m37, m38, m39, m40, m41, m42, m43, m44, m45, m46, m47, m48, m49, m50, m51, m52] as unknown[],
   /** 4 drop-in(s) from the doctorChecks folder(s). */
   doctorChecks: [m53, m54, m55, m56] as unknown[],
-  /** 25 drop-in(s) from the spokes folder(s). */
-  spokes: [m57, m58, m59, m60, m61, m62, m63, m64, m65, m66, m67, m68, m69, m70, m71, m72, m73, m74, m75, m76, m77, m78, m79, m80, m81] as unknown[],
+  /** 29 drop-in(s) from the spokes folder(s). */
+  spokes: [m57, m58, m59, m60, m61, m62, m63, m64, m65, m66, m67, m68, m69, m70, m71, m72, m73, m74, m75, m76, m77, m78, m79, m80, m81, m82, m83, m84, m85] as unknown[],
   /** 3 drop-in(s) from the notifyChannels folder(s). */
-  notifyChannels: [m82, m83, m84] as unknown[],
+  notifyChannels: [m86, m87, m88] as unknown[],
 } as const;
 
 export type KitDropIns = typeof KIT_DROP_INS;

@@ -294,6 +294,7 @@ export function createSnapshotStore(opts: SnapshotStoreOptions) {
         scrap(work, `${work}-wal`, `${work}-shm`);
       }
       // Committed already: a reader holding the WAL open must not turn a finished restore into an error.
+      await database.foldInBackground();
       await database.scrub().catch(() => undefined);
       return { info, undo };
       });

@@ -149,6 +149,30 @@ describe("the file", () => {
 });
 
 describe("readers and scrubbing", () => {
+  test("a rebuild leaves the main thread's scrubs nothing to fold, so no disk flush freezes the app", async () => {
+    const path = tempFile();
+    const d = track(openStageDatabase(path, [{ id: 1, name: "t", sql: "CREATE TABLE t (x TEXT)" }]));
+    d.transaction(() => { for (let i = 0; i < 2_000; i++) d.db.query("INSERT INTO t (x) VALUES (?)").run("row ".repeat(40)); });
+    // Measured on the file: a TRUNCATE checkpoint reports zero pages whatever it just copied.
+    const logBytes: number[] = [];
+    const originalPrepare = d.db.prepare;
+    d.db.prepare = new Proxy(originalPrepare, {
+      apply(target, _this, args) {
+        const prepared = Reflect.apply(target, d.db, args) as ReturnType<typeof originalPrepare>;
+        if (args[0] !== "PRAGMA wal_checkpoint(TRUNCATE)") return prepared;
+        const get = prepared.get.bind(prepared);
+        prepared.get = ((...values: never[]) => {
+          logBytes.push(existsSync(`${path}-wal`) ? statSync(`${path}-wal`).size : 0);
+          return get(...values);
+        }) as typeof prepared.get;
+        return prepared;
+      },
+    });
+    try { await d.rebuild(); } finally { d.db.prepare = originalPrepare; }
+    expect(logBytes.length).toBeGreaterThan(0);
+    expect(logBytes.every((bytes) => bytes === 0)).toBe(true);
+  });
+
   test("a registered reader holding a read open makes scrub fail loudly, naming it; once closed, scrub empties the WAL", async () => {
     const path = tempFile();
     const d = track(openStageDatabase(path, [one]));

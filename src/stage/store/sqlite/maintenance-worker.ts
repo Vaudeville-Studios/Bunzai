@@ -15,6 +15,8 @@ import { inspectSnapshot, restoreSnapshot, writeSnapshot } from "./snapshot-jobs
 declare const self: Worker;
 
 export type MaintenanceJob = { kind: "rebuild"; path: string }
+  /** Folds the write-ahead log into the file here, so the copy and its disk flush never freeze the main thread. A reader in the way is the caller's scrub to report. */
+  | { kind: "checkpoint"; path: string }
   | { kind: "derived-trim"; path: string; budgetBytes: number }
   | { kind: "snapshot"; path: string; dest: string }
   | { kind: "inspect"; path: string; snapshot: string }
@@ -28,6 +30,8 @@ export type MaintenanceJob = { kind: "rebuild"; path: string }
 export type MaintenanceResult = { ok: true; data?: unknown } | { ok: false; reason: string };
 
 self.onmessage = async (event: MessageEvent<MaintenanceJob>) => {
+  // The job arrived: a lane that hears this and then no answer knows the work stalled, not the worker's start (background.ts).
+  self.postMessage({ laneStarted: true });
   const job = event.data;
   let db: Database | null = null;
   const keys = job.kind === "check-table" || job.kind === "repair"
@@ -47,7 +51,11 @@ self.onmessage = async (event: MessageEvent<MaintenanceJob>) => {
       db = new Database(job.path, { strict: true });
       db.run("PRAGMA busy_timeout = 30000");
       db.run("PRAGMA secure_delete = ON");
-      if (job.kind === "derived-trim") {
+      if (job.kind === "checkpoint") {
+        db.run("PRAGMA busy_timeout = 0");
+        db.query("PRAGMA wal_checkpoint(TRUNCATE)").get();
+        result = { ok: true };
+      } else if (job.kind === "derived-trim") {
         trimDerivedRows(db, job.budgetBytes);
         result = { ok: true };
       } else if (job.kind === "check-table") {
@@ -78,6 +86,8 @@ self.onmessage = async (event: MessageEvent<MaintenanceJob>) => {
         // VACUUM writes a complete new copy and swaps it in; a crash leaves the original whole.
         db.run("VACUUM");
         const check = db.query("PRAGMA integrity_check").all() as { integrity_check: string }[];
+        // VACUUM wrote the whole file into the log; folding it here is what keeps the caller's scrub from doing that on the main thread.
+        if (check.length === 1 && check[0]!.integrity_check === "ok") db.query("PRAGMA wal_checkpoint(TRUNCATE)").get();
         result = check.length === 1 && check[0]!.integrity_check === "ok"
           ? { ok: true } : { ok: false, reason: "the rebuilt database failed its integrity check" };
       } else {

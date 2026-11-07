@@ -33,13 +33,14 @@ export const startLaneWorker = (compiledFactory: () => Worker, devUrl: string): 
 export type LaneFailure = { ok: false; reason: string };
 
 /** Sends one job to a started worker and settles once. `park` is told whether the worker answered cleanly (a reply, even a failed job's) and owns the worker from then on. */
-function dispatch<Job, Reply>(worker: Worker, job: Job, timeoutMs: number, transfer: Transferable[], signal: AbortSignal | undefined, park: (worker: Worker, clean: boolean) => void): Promise<Reply | LaneFailure> {
+function dispatch<Job, Reply>(worker: Worker, job: Job, timeoutMs: number, transfer: Transferable[], signal: AbortSignal | undefined, park: (worker: Worker, clean: boolean) => void, startMs?: number): Promise<Reply | LaneFailure> {
   return new Promise((resolve) => {
     let settled = false;
     const finish = (result: Reply | LaneFailure, clean: boolean) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      clearTimeout(startTimer);
       signal?.removeEventListener("abort", cancel);
       worker.onmessage = null;
       worker.onerror = null;
@@ -47,9 +48,19 @@ function dispatch<Job, Reply>(worker: Worker, job: Job, timeoutMs: number, trans
       try { park(worker, clean); } catch { /* Settlement still releases the caller's owned resources. */ }
       resolve(result);
     };
-    const cancel = () => finish({ ok: false, reason: "the background job was cancelled" }, false);
+    let started = false;
+    const cancel = () => finish({ ok: false, reason: `the background job was cancelled${startMs !== undefined && !started ? " before its worker had started" : ""}` }, false);
     const timer = setTimeout(() => finish({ ok: false, reason: "the background job took too long and was stopped" }, false), timeoutMs);
-    worker.onmessage = (event: MessageEvent<Reply>) => finish(event.data, true);
+    // A worker on a start limit says it received the job; a silence past the limit is a stalled start, not a slow job.
+    const startTimer = startMs === undefined ? undefined : setTimeout(() => finish({ ok: false, reason: "the background worker never started" }, false), startMs);
+    worker.onmessage = (event: MessageEvent<Reply | { laneStarted: true }>) => {
+      if (startMs !== undefined && (event.data as { laneStarted?: unknown } | null)?.laneStarted === true) {
+        started = true;
+        clearTimeout(startTimer);
+        return;
+      }
+      finish(event.data as Reply, true);
+    };
     worker.onerror = (event: ErrorEvent) => finish({ ok: false, reason: `the background job failed: ${event.message}` }, false);
     worker.onmessageerror = () => finish({ ok: false, reason: "the background job reply could not be received" }, false);
     signal?.addEventListener("abort", cancel, { once: true });
@@ -64,7 +75,7 @@ const startFailure = (error: unknown): LaneFailure => ({ ok: false, reason: `the
 const refs = (worker: Worker) => worker as Worker & { ref(): void; unref(): void };
 const end = (worker: Worker): void => { try { worker.terminate(); } catch { /* already gone */ } };
 
-export function runOnLane<Job, Reply>(start: () => Worker, job: Job, timeoutMs: number, transfer: Transferable[] = [], signal?: AbortSignal): Promise<Reply | LaneFailure> {
+export function runOnLane<Job, Reply>(start: () => Worker, job: Job, timeoutMs: number, transfer: Transferable[] = [], signal?: AbortSignal, startMs?: number): Promise<Reply | LaneFailure> {
   if (signal?.aborted) return Promise.resolve({ ok: false, reason: "the background job was cancelled" });
   let worker: Worker;
   try {
@@ -72,7 +83,7 @@ export function runOnLane<Job, Reply>(start: () => Worker, job: Job, timeoutMs: 
   } catch (error) {
     return Promise.resolve(startFailure(error));
   }
-  return dispatch(worker, job, timeoutMs, transfer, signal, end);
+  return dispatch(worker, job, timeoutMs, transfer, signal, end, startMs);
 }
 
 /**

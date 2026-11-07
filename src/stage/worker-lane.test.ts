@@ -87,3 +87,13 @@ test("an idle worker is ended after its idle time", async () => {
   expect(seen.started).toBe(2);
   lane.close();
 });
+
+test("a worker on a start limit that never says it has the job is named as a stalled start", async () => {
+  const silent = workerFrom("self.onmessage = () => {};");
+  expect(await runOnLane<null, { ok: true }>(silent, null, 60_000, [], undefined, 50)).toEqual({ ok: false, reason: "the background worker never started" });
+});
+
+test("a worker that says it started gets its whole time, and its start signal is not taken for the answer", async () => {
+  const slow = workerFrom("self.onmessage = () => { self.postMessage({ laneStarted: true }); setTimeout(() => self.postMessage({ ok: true }), 120); };");
+  expect(await runOnLane<null, { ok: true }>(slow, null, 5_000, [], undefined, 50)).toEqual({ ok: true });
+});

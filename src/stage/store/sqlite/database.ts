@@ -55,6 +55,8 @@ export interface StageDatabase {
    * the main thread for more than a few tens of milliseconds at a time.
    */
   scrub(): Promise<void>;
+  /** Folds the log on the background lane; call before `scrub` after a job that wrote a lot. */
+  foldInBackground(): Promise<void>;
   /**
    * A second, read-only connection to the same file, registered under a purpose ("backup", "export")
    * so anything that blocks a scrub can be named. The only sanctioned way to open another reader.
@@ -399,6 +401,11 @@ export function openStageDatabase(path: string, migrations: readonly Migration[]
     }
   };
 
+  /** Folds the log on the lane, so a following scrub has nothing heavy left to do on this thread. What it could not fold is that scrub's to report. */
+  const foldInBackground = async () => {
+    if (path !== ":memory:") await runInBackground({ kind: "checkpoint", path });
+  };
+
   const rebuild = () => exclusive(async () => {
     if (db.inTransaction) throw new StageDatabaseError("cannot rebuild the database inside a transaction");
     assertRoomToRebuild();
@@ -407,7 +414,9 @@ export function openStageDatabase(path: string, migrations: readonly Migration[]
       db.run("VACUUM");
       return;
     }
-    // Folded in first, so the background connection rebuilds everything this one has written.
+    // Folded in first, so the background connection rebuilds everything this one has written. The fold's copy and disk flush run on
+    // the lane: scrub then only confirms, because on a slow disk doing that work here froze the app for most of a second.
+    await foldInBackground();
     await scrub();
     const result = await runInBackground({ kind: "rebuild", path });
     if (!result.ok) throw new StageDatabaseError(`the database could not be rebuilt: ${result.reason}`);
@@ -460,5 +469,5 @@ export function openStageDatabase(path: string, migrations: readonly Migration[]
     }
   };
   const sealOwed = (): string | null => owedSeal;
-  return { db, statement, transaction, setCommitSeal, sealNow, sealOwed, scrub, openReader, openWorkerReader, readers, rebuild, idle, exclusive, assertRoomToRebuild, patiently, optimize, close };
+  return { db, statement, transaction, setCommitSeal, sealNow, sealOwed, scrub, foldInBackground, openReader, openWorkerReader, readers, rebuild, idle, exclusive, assertRoomToRebuild, patiently, optimize, close };
 }

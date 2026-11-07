@@ -14,7 +14,10 @@ function startWorker(): Worker {
   );
 }
 
+/** How long a worker has to say it received its job: far past any healthy start, and short of the job's own limit, so a stalled start is named as that. */
+const START_LIMIT_MS = 60_000;
+
 /** Runs one job and ends the worker; every failure resolves as `{ ok: false, reason }`. */
 export function runInBackground(job: MaintenanceJob, timeoutMs = 10 * 60_000, signal?: AbortSignal, transfer: Transferable[] = []): Promise<MaintenanceResult> {
-  return runOnLane<MaintenanceJob, MaintenanceResult>(startWorker, job, timeoutMs, transfer, signal);
+  return runOnLane<MaintenanceJob, MaintenanceResult>(startWorker, job, timeoutMs, transfer, signal, START_LIMIT_MS);
 }

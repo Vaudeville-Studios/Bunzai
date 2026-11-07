@@ -15,6 +15,8 @@ export interface CompatProvider {
   defaultModel?: string;
   /** Takes no key at all. */
   keyless?: boolean;
+  /** Chat completions hang straight off `base`: its path has no version segment. */
+  unversioned?: boolean;
   /** Publishes no `/models` list at this address, so a model is typed. */
   noList?: boolean;
 }
@@ -28,6 +30,6 @@ export function compatSpoke(p: CompatProvider): ProviderSpoke {
       return createOpenAICompatible({ name: p.id, baseURL: baseURL ?? p.base, ...(apiKey ? { apiKey } : {}), ...(headers ? { headers } : {}), fetch })(model);
     },
     ...(p.noList ? {} : { listModels: async ({ apiKey, baseURL }, fetch) => openAICompatModels(baseURL ?? p.base, apiKey, fetch) }),
-    scene: { base: (c) => c.baseURL ?? p.base },
+    scene: { base: (c) => c.baseURL ?? p.base, ...(p.unversioned ? { chatUrl: (c: { baseURL?: string }) => `${c.baseURL ?? p.base}/chat/completions` } : {}) },
   };
 }

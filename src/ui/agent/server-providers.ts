@@ -31,6 +31,9 @@ import type { ProviderConfig } from "../../kit/providers/config";
 import { listModelsFor } from "../../kit/providers/adapters";
 import { makeChat } from "../../kit/providers/chat";
 import { pingProvider } from "../../kit/providers/probe";
+import type { ChatFn } from "../../kit/providers/provider";
+import { resolveSceneProvider } from "../../kit/providers/scene";
+import type { ProviderMessage } from "../../stage/contracts/provider";
 import { redactSecrets } from "./server-agent";
 import { isRecord } from "../../core/guards";
 
@@ -170,7 +173,10 @@ export async function handleProviderSave(body: unknown): Promise<Response> {
   const stored = editing
     ? (await readVault()).providers.find((p) => p.id === id)
     : undefined;
-  const keptKey = !keyGiven && stored?.apiKey ? stored.apiKey : undefined;
+  // Kept only for the same provider at the same address: a saved key must never follow a kind or a Base URL change to another host.
+  const sameDestination = stored?.kind === kind && (stored.baseURL ?? "") === (typeof baseURL === "string" ? baseURL : "");
+  const keptKey = !keyGiven && sameDestination && stored?.apiKey ? stored.apiKey : undefined;
+  if (needsKey && !keyGiven && !keptKey) return json({ error: `${spoke.label} needs an API key` }, 400);
 
   /**
    * The spoke's own choices, which this route used to drop on the floor.
@@ -201,7 +207,8 @@ export async function handleProviderSave(body: unknown): Promise<Response> {
     model,
     ...(editing ? { id: id as string } : {}),
     ...(keyGiven ? { apiKey: apiKey as string } : keptKey ? { apiKey: keptKey } : {}),
-    ...(typeof baseURL === "string" && baseURL ? { baseURL } : {}),
+    // A fixed-host provider has no Base URL field, so nothing hidden can stay behind and point it elsewhere.
+    ...(typeof baseURL === "string" && baseURL && asksBaseURL(spoke) ? { baseURL } : {}),
     ...(typeof name === "string" && name ? { name } : {}),
     ...(Object.keys(options).length > 0 ? { options } : {}),
     ...(messageFormat ? { messageFormat } : stored?.messageFormat ? { messageFormat: stored.messageFormat } : {}),
@@ -266,7 +273,16 @@ export async function handleProviderTest(body: unknown, signal?: AbortSignal): P
   if (!config) return json({ error: "no such provider" }, 404);
 
   try {
-    const probe = await pingProvider(makeChat(config, signal));
+    // A provider that only has a scene transport (NovelAI, Vertex) is checked through it, so Test proves the credentials.
+    const spoke = (await spokes()).get(config.kind);
+    const chat: ChatFn = spoke && !spoke.model && !spoke.chat
+      ? async (messages) => {
+        const { provider } = await resolveSceneProvider(config, signal);
+        const reply = await provider.send({ model: config.model, messages: messages as ProviderMessage[], options: { max_tokens: 16 } }, signal ? { signal } : {});
+        return { text: reply.content } as Awaited<ReturnType<ChatFn>>;
+      }
+      : makeChat(config, signal);
+    const probe = await pingProvider(chat);
     return json({ ok: true, ms: probe.ms, text: probe.text.slice(0, 200) });
   } catch (error) {
     /**

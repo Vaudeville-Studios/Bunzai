@@ -1,5 +1,5 @@
 /** Adapt Bunzai's native Ollama transport to rp-core's streaming provider contract. */
-import { ProviderError as CoreError, type ModelRequest, type Provider as CoreProvider, type StreamEv } from "rp-core";
+import { categoryOf, ProviderError as CoreError, type ModelRequest, type Provider as CoreProvider, type StreamEv } from "rp-core";
 import { ProviderError as StageError, type Provider as StageProvider, type ProviderCompletion, type ProviderMessage, type ProviderRequest } from "../stage/contracts/provider";
 
 function stageRequest(req: ModelRequest): ProviderRequest {
@@ -42,12 +42,15 @@ function stageRequest(req: ModelRequest): ProviderRequest {
 
 function coreError(cause: unknown, afterOutput: boolean): CoreError {
   const code = cause instanceof StageError
-    ? cause.code === "model_not_found" ? "model_not_found"
+    ? cause.code === "invalid_api_key" ? "auth_failed"
+      : cause.code === "rate_limit_exceeded" ? "rate_limited"
+      : cause.code === "invalid_parameter" ? "bad_request"
+      : cause.code === "model_not_found" ? "model_not_found"
       : cause.code === "context_length_exceeded" ? "context_length_exceeded"
       : cause.code === "gateway_timeout" ? "timeout" : "overloaded"
     : "unreachable";
-  const category = code === "model_not_found" || code === "context_length_exceeded" ? "request" : code === "timeout" || code === "unreachable" ? "network" : "server";
-  const message = code === "model_not_found" ? "the server does not know this model" : code === "context_length_exceeded" ? "the prompt does not fit the model's context window" : code === "timeout" ? "the server did not answer in time" : code === "unreachable" ? "the server could not be reached" : "the server failed or is overloaded";
+  const category = categoryOf(code);
+  const message = code === "auth_failed" || code === "rate_limited" || code === "bad_request" ? (cause as Error).message : code === "model_not_found" ? "the server does not know this model" : code === "context_length_exceeded" ? "the prompt does not fit the model's context window" : code === "timeout" ? "the server did not answer in time" : code === "unreachable" ? "the server could not be reached" : "the server failed or is overloaded";
   return new CoreError({ category, code, message, afterOutput, ...(cause instanceof StageError ? { status: cause.status } : {}) });
 }
 

@@ -54,7 +54,7 @@ export function createNovelAIProvider(connection: { id: string; apiKey: string; 
             ...(options?.temperature !== undefined ? { temperature: options.temperature } : {}),
             ...(options?.top_p !== undefined ? { top_p: options.top_p } : {}),
             ...(options?.top_k !== undefined ? { top_k: options.top_k } : {}),
-            ...(options?.frequency_penalty !== undefined ? { repetition_penalty: options.frequency_penalty } : {}),
+            ...(options?.repetition_penalty !== undefined ? { repetition_penalty: options.repetition_penalty } : {}),
           },
         }),
       });
@@ -78,6 +78,7 @@ export function createNovelAIProvider(connection: { id: string; apiKey: string; 
         lines.forEach(line);
       }
       if (buffer) line(buffer);
+      await reader.cancel().catch(() => undefined);
       const completion: ProviderCompletion = { content, finish_reason: "stop", model: request.model, raw: {} };
       return completion;
     },

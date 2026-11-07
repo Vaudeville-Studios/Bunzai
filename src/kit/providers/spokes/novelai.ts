@@ -12,7 +12,7 @@ const novelai: ProviderSpoke = {
   host: new URL(BASE).host,
   defaultModel: "kayra-v1",
   async listModels() {
-    return [{ id: "kayra-v1" }, { id: "clio-v1" }, { id: "erato-v1" }];
+    return [{ id: "kayra-v1" }, { id: "clio-v1" }, { id: "llama-3-erato-v1" }];
   },
   scene: {
     base: () => BASE,

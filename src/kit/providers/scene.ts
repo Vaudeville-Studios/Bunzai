@@ -59,6 +59,7 @@ export async function resolveSceneProvider(config: ProviderConfig, signal?: Abor
     {
       id: config.id ?? config.kind,
       baseUrl,
+      ...(spoke.scene.chatUrl ? { chatCompletionsEndpoint: spoke.scene.chatUrl(config) } : {}),
       ...(spoke.scene.params ? { params: spoke.scene.params } : {}),
       ...(config.apiKey ? { apiKey: config.apiKey } : {}),
       ...(customHeaders ? { customHeaders } : {}),

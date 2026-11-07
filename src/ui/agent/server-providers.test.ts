@@ -104,6 +104,27 @@ describe("the provider surface", () => {
     expect(found?.hasKey).toBe(true);
   });
 
+  test("A SAVED KEY NEVER FOLLOWS A PROVIDER TO ANOTHER HOST: a new kind or address needs its own key", async () => {
+    const send = (body: unknown) => handleAgentRoutes("/api/agent/providers/save", post("/api/agent/providers/save", body), STUDIO);
+    const saved = await (await send({ kind: "custom", model: "m", baseURL: "https://one.example/v1", apiKey: SECRET }))!.json() as { provider?: { id: string }; id?: string };
+    const id = saved.provider?.id ?? saved.id!;
+    const moved = await send({ id, kind: "custom", model: "m", baseURL: "https://two.example/v1" });
+    expect(moved!.status).toBe(400);
+    const switched = await send({ id, kind: "groq", model: "m" });
+    expect(switched!.status).toBe(400);
+    const { readVault } = await import("../../kit/providers/vault");
+    const after = (await readVault()).providers.find((provider) => provider.id === id)!;
+    expect(after.baseURL).toBe("https://one.example/v1");
+    expect(after.apiKey).toBe(SECRET);
+  });
+
+  test("a fixed-host provider keeps no Base URL, so a leftover cannot point it elsewhere", async () => {
+    const send = (body: unknown) => handleAgentRoutes("/api/agent/providers/save", post("/api/agent/providers/save", body), STUDIO);
+    expect((await send({ kind: "groq", model: "m", apiKey: SECRET, baseURL: "https://elsewhere.example/v1" }))!.status).toBe(200);
+    const { readVault } = await import("../../kit/providers/vault");
+    expect((await readVault()).providers.at(-1)!.baseURL).toBeUndefined();
+  });
+
   test("a new provider that needs a key and has none is refused at the form", async () => {
     // Refused here, where the message can name the field, rather than saved and left to fail at the
     // first turn with an opaque provider error.

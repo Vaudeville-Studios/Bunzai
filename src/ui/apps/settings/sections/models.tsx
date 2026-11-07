@@ -91,12 +91,14 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
 
   const kindOf = (id: string): ProviderKind | undefined => kinds.find((k) => k.id === id);
   const editing = draft?.id ? providers.find((p) => p.id === draft.id) : undefined;
+  /** A saved key stays only for this provider at this address (the server holds the same rule). */
+  const keptKey = !!editing?.hasKey && editing.kind === draft?.kind && (editing.baseURL ?? "") === draft.baseURL.trim();
   /** The model is asked for once there is something to ask the provider with. */
   const modelsOpen = !!draft && (draft.id !== undefined || canListModels(draft, kindOf(draft.kind)) || modelProblem !== null);
 
   const save = async (): Promise<void> => {
     if (!draft) return;
-    const why = draftProblem(draft, kindOf(draft.kind), editing?.hasKey ?? false);
+    const why = draftProblem(draft, kindOf(draft.kind), keptKey);
     if (why) { setProblem(why); return; }
     setBusy(true);
     setProblem(null);
@@ -263,7 +265,8 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
               // that only fails at the first turn.
               onChange={(e) => {
                 const next = kindOf(e.target.value);
-                setDraft({ ...draft, kind: e.target.value, model: next?.defaultModel ?? "" });
+                // From empty: a key or Base URL typed for one provider must not go to the next one.
+                setDraft({ ...emptyDraft(next), ...(draft.id ? { id: draft.id } : {}), name: draft.name });
                 setModels([]);
                 setTyping(false);
                 // Ask THIS provider what it offers, now, rather than after it has been saved. The
@@ -289,8 +292,11 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
                 onChange={(e) => {
                   const next = { ...draft, baseURL: e.target.value };
                   setDraft(next);
-                  queueModels(next);
+                  // With a key in the form, nothing is asked of a half-typed address; it asks when the field is left.
+                  if (next.apiKey.trim()) { cancelModels(); setModels([]); setListing(null); }
+                  else queueModels(next);
                 }}
+                onBlur={() => { if (draft.apiKey.trim()) queueModels(draft); }}
               />
               {kindOf(draft.kind)?.keyless && listing && <span className={styles.hint}>{listing}</span>}
             </label>
@@ -303,7 +309,7 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
                 type="password"
                 value={draft.apiKey}
                 autoComplete="off"
-                placeholder={editing?.hasKey ? "leave blank to keep the saved key" : kindOf(draft.kind)?.keyHint ?? "paste your key"}
+                placeholder={keptKey ? "leave blank to keep the saved key" : kindOf(draft.kind)?.keyHint ?? "paste your key"}
                 onChange={(e) => {
                   const next = { ...draft, apiKey: e.target.value };
                   setDraft(next);

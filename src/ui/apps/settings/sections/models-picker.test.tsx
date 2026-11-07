@@ -108,3 +108,36 @@ test("a server with no model list says so and still takes a typed model", async 
   await until(() => doc.body.textContent!.includes("This server doesn't list its models."));
   expect(doc.body.textContent).toContain("Default model");
 });
+
+test("switching provider leaves the key behind: the next provider's lookup never carries it", async () => {
+  fixtureKinds = [{ id: "router", label: "Router", keyless: false, needsBaseUrl: false }, { id: "other", label: "Other", keyless: false, needsBaseUrl: false }];
+  try {
+    const { doc, flushSync } = await mount(false);
+    flushSync(() => typeInto(doc, "API key", "sk-secret"));
+    await until(() => pending.length === 1);
+    pending.splice(0)[0]!.resolve(Response.json({ models: [] }));
+    const select = [...doc.querySelectorAll("select")].find((item) => [...item.options].some((option) => option.value === "other"))!;
+    Object.getOwnPropertyDescriptor(installed.dom.window.HTMLSelectElement.prototype, "value")!.set!.call(select, "other");
+    flushSync(() => select.dispatchEvent(new installed.dom.window.Event("change", { bubbles: true })));
+    const field = [...doc.querySelectorAll("label")].find((item) => item.textContent?.trim().startsWith("API key"))!.querySelector("input")!;
+    expect(field.value).toBe("");
+    await Bun.sleep(40);
+    expect(pending.length).toBe(0);
+  } finally { fixtureKinds = []; }
+});
+
+test("with a key in the form, a half-typed Base URL is not asked; leaving the field asks once", async () => {
+  fixtureKinds = [{ id: "own", label: "Own server", keyless: false, needsBaseUrl: true }];
+  try {
+    const { doc, flushSync } = await mount(false);
+    flushSync(() => typeInto(doc, "API key", "sk-secret"));
+    flushSync(() => changeURL(doc, "https://my"));
+    flushSync(() => changeURL(doc, "https://my-server.test/v1"));
+    await Bun.sleep(600);
+    expect(pending.length).toBe(0);
+    const field = [...doc.querySelectorAll("label")].find((label) => label.textContent?.trim().startsWith("Base URL"))!.querySelector("input")!;
+    flushSync(() => field.dispatchEvent(new installed.dom.window.FocusEvent("focusout", { bubbles: true })));
+    await until(() => pending.length === 1);
+    expect(pending[0]!.body).toMatchObject({ baseURL: "https://my-server.test/v1", apiKey: "sk-secret" });
+  } finally { fixtureKinds = []; }
+});

@@ -111,7 +111,7 @@ async function connectionFor(pick: ChatConnection): Promise<{ connection: Connec
   return {
     connection: {
       id: pick.id,
-      provider: dialect === "anthropic" ? createAnthropicProvider({ connectionId: pick.id, baseUrl, local }) : createOpenAIChatProvider({ connectionId: pick.id, baseUrl, local }),
+      provider: dialect === "anthropic" ? createAnthropicProvider({ connectionId: pick.id, baseUrl, local }) : createOpenAIChatProvider({ connectionId: pick.id, baseUrl, local, ...(spoke.scene.chatUrl ? { chatUrl: spoke.scene.chatUrl({ ...saved, model: pick.model }) } : {}) }),
       caps, origin, local, key: saved.apiKey ?? null,
     },
     fetch: guardedFetch(host), fingerprint: providerConfigFingerprint(saved, pick.model),

@@ -23,6 +23,8 @@ export interface SceneEndpoint {
   /** The base URL chat completions hang from (`/chat/completions` is appended). Also the address
    * `scene.ts` checks against the spoke's egress host when `native` names a different transport. */
   base(config: ProviderConfig): string;
+  /** The whole chat address, for a server whose path has no version segment (`/v1` would otherwise be added). */
+  chatUrl?(config: ProviderConfig): string;
   support?: OpenAICompatibleSupport;
   /** The generation parameters this provider accepts, and the one wire name each goes under (stage/params/wire.ts). Absent means only the penalties every OpenAI-compatible server reads. */
   params?: ParamSupport;

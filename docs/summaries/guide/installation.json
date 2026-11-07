@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:94c83da956e72ad113bc9cbbaf2fce7264ba3318fb0d8d1870af037aa748763e",
+  "sourceHash": "sha256:0c9da259a0bd28b37009ec8466b15bbe07e07744804d704eee968f3a29abe3a6",
   "summary": "The download page offers Windows, Linux and macOS choices from actual published release assets. New releases contain Bunzai.exe, Bunzai-Linux.deb for Ubuntu and Debian, Bunzai-macOS for Apple Silicon Macs, Bunzai-Linux for other x64 Linux, and SHA256SUMS; everything except Windows is experimental. The apps include the remote helper; preparation never enables mesh access. The .deb installs an app-menu entry; the bare file runs from a terminal after chmod. Linux opens Studio in the browser, quits from Settings > About, and a second launch reopens the running Studio. Older Linux CLI files require the ui command. Existing helper and CLI release files remain for recovery. Advanced automation and ARM64 users can run or build from source. The guide covers pinned Bun, recursive RP-Core checkout, setup, providers, encrypted-library backups, source updates and startup troubleshooting. Browser Studio is temporary and Kit remains source-only.",
   "topics": [
     "source install and pinned Bun",
@@ -61,7 +61,7 @@
       "slug": "first-launch",
       "title": "First launch",
       "level": 2,
-      "sourceHash": "sha256:1f8fb651222f1c525e47087a743e86eea19fc0dd3b021a5936d6ce6017244e2e",
+      "sourceHash": "sha256:a4fba39a431d14ae51bdce386d023bc6ac43886301d6fc6a393a6dd12dec1086",
       "summary": "A new studio folder opens the first-run wizard, which asks about appearance, the kinds of pieces you use, publish targets, and accent color. You can skip it; the choices can be changed later in Settings. After setup, use the Library to import a supported file or start a blank character. Importing, editing, and converting local files do not require a provider connection. To generate a scene reply, configure a provider connection and select an available model. A submitted turn sends its assembled request to that provider, and any account or usage charges come from the provider.",
       "topics": [
         "first-run wizard",

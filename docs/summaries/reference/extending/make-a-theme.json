@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "docId": "reference/extending/make-a-theme",
   "sourcePath": "docs/reference/extending/make-a-theme.md",
-  "sourceHash": "sha256:5847b54ad143cff9f4cd8fdeb00369eef5e2c25a55da2f58d31b5953d84bdfdd",
+  "sourceHash": "sha256:a656566d9210316d8603e033166b292c035d7710818f84c0570f97fe8cfbf53d",
   "summary": "A theme is a folder of data and, optionally, one checked stylesheet: a schemaVersion 2 manifest that picks one host-built variant for any of 29 surfaces and sets a lowercase-hex palette held to contrast floors, bundled fonts by id, frame, density and motion, and accent behavior, with optional inert SVG marks. Beyond the descriptor it may add one checked stylesheet, woff2 fonts, PNG and WebP images and static slot content, each behind its own scope; it carries no code and no rule may name the protected layer, which a watchdog guards. Permissions are derived from the fields used and bound to the package digest, any edit needs fresh approval, and the protected layer is never themeable. A copy-paste starter validates in a test. Five themes ship: four identity themes held to a 50 percent surface-difference floor, and RoleCall, the default, which is colour-only on purpose (RoleCall palette, Cinzel and Inter, no surface picks) and exempt from that floor by name. Built-in themes get no power a package lacks: scan:theme-keys rejects host CSS or TypeScript keyed on a theme id. The manual theme:measure gate scores structural difference with recolour and font-only controls and lists the protected gate screens without scoring them.",
   "topics": [
     "data-only theme package",
@@ -88,7 +88,7 @@
       "slug": "permissions",
       "title": "Permissions",
       "level": 2,
-      "sourceHash": "sha256:3215ffe1af4d7eb73886ee73f05aea8cfcbbd720d5a9ddaf397861a42eaf956f",
+      "sourceHash": "sha256:1f3560801e6ad7b1d0d6459710996225f55870e41c358ed5a3d3bacd2e86a049",
       "summary": "Requested scopes must equal the derived set: palette, type, shape, surfaces and accent, plus assets, styles, fonts and slots when shipped. A package gets no library, credential, network or execution power. Approval is bound to the digest of every file, an edit makes the package inactive until reviewed, and an update that adds a scope waits for approval while the old one keeps serving. Disable and revoke return the core appearance, and the lock, recovery, Kit Gate and manager stay host-owned.",
       "topics": [
         "derived scopes",

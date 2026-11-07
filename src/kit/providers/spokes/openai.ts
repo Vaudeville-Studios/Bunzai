@@ -5,6 +5,7 @@ import { OPENAI_PARAMS } from "../../../stage/params/dialects";
 
 const openai: ProviderSpoke = {
   id: "openai",
+  group: "Major",
   label: "OpenAI",
   brand: "#10A37F",
   host: "api.openai.com",

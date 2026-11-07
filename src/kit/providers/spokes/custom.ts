@@ -5,6 +5,7 @@ import { OPEN_PARAMS } from "../../../stage/params/dialects";
 
 const custom: ProviderSpoke = {
   id: "custom",
+  group: "Custom",
   label: "Custom (OpenAI-compatible)",
   brand: "#E11D48",
   // No fixed host: the egress allowlist is the user's base URL.

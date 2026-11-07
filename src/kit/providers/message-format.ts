@@ -1,5 +1,5 @@
 /**
- * How an OpenAI-compatible connection wants its messages laid out, chosen in Settings > Models. Servers differ: most take a system
+ * How an OpenAI-compatible connection wants its messages laid out, chosen in Settings > Providers. Servers differ: most take a system
  * message anywhere, many local chat templates refuse one mid-chat or refuse two turns in a row from one side. rp-core shapes every
  * request to what its capability record says, so the choice is that record's three fields, and only those.
  */

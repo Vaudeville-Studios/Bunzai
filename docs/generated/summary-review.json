@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-06",
+  "generated": "2026-11-07",
   "count": 143,
   "pages": [
     {
@@ -207,8 +207,8 @@
       "status": "APPROVED",
       "verdict": "APPROVE",
       "reviewer": "docs-review-sonnet",
-      "sourceHash": "sha256:94c83da956e72ad113bc9cbbaf2fce7264ba3318fb0d8d1870af037aa748763e",
-      "semanticSummaryHash": "sha256:3d32e896f5c21748a84d45daf15f1df5b3a682e32edde759686db9ca7a6dfb97"
+      "sourceHash": "sha256:0c9da259a0bd28b37009ec8466b15bbe07e07744804d704eee968f3a29abe3a6",
+      "semanticSummaryHash": "sha256:41f3198930c2309294b00cbad0ce7930a610584ef7ee6ffbe1085c03b433ae76"
     },
     {
       "docId": "guide/library",
@@ -662,9 +662,9 @@
       "docId": "reference/extending/make-a-theme",
       "status": "APPROVED",
       "verdict": "APPROVE",
-      "reviewer": "integration_review",
-      "sourceHash": "sha256:5847b54ad143cff9f4cd8fdeb00369eef5e2c25a55da2f58d31b5953d84bdfdd",
-      "semanticSummaryHash": "sha256:23baef150400bf68b7b67a82408a451238cd488040e2a3b7e5a7b0fda11c4f55"
+      "reviewer": "docs-review-sonnet",
+      "sourceHash": "sha256:a656566d9210316d8603e033166b292c035d7710818f84c0570f97fe8cfbf53d",
+      "semanticSummaryHash": "sha256:af00aaffef141dcdcc809241c6fad0d3112e8c7ec33213e456f1279509941562"
     },
     {
       "docId": "reference/extending/new-kind",

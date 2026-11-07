@@ -25,7 +25,7 @@ export interface ProviderConfig {
   headers?: Record<string, string>;
   /** Provider-specific choices from the spoke's declared options (e.g. NanoGPT's plan). */
   options?: Record<string, string>;
-  /** How an OpenAI-compatible connection lays out its messages (Settings > Models). Absent: the standard layout. */
+  /** How an OpenAI-compatible connection lays out its messages (Settings > Providers). Absent: the standard layout. */
   messageFormat?: MessageFormat;
   /** Optional human label (e.g. "Personal", "Work"). */
   name?: string;

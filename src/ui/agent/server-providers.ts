@@ -102,6 +102,7 @@ export async function handleProviderList(): Promise<Response> {
        * distinction the terminal's own form already draws (render/settings/providers-data.ts).
        */
       needsBaseUrl: asksBaseURL(spoke),
+      group: spoke.group ?? "OpenAI compatible",
       ...(spoke.defaultBaseURL ? { defaultBaseURL: spoke.defaultBaseURL } : {}),
       ...(spoke.options ? { options: spoke.options } : {}),
     })),

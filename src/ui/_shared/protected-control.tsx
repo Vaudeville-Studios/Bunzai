@@ -8,7 +8,7 @@
 /** The controls inside the protected layer beyond the gates: id to the words the documentation uses. */
 export const PROTECTED_CONTROLS = {
   "inspector-actions": "Prompt Inspector Send and Stop",
-  "provider-keys": "Provider keys and models (Settings > Models)",
+  "provider-keys": "Provider keys and models (Settings > Providers)",
   "mcp-connections": "MCP connections (Settings > Connections)",
   "spotify-link": "Spotify sign-in and Client ID",
   "narrator-tools": "Narrator Tool Access and Max tool rounds",

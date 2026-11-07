@@ -1,5 +1,6 @@
 /**
- * Settings > Models: which models this studio can reach, and which one it uses.
+ * Settings > Providers: which providers this studio can reach, and which of them new scenes start on.
+ * A scene can switch to any model of a saved provider, so the model chosen here is only where it starts.
  *
  * THE SAME VAULT THE TERMINAL USES. A provider added here is a provider Kit sees, and one added
  * with Kit's /model shows up here. There is no second store, no second key to paste, and no way for
@@ -17,11 +18,13 @@ import { toErrorMessage } from "../../../_shared/error-message";
 import { protect } from "../../../_shared/protected-control";
 import { SettingsRow, type SettingsSection } from "../section-contract";
 import { Button } from "../../../components/button";
+import { PROVIDER_GROUPS } from "../../../../kit/providers/spoke";
 import { testProvider, testWords } from "./models-api";
 import { MessageFormatField } from "./models-message-format";
 import styles from "./models.module.css";
 import {
   draftFrom,
+  canListModels,
   draftProblem,
   emptyDraft,
   offeredModel,
@@ -58,6 +61,8 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
   const [tested, setTested] = useState<Record<string, string>>({});
   /** Somebody chose "Type an id...", so the picker stands aside until the draft changes. */
   const [typing, setTyping] = useState(false);
+  /** What the last lookup found, said beside the field it depended on. */
+  const [listing, setListing] = useState<string | null>(null);
   /** The current lookup owns the picker; superseded requests cannot change it. */
   const modelRequest = useRef<AbortController | null>(null);
   /** The pending re-ask after the Base URL changes. */
@@ -86,6 +91,8 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
 
   const kindOf = (id: string): ProviderKind | undefined => kinds.find((k) => k.id === id);
   const editing = draft?.id ? providers.find((p) => p.id === draft.id) : undefined;
+  /** The model is asked for once there is something to ask the provider with. */
+  const modelsOpen = !!draft && (draft.id !== undefined || canListModels(draft, kindOf(draft.kind)) || modelProblem !== null);
 
   const save = async (): Promise<void> => {
     if (!draft) return;
@@ -104,7 +111,7 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
       setDraft(null);
       setModels([]);
       await reload();
-      ctx.setStatus("model saved");
+      ctx.setStatus("provider saved");
     } catch (error) {
       setProblem(toErrorMessage(error, "could not save"));
     } finally {
@@ -147,13 +154,14 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
    * BY SAVED ID OR BY DRAFT KIND. Asking by id alone meant the list arrived only for a provider that
    * already existed, which is one screen too late: the model is chosen while ADDING one.
    */
-  const loadModels = async (target: { id: string } | { kind: string; baseURL?: string; options?: Readonly<Record<string, string>> }): Promise<void> => {
+  const loadModels = async (target: { id: string } | { kind: string; baseURL?: string; apiKey?: string; options?: Readonly<Record<string, string>> }): Promise<void> => {
     cancelModels();
+    setListing(null);
     const controller = new AbortController();
     modelRequest.current = controller;
     setModelProblem(null);
     try {
-      const reply = await apiFetchJson<{ models: { id: string; label?: string }[] }>(
+      const reply = await apiFetchJson<{ models: { id: string; label?: string }[]; manual?: boolean }>(
         "/api/agent/providers/models",
         { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(target), signal: controller.signal },
       );
@@ -162,10 +170,11 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
         setDraft((d) => (d && d.kind === target.kind ? { ...d, model: offeredModel(d.model, reply.models, kindOf(target.kind)?.defaultModel) } : d));
       }
       setModels(reply.models);
+      setListing(reply.manual ? "This server doesn't list its models. Type one below." : `${reply.models.length} ${reply.models.length === 1 ? "model" : "models"} available.`);
     } catch {
       if (controller.signal.aborted) return;
       setModels([]);
-      setModelProblem("Could not load this provider's models. Check the Base URL or type a model ID.");
+      setModelProblem("Could not load this provider's models. Check the key and Base URL, or type a model ID.");
     }
   };
 
@@ -173,7 +182,9 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
     if (next.id !== undefined) return;
     cancelModels();
     setModels([]);
-    refetch.current = setTimeout(() => void loadModels({ kind: next.kind, ...(next.baseURL.trim() ? { baseURL: next.baseURL.trim() } : {}), options: next.options }), 500);
+    setListing(null);
+    if (!canListModels(next, kindOf(next.kind))) return;
+    refetch.current = setTimeout(() => void loadModels({ kind: next.kind, ...(next.apiKey.trim() ? { apiKey: next.apiKey.trim() } : {}), ...(next.baseURL.trim() ? { baseURL: next.baseURL.trim() } : {}), options: next.options }), 500);
   };
 
   return (
@@ -181,14 +192,14 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
       {notice && <p className={styles.notice}>{notice}</p>}
 
       <SettingsRow
-        label="Models"
+        label="Providers"
         hint="Shared with Kit in the terminal. Adding one here adds it there."
       >
         <span />
       </SettingsRow>
 
       <ul className={styles.list}>
-        {providers.length === 0 && <li className={styles.empty}>No models connected yet.</li>}
+        {providers.length === 0 && <li className={styles.empty}>No providers connected yet.</li>}
         {providers.map(/* bounded-ok: fixed category set, per-item detail, capped or short by construction */ (p) => (
           <li key={p.id} className={p.active ? `${styles.row} ${styles.rowActive}` : styles.row}>
             <label className={styles.pick}>
@@ -198,7 +209,7 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
                 name="active-provider"
                 checked={p.active}
                 disabled={busy}
-                onChange={() => { void act("activate", p.id, "model switched"); }}
+                onChange={() => { void act("activate", p.id, "provider switched"); }}
               />
               <span className={styles.name}>{providerLabel(p, kinds)}</span>
             </label>
@@ -215,7 +226,7 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
               >
                 {"Edit"}
               </Button>
-              <Button size="sm" variant="danger" disabled={busy} onClick={() => { void act("remove", p.id, "model removed"); }}>
+              <Button size="sm" variant="danger" disabled={busy} onClick={() => { void act("remove", p.id, "provider removed"); }}>
                 {"Remove"}
               </Button>
             </span>
@@ -234,10 +245,11 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
               setModels([]);
               setTyping(false);
               // The add form opens already knowing what its first provider offers.
-                if (first) void loadModels({ kind: first.id });
+              if (first && canListModels(emptyDraft(first), first)) void loadModels({ kind: first.id });
+              setListing(null);
             }}
           >
-            {"Add a model"}
+            {"Add a provider"}
           </Button>
         </div>
       ) : (
@@ -256,50 +268,51 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
                 setTyping(false);
                 // Ask THIS provider what it offers, now, rather than after it has been saved. The
                 // add screen is where the model is being decided, so it is where the list belongs.
-                void loadModels({ kind: e.target.value });
+                setListing(null);
+                cancelModels();
+                if (next && canListModels(emptyDraft(next), next)) void loadModels({ kind: e.target.value });
               }}
             >
-              {kinds.map(/* bounded-ok: fixed options, per-finding detail, or short word lists */ (k) => <option key={k.id} value={k.id}>{k.label}</option>)}
+              {PROVIDER_GROUPS.map(/* bounded-ok: fixed options, per-finding detail, or short word lists */ (group) => {
+                const members = kinds.filter((k) => (k.group ?? "OpenAI compatible") === group);
+                return members.length === 0 ? null : <optgroup key={group} label={group}>{members.map(/* bounded-ok: fixed options, per-finding detail, or short word lists */ (k) => <option key={k.id} value={k.id}>{k.label}</option>)}</optgroup>;
+              })}
             </select>
           </label>
 
-          <label>
-            {"Model"}
-            {/*
-              A PICKER WHEN THERE IS SOMETHING TO PICK FROM, and a text field when there is not.
-              The datalist this replaces was a picker only in principle: it renders as a plain text
-              box with a hint some browsers hide entirely, so the honest description of the old
-              behaviour is "type the id exactly and hope". A typo there is indistinguishable from an
-              outage at the first turn.
-
-              TYPING SURVIVES, which the old comment here was right to defend: a provider may publish
-              no list at all, or offer something newer than its own index. That is what "Type an
-              id..." is - the escape hatch made visible, rather than the only path.
-            */}
-            {models.length > 0 && !typing ? (
-              <select
-                value={draft.model}
-                onChange={(e) => {
-                  if (e.target.value === TYPE_IT) { setTyping(true); return; }
-                  setDraft({ ...draft, model: e.target.value });
-                }}
-              >
-                {/* A saved model the list does not carry stays selectable rather than being
-                    silently swapped for whatever happens to sort first. */}
-                {!models.some((m) => m.id === draft.model) && draft.model && (
-                  <option value={draft.model}>{`${draft.model} (saved)`}</option>
-                )}
-                {models.map((m) => <option key={m.id} value={m.id}>{m.label ?? m.id}</option>)}
-                <option value={TYPE_IT}>{"Type an id..."}</option>
-              </select>
-            ) : (
+          {kindOf(draft.kind)?.needsBaseUrl && (
+            <label>
+              {"Base URL"}
               <input
-                value={draft.model}
-                placeholder={kindOf(draft.kind)?.defaultModel ?? "model id"}
-                onChange={(e) => { setDraft({ ...draft, model: e.target.value }); }}
+                value={draft.baseURL}
+                placeholder={kindOf(draft.kind)?.defaultBaseURL ? `${kindOf(draft.kind)!.defaultBaseURL} (leave blank for this)` : "http://localhost:1234/v1"}
+                onChange={(e) => {
+                  const next = { ...draft, baseURL: e.target.value };
+                  setDraft(next);
+                  queueModels(next);
+                }}
               />
-            )}
-          </label>
+              {kindOf(draft.kind)?.keyless && listing && <span className={styles.hint}>{listing}</span>}
+            </label>
+          )}
+
+          {!kindOf(draft.kind)?.keyless && (
+            <label>
+              {"API key"}
+              <input
+                type="password"
+                value={draft.apiKey}
+                autoComplete="off"
+                placeholder={editing?.hasKey ? "leave blank to keep the saved key" : "paste your key"}
+                onChange={(e) => {
+                  const next = { ...draft, apiKey: e.target.value };
+                  setDraft(next);
+                  queueModels(next);
+                }}
+              />
+              {listing && <span className={styles.hint}>{listing}</span>}
+            </label>
+          )}
 
           {/*
             THE SPOKE'S OWN CHOICES, drawn from what it declares rather than hand-written here, so a
@@ -326,6 +339,54 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
             </label>
           ))}
 
+          {modelsOpen && (
+            <>
+              <label>
+                {"Default model"}
+                {/*
+                  A PICKER WHEN THERE IS SOMETHING TO PICK FROM, and a text field when there is not.
+                  The datalist this replaces was a picker only in principle: it renders as a plain text
+                  box with a hint some browsers hide entirely, so the honest description of the old
+                  behaviour is "type the id exactly and hope". A typo there is indistinguishable from an
+                  outage at the first turn.
+
+                  TYPING SURVIVES, which the old comment here was right to defend: a provider may publish
+                  no list at all, or offer something newer than its own index. That is what "Type an
+                  id..." is - the escape hatch made visible, rather than the only path.
+                */}
+                {models.length > 0 && !typing ? (
+                  <select
+                    value={draft.model}
+                    onChange={(e) => {
+                      if (e.target.value === TYPE_IT) { setTyping(true); return; }
+                      setDraft({ ...draft, model: e.target.value });
+                    }}
+                  >
+                    {/* A saved model the list does not carry stays selectable rather than being
+                        silently swapped for whatever happens to sort first. */}
+                    {!models.some((m) => m.id === draft.model) && draft.model && (
+                      <option value={draft.model}>{`${draft.model} (saved)`}</option>
+                    )}
+                    {models.map((m) => <option key={m.id} value={m.id}>{m.label ?? m.id}</option>)}
+                    <option value={TYPE_IT}>{"Type an id..."}</option>
+                  </select>
+                ) : (
+                  <input
+                    value={draft.model}
+                    placeholder={kindOf(draft.kind)?.defaultModel ?? "model id"}
+                    onChange={(e) => { setDraft({ ...draft, model: e.target.value }); }}
+                  />
+                )}
+                <span className={styles.hint}>{"New scenes start on this. Any scene can switch."}</span>
+              </label>
+            </>
+          )}
+
+          {/* Ollama speaks its own format. */}
+          {kindOf(draft.kind)?.needsBaseUrl && draft.kind !== "ollama" && (
+            <MessageFormatField value={draft.messageFormat} onChange={(messageFormat) => { setDraft({ ...draft, messageFormat }); }} />
+          )}
+
           <label>
             {"Name (optional)"}
             <input
@@ -334,39 +395,6 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
               onChange={(e) => { setDraft({ ...draft, name: e.target.value }); }}
             />
           </label>
-
-          {kindOf(draft.kind)?.needsBaseUrl && (
-            <label>
-              {"Base URL"}
-              <input
-                value={draft.baseURL}
-                placeholder={kindOf(draft.kind)?.defaultBaseURL ? `${kindOf(draft.kind)!.defaultBaseURL} (leave blank for this)` : "http://localhost:1234/v1"}
-                onChange={(e) => {
-                  const next = { ...draft, baseURL: e.target.value };
-                  setDraft(next);
-                  queueModels(next);
-                }}
-              />
-            </label>
-          )}
-
-          {/* Ollama speaks its own format. */}
-          {kindOf(draft.kind)?.needsBaseUrl && draft.kind !== "ollama" && (
-            <MessageFormatField value={draft.messageFormat} onChange={(messageFormat) => { setDraft({ ...draft, messageFormat }); }} />
-          )}
-
-          {!kindOf(draft.kind)?.keyless && (
-            <label>
-              {"API key"}
-              <input
-                type="password"
-                value={draft.apiKey}
-                autoComplete="off"
-                placeholder={editing?.hasKey ? "leave blank to keep the saved key" : "paste your key"}
-                onChange={(e) => { setDraft({ ...draft, apiKey: e.target.value }); }}
-              />
-            </label>
-          )}
 
           <div className={styles.formActs}>
             <Button variant="primary" disabled={busy} onClick={() => { void save(); }}>{"Save"}</Button>
@@ -386,10 +414,10 @@ function ModelsSection({ ctx }: { ctx: AppContext }): JSX.Element {
 const section: SettingsSection = {
   id: "models",
   act: "agent",
-  title: "The cast of models",
-  lede: "Which models this studio can reach, and which one it uses. Shared with Kit in the terminal: adding one here adds it there.",
+  title: "The cast of providers",
+  lede: "Which providers this studio can reach. Add one with its key, then pick any of its models in a scene. Shared with Kit in the terminal: adding one here adds it there.",
   protectedNote: "A key goes in and never comes back: the field is always empty, and blank means \"keep the one you have\". Host only.",
-  label: "Models",
+  label: "Providers",
   // Straight after appearance: it is the thing somebody comes to Settings to do once the studio
   // itself is set up, and burying it under Updates would be hiding the point of the agent window.
   order: 15,

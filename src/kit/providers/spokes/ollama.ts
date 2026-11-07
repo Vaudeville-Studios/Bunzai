@@ -97,6 +97,7 @@ const argsOf = (text: string): unknown => { try { return JSON.parse(text) as unk
 
 const ollama: ProviderSpoke = {
   id: "ollama",
+  group: "Custom",
   label: "Ollama",
   brand: "#A3A3A3",
   defaultModel: "llama3.1",

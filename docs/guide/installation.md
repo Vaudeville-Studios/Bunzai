@@ -56,7 +56,7 @@ On a new studio folder, the first-run wizard offers choices for appearance, the 
 
 ![The Library ready for a first import](../media/installation/library.png)
 
-To play a scene, choose a character and start a scene from the Scenes app. To generate a reply, configure a provider connection in **Settings > Connections**, then choose an available model in **Settings > Models**. Importing, editing, and converting files do not require a provider. A submitted scene turn sends its assembled request to the provider you selected; any provider account or usage charges are separate from Bunzai.
+To play a scene, choose a character and start a scene from the Scenes app. To generate a reply, add a provider in **Settings > Providers**, then choose any of its models in the scene. Importing, editing, and converting files do not require a provider. A submitted scene turn sends its assembled request to the provider you selected; any provider account or usage charges are separate from Bunzai.
 
 ![The Scenes room in a clean local studio](../media/installation/scenes.png)
 

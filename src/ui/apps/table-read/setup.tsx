@@ -42,7 +42,7 @@ export function Setup({ ctx, drafts, busy, onStart, reader, onReaderChange }: { 
           {choices.map(/* bounded-ok: shared saved model choices in a native select */ (choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
         </Select>
         {models.conns !== null && !available ? <div className={styles.empty}>
-          <strong>Add a model to begin.</strong>
+          <strong>Add a provider to begin.</strong>
           <p>The Table Read uses a connection you choose. Your answers are sent to that model; no other Library pieces are included.</p>
           <Button size="sm" onClick={(event) => { event.currentTarget.ownerDocument.defaultView!.location.hash = "settings/models"; ctx.openApp("settings"); }}>Open Connections</Button>
         </div> : <p className={styles.muted}>Use any available saved connection. A local model works too.</p>}

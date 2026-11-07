@@ -1,8 +1,8 @@
 {
-  "generated": "2026-11-06",
+  "generated": "2026-11-07",
   "targetChars": 90000,
   "totalPages": 143,
-  "totalSourceChars": 1750536,
+  "totalSourceChars": 1750507,
   "batches": [
     {
       "id": "batch-001",
@@ -188,7 +188,7 @@
     },
     {
       "id": "batch-002",
-      "sourceChars": 82736,
+      "sourceChars": 82704,
       "pages": [
         {
           "docId": "guide/faq",
@@ -219,7 +219,7 @@
           "sourcePath": "docs/guide/installation.md",
           "sidecarPath": "docs/summaries/guide/installation.json",
           "sectionCount": 8,
-          "sourceChars": 8702,
+          "sourceChars": 8670,
           "status": "APPROVED"
         },
         {
@@ -694,7 +694,7 @@
     },
     {
       "id": "batch-009",
-      "sourceChars": 74029,
+      "sourceChars": 74032,
       "pages": [
         {
           "docId": "reference/extending/coverage",
@@ -717,7 +717,7 @@
           "sourcePath": "docs/reference/extending/make-a-theme.md",
           "sidecarPath": "docs/summaries/reference/extending/make-a-theme.json",
           "sectionCount": 15,
-          "sourceChars": 29849,
+          "sourceChars": 29852,
           "status": "APPROVED"
         },
         {

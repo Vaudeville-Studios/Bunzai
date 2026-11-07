@@ -13,19 +13,31 @@ const local: ProviderConfig = { kind: "local", model: "llama3.1", baseURL: "http
 
 test("registry discovers every drop-in provider and skips the template", () => {
   expect([...registry.keys()].sort()).toEqual([
+    "ai21",
+    "aimlapi",
     "anthropic",
     "claude-sub",
     "codex",
+    "cometapi",
     "custom",
     "deepseek",
+    "electronhub",
+    "fireworks",
     "google",
     "groq",
     "local",
+    "minimax",
     "mistral",
+    "moonshot",
     "nanogpt",
     "ollama",
     "openai",
     "openrouter",
+    "perplexity",
+    "pollinations",
+    "siliconflow",
+    "xai",
+    "zai",
   ]);
 });
 

@@ -177,7 +177,7 @@ Beyond the gates, these controls are drawn inside the protected layer (the `prot
 puts one element in it; `src/ui/protected-set.test.ts` holds each to the file that owns it). A mod cannot restyle, hide or relabel them:
 
 - Prompt Inspector Send and Stop
-- Provider keys and models (Settings > Models)
+- Provider keys and models (Settings > Providers)
 - MCP connections (Settings > Connections)
 - Spotify sign-in and Client ID
 - Narrator Tool Access and Max tool rounds

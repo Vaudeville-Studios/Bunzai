@@ -5,6 +5,7 @@ import { stopList, logitBias } from "../../../stage/params/dialects";
 
 const openrouter: ProviderSpoke = {
   id: "openrouter",
+  group: "Major",
   label: "OpenRouter",
   brand: "#94A3B8",
   host: "openrouter.ai",

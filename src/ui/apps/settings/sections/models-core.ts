@@ -38,6 +38,8 @@ export interface ProviderKind {
   readonly defaultModel?: string;
   readonly keyless: boolean;
   readonly needsBaseUrl: boolean;
+  /** Where the list shows it (spoke.ts PROVIDER_GROUPS). */
+  readonly group?: string;
   /** Where the server answers when the base URL is left blank (Ollama's local address); the field is then optional. */
   readonly defaultBaseURL?: string;
   /**
@@ -106,6 +108,13 @@ export const draftFrom = (provider: SafeProvider, kind?: ProviderKind): Provider
   messageFormat: provider.messageFormat ?? { preset: "standard" },
 });
 
+/** Whether a new provider has what its model list needs: its key, unless it runs without one, and its Base URL when it has no default. */
+export function canListModels(draft: ProviderDraft, kind: ProviderKind | undefined): boolean {
+  if (!kind) return false;
+  if (!kind.keyless && !draft.apiKey.trim()) return false;
+  return !kind.needsBaseUrl || !!kind.defaultBaseURL || !!draft.baseURL.trim();
+}
+
 /**
  * Why this draft cannot be saved yet, or null.
  *
@@ -120,7 +129,6 @@ export function draftProblem(
   hasStoredKey = false,
 ): string | null {
   if (!kind) return "Choose a provider.";
-  if (!draft.model.trim()) return "Choose or type a model.";
   if (kind.needsBaseUrl && !kind.defaultBaseURL && !draft.baseURL.trim()) return "This provider needs a base URL.";
   /**
    * A key is required unless the provider runs without one, or unless one is already stored. That
@@ -128,6 +136,7 @@ export function draftProblem(
    * API key out again - which is the single most common edit and was worth not making annoying.
    */
   if (!kind.keyless && !draft.apiKey.trim() && !hasStoredKey) return `${kind.label} needs an API key.`;
+  if (!draft.model.trim()) return "Choose or type a default model.";
   return null;
 }
 

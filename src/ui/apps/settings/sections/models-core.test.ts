@@ -68,7 +68,9 @@ describe("draftProblem", () => {
   });
 
   test("a model is always required", () => {
-    expect(draftProblem({ ...emptyDraft(ANTHROPIC), model: "  " }, ANTHROPIC)).toContain("model");
+    expect(draftProblem({ ...emptyDraft(ANTHROPIC), apiKey: "k", model: "  " }, ANTHROPIC)).toContain("model");
+    // The key comes first on the form, so it is what a blank form asks for first.
+    expect(draftProblem({ ...emptyDraft(ANTHROPIC), model: "  " }, ANTHROPIC)).toContain("needs an API key");
   });
 });
 

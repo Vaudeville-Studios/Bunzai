@@ -57,7 +57,12 @@ export interface SpokeOption {
   defaultValue: string;
 }
 
+/** Where the Providers list shows a spoke, in RoleCall's order. Absent: OpenAI compatible. */
+export const PROVIDER_GROUPS = ["Major", "OpenAI compatible", "Regional", "Specialized", "Free", "Custom"] as const;
+export type ProviderGroup = (typeof PROVIDER_GROUPS)[number];
+
 export interface ProviderSpoke {
+  group?: ProviderGroup;
   /** Stable id stored in config.kind. */
   id: string;
   /** Display name for the setup screen preset card. */

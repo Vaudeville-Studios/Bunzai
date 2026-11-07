@@ -7,9 +7,10 @@ import section from "./models";
 let installed: InstalledDom;
 let root: Root | null = null;
 const pending: { body: { baseURL?: string }; resolve(response: Response): void }[] = [];
+let fixtureKinds: Record<string, unknown>[] = [];
 const fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   if (String(input).endsWith("/models")) return new Promise((resolve) => pending.push({ body: JSON.parse(String(init?.body)), resolve }));
-  return Response.json({ providers: [], kinds: [{ id: "ollama", label: "Ollama", keyless: true, needsBaseUrl: true, defaultBaseURL: "http://localhost:11434", defaultModel: "llama3.1" }] });
+  return Response.json({ providers: [], kinds: [...fixtureKinds, { id: "ollama", label: "Ollama", keyless: true, needsBaseUrl: true, defaultBaseURL: "http://localhost:11434", defaultModel: "llama3.1" }] });
 };
 beforeAll(() => { installed = installDom('<!doctype html><head><meta name="vaude-session" content="fixture"></head><body></body>', { url: "http://127.0.0.1:8333/", extraGlobals: ["Event", "HTMLElement", "HTMLInputElement", "HTMLSelectElement"], globals: { fetch } }); });
 afterAll(() => installed.teardown());
@@ -21,17 +22,17 @@ async function until(check: () => boolean): Promise<void> {
   throw new Error("the fixture did not reach its expected UI state");
 }
 
-async function mount() {
+async function mount(firstLookup = true) {
   const { createRoot } = await import("react-dom/client");
   const { flushSync } = await import("react-dom");
   const doc = installed.dom.window.document;
   const host = doc.createElement("div"); doc.body.append(host); root = createRoot(host);
   const Section = section.Component;
   flushSync(() => root!.render(<Section ctx={{ setStatus: () => undefined } as never} />));
-  const add = () => [...doc.querySelectorAll("button")].find((button) => button.textContent?.trim() === "Add a model");
+  const add = () => [...doc.querySelectorAll("button")].find((button) => button.textContent?.trim() === "Add a provider");
   await until(() => !!add() && !add()!.disabled);
   flushSync(() => add()!.click());
-  await until(() => pending.length === 1);
+  if (firstLookup) await until(() => pending.length === 1);
   return { doc, flushSync };
 }
 
@@ -73,4 +74,37 @@ test("saving closes the form and cancels its pending model lookup", async () => 
   pending[0]!.resolve(Response.json({ error: "late failure" }, { status: 502 }));
   await Bun.sleep(10);
   expect(doc.body.textContent).not.toContain("Could not load this provider's models");
+});
+
+function typeInto(doc: Document, label: string, value: string): void {
+  const field = [...doc.querySelectorAll("label")].find((item) => item.textContent?.trim().startsWith(label))!.querySelector("input")!;
+  Object.getOwnPropertyDescriptor(installed.dom.window.HTMLInputElement.prototype, "value")!.set!.call(field, value);
+  field.dispatchEvent(new installed.dom.window.Event("input", { bubbles: true }));
+}
+
+test("a provider that needs a key asks nothing and offers no model until the key is in, then lists with that key", async () => {
+  fixtureKinds = [{ id: "router", label: "Router", keyless: false, needsBaseUrl: false }];
+  try {
+    const { doc, flushSync } = await mount(false);
+    await Bun.sleep(20);
+    expect(pending.length).toBe(0);
+    expect(doc.body.textContent).not.toContain("Default model");
+    expect(doc.body.textContent).not.toContain("Could not load");
+    const order = [...doc.querySelectorAll("label")].map((label) => label.firstChild?.textContent).filter((text) => text === "Provider" || text === "API key" || text === "Name (optional)");
+    expect(order).toEqual(["Provider", "API key", "Name (optional)"]);
+    flushSync(() => typeInto(doc, "API key", "sk-test"));
+    await until(() => pending.length === 1);
+    expect(pending[0]!.body).toMatchObject({ kind: "router", apiKey: "sk-test" });
+    pending[0]!.resolve(Response.json({ models: [{ id: "alpha" }, { id: "beta" }] }));
+    await until(() => doc.body.textContent!.includes("2 models available."));
+    expect(doc.body.textContent).toContain("Default model");
+    expect([...doc.querySelectorAll("option")].some((option) => option.value === "alpha")).toBe(true);
+  } finally { fixtureKinds = []; }
+});
+
+test("a server with no model list says so and still takes a typed model", async () => {
+  const { doc } = await mount();
+  pending[0]!.resolve(Response.json({ models: [], manual: true }));
+  await until(() => doc.body.textContent!.includes("This server doesn't list its models."));
+  expect(doc.body.textContent).toContain("Default model");
 });

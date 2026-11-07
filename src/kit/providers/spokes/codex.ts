@@ -30,6 +30,7 @@ const DEFAULT_MODEL = "gpt-5.6-sol";
 
 const codex: ProviderSpoke = {
   id: "codex",
+  group: "Major",
   label: "ChatGPT (Codex login)",
   brand: "#000000",
   host: CODEX_CHAT_HOST,

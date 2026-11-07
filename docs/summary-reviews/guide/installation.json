@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "docId": "guide/installation",
   "sourcePath": "docs/guide/installation.md",
-  "sourceHash": "sha256:94c83da956e72ad113bc9cbbaf2fce7264ba3318fb0d8d1870af037aa748763e",
-  "semanticSummaryHash": "sha256:3d32e896f5c21748a84d45daf15f1df5b3a682e32edde759686db9ca7a6dfb97",
+  "sourceHash": "sha256:0c9da259a0bd28b37009ec8466b15bbe07e07744804d704eee968f3a29abe3a6",
+  "semanticSummaryHash": "sha256:41f3198930c2309294b00cbad0ce7930a610584ef7ee6ffbe1085c03b433ae76",
   "verdict": "APPROVE",
   "reviewer": "docs-review-sonnet",
-  "notes": "Verified summary download claims (Windows, Linux, macOS, five assets, Apple Silicon, unsigned macOS, experimental non-Windows) match installation.md and release.yml build and publish steps, with no stale macOS-unavailable text left.",
-  "reviewedAt": "2026-11-06T21:46:34.624Z"
+  "notes": "Verified Settings > Providers label in models.tsx; installation sentence and sidecar no longer name Models or Connections for providers.",
+  "reviewedAt": "2026-11-07T00:05:30.150Z"
 }

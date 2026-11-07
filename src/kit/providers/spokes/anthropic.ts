@@ -4,6 +4,7 @@ import { parseModelsPayload } from "../models";
 
 const anthropic: ProviderSpoke = {
   id: "anthropic",
+  group: "Major",
   label: "Anthropic (Claude)",
   brand: "#DE7356",
   host: "api.anthropic.com",

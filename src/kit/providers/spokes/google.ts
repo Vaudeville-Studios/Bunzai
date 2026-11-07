@@ -4,6 +4,7 @@ import { parseModelsPayload } from "../models";
 
 const google: ProviderSpoke = {
   id: "google",
+  group: "Major",
   label: "Google AI (Gemini)",
   brand: "#4796E3",
   host: "generativelanguage.googleapis.com",

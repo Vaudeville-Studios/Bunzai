@@ -90,6 +90,7 @@ const LIST_MODELS_TIMEOUT_MS = 20_000;
 
 const claudeSub: ProviderSpoke = {
   id: "claude-sub",
+  group: "Major",
   label: "Claude (subscription)",
   brand: "#D97757",
   defaultModel: "sonnet",

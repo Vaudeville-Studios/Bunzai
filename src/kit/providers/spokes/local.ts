@@ -9,6 +9,7 @@ import { LOCAL_PARAMS } from "../../../stage/params/dialects";
 
 const local: ProviderSpoke = {
   id: "local",
+  group: "Custom",
   label: "Local OpenAI-compatible (LM Studio, llama.cpp)",
   brand: "#5AD07A",
   // No fixed host: the egress allowlist is derived from the user's base URL (localhost).

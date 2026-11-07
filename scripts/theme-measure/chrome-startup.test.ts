@@ -96,10 +96,11 @@ test("missing readiness expires at the fixed deadline and reaps only the owned c
 
 test("child exit interrupts a connector that ignores its own timeout", async () => {
   const process = child(`process.stderr.write('DevTools listening on ws://127.0.0.1:9591/devtools/browser/nonce\\n');setTimeout(()=>process.exit(9),100);`);
-  const started = performance.now();
+  // Timed from the exit itself: the child's own start can stall for seconds on a loaded runner, and that is not the connector's delay.
+  const exited = new Promise<number>((resolve) => process.once("exit", () => resolve(performance.now())));
   const error = await connectOwnedChrome(process, 9591, () => new Promise<never>(() => {})).then(() => null, (error: unknown) => error);
   expect((error as Error).message).toContain("Chrome exited");
-  expect(performance.now() - started).toBeLessThan(1500);
+  expect(performance.now() - await exited).toBeLessThan(1500);
 });
 
 test.each([false, true])("the owner bounds a connector that ignores its timeout (late resolution: %s)", async (late) => {
